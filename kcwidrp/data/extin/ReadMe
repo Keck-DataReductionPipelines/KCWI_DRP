@@ -1,0 +1,72 @@
+J/A+A/549/A8    Atmospheric extinction properties above Mauna Kea (Buton+, 2013)
+================================================================================
+Atmospheric extinction properties above Mauna Kea from the Nearby Supernova
+Factory spectro-photometric data set.
+    Buton C., Copin Y., Aldering G., Antilogus P., Aragon C., Bailey S.,
+    Baltay C., Bongard S., Canto A., Cellier-Holzem F., Childress M.,
+    Chotard N., Fakhouri H.K., Gangler E., Guy J., Hsiao E.Y., Kerschhaggl M.,
+    Kowalski M., Loken S., Nugent P., Paech K., Pain R., Pecontal E.,
+    Pereira R., Perlmutter S., Rabinowitz D., M.Rigault, Runge K., Scalzo R.,
+    Smadja G., Tao C., Thomas R.C., Weaver B.A., Wu C.,
+    The Nearby Supernova Factory
+   <Astron. Astrophys. 549, A8 (2013)>
+   =2013A&A...549A...8B
+================================================================================
+ADC_Keywords: Extinction ; Spectrophotometry
+Keywords: atmospheric effects - instrumentation: spectrographs -
+          methods: observational - techniques: imaging spectroscopy
+
+Abstract:
+    We present a new atmospheric extinction curve for Mauna Kea spanning
+    3200-9700{AA}. It is the most comprehensive to date, being based on
+    some 4285 standard star spectra obtained on 478 nights spread over a
+    period of 7 years obtained by the Nearby SuperNova Factory using the
+    SuperNova Integral Field Spectrograph. This mean curve and its
+    dispersion can be used as an aid in calibrating spectroscopic or
+    imaging data from Mauna Kea, and in estimating the calibration
+    uncertainty associated with the use of a mean extinction curve. Our
+    method for decomposing the extinction curve into physical components,
+    and the ability to determine the chromatic portion of the extinction
+    even on cloudy nights, is described and verified over the wide range
+    of conditions sampled by our large dataset. We demonstrate good
+    agreement with atmospheric science data obtain at nearby Mauna Loa
+    Observatory, and with previously published measurements of the
+    extinction above Mauna Kea.
+
+Description:
+    SNfactory median atmospheric extinction [mag/airmass] and its
+    decomposition into physical components (Ozone, Aerosol optical depth
+    and Aerosol Angstroem exponent) from 3200{AA} to 10000{AA} (2{AA}
+    bins).
+
+File Summary:
+--------------------------------------------------------------------------------
+ FileName   Lrecl  Records   Explanations
+--------------------------------------------------------------------------------
+ReadMe         80        .   This file
+snfext.dat     69     3551   Atmospheric extinction at Mauna Kea
+snfext.fits  2880       28   FITS file for atmospheric extinction
+--------------------------------------------------------------------------------
+
+See also:
+   J/A+AS/109/293   : Heterochromatic extinction. I. (Grebel+, 1995)
+   J/A+AS/109/313   : Heterochromatic Atmospheric Extinction (Roberts+, 1995)
+   J/other/JAD/18.3 : Infrared extinction spectra of aerosols (Sterken+, 2012)
+
+Byte-by-byte Description of file: snfext.dat
+--------------------------------------------------------------------------------
+   Bytes Format Units   Label     Explanations
+--------------------------------------------------------------------------------
+   2- 13  E12.8 0.1nm   lambda    Wavelength ({AA})
+  16- 27  E12.8 mag     Ext       Median atmospheric extinction,
+                                   in mag/airmass unit
+  30- 41  E12.8 mag     kR        Rayleigh scattering, in mag/airmass unit
+  43- 55  E13.8 mag     kO3       Ozone scattering, in mag/airmass unit
+  58- 69  E12.8 mag     ka        Aerosols scattering, in mag/airmass unit
+--------------------------------------------------------------------------------
+
+Acknowledgements:
+    C. Buton, cbuton(at)me.com
+
+================================================================================
+(End)        C. Buton [Universitaet Bonn], Patricia Vannier [CDS]    05-Oct-2012
