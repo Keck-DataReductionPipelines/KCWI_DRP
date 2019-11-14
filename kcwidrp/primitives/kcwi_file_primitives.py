@@ -47,7 +47,7 @@ class ingest_file(Base_primitive):
         Base_primitive.__init__(self, action, context)
 
     def get_keyword(self, keyword):
-        return self.context.data_set.getInfo(self.name, keyword)
+        return self.context.data_set.get_info_column(self.name, keyword)
 
     def camera(self):
         camera = self.get_keyword('CAMERA')

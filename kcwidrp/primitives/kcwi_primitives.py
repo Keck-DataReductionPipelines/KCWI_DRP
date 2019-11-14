@@ -107,11 +107,11 @@ class subtract_overscan(Base_primitive):
         # is it performed?
         performed = False
         # loop over amps
-        session = self.context.bokeh_session
+        #session = self.context.bokeh_session
 
         for ia in range(namps):
             # get gain
-            gain = self.context.data_set.getInfo(self.action.args.name, 'GAIN%d' % (ia + 1))
+            gain = self.context.data_set.get_info_column(self.action.args.name, 'GAIN%d' % (ia + 1))
             # check if we have enough data to fit
             if (bsec[ia][3] - bsec[ia][2]) > self.context.config.instrument.minoscanpix:
                 # pull out an overscan vector
@@ -138,14 +138,14 @@ class subtract_overscan(Base_primitive):
                           ((ia + 1), sdrs))
                 self.action.args.ccddata.header['OSCNRN%d' % (ia + 1)] = (sdrs, "amp%d RN in e- from oscan" % (ia + 1))
 
-                if self.context.config.instrument.interactive>=1:
+                if self.context.config.plot_level>=1:
                     x=np.arange(len(osvec))
                     p = figure(title='Overscan amp %d' % (ia+1), x_axis_label='x', y_axis_label='counts',
                                plot_width=self.context.config.instrument.plot_width, plot_height=self.context.config.instrument.plot_height)
                     p.line(x,osvec)
                     p.line(x,osfit)
                     bokeh_plot(p)
-                    if self.context.config.instrument.interactive >= 2:
+                    if self.context.config.plot_level >= 2:
                         input("Next? <cr>: ")
                     else:
                         time.sleep(self.context.config.instrument.plot_pause)
@@ -242,7 +242,7 @@ class correct_gain(Base_primitive):
             section = self.action.args.ccddata.header['ATSEC%d' % (ia +1)]
             sec, rfor = parse_imsec(section)
             # get gain for this amp
-            gain = self.context.data_set.getInfo(self.action.args.name,'GAIN%d' % (ia + 1))
+            gain = self.context.data_set.get_info_column(self.action.args.name,'GAIN%d' % (ia + 1))
             self.logger.info("Applying gain correction of %.3f in section %s" %(gain, self.action.args.ccddata.header['ATSEC%d' % (ia + 1)]))
             self.action.args.ccddata.data[sec[0]:(sec[1]+1), sec[2]:(sec[3]+1)] *= gain
             #sliced_ccddata.header=self.action.args.header
@@ -331,7 +331,7 @@ class find_bars(Base_primitive):
     def _perform(self):
         self.logger.info("Finding continuum bars")
         # Do we plot?
-        if self.context.config.instrument.interactive >= 1:
+        if self.context.config.plot_level >= 1:
             do_plot = True
         else:
             do_plot = False
@@ -393,7 +393,7 @@ class find_bars(Base_primitive):
                 #p = figure()
                 p.scatter(midcntr, midvec[midpeaks], marker='x', color='green')
                 bokeh_plot(p)
-                if self.context.config.instrument.interactive >= 2:
+                if self.context.config.plot_level >= 2:
                     input("next: ")
                 else:
                     time.sleep(self.context.config.instrument.plot_pause)
@@ -411,7 +411,7 @@ class trace_bars(Base_primitive):
 
     def _perform(self):
         self.logger.info("Tracing continuum bars")
-        if self.context.config.instrument.interactive >= 1:
+        if self.context.config.plot_level >= 1:
             do_plot = True
             pl.ion()
         else:
@@ -496,7 +496,7 @@ class trace_bars(Base_primitive):
                 p.scatter(self.action.args.midcntr, [self.action.args.midrow]*120, color='red')
                 #pl.plot(self.action.args.midcntr, [self.action.args.midrow]*120, 'x', color='red')
                 bokeh_plot(p)
-                if self.context.config.instrument.interactive >= 2:
+                if self.context.config.plot_level >= 2:
                     input("next: ")
                 else:
                     time.sleep(self.context.config.instrument.plot_pause)
@@ -607,7 +607,7 @@ class arc_offsets(Base_primitive):
         arcs = self.context.arcs
         if arcs is not None:
             # Do we plot?
-            if self.context.config.instrument.interactive >= 2:
+            if self.context.config.plot_level >= 2:
                 do_plot = True
             else:
                 do_plot = False
@@ -752,7 +752,7 @@ class read_atlas(Base_primitive):
         offset_wav = offset_pix * refdisp
         self.logger.info("Initial arc-atlas offset (px, Ang): %d, %.1f" %
                       (offset_pix, offset_wav))
-        if self.context.config.instrument.interactive >= 1:
+        if self.context.config.plot_level >= 1:
             #if self.frame.inter() >= 2:
             #    pl.ion()
             #else:
@@ -768,7 +768,7 @@ class read_atlas(Base_primitive):
             #ylim = pl.gca().get_ylim()
             p.line([offset_pix, offset_pix], [ylim_min, ylim_max], color='green')
             bokeh_plot(p)
-            if self.context.config.instrument.interactive >= 2:
+            if self.context.config.plot_level >= 2:
                 input("Next? <cr>: ")
             else:
                 time.sleep(self.context.config.instrument.plot_pause)
@@ -793,7 +793,7 @@ class read_atlas(Base_primitive):
                 p.line([cwave, cwave], [ylim_min, ylim_max], color="green", legend="CWAVE")
                 bokeh_plot(p)
 
-                if self.context.config.instrument.interactive >= 2:
+                if self.context.config.plot_level >= 2:
                     q = input("Enter: <cr> - next, new offset (px): ")
                     if q:
                         offset_pix = int(q)
@@ -1127,7 +1127,7 @@ class fit_center(Base_primitive):
             # Store results
             self.action.args.centcoeff.append(coeff)
 
-            if self.context.config.instrument.interactive >= 1:
+            if self.context.config.plot_level >= 1:
                 # plot maxima
                 p = figure(title="Bar %d, Slice %d" % (b, int(b/5)),
                            x_axis_label="Central dispersion (Ang/px)", y_axis_label="X-Corr Peak Value")
@@ -1145,7 +1145,7 @@ class fit_center(Base_primitive):
                 else:
                     time.sleep(0.01)
 
-        if self.context.config.instrument.interactive >= 1:
+        if self.context.config.plot_level >= 1:
             # Plot results
             p = figure(title=imlab, x_axis_label="Bar #", y_axis_label="Central Wavelength (A)")
             x = range(len(centwave))
@@ -1156,7 +1156,7 @@ class fit_center(Base_primitive):
                  p.line([sx, sx], ylim, color='black', line_dash = 'dotted')
             p.x_range = Range1d(-1, 120)
             bokeh_plot(p)
-            if self.context.config.instrument.interactive >= 2:
+            if self.context.config.plot_level >= 2:
                  input("Next? <cr>: ")
             else:
                  time.sleep(self.context.config.instrument.plot_pause)
@@ -1169,7 +1169,7 @@ class fit_center(Base_primitive):
                 p.line([sx, sx], ylim,  color='black', line_dash = 'dotted')
             p.x_range = Range1d(-1, 120)
             bokeh_plot(p)
-            if self.context.config.instrument.interactive >= 2:
+            if self.context.config.plot_level >= 2:
                 input("Next? <cr>: ")
             else:
                 time.sleep(self.context.config.instrument.plot_pause)

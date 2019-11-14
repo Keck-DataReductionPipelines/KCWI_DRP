@@ -12,37 +12,44 @@ from keckdrpframework.models.arguments import Arguments
 import subprocess
 import time
 import argparse
+import sys
 
 from kcwidrp.pipelines.kcwi_pipeline import Kcwi_pipeline
 
 
+def _parseArguments(in_args):
+    description = "KCWI pipeline CLI"
 
-def reduce(file_name):
-    subprocess.Popen('bokeh serve', shell=True)
-    time.sleep(2)
-
-    pipeline = Kcwi_pipeline()
-    framework = Framework(pipeline,  'framework.cfg')
-    framework.config.instrument = ConfigClass("instr.cfg")
-    framework.logger.info("Framework initialized")
-
-    framework.logger.info("Checking path for files")
-
-    args = Arguments(name=file_name)
-    framework.append_event('next_file', args)
-
-    framework.start()
-    framework.waitForEver()
-
-
-def main():
-
-    parser = argparse.ArgumentParser(description='Process a single file.')
+    parser = argparse.ArgumentParser(prog=f"{in_args[0]}", description=description)
+    parser.add_argument('-c', dest="config_file", type=str, help="Configuration file")
     parser.add_argument('frame', nargs=1, type=str, help='input image file')
+    # parser.add_argument("-d", "--directory", dest="dirname", type=str, help="Input directory")
 
-    args = parser.parse_args()
+    args = parser.parse_args(in_args[1:])
+    return args
 
-    reduce(args.frame[0])
+
+
 
 if __name__ == "__main__":
-    main()
+
+    args = _parseArguments(sys.argv)
+
+    config = ConfigClass(args.config_file)
+    if config.enable_bokeh is True:
+        subprocess.Popen('bokeh serve', shell=True)
+        time.sleep(2)
+    try:
+        framework = Framework(Kcwi_pipeline, config)
+    except Exception as e:
+        print("Failed to initialize framework, exiting ...", e)
+        traceback.print_exc()
+        sys.exit(1)
+
+    framework.logger.info("Framework initialized")
+    arguments = Arguments(name=args.frame[0])
+    print(arguments)
+    framework.append_event('next_file', arguments)
+
+    framework.start()
+
