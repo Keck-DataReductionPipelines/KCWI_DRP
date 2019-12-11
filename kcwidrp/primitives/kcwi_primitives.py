@@ -1,7 +1,7 @@
 
-from keckdrpframework.primitives.base_primitive import Base_primitive
+from keckdrpframework.primitives.base_primitive import BasePrimitive
 from keckdrpframework.models.arguments import Arguments
-from keckdrpframework.primitives.base_img import Base_img
+from keckdrpframework.primitives.base_img import BaseImg
 from .kcwi_file_primitives import *
 from keckdrpframework.core.bokeh_plotting import bokeh_plot
 import ccdproc
@@ -87,10 +87,10 @@ def pascal_shift(coef=None, x0=None):
     # Reverse for python
     return list(reversed(fincoeff))
 
-class subtract_overscan(Base_primitive):
+class subtract_overscan(BasePrimitive):
 
     def __init__(self, action, context):
-        Base_primitive.__init__(self, action, context)
+        BasePrimitive.__init__(self, action, context)
 
 
     def _perform(self):
@@ -170,10 +170,10 @@ class subtract_overscan(Base_primitive):
         return self.action.args
 
 
-class trim_overscan(Base_primitive):
+class trim_overscan(BasePrimitive):
 
     def __init__(self, action, context):
-        Base_primitive.__init__(self, action, context)
+        BasePrimitive.__init__(self, action, context)
 
     def _perform(self):
 
@@ -229,10 +229,10 @@ class trim_overscan(Base_primitive):
         #self.log.info(self.trim_oscan.__qualname__)
 
 
-class correct_gain(Base_primitive):
+class correct_gain(BasePrimitive):
 
     def __init__(self, action, context):
-        Base_primitive.__init__(self, action, context)
+        BasePrimitive.__init__(self, action, context)
 
     def _perform(self):
         #print(self.action.args.ccddata.header)
@@ -264,10 +264,10 @@ class correct_gain(Base_primitive):
         kcwi_fits_writer(self.action.args.ccddata, table=self.action.args.table, output_file=self.action.args.name, suffix="int")
         return self.action.args
 
-class process_bias(Base_img):
+class process_bias(BaseImg):
 
     def __init__(self, action, context):
-        Base_img.__init__(self, action, context)
+        BaseImg.__init__(self, action, context)
 
     def _pre_condition(self):
         """
@@ -314,18 +314,18 @@ class process_bias(Base_img):
 
         return Arguments(name=args.new_file_name)
 
-class process_contbars(Base_primitive):
+class process_contbars(BasePrimitive):
 
     def __init__(self, action, context):
-        Base_primitive.__init__(self, action, context)
+        BasePrimitive.__init__(self, action, context)
 
     def _perform(self):
         return self.action.args
 
-class find_bars(Base_primitive):
+class find_bars(BasePrimitive):
 
     def __init__(self, action, context):
-        Base_primitive.__init__(self, action, context)
+        BasePrimitive.__init__(self, action, context)
         basicConfig(level=logging.ERROR)
 
     def _perform(self):
@@ -404,10 +404,10 @@ class find_bars(Base_primitive):
         return self.action.args
 
 
-class trace_bars(Base_primitive):
+class trace_bars(BasePrimitive):
 
     def __init__(self, action, context):
-        Base_primitive.__init__(self, action, context)
+        BasePrimitive.__init__(self, action, context)
 
     def _perform(self):
         self.logger.info("Tracing continuum bars")
@@ -543,10 +543,10 @@ class trace_bars(Base_primitive):
 
 
 
-class extract_arcs(Base_primitive):
+class extract_arcs(BasePrimitive):
 
     def __init__(self, action, context):
-            Base_primitive.__init__(self, action, context)
+            BasePrimitive.__init__(self, action, context)
 
     def _perform(self):
         self.logger.info("Extracting arc spectra")
@@ -597,10 +597,10 @@ class extract_arcs(Base_primitive):
                            (self.context.config.instrument.NBARS, len(arcs)))
         return self.action.args
 
-class arc_offsets(Base_primitive):
+class arc_offsets(BasePrimitive):
 
     def __init__(self, action, context):
-            Base_primitive.__init__(self, action, context)
+            BasePrimitive.__init__(self, action, context)
 
     def _perform(self):
         self.logger.info("Finding inter-bar offsets")
@@ -651,10 +651,10 @@ class arc_offsets(Base_primitive):
         return self.action.args
 
 
-class calc_prelim_disp(Base_primitive):
+class calc_prelim_disp(BasePrimitive):
 
     def __init__(self, action, context):
-        Base_primitive.__init__(self, action, context)
+        BasePrimitive.__init__(self, action, context)
 
     def _perform(self):
         # get binning
@@ -675,10 +675,10 @@ class calc_prelim_disp(Base_primitive):
         return self.action.args
 
 
-class read_atlas(Base_primitive):
+class read_atlas(BasePrimitive):
 
     def __init__(self, action, context):
-        Base_primitive.__init__(self, action, context)
+        BasePrimitive.__init__(self, action, context)
 
     def _perform(self):
         # What lamp are we using?
@@ -924,10 +924,10 @@ def myhelper(argument):
     # Store results
     return b, scoeff, coeff[4], coeff[3]
 
-class fit_center(Base_primitive):
+class fit_center(BasePrimitive):
 
     def __init__(self, action, context):
-        Base_primitive.__init__(self, action, context)
+        BasePrimitive.__init__(self, action, context)
         self.action.args.centcoeff=[]
 
     def _perform(self):
@@ -1177,10 +1177,10 @@ class fit_center(Base_primitive):
         #print(self.action.args.centcoeff)
         return self.action.args
 
-class process_arc(Base_primitive):
+class process_arc(BasePrimitive):
 
     def __init__(self, action, context):
-        Base_primitive.__init__(self, action, context)
+        BasePrimitive.__init__(self, action, context)
 
     def _perform(self):
         return self.action.args

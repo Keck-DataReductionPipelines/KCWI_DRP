@@ -4,20 +4,22 @@ KCWI
 @author: lrizzi
 """
 
-from keckdrpframework.pipelines.base_pipeline import Base_pipeline
+from keckdrpframework.pipelines.base_pipeline import BasePipeline
 
 from ..primitives.kcwi_primitives import *
 from ..primitives.kcwi_file_primitives import *
+from ..primitives.kcwi_bokeh import *
 
 
 
-class Kcwi_pipeline(Base_pipeline):
+class Kcwi_pipeline(BasePipeline):
     """
     Pipeline to process KCWI data
 
     """
 
     event_table = {
+        "start_bokeh": ("start_bokeh", None, None),
         #"next_file": ("ingest_file", "file_ingested", None),
         "next_file": ("ingest_file", "file_ingested", "file_ingested"),
         "file_ingested": ("action_planner", None, None),
@@ -56,7 +58,7 @@ class Kcwi_pipeline(Base_pipeline):
         """
         Constructor
         """
-        Base_pipeline.__init__(self)
+        BasePipeline.__init__(self)
         self.cnt = 0
 
     def action_planner (self, action, context):

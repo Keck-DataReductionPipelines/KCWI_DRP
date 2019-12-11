@@ -3,7 +3,8 @@ from astropy.io import fits
 from astropy.nddata import CCDData
 from astropy.table import Table
 
-from keckdrpframework.primitives.base_primitive import Base_primitive
+from keckdrpframework.primitives.base_primitive import BasePrimitive
+from keckdrpframework.models.data_set import DataSet
 import os
 import math
 
@@ -38,13 +39,13 @@ def parse_imsec(section=None):
         # use python axis ordering
         return sec, rfor
 
-class ingest_file(Base_primitive):
+class ingest_file(BasePrimitive):
 
     def __init__(self, action, context):
         '''
         Constructor
         '''
-        Base_primitive.__init__(self, action, context)
+        BasePrimitive.__init__(self, action, context)
 
     def get_keyword(self, keyword):
         return self.context.data_set.get_info_column(self.name, keyword)
@@ -323,6 +324,8 @@ class ingest_file(Base_primitive):
         return bsec, dsec, tsec, direc
 
     def _perform(self):
+        if self.context.data_set is None:
+            self.context.data_set = DataSet(None, self.logger, self.config)
         self.context.data_set.append_item(self.action.args.name)
         self.name = self.action.args.name
         out_args = Arguments()
@@ -420,7 +423,7 @@ def kcwi_fits_reader(file):
     return ccddata, table
 
 
-class kcwi_fits_ingest(Base_primitive):
+class kcwi_fits_ingest(BasePrimitive):
     '''
     classdocs
     '''
@@ -429,7 +432,7 @@ class kcwi_fits_ingest(Base_primitive):
         '''
         Constructor
         '''
-        Base_primitive.__init__(self, action, context)
+        BasePrimitive.__init__(self, action, context)
 
     def _perform(self):
         '''

@@ -13,6 +13,8 @@ import subprocess
 import time
 import argparse
 import sys
+import traceback
+import threading
 
 from kcwidrp.pipelines.kcwi_pipeline import Kcwi_pipeline
 
@@ -29,8 +31,6 @@ def _parseArguments(in_args):
     return args
 
 
-
-
 if __name__ == "__main__":
 
     args = _parseArguments(sys.argv)
@@ -39,6 +39,8 @@ if __name__ == "__main__":
     if config.enable_bokeh is True:
         subprocess.Popen('bokeh serve', shell=True)
         time.sleep(2)
+
+
     try:
         framework = Framework(Kcwi_pipeline, config)
     except Exception as e:
@@ -46,10 +48,15 @@ if __name__ == "__main__":
         traceback.print_exc()
         sys.exit(1)
 
+
     framework.logger.info("Framework initialized")
     arguments = Arguments(name=args.frame[0])
     print(arguments)
+    framework.append_event('start_bokeh', None)
     framework.append_event('next_file', arguments)
 
-    framework.start()
+    #print(framework.context.bokeh_session)
+    #framework.start()
+    # PLOTTING
 
+    framework.start()
