@@ -324,9 +324,9 @@ class ingest_file(BasePrimitive):
         return bsec, dsec, tsec, direc
 
     def _perform(self):
-        if self.context.data_set is None:
-            self.context.data_set = DataSet(None, self.logger, self.config)
-        self.context.data_set.append_item(self.action.args.name)
+        #if self.context.data_set is None:
+        #    self.context.data_set = DataSet(None, self.logger, self.config, self.context.event_queue)
+        #self.context.data_set.append_item(self.action.args.name)
         self.name = self.action.args.name
         out_args = Arguments()
 
