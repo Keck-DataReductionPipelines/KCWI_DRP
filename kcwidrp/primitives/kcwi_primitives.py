@@ -87,11 +87,11 @@ def pascal_shift(coef=None, x0=None):
     # Reverse for python
     return list(reversed(fincoeff))
 
+
 class subtract_overscan(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
-
 
     def _perform(self):
         # image sections for each amp
@@ -107,19 +107,21 @@ class subtract_overscan(BasePrimitive):
         # is it performed?
         performed = False
         # loop over amps
-        #session = self.context.bokeh_session
+        # session = self.context.bokeh_session
 
         for ia in range(namps):
             # get gain
-            gain = self.context.data_set.get_info_column(self.action.args.name, 'GAIN%d' % (ia + 1))
+            gain = self.context.data_set.get_info_column(self.action.args.name,
+                                                         'GAIN%d' % (ia + 1))
             # check if we have enough data to fit
-            if (bsec[ia][3] - bsec[ia][2]) > self.context.config.instrument.minoscanpix:
+            if (bsec[ia][3] - bsec[ia][2]) > self.config.instrument.minoscanpix:
                 # pull out an overscan vector
-                x0 = bsec[ia][2] + self.context.config.instrument.oscanbuf
-                x1 = bsec[ia][3] - self.context.config.instrument.oscanbuf
+                x0 = bsec[ia][2] + self.config.instrument.oscanbuf
+                x1 = bsec[ia][3] - self.config.instrument.oscanbuf
                 y0 = bsec[ia][0]
                 y1 = bsec[ia][1] + 1
-                osvec = np.nanmedian(self.action.args.ccddata.data[y0:y1, x0:x1], axis=1)
+                osvec = np.nanmedian(
+                    self.action.args.ccddata.data[y0:y1, x0:x1], axis=1)
                 nsam = x1 - x0
                 xx = np.arange(len(osvec), dtype=np.float)
                 # fit it, avoiding first 50 px
@@ -140,10 +142,12 @@ class subtract_overscan(BasePrimitive):
 
                 if self.context.config.plot_level>=1:
                     x=np.arange(len(osvec))
-                    p = figure(title='Overscan amp %d' % (ia+1), x_axis_label='x', y_axis_label='counts',
-                               plot_width=self.context.config.instrument.plot_width, plot_height=self.context.config.instrument.plot_height)
-                    p.line(x,osvec)
-                    p.line(x,osfit)
+                    p = figure(title='Overscan amp %d' % (ia+1),
+                               x_axis_label='x', y_axis_label='counts',
+                               plot_width=self.config.instrument.plot_width,
+                               plot_height=self.config.instrument.plot_height)
+                    p.line(x, osvec)
+                    p.line(x, osfit)
                     bokeh_plot(p)
                     if self.context.config.plot_level >= 2:
                         input("Next? <cr>: ")
@@ -153,9 +157,9 @@ class subtract_overscan(BasePrimitive):
                 for ix in range(dsec[ia][2], dsec[ia][3] + 1):
                     self.action.args.ccddata.data[y0:y1, ix] = \
                         self.action.args.ccddata.data[y0:y1, ix] - osfit
-            performed = True
-            #else:
-            #    self.log.info("not enough overscan px to fit amp %d")
+                performed = True
+            else:
+                self.logger.info("not enough overscan px to fit amp %d")
 
         if performed:
             self.action.args.ccddata.header[key] = (True, 'Overscan subtracted')
@@ -163,10 +167,8 @@ class subtract_overscan(BasePrimitive):
             self.action.args.ccddata.header[key] = (False, 'Overscan subtracted')
         logstr = self.__module__ + "." + self.__class__.__name__
         self.action.args.ccddata.header['HISTORY'] = logstr
-        #self.log.info(self.subtract_oscan.__qualname__)
+        self.logger.info(logstr)
 
-        #new_name = "%s_ovsc" % self.action.args.name
-        kcwi_fits_writer(self.action.args.ccddata, table=self.action.args.table, output_file=self.action.args.name, suffix="oscan")
         return self.action.args
 
 
@@ -200,7 +202,8 @@ class trim_overscan(BasePrimitive):
             xo0 = tsec[ia][2]
             xo1 = tsec[ia][3] + 1
             # transfer to new image
-            new[yo0:yo1, xo0:xo1] = self.action.args.ccddata.data[yi0:yi1, xi0:xi1]
+            new[yo0:yo1, xo0:xo1] = self.action.args.ccddata.data[yi0:yi1,
+                                                                  xi0:xi1]
             # update amp section
             sec = "[%d:" % (xo0+1)
             sec += "%d," % xo1
@@ -219,14 +222,13 @@ class trim_overscan(BasePrimitive):
         self.action.args.ccddata.header['NAXIS2'] = max_sec[1] + 1
         self.action.args.ccddata.header[key] = (True, "Overscan trimmed")
 
-        logstr = self.__module__ + "." + \
-                 self.__class__.__name__
+        logstr = self.__module__ + "." + self.__class__.__name__
         self.action.args.ccddata.header['HISTORY'] = logstr
-        #new_name = "%s_trim" % self.action.args.name
-
-        kcwi_fits_writer(self.action.args.ccddata, table=self.action.args.table, output_file=self.action.args.name, suffix="trim")
+        if self.config.instrument.saveintims:
+            kcwi_fits_writer(self.action.args.ccddata,
+                             table=self.action.args.table,
+                             output_file=self.action.args.name, suffix="trim")
         return self.action.args
-        #self.log.info(self.trim_oscan.__qualname__)
 
 
 class correct_gain(BasePrimitive):
@@ -235,33 +237,33 @@ class correct_gain(BasePrimitive):
         BasePrimitive.__init__(self, action, context)
 
     def _perform(self):
-        #print(self.action.args.ccddata.header)
+        # print(self.action.args.ccddata.header)
         namps = self.action.args.namps
         for ia in range(namps):
             # get amp section
             section = self.action.args.ccddata.header['ATSEC%d' % (ia +1)]
             sec, rfor = parse_imsec(section)
             # get gain for this amp
-            gain = self.context.data_set.get_info_column(self.action.args.name,'GAIN%d' % (ia + 1))
-            self.logger.info("Applying gain correction of %.3f in section %s" %(gain, self.action.args.ccddata.header['ATSEC%d' % (ia + 1)]))
-            self.action.args.ccddata.data[sec[0]:(sec[1]+1), sec[2]:(sec[3]+1)] *= gain
-            #sliced_ccddata.header=self.action.args.header
-
-            #multiplied_ccddata = sliced_ccddata.multiply(gain)
-            #mu
-            #self.action.args.ccddata=multiplied_ccddata
+            gain = self.context.data_set.get_info_column(
+                self.action.args.name,'GAIN%d' % (ia + 1))
+            self.logger.info(
+                "Applying gain correction of %.3f in section %s" %
+                (gain, self.action.args.ccddata.header['ATSEC%d' % (ia + 1)]))
+            self.action.args.ccddata.data[sec[0]:(sec[1]+1),
+                                          sec[2]:(sec[3]+1)] *= gain
 
         self.action.args.ccddata.header['GAINCOR'] = (True, "Gain corrected")
-        self.action.args.ccddata.header['BUNIT'] = ('electron','Units set to electrons')
+        self.action.args.ccddata.header['BUNIT'] = ('electron',
+                                                    'Units set to electrons')
         self.action.args.ccddata.unit = 'electron'
 
-        #logstr = self.correct_gain.__module__ + "." + \
-        #         self.correct_gain.__qualname__
-        #self.frame.header['HISTORY'] = logstr
-        #self.log.info(self.correct_gain.__qualname__)
-        #self.logger.info("Writing test file")
-        #self.action.args.ccddata.write('test.fits')
-        kcwi_fits_writer(self.action.args.ccddata, table=self.action.args.table, output_file=self.action.args.name, suffix="int")
+        logstr = self.__module__ + "." + self.__class__.__name__
+        self.action.args.ccddata.header['HISTORY'] = logstr
+
+        if self.config.instrument.saveintims:
+            kcwi_fits_writer(self.action.args.ccddata,
+                             table=self.action.args.table,
+                             output_file=self.action.args.name, suffix="int")
         return self.action.args
 
 class process_bias(BaseImg):
@@ -340,6 +342,7 @@ class process_contbars(BasePrimitive):
     def _perform(self):
         return self.action.args
 
+
 class find_bars(BasePrimitive):
 
     def __init__(self, action, context):
@@ -354,6 +357,7 @@ class find_bars(BasePrimitive):
         else:
             do_plot = False
         # initialize
+        refbar = self.context.config.instrument.REFBAR
         midcntr = []
         # get image dimensions
         nx = self.action.args.ccddata.data.shape[1]
@@ -378,18 +382,19 @@ class find_bars(BasePrimitive):
             if do_plot:
                 # plot the peak positions
                 x = np.arange(len(midvec))
-                #pl.plot(midvec, '-')
+                # pl.plot(midvec, '-')
                 p = figure(title="Img %d, Thresh = %.2f" % (self.action.args.ccddata.header['FRAMENO'], midavg), \
                     x_axis_label='CCD X (px)', y_axis_label='e-',
                            plot_width=self.context.config.instrument.plot_width, plot_height=self.context.config.instrument.plot_height)
                 p.line(x, midvec, color='blue')
                 p.scatter(midpeaks, midvec[midpeaks], marker='x', color='red')
-                p.line([0, nx], [midavg, midavg], color='grey', line_dash='dashed')
+                p.line([0, nx], [midavg, midavg], color='grey',
+                       line_dash='dashed')
                 bokeh_plot(p)
                 time.sleep(self.context.config.instrument.plot_pause)
             # calculate the bar centroids
-            plotting_vector_x=[]
-            plotting_vector_y=[]
+            plotting_vector_x = []
+            plotting_vector_y = []
             for peak in midpeaks:
                 xs = list(range(peak-win, peak+win+1))
                 ys = midvec[xs] - np.nanmin(midvec[xs])
@@ -402,13 +407,13 @@ class find_bars(BasePrimitive):
                 plotting_vector_x.append(xc)
                 plotting_vector_y.append(midavg)
 
-                #p=figure()
+                # p=figure()
             if do_plot:
                 p.line(plotting_vector_x, plotting_vector_y, color='grey')
-                #p.line([xc, xc], [midavg, midvec[peak]], color='grey')
+                # p.line([xc, xc], [midavg, midvec[peak]], color='grey')
 
             if do_plot:
-                #p = figure()
+                # p = figure()
                 p.scatter(midcntr, midvec[midpeaks], marker='x', color='green')
                 bokeh_plot(p)
                 if self.context.config.plot_level >= 2:
@@ -416,10 +421,21 @@ class find_bars(BasePrimitive):
                 else:
                     time.sleep(self.context.config.instrument.plot_pause)
             self.logger.info("Found middle centroids for continuum bars")
+        # store peaks
         self.action.args.midcntr = midcntr
+        # store the row where we got them
         self.action.args.midrow = midy
         self.action.args.win = win
+        # calculate reference delta x based on refbar
+        self.action.args.refdelx = 0.
+        for ib in range(refbar-1, refbar+3):
+            self.action.args.refdelx += (midcntr[ib] - midcntr[ib-1])
+        self.action.args.refdelx /= 4.
+        # store image info
+        self.action.args.cbarsno = self.action.args.ccddata.header['FRAMENO']
+        self.action.args.cbarsfl = self.action.args.ccddata.header['OFNAME']
         return self.action.args
+    # END: find_bars
 
 
 class trace_bars(BasePrimitive):
@@ -502,7 +518,6 @@ class trace_bars(BasePrimitive):
             yo = yi
             dst = np.column_stack((xi, yi))
             src = np.column_stack((xo, yo))
-
             if do_plot:
                 # plot them
                 # pl.ioff()
@@ -510,9 +525,10 @@ class trace_bars(BasePrimitive):
                     x_axis_label="CCD X (px)", y_axis_label="CCD Y (px)",
                            plot_width=self.context.config.instrument.plot_width, plot_height=self.context.config.instrument.plot_height)
                 p.scatter(xi, yi, marker='x', size=2, color='blue')
-                #pl.plot(xi, yi, 'x', ms=0.5)
-                p.scatter(self.action.args.midcntr, [self.action.args.midrow]*120, color='red')
-                #pl.plot(self.action.args.midcntr, [self.action.args.midrow]*120, 'x', color='red')
+                # pl.plot(xi, yi, 'x', ms=0.5)
+                p.scatter(self.action.args.midcntr,
+                          [self.action.args.midrow]*120, color='red')
+                # pl.plot(self.action.args.midcntr, [self.action.args.midrow]*120, 'x', color='red')
                 bokeh_plot(p)
                 if self.context.config.plot_level >= 2:
                     input("next: ")
@@ -526,28 +542,29 @@ class trace_bars(BasePrimitive):
                 'MIDROW': self.action.args.midrow,
                 'WINDOW': self.action.args.win}
 
-            # in this line we pass the trace information to an argument instead of writing it to a table
+            # in this line we pass the trace information to an argument
+            # instead of writing it to a table
             self.context.trace = trace
-            write_table(table = [src, dst, barid, slid],
-                        names = ('src', 'dst', 'barid', 'slid'),
-                        #suffix='trace',
-                        output_dir = os.path.dirname(self.action.args.name),
-                        output_name = 'trace_table.fits',
-                        comment = ['Source and destination fiducial points',
-                                      'Derived from KCWI continuum bars images',
-                                      'For defining spatial transformation'],
-                        keywords={'MIDROW': self.action.args.midrow,
-                                    'WINDOW': self.action.args.win})
+            ofname = self.action.args.cbarfl.split('.')[0] + "_trace.fits"
+            write_table(table=[src, dst, barid, slid],
+                        names=('src', 'dst', 'barid', 'slid'),
+                        output_dir=os.path.dirname(self.action.args.name),
+                        output_name=ofname,
+                        comment=['Source and destination fiducial points',
+                                 'Derived from KCWI continuum bars images',
+                                 'For defining spatial transformation'],
+                        keywords={'MIDROW': (self.action.args.midrow,
+                                             "Middle Row of image"),
+                                  'WINDOW': (self.action.args.win,
+                                             "Window for bar"),
+                                  'REFDELX': (self.action.args.refdelx,
+                                              "Reference bar sep in px"),
+                                  'CBARSNO': (self.action.args.cbarsno,
+                                              "Cont. bars image number"),
+                                  'CBARSFL': (self.action.args.cbarsfl,
+                                              "Cont. bars image")})
 
-            #self.write_table(table=[src, dst, barid, slid],
-            #                 names=('src', 'dst', 'barid', 'slid'),
-            #                 suffix='trace',
-            #                 comment=['Source and destination fiducial points',
-            #                          'Derived from KCWI continuum bars images',
-            #                          'For defining spatial transformation'],
-            #                 keywords={'MIDROW': self.midrow,
-            #                           'WINDOW': self.win})
-            if True:
+            if self.context.config.instrument.saveintims:
                 # fit transform
                 self.logger.info("Fitting spatial control points")
                 tform = tf.estimate_transform('polynomial', src, dst, order=3)
@@ -555,10 +572,12 @@ class trace_bars(BasePrimitive):
                 warped = tf.warp(self.action.args.ccddata.data, tform)
                 # write out warped image
                 self.action.args.ccddata.data = warped
-                kcwi_fits_writer(self.action.args.ccddata, self.action.args.table, output_file=self.action.args.name, suffix='warped')
+                kcwi_fits_writer(self.action.args.ccddata,
+                                 self.action.args.table,
+                                 output_file=self.action.args.name,
+                                 suffix='warped')
                 self.logger.info("Transformed bars produced")
             return self.action.args
-
 
 
 class extract_arcs(BasePrimitive):
@@ -574,7 +593,8 @@ class extract_arcs(BasePrimitive):
             midrow = trace['MIDROW']
             win = trace['WINDOW']
         else:
-            trace = read_table(input_dir = os.path.dirname(self.action.args.name), file_name = "trace_table.fits")
+            trace = read_table(input_dir=os.path.dirname(self.action.args.name),
+                               file_name="trace_table.fits")
             midrow = trace.meta['MIDROW']
             win = trace.meta['WINDOW']
             self.context.trace = trace
@@ -582,8 +602,6 @@ class extract_arcs(BasePrimitive):
         dst = trace['dst']  # destination control points
         barid = trace['barid']
         slid = trace['slid']
-
-
 
         self.logger.info("Fitting spatial control points")
         tform = tf.estimate_transform('polynomial', src, dst, order=3)
