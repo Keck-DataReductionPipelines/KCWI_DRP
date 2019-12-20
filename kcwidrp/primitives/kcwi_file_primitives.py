@@ -40,6 +40,7 @@ def parse_imsec(section=None):
         # use python axis ordering
         return sec, rfor
 
+
 class ingest_file(BasePrimitive):
 
     def __init__(self, action, context):
@@ -59,7 +60,6 @@ class ingest_file(BasePrimitive):
             return 1
         else:
             return -1
-        return -1
 
     def camang(self):
         if self.camera() == 0:  # Blue
@@ -146,39 +146,63 @@ class ingest_file(BasePrimitive):
                              "CAMERA undefined")
         return self.get_keyword(key)
 
-    def atres(self):
-        self.ifunum = self.get_keyword('IFUNUM')
-        if 'BH' in self.grating():
-            atsig = 2.5
-            if self.ifunum > 2:
-                atsig = 1.5
-        elif 'RH' in self.grating():
-            atsig = 2.5
-            if self.ifunum > 2:
-                atsig = 1.5
-        elif 'BM' in self.grating():
-            atsig = 4.0
-            if self.ifunum > 2:
-                atsig = 2.0
-        elif 'RM' in self.grating():
-            atsig = 4.0
-            if self.ifunum > 2:
-                atsig = 2.0
-        elif 'BL' in self.grating():
-            atsig = 20.0
-            if self.ifunum == 2:
-                atsig = 10.0
-            elif self.ifunum == 3:
-                atsig = 7.0
-        elif 'RL' in self.grating():
-            atsig = 14.0
-            if self.ifunum == 2:
-                atsig = 10.
-            elif self.ifunum == 3:
-                atsig = 7.0
+    def resolution(self, refwave=None):
+        """Return FWHM resolution in Angstroms for the given grating"""
+        # get reference wavelength
+        if refwave:
+            rw = refwave
         else:
-            atsig = None
-        return atsig
+            if 'B' in self.grating():
+                rw = 4500.
+            else:
+                rw = 7500.
+        # Calc rez from grating resolution (d-lambda = lambda/R)
+        # First, assume large slicer IFU
+        if 'BH' in self.grating():
+            rez = rw / 5000.
+        elif 'RH' in self.grating():
+            rez = rw / 5000.
+        elif 'BM' in self.grating():
+            rez = rw / 2500.
+        elif 'RM' in self.grating():
+            rez = rw / 2500.
+        elif 'BL' in self.grating():
+            rez = rw / 1250.
+        elif 'RL' in self.grating():
+            rez = rw / 1250.
+        else:
+            raise ValueError("unable to compute atlas resolution: "
+                             "grating undefined")
+        # Adjust for slicer
+        if self.ifunum() == 2:  # Medium slicer
+            rez /= 2.
+        elif self.ifunum() == 3:  # Small slicer
+            rez /= 4.
+
+        return rez
+
+    def delta_wave_out(self):
+        """Return output delta lambda in Angstroms for the given grating"""
+        # Calc delta wave out from grating
+        if 'BH' in self.grating():
+            dw = 0.125 * float(self.ybinsize())
+        elif 'RH' in self.grating():
+            dw = 0.125 * float(self.ybinsize())
+        elif 'BM' in self.grating():
+            dw = 0.25 * float(self.ybinsize())
+        elif 'RM' in self.grating():
+            dw = 0.25 * float(self.ybinsize())
+        elif 'BL' in self.grating():
+            dw = 0.5 * float(self.ybinsize())
+        elif 'RL' in self.grating():
+            dw = 0.5 * float(self.ybinsize())
+        else:
+            raise ValueError("unable to compute output delta lambda: "
+                             "grating undefined")
+        return dw
+
+    def namps(self):
+        return self.get_keyword('NVIDINP')
 
     def nasmask(self):
         if self.camera() == 0:  # Blue
@@ -194,13 +218,41 @@ class ingest_file(BasePrimitive):
         else:
             raise ValueError("unable to determine mask: CAMERA undefined")
 
+    def shufrows(self):
+        return self.get_keyword('SHUFROWS')
+
+    def xbinsize(self):
+        return int(self.get_keyword('BINNING').split(',')[0])
+
+    def ybinsize(self):
+        return int(self.get_keyword('BINNING').split(',')[-1])
+
+    def plotlabel(self):
+        lab = "Img # %d " % self.get_keyword('FRAMENO')
+        lab += "(%s) " % self.illum()
+        lab += "Sl: %s " % self.ifuname()
+        lab += "Fl: %s " % self.filter()
+        lab += "Gr: %s " % self.grating()
+        return lab
+
+    def ifuname(self):
+        return self.get_keyword('IFUNAM')
+
+    def ifunum(self):
+        return self.get_keyword('IFUNUM')
+
+    def imtype(self):
+        return self.get_keyword('IMTYPE')
+
     def illum(self):
         # set ILLUM keyword
         # ARCS
         if self.get_keyword('IMTYPE') == 'ARCLAMP':
-            if self.get_keyword('LMP0STAT') == 1 and self.get_keyword('LMP0SHST') == 1:
+            if self.get_keyword('LMP0STAT') == 1 and \
+                    self.get_keyword('LMP0SHST') == 1:
                 illum = self.get_keyword('LMP0NAM')
-            elif self.get_keyword('LMP1STAT') == 1 and self.get_keyword('LMP1SHST') == 1:
+            elif self.get_keyword('LMP1STAT') == 1 and \
+                    self.get_keyword('LMP1SHST') == 1:
                 illum = self.get_keyword('LMP1NAM')
             else:
                 illum = 'Test'
@@ -212,7 +264,8 @@ class ingest_file(BasePrimitive):
                 illum = 'Test'
         # DOMES
         elif self.get_keyword('IMTYPE') == 'DOMEFLAT':
-            if self.get_keyword('FLIMAGIN') == 'on' or self.get_keyword('FLSPECTR') == 'on':
+            if self.get_keyword('FLIMAGIN') == 'on' or \
+                    self.get_keyword('FLSPECTR') == 'on':
                 illum = 'Dome'
             else:
                 illum = 'Test'
@@ -319,15 +372,16 @@ class ingest_file(BasePrimitive):
                 y1 = -1
                 x0 = -1
                 x1 = -1
-                #self.log.info("ERROR - bad amp number: %d" % i)
+                # self.log.info("ERROR - bad amp number: %d" % i)
             tsec.append((y0, y1, x0, x1))
 
         return bsec, dsec, tsec, direc
 
     def _perform(self):
-        #if self.context.data_set is None:
-        #    self.context.data_set = DataSet(None, self.logger, self.config, self.context.event_queue)
-        #self.context.data_set.append_item(self.action.args.name)
+        # if self.context.data_set is None:
+        #    self.context.data_set = DataSet(None, self.logger, self.config,
+        #    self.context.event_queue)
+        # self.context.data_set.append_item(self.action.args.name)
         self.name = self.action.args.name
         out_args = Arguments()
 
@@ -363,18 +417,24 @@ class ingest_file(BasePrimitive):
         out_args.rho = self.rho()
         # CWAVE
         out_args.cwave = self.cwave()
-        # ATRES
-        out_args.atres = self.atres()
+        # RESOLUTION
+        out_args.resolution = self.resolution()
+        # DELTA WAVE OUT
+        out_args.dwout = self.delta_wave_out()
         # NAMPS
         out_args.namps = int(self.get_keyword('NVIDINP'))
         # NASMASK
         out_args.nasmak = self.nasmask()
+        # SHUFROWS
+        out_args.shufrows = self.shufrows()
         # BINNING
         out_args.xbinsize, out_args.ybinsize = map(int, self.get_keyword('BINNING').split(','))
         # IFUNUM
-        out_args.ifunum = self.get_keyword('IFUNUM')
+        out_args.ifunum = int(self.get_keyword('IFUNUM'))
         # IFUNAM
         out_args.ifuname = self.get_keyword('IFUNAM')
+        # PLOTLABEL
+        out_args.plotlabel = self.plotlabel()
         # ILUM
         out_args.illum = self.illum()
         # MAPCCD
@@ -454,11 +514,10 @@ class kcwi_fits_ingest(BasePrimitive):
 
         return out_args
 
+
 def write_table(output_dir = None, table=None, names=None,
                     comment=None, keywords=None, output_name=None):
     output_file = os.path.join(output_dir, 'redux', output_name)
-    #if suffix is not None:
-    #    output_file = output_file.split('.')[0]+"_"+suffix+".fits"
 
     t = Table(table, names=names)
     if comment:
@@ -470,7 +529,8 @@ def write_table(output_dir = None, table=None, names=None,
         t.write(output_file, format='fits')
     except:
         print("Table already exists")
-        #self.log.info("output file: %s" % outfn)
+    print("output file: %s" % output_file)
+
 
 def read_table(input_dir = None, file_name = None):
         # Set up return table
