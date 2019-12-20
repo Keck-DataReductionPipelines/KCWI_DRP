@@ -269,7 +269,7 @@ class process_bias(BaseImg):
     def __init__(self, action, context):
         BaseImg.__init__(self, action, context)
 
-    def _pre_condition(self):
+    def hello(self):
         """
         Checks is we can build a stacked  frame
         Expected arguments:
@@ -294,24 +294,42 @@ class process_bias(BaseImg):
             self.logger.error(f"Exception in base_ccd_primitive: {e}")
             return False
 
+    def _pre_condition(self):
+        """
+        Checks if we can build a stacked frame based on the processing table
+        :return:
+        """
+        # get current group id
+        self.logger.info("Checking precondition for process_bias")
+        self.combine_list = self.context.proctab.n_proctab(frame = self.action.args.ccddata, target_type='BIAS', target_group=self.action.args.groupid)
+        self.logger.info(f"pre condition got {len(self.combine_list)}, expecting {self.action.args.min_files}")
+        # create master bias
+        if len(self.combine_list) >= self.action.args.min_files:
+            return True
+        else:
+            return False
+
     def _perform(self):
         """
         Returns an Argument() with the parameters that depends on this operation.
         """
         args = self.action.args
 
-        df = self.context.data_set.data_table
-        files = list(df[(df.IMTYPE == args.want_type) & (df.GROUPID == args.groupid)].index)
+        #df = self.context.data_set.data_table
+        #files = list(df[(df.IMTYPE == args.want_type) & (df.GROUPID == args.groupid)].index)
+        #print("BEFORE:", files)
+        #print("NOW:", self.combine_list)
+        combine_list = list(self.combine_list['OFNAME'])
         stack = []
-        for file in files:
+        for bias in combine_list:
             # using [0] drops the table
-            stack.append(kcwi_fits_reader(file)[0])
+            stack.append(kcwi_fits_reader(bias)[0])
 
         stacked = ccdproc.combine(stack)
         stacked.header.IMTYPE=args.new_type
 
         kcwi_fits_writer(stacked, output_file = args.new_file_name)
-
+        self.context.proctab.update_proctab(frame=stacked, suffix='master_bias', newtype='MBIAS')
         return Arguments(name=args.new_file_name)
 
 class process_contbars(BasePrimitive):

@@ -7,6 +7,7 @@ from keckdrpframework.primitives.base_primitive import BasePrimitive
 from keckdrpframework.models.data_set import DataSet
 import os
 import math
+from ..core.kcwi_proctab import Proctab
 
 
 def parse_imsec(section=None):
@@ -381,6 +382,9 @@ class ingest_file(BasePrimitive):
 
         # for arg in str(out_args).split(','):
         #    print(arg)
+
+        self.context.proctab.update_proctab(frame=out_args.ccddata, suffix='RAW')
+        self.context.proctab.write_proctab()
 
         return out_args
 

@@ -9,7 +9,7 @@ from keckdrpframework.pipelines.base_pipeline import BasePipeline
 from ..primitives.kcwi_primitives import *
 from ..primitives.kcwi_file_primitives import *
 from ..primitives.kcwi_bokeh import *
-
+from ..core.kcwi_proctab import Proctab
 
 
 class Kcwi_pipeline(BasePipeline):
@@ -66,12 +66,12 @@ class Kcwi_pipeline(BasePipeline):
         groupid = action.args.groupid
         self.logger.info("******* GROUPID is %s " % action.args.groupid)
         if action.args.imtype == "BIAS":
-            bias_args = Arguments(name="bias_args",
-                                  groupid = groupid,
-                                  want_type="BIAS",
-                                  new_type="MASTER_BIAS",
-                                  min_files=context.config.instrument.bias_min_nframes,
-                                  new_file_name="master_bias_%s.fits" % groupid)
+            bias_args = action.args
+            bias_args.groupid=groupid
+            bias_args.want_type="BIAS"
+            bias_args.new_type="MASTER_BIAS"
+            bias_args.min_files=context.config.instrument.bias_min_nframes
+            bias_args.new_file_name="master_bias_%s.fits" % groupid
             context.push_event("process_bias", bias_args)
         elif "CONTBARS" in action.args.imtype:
             context.push_event("process_contbars", action.args)

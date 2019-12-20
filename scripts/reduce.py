@@ -17,6 +17,7 @@ import traceback
 import threading
 
 from kcwidrp.pipelines.kcwi_pipeline import Kcwi_pipeline
+from kcwidrp.core.kcwi_proctab import Proctab
 
 
 def _parseArguments(in_args):
@@ -48,6 +49,9 @@ def _parseArguments(in_args):
         help="Starts queue manager only, no processing",
     )
 
+    # kcwi specific parameter
+    parser.add_argument('-proctab', dest='proctab', help='Proctab file', default='kcwi.proc')
+
     args = parser.parse_args(in_args[1:])
     return args
 
@@ -58,7 +62,7 @@ if __name__ == "__main__":
     config = ConfigClass(args.config_file)
     if config.enable_bokeh is True:
         subprocess.Popen('bokeh serve', shell=True)
-        time.sleep(2)
+        time.sleep(5)
 
 
     try:
@@ -68,6 +72,9 @@ if __name__ == "__main__":
         traceback.print_exc()
         sys.exit(1)
 
+    # initialize the proctab and read it
+    framework.context.proctab = Proctab(framework.logger)
+    framework.context.proctab.read_proctab(tfil=args.proctab)
 
     framework.logger.info("Framework initialized")
     if config.enable_bokeh:
@@ -83,7 +90,8 @@ if __name__ == "__main__":
     # single frame processing
     elif args.frames:
         for frame in args.frames:
-            framework.ingest_data(None, args.frames, False)
+            framework.ingest_data(None, [frame], False)
+        for frame in args.frames:
             arguments = Arguments(name=frame)
             framework.append_event('next_file', arguments)
 
