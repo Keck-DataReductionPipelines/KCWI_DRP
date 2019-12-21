@@ -34,7 +34,6 @@ def _parseArguments(in_args):
     parser.add_argument('-m', '--monitor', dest="monitor", help='Continue monitoring the directory after the initial ingestion',
                         action='store_true', default=False)
 
-
     # special arguments, ignore
     parser.add_argument("-i", "--ingest_data_only", dest="ingest_data_only", action="store_true",
                         help="Ingest data and terminate")
@@ -55,6 +54,7 @@ def _parseArguments(in_args):
     args = parser.parse_args(in_args[1:])
     return args
 
+
 if __name__ == "__main__":
 
     args = _parseArguments(sys.argv)
@@ -63,7 +63,6 @@ if __name__ == "__main__":
     if config.enable_bokeh is True:
         subprocess.Popen('bokeh serve', shell=True)
         time.sleep(5)
-
 
     try:
         framework = Framework(Kcwi_pipeline, config)
@@ -79,7 +78,6 @@ if __name__ == "__main__":
     framework.logger.info("Framework initialized")
     if config.enable_bokeh:
         framework.append_event('start_bokeh', None)
-
 
     # start queue manager only (useful for RPC)
     if args.queue_manager_only:
@@ -98,7 +96,7 @@ if __name__ == "__main__":
     # ingest an entire directory, trigger "next_file" on each file, optionally continue to monitor if -m is specified
     elif (len(args.infiles) > 0) or args.dirname is not None:
         framework.ingest_data(args.dirname, args.infiles, args.monitor)
-        #ramework.context.data_set.start_monitor()
+        # framework.context.data_set.start_monitor()
 
     framework.start(args.queue_manager_only, args.ingest_data_only, args.wait_for_event, args.continuous)
 

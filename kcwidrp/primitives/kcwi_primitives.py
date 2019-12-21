@@ -137,11 +137,12 @@ class subtract_overscan(BasePrimitive):
                 resid = (osvec - osfit) * math.sqrt(nsam) * gain / 1.414
                 sdrs = float("%.3f" % np.std(resid))
                 self.logger.info("Amp%d Read noise from oscan in e-: %.3f" %
-                          ((ia + 1), sdrs))
-                self.action.args.ccddata.header['OSCNRN%d' % (ia + 1)] = (sdrs, "amp%d RN in e- from oscan" % (ia + 1))
+                                 ((ia + 1), sdrs))
+                self.action.args.ccddata.header['OSCNRN%d' % (ia + 1)] = \
+                    (sdrs, "amp%d RN in e- from oscan" % (ia + 1))
 
-                if self.context.config.plot_level>=1:
-                    x=np.arange(len(osvec))
+                if self.context.config.plot_level >= 1:
+                    x = np.arange(len(osvec))
                     p = figure(title='Overscan amp %d' % (ia+1),
                                x_axis_label='x', y_axis_label='counts',
                                plot_width=self.config.instrument.plot_width,
@@ -164,7 +165,8 @@ class subtract_overscan(BasePrimitive):
         if performed:
             self.action.args.ccddata.header[key] = (True, 'Overscan subtracted')
         else:
-            self.action.args.ccddata.header[key] = (False, 'Overscan subtracted')
+            self.action.args.ccddata.header[key] = (False,
+                                                    'Overscan subtracted')
         logstr = self.__module__ + "." + self.__class__.__name__
         self.action.args.ccddata.header['HISTORY'] = logstr
         self.logger.info(logstr)
@@ -241,11 +243,11 @@ class correct_gain(BasePrimitive):
         namps = self.action.args.namps
         for ia in range(namps):
             # get amp section
-            section = self.action.args.ccddata.header['ATSEC%d' % (ia +1)]
+            section = self.action.args.ccddata.header['ATSEC%d' % (ia + 1)]
             sec, rfor = parse_imsec(section)
             # get gain for this amp
             gain = self.context.data_set.get_info_column(
-                self.action.args.name,'GAIN%d' % (ia + 1))
+                self.action.args.name, 'GAIN%d' % (ia + 1))
             self.logger.info(
                 "Applying gain correction of %.3f in section %s" %
                 (gain, self.action.args.ccddata.header['ATSEC%d' % (ia + 1)]))
@@ -266,6 +268,7 @@ class correct_gain(BasePrimitive):
                              output_file=self.action.args.name, suffix="int")
         return self.action.args
 
+
 class process_bias(BaseImg):
 
     def __init__(self, action, context):
@@ -284,11 +287,12 @@ class process_bias(BaseImg):
         try:
             args = self.action.args
             df = self.context.data_set.data_table
-            files = df[(df.IMTYPE == args.want_type) & (df.GROUPID == args.groupid)]
+            files = df[(df.IMTYPE == args.want_type) &
+                       (df.GROUPID == args.groupid)]
             nfiles = len(files)
 
-
-            self.logger.info(f"pre condition got {nfiles}, expecting {args.min_files}")
+            self.logger.info(f"pre condition got {nfiles},"
+                             f" expecting {args.min_files}")
             if nfiles < 1 or nfiles < args.min_files:
                 return False
             return True
@@ -303,8 +307,11 @@ class process_bias(BaseImg):
         """
         # get current group id
         self.logger.info("Checking precondition for process_bias")
-        self.combine_list = self.context.proctab.n_proctab(frame = self.action.args.ccddata, target_type='BIAS', target_group=self.action.args.groupid)
-        self.logger.info(f"pre condition got {len(self.combine_list)}, expecting {self.action.args.min_files}")
+        self.combine_list = self.context.proctab.n_proctab(
+            frame=self.action.args.ccddata, target_type='BIAS',
+            target_group=self.action.args.groupid)
+        self.logger.info(f"pre condition got {len(self.combine_list)},"
+                         f" expecting {self.action.args.min_files}")
         # create master bias
         if len(self.combine_list) >= self.action.args.min_files:
             return True
@@ -313,26 +320,33 @@ class process_bias(BaseImg):
 
     def _perform(self):
         """
-        Returns an Argument() with the parameters that depends on this operation.
+        Returns an Argument() with the parameters that depends on this operation
         """
         args = self.action.args
+        method = 'average'
+        suffix = 'master_bias'
 
-        #df = self.context.data_set.data_table
-        #files = list(df[(df.IMTYPE == args.want_type) & (df.GROUPID == args.groupid)].index)
-        #print("BEFORE:", files)
-        #print("NOW:", self.combine_list)
         combine_list = list(self.combine_list['OFNAME'])
+        # get master bias output name
+        mbname = combine_list[0].split('.fits')[0] + '_master_bias.fits'
         stack = []
         for bias in combine_list:
             # using [0] drops the table
             stack.append(kcwi_fits_reader(bias)[0])
 
-        stacked = ccdproc.combine(stack)
-        stacked.header.IMTYPE=args.new_type
+        stacked = ccdproc.combine(stack, method=method, sigma_clip=True,
+                                  sigma_clip_low_thresh=None,
+                                  sigma_clip_high_thresh=2.0)
+        stacked.header.IMTYPE = args.new_type
+        stacked.header['NSTACK'] = (len(combine_list),
+                                    'number of images stacked')
+        stacked.header['STCKMETH'] = (method, 'method used for stacking')
 
-        kcwi_fits_writer(stacked, output_file = args.new_file_name)
-        self.context.proctab.update_proctab(frame=stacked, suffix='master_bias', newtype='MBIAS')
-        return Arguments(name=args.new_file_name)
+        kcwi_fits_writer(stacked, output_file=mbname)
+        self.context.proctab.update_proctab(frame=stacked, suffix=suffix,
+                                            newtype='MBIAS')
+        return Arguments(name=mbname)
+
 
 class process_contbars(BasePrimitive):
 
@@ -367,7 +381,8 @@ class find_bars(BasePrimitive):
         win = int(10 / ybin)
         # select from center rows of image
         midy = int(ny / 2)
-        midvec = np.median(self.action.args.ccddata.data[(midy-win):(midy+win+1), :], axis=0)
+        midvec = np.median(
+            self.action.args.ccddata.data[(midy-win):(midy+win+1), :], axis=0)
         # set threshold for peak finding
         midavg = np.average(midvec)
         self.logger.info("peak threshold = %f" % midavg)
@@ -375,17 +390,20 @@ class find_bars(BasePrimitive):
         midpeaks, _ = find_peaks(midvec, height=midavg)
         # do we have the requisite number?
         if len(midpeaks) != self.context.config.instrument.NBARS:
-            self.logger.error("Did not find %d peaks: n peaks = %d"
-                           % (self.context.config.instrument.NBARS, len(midpeaks)))
+            self.logger.error("Did not find %d peaks: n peaks = %d" %
+                              (self.config.instrument.NBARS, len(midpeaks)))
         else:
             self.logger.info("found %d bars" % len(midpeaks))
             if do_plot:
                 # plot the peak positions
                 x = np.arange(len(midvec))
                 # pl.plot(midvec, '-')
-                p = figure(title="Img %d, Thresh = %.2f" % (self.action.args.ccddata.header['FRAMENO'], midavg), \
-                    x_axis_label='CCD X (px)', y_axis_label='e-',
-                           plot_width=self.context.config.instrument.plot_width, plot_height=self.context.config.instrument.plot_height)
+                p = figure(title="Img %d, Thresh = %.2f" %
+                                 (self.action.args.ccddata.header['FRAMENO'],
+                                  midavg),
+                           x_axis_label='CCD X (px)', y_axis_label='e-',
+                           plot_width=self.context.config.instrument.plot_width,
+                           plot_height=self.context.config.instrument.plot_height)
                 p.line(x, midvec, color='blue')
                 p.scatter(midpeaks, midvec[midpeaks], marker='x', color='red')
                 p.line([0, nx], [midavg, midavg], color='grey',
@@ -475,10 +493,13 @@ class trace_bars(BasePrimitive):
                 # trace up
                 samy = self.action.args.midrow + samp
                 done = False
-                while samy < (self.action.args.ccddata.data.shape[0] - win) and not done:
+                while samy < (self.action.args.ccddata.data.shape[0] - win) \
+                        and not done:
                     ys = np.median(
-                        self.action.args.ccddata.data[(samy - win):(samy + win + 1),
-                                        (barxi - win):(barxi + win + 1)],
+                        self.action.args.ccddata.data[(samy - win):
+                                                      (samy + win + 1),
+                                                      (barxi - win):
+                                                      (barxi + win + 1)],
                         axis=0)
                     ys = ys - np.nanmin(ys)
                     xs = list(range(barxi - win, barxi + win + 1))
@@ -497,8 +518,10 @@ class trace_bars(BasePrimitive):
                 done = False
                 while samy >= win and not done:
                     ys = np.median(
-                        self.action.args.ccddata.data[(samy - win):(samy + win + 1),
-                                        (barxi - win):(barxi + win + 1)],
+                        self.action.args.ccddata.data[(samy - win):
+                                                      (samy + win + 1),
+                                                      (barxi - win):
+                                                      (barxi + win + 1)],
                         axis=0)
                     ys = ys - np.nanmin(ys)
                     xs = list(range(barxi - win, barxi + win + 1))
@@ -521,14 +544,17 @@ class trace_bars(BasePrimitive):
             if do_plot:
                 # plot them
                 # pl.ioff()
-                p = figure(title="Img %d" % self.action.args.ccddata.header['FRAMENO'],
-                    x_axis_label="CCD X (px)", y_axis_label="CCD Y (px)",
-                           plot_width=self.context.config.instrument.plot_width, plot_height=self.context.config.instrument.plot_height)
+                p = figure(title="Img %d" %
+                                 self.action.args.ccddata.header['FRAMENO'],
+                           x_axis_label="CCD X (px)", y_axis_label="CCD Y (px)",
+                           plot_width=self.config.instrument.plot_width,
+                           plot_height=self.config.instrument.plot_height)
                 p.scatter(xi, yi, marker='x', size=2, color='blue')
                 # pl.plot(xi, yi, 'x', ms=0.5)
                 p.scatter(self.action.args.midcntr,
                           [self.action.args.midrow]*120, color='red')
-                # pl.plot(self.action.args.midcntr, [self.action.args.midrow]*120, 'x', color='red')
+                # pl.plot(self.action.args.midcntr,
+                # [self.action.args.midrow]*120, 'x', color='red')
                 bokeh_plot(p)
                 if self.context.config.plot_level >= 2:
                     input("next: ")
@@ -540,7 +566,10 @@ class trace_bars(BasePrimitive):
                 'barid': barid,
                 'slid': slid,
                 'MIDROW': self.action.args.midrow,
-                'WINDOW': self.action.args.win}
+                'WINDOW': self.action.args.win,
+                'REFDELX': self.action.args.refdelx,
+                'CBARSNO': self.action.args.cbarsno,
+                'CBARSFL': self.action.args.cbarsfl}
 
             # in this line we pass the trace information to an argument
             # instead of writing it to a table
@@ -583,31 +612,35 @@ class trace_bars(BasePrimitive):
 class extract_arcs(BasePrimitive):
 
     def __init__(self, action, context):
-            BasePrimitive.__init__(self, action, context)
+        BasePrimitive.__init__(self, action, context)
 
     def _perform(self):
         self.logger.info("Extracting arc spectra")
-        tab = self.context.proctab.n_proctab(frame=self.action.args.ccddata, target_type='CONTBARS', nearest=True)
+        tab = self.context.proctab.n_proctab(frame=self.action.args.ccddata,
+                                             target_type='CONTBARS',
+                                             nearest=True)
         self.logger.info("%d continuum bars frames found" % len(tab))
-        #ofname = tab['OFNAME'][0]
+        # ofname = tab['OFNAME'][0]
         ofname = tab['OFNAME'][0].split('.')[0] + "_trace.fits"
         print("*************** READING TABLE: %s" % ofname)
-        #trace = read_table(tab=tab, indir='redux', suffix='trace')
+        # trace = read_table(tab=tab, indir='redux', suffix='trace')
         # Find  and read control points from continuum bars
         if hasattr(self.context, 'trace'):
             trace = self.context.trace
-            midrow = trace['MIDROW']
-            win = trace['WINDOW']
         else:
             trace = read_table(input_dir=os.path.dirname(self.action.args.name),
                                file_name=ofname)
-            midrow = trace.meta['MIDROW']
-            win = trace.meta['WINDOW']
             self.context.trace = trace
+        midrow = trace.meta['MIDROW']
+        win = trace.meta['WINDOW']
+        self.action.args.refdelx = trace.meta['REFDELX']
+        self.action.args.cbarsno = trace.meta['CBARSNO']
+        self.action.args.cbarsfl = trace.meta['CBARSFL']
+        self.action.args.arcno = self.action.args.ccddata.header['FRAMENO']
+        self.action.args.arcfl = self.action.args.ccddata.header['OFNAME']
+
         src = trace['src']  # source control points
         dst = trace['dst']  # destination control points
-        barid = trace['barid']
-        slid = trace['slid']
 
         self.logger.info("Fitting spatial control points")
         tform = tf.estimate_transform('polynomial', src, dst, order=3)
@@ -615,7 +648,7 @@ class extract_arcs(BasePrimitive):
         self.logger.info("Transforming arc image")
         warped = tf.warp(self.action.args.ccddata.data, tform)
         # Write warped arcs if requested
-        #if self.frame.saveintims():
+        # if self.frame.saveintims():
         #    # write out warped image
         #    self.frame.data = warped
         #    self.write_image(suffix='warped')
@@ -636,13 +669,15 @@ class extract_arcs(BasePrimitive):
             self.context.arcs = arcs
         else:
             self.logger.error("Did not extract %d arcs, extracted %d" %
-                           (self.context.config.instrument.NBARS, len(arcs)))
+                              (self.context.config.instrument.NBARS, len(arcs)))
         return self.action.args
+# END class extract_arcs(BasePrimative)
+
 
 class arc_offsets(BasePrimitive):
 
     def __init__(self, action, context):
-            BasePrimitive.__init__(self, action, context)
+        BasePrimitive.__init__(self, action, context)
 
     def _perform(self):
         self.logger.info("Finding inter-bar offsets")
@@ -668,28 +703,30 @@ class arc_offsets(BasePrimitive):
                 offset = offar[xcorr.argmax()]
                 offsets.append(offset)
                 self.logger.info("Arc %d Slice %d XCorr shift = %d" %
-                              (na, int(na/5), offset))
+                                 (na, int(na/5), offset))
                 # display if requested
                 if do_plot:
-                    p=figure(title="Arc %d Slice %d XCorr, Shift = %d" % (na, int(na/5), offset),
-                             x_axis_label="CCD y (px)", y_axis_label="e-",
-                             plot_width=self.context.config.instrument.plot_width, plot_height=self.context.config.instrument.plot_height)
+                    p = figure(title="Arc %d Slice %d XCorr, Shift = %d" %
+                                     (na, int(na/5), offset),
+                               x_axis_label="CCD y (px)", y_axis_label="e-",
+                               plot_width=self.config.instrument.plot_width,
+                               plot_height=self.config.instrument.plot_height)
                     x = range(len(refarc))
-                    p.line(x,refarc, color='green')
+                    p.line(x, refarc, color='green')
                     p.line(x, np.roll(arc, offset), color='red')
-                    #pl.ylim(bottom=0.)
-                    #pl.xlabel("CCD y (px)")
-                    #pl.ylabel("e-")
-                    #pl.title("Arc %d Slice %d XCorr, Shift = %d" %
+                    # pl.ylim(bottom=0.)
+                    # pl.xlabel("CCD y (px)")
+                    # pl.ylabel("e-")
+                    # pl.title("Arc %d Slice %d XCorr, Shift = %d" %
                     #         (na, int(na/5), offset))
-                    #pl.show()
+                    # pl.show()
                     bokeh_plot(p)
                     q = input("<cr> - Next, q to quit: ")
                     if 'Q' in q.upper():
                         do_plot = False
             self.context.baroffs = offsets
         else:
-            self.log.error("No extracted arcs found")
+            self.logger.error("No extracted arcs found")
         return self.action.args
 
 
@@ -707,12 +744,14 @@ class calc_prelim_disp(BasePrimitive):
         prelim_beta = self.action.args.camangle - prelim_alpha
         # 2 - compute preliminary dispersion
         prelim_disp = math.cos(prelim_beta/math.degrees(1.)) / \
-            self.action.args.rho / self.context.config.instrument.FCAM * (self.context.config.instrument.PIX*ybin) * 1.e4
-        prelim_disp *= math.cos(self.context.config.instrument.GAMMA/math.degrees(1.))
+            self.action.args.rho / self.context.config.instrument.FCAM * \
+            (self.context.config.instrument.PIX*ybin) * 1.e4
+        prelim_disp *= math.cos(
+            self.context.config.instrument.GAMMA/math.degrees(1.))
         self.logger.info("Initial alpha, beta (deg): %.3f, %.3f" %
-                      (prelim_alpha, prelim_beta))
+                         (prelim_alpha, prelim_beta))
         self.logger.info("Initial calculated dispersion (A/binned pix): %.3f" %
-                      prelim_disp)
+                         prelim_disp)
         self.context.prelim_disp = prelim_disp
         return self.action.args
 
@@ -730,7 +769,7 @@ class read_atlas(BasePrimitive):
             rezfact = 0.5
         else:
             rezfact = 1.0
-        #atpath = os.path.join("../data", "%s.fits" % lamp.lower())
+        # atpath = os.path.join("../data", "%s.fits" % lamp.lower())
         # Does the atlas file exist?
         path = "data/%s.fits" % lamp.lower()  # always use slash
         pkg = __name__.split('.')[0]
@@ -748,7 +787,8 @@ class read_atlas(BasePrimitive):
         # Convolve with appropriate Gaussian
         resolution = self.action.args.resolution
         atrespix = resolution / refdisp
-        self.logger.info("Resolution = %.3f Ang, or %.2f Atlas px" % (resolution, atrespix))
+        self.logger.info("Resolution = %.3f Ang, or %.2f Atlas px" %
+                         (resolution, atrespix))
         reflux = gaussian_filter1d(reflux, atrespix/2.354)
         # Observed arc spectrum
         obsarc = self.context.arcs[self.context.config.instrument.REFBAR]
@@ -780,9 +820,9 @@ class read_atlas(BasePrimitive):
         cc_obsarc = obsint(cc_refwav)
         # Apply cosign bell taper to both
         cc_obsarc *= signal.windows.tukey(len(cc_obsarc),
-                                          alpha=self.context.config.instrument.TAPERFRAC)
+                                          alpha=self.config.instrument.TAPERFRAC)
         cc_reflux *= signal.windows.tukey(len(cc_reflux),
-                                          alpha=self.context.config.instrument.TAPERFRAC)
+                                          alpha=self.config.instrument.TAPERFRAC)
         nsamp = len(cc_refwav)
         offar = np.arange(1 - nsamp, nsamp)
         # Cross-correlate
@@ -796,22 +836,26 @@ class read_atlas(BasePrimitive):
         offset_pix = offar_central[xcorr_central.argmax()]
         offset_wav = offset_pix * refdisp
         self.logger.info("Initial arc-atlas offset (px, Ang): %d, %.1f" %
-                      (offset_pix, offset_wav))
+                         (offset_pix, offset_wav))
         if self.context.config.plot_level >= 1:
-            #if self.frame.inter() >= 2:
+            # if self.frame.inter() >= 2:
             #    pl.ion()
-            #else:
+            # else:
             #    pl.ioff()
             # Plot
-            p = figure(title="Img # %d (%s), Offset = %d px" % (self.action.args.ccddata.header['FRAMENO'], lamp, offset_pix),
+            p = figure(title="Img # %d (%s), Offset = %d px" %
+                             (self.action.args.ccddata.header['FRAMENO'], lamp,
+                              offset_pix),
                        x_axis_label="Offset(px)", y_axis_label="X-corr",
-                       plot_width=self.context.config.instrument.plot_width, plot_height=self.context.config.instrument.plot_height)
+                       plot_width=self.context.config.instrument.plot_width,
+                       plot_height=self.context.config.instrument.plot_height)
 
             p.line(offar_central, xcorr_central)
             ylim_min = min(xcorr_central)
             ylim_max = max(xcorr_central)
-            #ylim = pl.gca().get_ylim()
-            p.line([offset_pix, offset_pix], [ylim_min, ylim_max], color='green')
+            # ylim = pl.gca().get_ylim()
+            p.line([offset_pix, offset_pix], [ylim_min, ylim_max],
+                   color='green')
             bokeh_plot(p)
             if self.context.config.plot_level >= 2:
                 input("Next? <cr>: ")
@@ -823,19 +867,26 @@ class read_atlas(BasePrimitive):
             q = 'test'
             while q:
                 # Plot the two spectra
-                p = figure(title="Img # %d (%s), Offset = %.1f Ang (%d px)" % (self.action.args.ccddata.header['FRAMENO'], lamp, offset_wav, offset_pix),
+                p = figure(title="Img # %d (%s), Offset = %.1f Ang (%d px)" %
+                                 (self.action.args.ccddata.header['FRAMENO'],
+                                  lamp, offset_wav, offset_pix),
                            x_axis_label="Wave(A)", y_axis_label="Rel. Flux",
-                           plot_width=self.context.config.instrument.plot_width,
-                           plot_height=self.context.config.instrument.plot_height)
+                           plot_width=self.config.instrument.plot_width,
+                           plot_height=self.config.instrument.plot_height)
                 p.line(obswav[minow:maxow] - offset_wav,
-                        obsarc[minow:maxow]/np.nanmax(obsarc[minow:maxow]), legend="ref bar (%d)" % self.context.config.instrument.REFBAR)
+                       obsarc[minow:maxow]/np.nanmax(obsarc[minow:maxow]),
+                       legend="ref bar (%d)" %
+                              self.context.config.instrument.REFBAR)
                 p.line(refwav[minrw:maxrw],
-                        reflux[minrw:maxrw]/np.nanmax(reflux[minrw:maxrw]), color="red", legend="Atlas")
-                p.x_range=Range1d(np.nanmin(obswav[minow:maxow]),np.nanmax(obswav[minow:maxow]))
+                       reflux[minrw:maxrw]/np.nanmax(reflux[minrw:maxrw]),
+                       color="red", legend="Atlas")
+                p.x_range = Range1d(np.nanmin(obswav[minow:maxow]),
+                                    np.nanmax(obswav[minow:maxow]))
                 ylim_min = min(obsarc[minow:maxow]/np.nanmax(obsarc[minow:maxow]))
                 ylim_max = max(obsarc[minow:maxow]/np.nanmax(obsarc[minow:maxow]))
-                #ylim = pl.gca().get_ylim()
-                p.line([cwave, cwave], [ylim_min, ylim_max], color="green", legend="CWAVE")
+                # ylim = pl.gca().get_ylim()
+                p.line([cwave, cwave], [ylim_min, ylim_max], color="green",
+                       legend="CWAVE")
                 bokeh_plot(p)
 
                 if self.context.config.plot_level >= 2:
@@ -847,7 +898,7 @@ class read_atlas(BasePrimitive):
                     time.sleep(self.context.config.instrument.plot_pause)
                     q = None
             self.logger.info("Final   arc-atlas offset (px, Ang): %d, %.1f" %
-                          (offset_pix, offset_wav))
+                             (offset_pix, offset_wav))
         # Store atlas spectrum
         self.action.args.reflux = reflux
         self.action.args.refwave = refwav
@@ -863,6 +914,7 @@ class read_atlas(BasePrimitive):
         self.action.args.xvals = xvals
         self.action.args.x0 = int(len(obsarc)/2)
         return self.action.args
+
 
 def myhelper(argument):
 
@@ -880,17 +932,20 @@ def myhelper(argument):
         # populate the coefficients
         coeff[4] = argument['p0'][b]
         coeff[3] = disp
-        cosbeta = disp / (argument['PIX'] * argument['ybin']) * argument['rho'] * \
-                  argument['FCAM'] * 1.e-4
+        cosbeta = disp / (argument['PIX'] * argument['ybin']) * \
+            argument['rho'] * argument['FCAM'] * 1.e-4
         if cosbeta > 1.:
             cosbeta = 1.
         beta = math.acos(cosbeta)
-        coeff[2] = -(argument['PIX'] * argument['ybin'] / argument['FCAM']) ** 2 * \
-                   math.sin(beta) / 2. / argument['rho'] * 1.e4
-        coeff[1] = -(argument['PIX']* argument['ybin'] / argument['FCAM']) ** 3 * \
-                   math.cos(beta) / 6. / argument['rho'] * 1.e4
-        coeff[0] = (argument['PIX'] * argument['ybin'] / argument['FCAM']) ** 4 * \
-                   math.sin(beta) / 24. / argument['rho'] * 1.e4
+        coeff[2] = -(argument['PIX'] * argument['ybin'] /
+                     argument['FCAM']) ** 2 * math.sin(beta) / 2. / \
+            argument['rho'] * 1.e4
+        coeff[1] = -(argument['PIX'] * argument['ybin'] /
+                     argument['FCAM']) ** 3 * math.cos(beta) / 6. / \
+            argument['rho'] * 1.e4
+        coeff[0] = (argument['PIX'] * argument['ybin'] /
+                    argument['FCAM']) ** 4 * math.sin(beta) / 24. / \
+            argument['rho'] * 1.e4
         # what are the min and max wavelengths to consider?
         wl0 = np.polyval(coeff, argument['xvals'][argument['minrow']])
         wl1 = np.polyval(coeff, argument['xvals'][argument['maxrow']])
@@ -938,7 +993,8 @@ def myhelper(argument):
     int_shift = interpolate.interp1d(argument['disps'], shifts, kind='cubic',
                                      bounds_error=False,
                                      fill_value='extrapolate')
-    xdisps = np.linspace(min(argument['disps']), max(argument['disps']), num=argument['nn'] * 100)
+    xdisps = np.linspace(min(argument['disps']), max(argument['disps']),
+                         num=argument['nn'] * 100)
     # get peak values
     maxima_res = int_max(xdisps)
     shifts_res = int_shift(xdisps) * argument['refdisp']
@@ -947,33 +1003,33 @@ def myhelper(argument):
     # update coeffs
     coeff[4] = argument['p0'][b] - barshift
     coeff[3] = bardisp
-    cosbeta = coeff[3] / (argument['PIX'] * argument['ybin']) * argument['rho'] * \
-              argument['FCAM'] * 1.e-4
+    cosbeta = coeff[3] / (argument['PIX'] * argument['ybin']) * \
+        argument['rho'] * argument['FCAM'] * 1.e-4
     if cosbeta > 1.:
         cosbeta = 1.
     beta = math.acos(cosbeta)
     coeff[2] = -(argument['PIX'] * argument['ybin'] / argument['FCAM']) ** 2 * \
-               math.sin(beta) / 2. / argument['rho'] * 1.e4
+        math.sin(beta) / 2. / argument['rho'] * 1.e4
     coeff[1] = -(argument['PIX'] * argument['ybin'] / argument['FCAM']) ** 3 * \
-               math.cos(beta) / 6. / argument['rho'] * 1.e4
+        math.cos(beta) / 6. / argument['rho'] * 1.e4
     coeff[0] = (argument['PIX'] * argument['ybin'] / argument['FCAM']) ** 4 * \
-               math.sin(beta) / 24. / argument['rho'] * 1.e4
+        math.sin(beta) / 24. / argument['rho'] * 1.e4
     scoeff = pascal_shift(coeff, argument['x0'])
     print("Central Fit: Bar#, Cdisp, Coefs: "
-                     "%3d  %.4f  %.2f  %.4f  %13.5e %13.5e" %
-                     (b, bardisp, scoeff[4], scoeff[3], scoeff[2],
-                      scoeff[1]))
+          "%3d  %.4f  %.2f  %.4f  %13.5e %13.5e" %
+          (b, bardisp, scoeff[4], scoeff[3], scoeff[2], scoeff[1]))
     # store central values
-    #centwave.append(coeff[4])
-    #centdisp.append(coeff[3])
+    # centwave.append(coeff[4])
+    # centdisp.append(coeff[3])
     # Store results
     return b, scoeff, coeff[4], coeff[3]
+
 
 class fit_center(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
-        self.action.args.centcoeff=[]
+        self.action.args.centcoeff = []
 
     def _perform(self):
         """ Fit central region
@@ -984,28 +1040,30 @@ class fit_center(BasePrimitive):
         """
         self.logger.info("Finding wavelength solution for central region")
         # Are we interactive?
-        #if KcwiConf.INTER >= 2:
+        # if KcwiConf.INTER >= 2:
         #    do_inter = True
         #    pl.ion()
-        #else:
+        # else:
         #    do_inter = False
-        do_inter=False
+        do_inter = False
         # image label
         imlab = "Img # %d (%s) Sl: %s Fl: %s Gr: %s" % \
-                (self.action.args.ccddata.header['FRAMENO'], self.action.args.illum,
+                (self.action.args.ccddata.header['FRAMENO'],
+                 self.action.args.illum,
                  self.action.args.ifuname, self.action.args.filter,
                  self.action.args.grating)
         # y binning
         ybin = self.action.args.ybinsize
         # let's populate the 0 points vector
-        p0 = self.action.args.cwave + np.array(self.context.baroffs) * self.context.prelim_disp \
-            - self.action.args.offset_wave
+        p0 = self.action.args.cwave + np.array(self.context.baroffs) * \
+             self.context.prelim_disp - self.action.args.offset_wave
         # next we are going to brute-force scan around the preliminary
         # dispersion for a better solution. We will wander 5% away from it.
         max_ddisp = 0.05    # fraction
         # we will try nn values
-        nn = (int(max_ddisp*abs(self.context.prelim_disp)/self.action.args.refdisp*(
-                self.action.args.maxrow-self.action.args.minrow)/3.0))
+        nn = (int(max_ddisp*abs(self.context.prelim_disp) /
+                  self.action.args.refdisp * (self.action.args.maxrow -
+                                              self.action.args.minrow)/3.0))
         if nn < 10:
             nn = 10
         if nn > 25:
@@ -1013,7 +1071,8 @@ class fit_center(BasePrimitive):
         self.logger.info("N disp. samples: %d" % nn)
         # dispersions to try
         disps = self.context.prelim_disp * (1.0 + max_ddisp *
-                                    (np.arange(0, nn+1) - nn/2.) * 2.0 / nn)
+                                            (np.arange(0, nn+1) - nn/2.) *
+                                            2.0 / nn)
         # containers for bar-specific values
         bardisp = []
         barshift = []
@@ -1021,31 +1080,25 @@ class fit_center(BasePrimitive):
         centdisp = []
 
         # values for central fit
-        subxvals = self.action.args.xvals[self.action.args.minrow:self.action.args.maxrow]
+        subxvals = self.action.args.xvals[
+                   self.action.args.minrow:self.action.args.maxrow]
         # loop over bars
-
 
         my_arguments = []
         for b, bs in enumerate(self.context.arcs):
-            arguments={}
-            arguments['b']=b
-            arguments['bs'] = bs
-            arguments['minrow'] = self.action.args.minrow
-            arguments['maxrow'] = self.action.args.maxrow
-            arguments['disps'] = disps
-            arguments['p0'] = p0
-            arguments['PIX']= self.context.config.instrument.PIX
-            arguments['ybin'] = ybin
-            arguments['rho'] = self.action.args.rho
-            arguments['FCAM'] = self.context.config.instrument.FCAM
-            arguments['xvals'] = self.action.args.xvals
-            arguments['refwave'] = self.action.args.refwave
-            arguments['reflux'] = self.action.args.reflux
-            arguments['taperfrac'] = self.context.config.instrument.TAPERFRAC
-            arguments['refdisp'] = self.action.args.refdisp
-            arguments['subxvals'] = subxvals
-            arguments['nn']= nn
-            arguments['x0']= self.action.args.x0
+            arguments = {
+                'b': b, 'bs': bs, 'minrow': self.action.args.minrow,
+                'maxrow': self.action.args.maxrow, 'disps': disps, 'p0': p0,
+                'PIX': self.context.config.instrument.PIX, 'ybin': ybin,
+                'rho': self.action.args.rho,
+                'FCAM': self.context.config.instrument.FCAM,
+                'xvals': self.action.args.xvals,
+                'refwave': self.action.args.refwave,
+                'reflux': self.action.args.reflux,
+                'taperfrac': self.context.config.instrument.TAPERFRAC,
+                'refdisp': self.action.args.refdisp, 'subxvals': subxvals,
+                'nn': nn, 'x0': self.action.args.x0
+            }
             my_arguments.append(arguments)
 
         results = []
@@ -1053,7 +1106,7 @@ class fit_center(BasePrimitive):
         centwave = []
         centdisp = []
 
-        p=Pool()
+        p = Pool()
         results = p.map(myhelper, list(my_arguments))
         p.close()
 
@@ -1068,7 +1121,7 @@ class fit_center(BasePrimitive):
 
         self.action.args.centcoeff = centcoeff
 
-        #for b, bs in enumerate(self.context.arcs):
+        # for b, bs in enumerate(self.context.arcs):
         if False:
 
             # wavelength coefficients
@@ -1192,26 +1245,28 @@ class fit_center(BasePrimitive):
 
         if self.context.config.plot_level >= 1:
             # Plot results
-            p = figure(title=imlab, x_axis_label="Bar #", y_axis_label="Central Wavelength (A)")
+            p = figure(title=imlab, x_axis_label="Bar #",
+                       y_axis_label="Central Wavelength (A)")
             x = range(len(centwave))
-            p.scatter(x,centwave, marker='x')
+            p.scatter(x, centwave, marker='x')
             ylim = [min(centwave), max(centwave)]
             for ix in range(1, 24):
                  sx = ix*5 - 0.5
-                 p.line([sx, sx], ylim, color='black', line_dash = 'dotted')
+                 p.line([sx, sx], ylim, color='black', line_dash='dotted')
             p.x_range = Range1d(-1, 120)
             bokeh_plot(p)
             if self.context.config.plot_level >= 2:
-                 input("Next? <cr>: ")
+                input("Next? <cr>: ")
             else:
-                 time.sleep(self.context.config.instrument.plot_pause)
-            p = figure(title=imlab, x_axis_label="Bar #", y_axis_label="Central Dispersion (A)")
+                time.sleep(self.context.config.instrument.plot_pause)
+            p = figure(title=imlab, x_axis_label="Bar #",
+                       y_axis_label="Central Dispersion (A)")
             x = range(len(centdisp))
             p.scatter(x, centdisp, marker='x')
             ylim = [min(centdisp), max(centdisp)]
             for ix in range(1, 24):
                 sx = ix * 5 - 0.5
-                p.line([sx, sx], ylim,  color='black', line_dash = 'dotted')
+                p.line([sx, sx], ylim,  color='black', line_dash='dotted')
             p.x_range = Range1d(-1, 120)
             bokeh_plot(p)
             if self.context.config.plot_level >= 2:
@@ -1219,8 +1274,9 @@ class fit_center(BasePrimitive):
             else:
                 time.sleep(self.context.config.instrument.plot_pause)
 
-        #print(self.action.args.centcoeff)
+        # print(self.action.args.centcoeff)
         return self.action.args
+
 
 class process_arc(BasePrimitive):
 
