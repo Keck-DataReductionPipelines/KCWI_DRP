@@ -24,7 +24,7 @@ def _parseArguments(in_args):
     description = "KCWI pipeline CLI"
     # this is a simple case where we provide a frame and a configuration file
     parser = argparse.ArgumentParser(prog=f"{in_args[0]}", description=description)
-    parser.add_argument('-c', dest="config_file", type=str, help="Configuration file", required=True)
+    parser.add_argument('-c', dest="config_file", type=str, help="Configuration file", default='config.cfg')
     parser.add_argument('-frames', nargs='*', type=str, help='input image files (full path, list ok)', default=None)
 
     # in this case, we are loading an entire directory, and ingesting all the files in that directory
