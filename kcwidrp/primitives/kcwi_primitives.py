@@ -545,7 +545,7 @@ class trace_bars(BasePrimitive):
             # in this line we pass the trace information to an argument
             # instead of writing it to a table
             self.context.trace = trace
-            ofname = self.action.args.cbarfl.split('.')[0] + "_trace.fits"
+            ofname = self.action.args.cbarsfl.split('.')[0] + "_trace.fits"
             write_table(table=[src, dst, barid, slid],
                         names=('src', 'dst', 'barid', 'slid'),
                         output_dir=os.path.dirname(self.action.args.name),
@@ -587,6 +587,12 @@ class extract_arcs(BasePrimitive):
 
     def _perform(self):
         self.logger.info("Extracting arc spectra")
+        tab = self.context.proctab.n_proctab(frame=self.action.args.ccddata, target_type='CONTBARS', nearest=True)
+        self.logger.info("%d continuum bars frames found" % len(tab))
+        #ofname = tab['OFNAME'][0]
+        ofname = tab['OFNAME'][0].split('.')[0] + "_trace.fits"
+        print("*************** READING TABLE: %s" % ofname)
+        #trace = read_table(tab=tab, indir='redux', suffix='trace')
         # Find  and read control points from continuum bars
         if hasattr(self.context, 'trace'):
             trace = self.context.trace
@@ -594,7 +600,7 @@ class extract_arcs(BasePrimitive):
             win = trace['WINDOW']
         else:
             trace = read_table(input_dir=os.path.dirname(self.action.args.name),
-                               file_name="trace_table.fits")
+                               file_name=ofname)
             midrow = trace.meta['MIDROW']
             win = trace.meta['WINDOW']
             self.context.trace = trace
@@ -740,7 +746,10 @@ class read_atlas(BasePrimitive):
         refwav = np.arange(0, len(reflux)) * refdisp + ff[0].header['CRVAL1']
         ff.close()
         # Convolve with appropriate Gaussian
-        reflux = gaussian_filter1d(reflux, self.action.args.atres*rezfact)
+        resolution = self.action.args.resolution
+        atrespix = resolution / refdisp
+        self.logger.info("Resolution = %.3f Ang, or %.2f Atlas px" % (resolution, atrespix))
+        reflux = gaussian_filter1d(reflux, atrespix/2.354)
         # Observed arc spectrum
         obsarc = self.context.arcs[self.context.config.instrument.REFBAR]
         # Preliminary wavelength solution

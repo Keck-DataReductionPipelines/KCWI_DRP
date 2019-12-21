@@ -146,9 +146,10 @@ class ingest_file(BasePrimitive):
                              "CAMERA undefined")
         return self.get_keyword(key)
 
-    def resolution(self, refwave=None):
+    def resolution(self):
         """Return FWHM resolution in Angstroms for the given grating"""
         # get reference wavelength
+        refwave = self.cwave()
         if refwave:
             rw = refwave
         else:
