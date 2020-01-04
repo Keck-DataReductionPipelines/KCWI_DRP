@@ -104,6 +104,7 @@ class subtract_overscan(BasePrimitive):
             porder = 7
         # header keyword to update
         key = 'OSCANSUB'
+        keycom = 'Overscan subtracted?'
         # is it performed?
         performed = False
         # loop over amps
@@ -162,11 +163,8 @@ class subtract_overscan(BasePrimitive):
             else:
                 self.logger.info("not enough overscan px to fit amp %d")
 
-        if performed:
-            self.action.args.ccddata.header[key] = (True, 'Overscan subtracted')
-        else:
-            self.action.args.ccddata.header[key] = (False,
-                                                    'Overscan subtracted')
+        self.action.args.ccddata.header[key] = (performed, keycom)
+
         logstr = self.__module__ + "." + self.__class__.__name__
         self.action.args.ccddata.header['HISTORY'] = logstr
         self.logger.info(logstr)
@@ -187,6 +185,7 @@ class trim_overscan(BasePrimitive):
         namps = len(bsec)
         # header keyword to update
         key = 'OSCANTRM'
+        keycom = 'Overscan trimmed?'
         # get output image dimensions
         max_sec = max(tsec)
         # create new blank image
@@ -222,7 +221,7 @@ class trim_overscan(BasePrimitive):
         self.action.args.ccddata.data = new
         self.action.args.ccddata.header['NAXIS1'] = max_sec[3] + 1
         self.action.args.ccddata.header['NAXIS2'] = max_sec[1] + 1
-        self.action.args.ccddata.header[key] = (True, "Overscan trimmed")
+        self.action.args.ccddata.header[key] = (True, keycom)
 
         logstr = self.__module__ + "." + self.__class__.__name__
         self.action.args.ccddata.header['HISTORY'] = logstr
@@ -239,6 +238,9 @@ class correct_gain(BasePrimitive):
         BasePrimitive.__init__(self, action, context)
 
     def _perform(self):
+        # Header keyword to update
+        key = 'GAINCOR'
+        keycom = 'Gain corrected?'
         # print(self.action.args.ccddata.header)
         namps = self.action.args.namps
         for ia in range(namps):
@@ -254,7 +256,7 @@ class correct_gain(BasePrimitive):
             self.action.args.ccddata.data[sec[0]:(sec[1]+1),
                                           sec[2]:(sec[3]+1)] *= gain
 
-        self.action.args.ccddata.header['GAINCOR'] = (True, "Gain corrected")
+        self.action.args.ccddata.header[key] = (True, keycom)
         self.action.args.ccddata.header['BUNIT'] = ('electron',
                                                     'Units set to electrons')
         self.action.args.ccddata.unit = 'electron'
