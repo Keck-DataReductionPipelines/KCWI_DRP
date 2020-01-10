@@ -6,6 +6,7 @@ from .kcwi_file_primitives import *
 from keckdrpframework.core.bokeh_plotting import bokeh_plot
 import ccdproc
 from astropy.io import fits as pf
+from astropy.nddata import VarianceUncertainty
 import os
 
 import matplotlib.pyplot as pl
@@ -270,6 +271,64 @@ class correct_gain(BasePrimitive):
             kcwi_fits_writer(self.action.args.ccddata,
                              table=self.action.args.table,
                              output_file=self.action.args.name, suffix="gain")
+        return self.action.args
+
+
+class remove_badcols(BasePrimitive):
+
+    def __init__(self, action, context):
+        BasePrimitive.__init__(self, action, context)
+
+    def _perform(self):
+        self.logger.info("Removing bad columns (not yet implemented)")
+        return self.action.args
+
+
+class remove_crs(BasePrimitive):
+
+    def __init__(self, action, context):
+        BasePrimitive.__init__(self, action, context)
+
+    def _perform(self):
+        self.logger.info("Finding and masking cosmic rays"
+                         " (not yet implemented)")
+        return self.action.args
+
+
+class create_unc(BasePrimitive):
+
+    def __init__(self, action, context):
+        BasePrimitive.__init__(self, action, context)
+
+    def _perform(self):
+        """Assumes units of image are electron"""
+
+        # Header keyword to update
+        key = 'UNCVAR'
+        keycom = 'variance created?'
+
+        self.logger.info("Create uncertainty image")
+        # start with Poisson noise
+        self.action.args.ccddata.uncertainty = VarianceUncertainty(
+            self.action.args.ccddata.data, unit='electron^2', copy=True)
+        # add readnoise, if known
+        if 'BIASRN1' in self.action.args.ccddata.header:
+            namps = self.action.args.ccddata.header['NVIDINP']
+            for ia in range(namps):
+                # get amp parameters
+                biasrn = self.action.args.ccddata.header['BIASRN%d' % (ia + 1)]
+                section = self.action.args.ccddata.header['ATSEC%d' % (ia + 1)]
+                sec, rfor = parse_imsec(section)
+                self.action.args.ccddata.uncertainty.array[
+                    sec[0]:(sec[1]+1), sec[2]:(sec[3]+1)] += biasrn
+        else:
+            self.logger.warn("Readnoise undefined, uncertainty Poisson only")
+        # document variance image creation
+        self.action.args.ccddata.header[key] = (True, keycom)
+
+        logstr = self.__module__ + "." + self.__class__.__name__
+        self.action.args.ccddata.header['HISTORY'] = logstr
+
         return self.action.args
 
 
