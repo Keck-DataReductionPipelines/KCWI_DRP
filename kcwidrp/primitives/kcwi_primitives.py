@@ -23,6 +23,7 @@ from scipy.interpolate import interpolate
 from scipy.signal import find_peaks
 from scipy import signal
 from scipy.ndimage import gaussian_filter1d
+from scipy.stats import sigmaclip
 import time
 from multiprocessing import Pool
 import pkg_resources
@@ -225,6 +226,7 @@ class trim_overscan(BasePrimitive):
 
         logstr = self.__module__ + "." + self.__class__.__name__
         self.action.args.ccddata.header['HISTORY'] = logstr
+
         if self.config.instrument.saveintims:
             kcwi_fits_writer(self.action.args.ccddata,
                              table=self.action.args.table,
@@ -267,7 +269,49 @@ class correct_gain(BasePrimitive):
         if self.config.instrument.saveintims:
             kcwi_fits_writer(self.action.args.ccddata,
                              table=self.action.args.table,
-                             output_file=self.action.args.name, suffix="int")
+                             output_file=self.action.args.name, suffix="gain")
+        return self.action.args
+
+
+class rectify_image(BasePrimitive):
+
+    def __init__(self, action, context):
+        BasePrimitive.__init__(self, action, context)
+
+    def _perform(self):
+
+        # Header keyword to update
+        key = 'IMGRECT'
+        keycom = 'Image rectified?'
+
+        # get amp mode
+        ampmode = self.action.args.ccddata.header['AMPMODE'].strip().upper()
+
+        if '__B' in ampmode or '__G' in ampmode:
+            newimg = np.rot90(self.action.args.ccddata.data, 2)
+            newunc = np.rot90(self.action.args.ccddata.uncertainty.array, 2)
+            self.action.args.ccddata.data = newimg
+            self.action.args.ccddata.uncertainty.array = newunc
+        elif '__D' in ampmode or '__F' in ampmode:
+            newimg = np.fliplr(self.action.args.ccddata.data)
+            newunc = np.fliplr(self.action.args.ccddata.uncertainty.array)
+            self.action.args.ccddata.data = newimg
+            self.action.args.ccddata.uncertainty.array = newunc
+        elif '__A' in ampmode or '__H' in ampmode or 'TUP' in ampmode:
+            newimg = np.flipud(self.action.args.ccddata.data)
+            newunc = np.flipud(self.action.args.ccddata.uncertainty.array)
+            self.action.args.ccddata.data = newimg
+            self.action.args.ccddata.uncertainty.array = newunc
+
+        self.action.args.ccddata.header[key] = (True, keycom)
+
+        logstr = self.__module__ + "." + self.__class__.__name__
+        self.action.args.ccddata.header['HISTORY'] = logstr
+
+        # write out int image
+        kcwi_fits_writer(self.action.args.ccddata,
+                         table=self.action.args.table,
+                         output_file=self.action.args.name, suffix="int")
         return self.action.args
 
 
@@ -278,7 +322,7 @@ class process_bias(BaseImg):
 
     def hello(self):
         """
-        Checks is we can build a stacked  frame
+        Checks if we can build a stacked bias frame
         Expected arguments:
             want_type: ie. BIAS
             min_files: ie 10
@@ -343,6 +387,26 @@ class process_bias(BaseImg):
         stacked.header['NSTACK'] = (len(combine_list),
                                     'number of images stacked')
         stacked.header['STCKMETH'] = (method, 'method used for stacking')
+
+        # for readnoise stats use 2nd and 3rd bias
+        diff = stack[1].data.astype(np.float64) - \
+               stack[2].data.astype(np.float64)
+        namps = stack[1].header['NVIDINP']
+        for ia in range(namps):
+            # get gain
+            gain = stacked.header['GAIN%d' % (ia + 1)]
+            # get amp section
+            sec, rfor = parse_imsec(stacked.header['DSEC%d' % (ia + 1)])
+            noise = diff[sec[0]:(sec[1]+1), sec[2]:(sec[3]+1)]
+            noise = np.reshape(noise, noise.shape[0]*noise.shape[1]) * \
+                    gain / 1.414
+            # get stats on noise
+            c, upp, low = sigmaclip(noise, low=3.5, high=3.5)
+            bias_rn = c.std()
+            self.logger.info("Amp%d read noise from bias in e-: %.3f" %
+                             ((ia + 1), bias_rn))
+            stacked.header['BIASRN%d' % (ia + 1)] = \
+                (float("%.3f" % bias_rn), "RN in e- from bias")
 
         kcwi_fits_writer(stacked, output_file=mbname)
         self.context.proctab.update_proctab(frame=stacked, suffix=suffix,

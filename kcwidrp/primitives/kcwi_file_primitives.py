@@ -12,41 +12,41 @@ from ..core.kcwi_proctab import Proctab
 
 def parse_imsec(section=None):
 
-        xfor = True
-        yfor = True
+    xfor = True
+    yfor = True
 
-        p1 = int(section[1:-1].split(',')[0].split(':')[0])
-        p2 = int(section[1:-1].split(',')[0].split(':')[1])
-        p3 = int(section[1:-1].split(',')[1].split(':')[0])
-        p4 = int(section[1:-1].split(',')[1].split(':')[1])
-        # tests for individual axes
-        if p1 > p2:
-            x0 = p2 - 1
-            x1 = p1 - 1
-            xfor = False
-        else:
-            x0 = p1 - 1
-            x1 = p2 - 1
-        if p3 > p4:
-            y0 = p4 - 1
-            y1 = p3 - 1
-            yfor = False
-        else:
-            y0 = p3 - 1
-            y1 = p4 - 1
-        # package output
-        sec = (y0, y1, x0, x1)
-        rfor = (yfor, xfor)
-        # use python axis ordering
-        return sec, rfor
+    p1 = int(section[1:-1].split(',')[0].split(':')[0])
+    p2 = int(section[1:-1].split(',')[0].split(':')[1])
+    p3 = int(section[1:-1].split(',')[1].split(':')[0])
+    p4 = int(section[1:-1].split(',')[1].split(':')[1])
+    # tests for individual axes
+    if p1 > p2:
+        x0 = p2 - 1
+        x1 = p1 - 1
+        xfor = False
+    else:
+        x0 = p1 - 1
+        x1 = p2 - 1
+    if p3 > p4:
+        y0 = p4 - 1
+        y1 = p3 - 1
+        yfor = False
+    else:
+        y0 = p3 - 1
+        y1 = p4 - 1
+    # package output
+    sec = (y0, y1, x0, x1)
+    rfor = (yfor, xfor)
+    # use python axis ordering
+    return sec, rfor
 
 
 class ingest_file(BasePrimitive):
 
     def __init__(self, action, context):
-        '''
+        """
         Constructor
-        '''
+        """
         BasePrimitive.__init__(self, action, context)
 
     def get_keyword(self, keyword):
@@ -391,16 +391,16 @@ class ingest_file(BasePrimitive):
         out_args.table = table
 
         try:
-            type = self.get_keyword("IMTYPE")
+            imtype = self.get_keyword("IMTYPE")
             groupid = self.get_keyword("GROUPID")
         except KeyError:
-            type = "Unknown"
+            imtype = "Unknown"
             groupid = "Unknown"
             fname = os.path.basename(self.action.args.name)
             self.logger.warn(f"Unknown IMTYPE {fname}")
 
         out_args.name = self.action.args.name
-        out_args.imtype = type
+        out_args.imtype = imtype
         out_args.groupid = groupid
         # CAMERA
         out_args.camera = self.camera()
@@ -444,7 +444,8 @@ class ingest_file(BasePrimitive):
         # for arg in str(out_args).split(','):
         #    print(arg)
 
-        self.context.proctab.update_proctab(frame=out_args.ccddata, suffix='RAW')
+        self.context.proctab.update_proctab(frame=out_args.ccddata,
+                                            suffix='RAW')
         self.context.proctab.write_proctab()
 
         return out_args
@@ -474,13 +475,15 @@ def kcwi_fits_reader(file):
         table = hdul[1]
     elif len(hdul) == 3:
         # pure ccd data
-        ccddata = CCDData(hdul['PRIMARY'], meta=hdul['PRIMARY'].header, unit='adu')
+        ccddata = CCDData(hdul['PRIMARY'], meta=hdul['PRIMARY'].header,
+                          unit='adu')
         ccddata.mask = hdul['MASK']
         ccddata.uncertainty = hdul['UNCERT']
         table = None
     elif len(hdul) == 4:
         # pure ccd data
-        ccddata = CCDData(hdul['PRIMARY'], meta=hdul['PRIMARY'].header, unit='adu')
+        ccddata = CCDData(hdul['PRIMARY'], meta=hdul['PRIMARY'].header,
+                          unit='adu')
         ccddata.mask = hdul['MASK']
         ccddata.uncertainty = hdul['UNCERT']
         table = Table(hdul[3])
@@ -489,21 +492,21 @@ def kcwi_fits_reader(file):
 
 
 class kcwi_fits_ingest(BasePrimitive):
-    '''
+    """
     classdocs
-    '''
+    """
 
     def __init__(self, action, context):
-        '''
+        """
         Constructor
-        '''
+        """
         BasePrimitive.__init__(self, action, context)
 
     def _perform(self):
-        '''
+        """
         Expects action.args.name as fits file name
         Returns HDUs or (later) data model
-        '''
+        """
         name = self.action.args.name
         self.logger.info(f"Reading {name}")
         out_args = Arguments()
@@ -516,8 +519,8 @@ class kcwi_fits_ingest(BasePrimitive):
         return out_args
 
 
-def write_table(output_dir = None, table=None, names=None,
-                    comment=None, keywords=None, output_name=None):
+def write_table(output_dir=None, table=None, names=None, comment=None,
+                keywords=None, output_name=None):
     output_file = os.path.join(output_dir, 'redux', output_name)
 
     t = Table(table, names=names)
@@ -533,26 +536,29 @@ def write_table(output_dir = None, table=None, names=None,
     print("output file: %s" % output_file)
 
 
-def read_table(input_dir = None, file_name = None):
-        # Set up return table
-        input_file = os.path.join(input_dir, 'redux', file_name)
-        # Construct table file name
-        #if suffix is not None:
-        #    input_file = input_file.split('.')[0] + "_" + suffix + ".fits"
-        print("Trying to read table: %s" % input_file)
-        try:
-            retab = Table.read(input_file, format='fits')
-        except:
-            print("No table to read")
-        return retab
+def read_table(input_dir=None, file_name=None):
+    # Set up return table
+    input_file = os.path.join(input_dir, 'redux', file_name)
+    # Construct table file name
+    # if suffix is not None:
+    #    input_file = input_file.split('.')[0] + "_" + suffix + ".fits"
+    print("Trying to read table: %s" % input_file)
+    try:
+        retab = Table.read(input_file, format='fits')
+    except:
+        print("No table to read")
+        retab = None
+    return retab
+
 
 def kcwi_fits_writer(ccddata, table=None, output_file=None, suffix=None):
-    output_file = os.path.join(os.path.dirname(output_file),'redux', os.path.basename(output_file))
+    output_file = os.path.join(os.path.dirname(output_file), 'redux',
+                               os.path.basename(output_file))
     if suffix is not None:
         output_file = output_file.split('.')[0]+"_"+suffix+".fits"
     hdus_to_save = ccddata.to_hdu()
-    #if table is not None:
+    # if table is not None:
     #    hdus_to_save.append(table)
-    #hdus_to_save.info()
+    # hdus_to_save.info()
     print("Saving to %s" % output_file)
     hdus_to_save.writeto(output_file, overwrite=True)
