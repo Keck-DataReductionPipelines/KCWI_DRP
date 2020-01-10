@@ -468,10 +468,11 @@ def kcwi_fits_reader(file):
         print(e.msg)
         raise e
 
-    ccddata = None
-    table = None
-
-    if len(hdul) == 2:
+    if len(hdul) == 1:
+        # Simple input, no table
+        ccddata = CCDData(hdul[0].data, meta=hdul[0].header, unit='adu')
+        table = None
+    elif len(hdul) == 2:
         # raw data
         # 1- read the first extension into a ccddata
         ccddata = CCDData(hdul[0].data, meta=hdul[0].header, unit='adu')
@@ -493,6 +494,11 @@ def kcwi_fits_reader(file):
         ccddata.mask = hdul['MASK']
         ccddata.uncertainty = hdul['UNCERT']
         table = Table(hdul[3])
+    else:
+        print("Wrong number of HDUnits in %s: should be 1-4, but is %d"
+              % (file, len(hdul)))
+        ccddata = None
+        table = None
 
     return ccddata, table
 

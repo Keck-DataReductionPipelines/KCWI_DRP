@@ -318,6 +318,52 @@ class rectify_image(BasePrimitive):
         return self.action.args
 
 
+class subtract_bias(BasePrimitive):
+
+    def __init__(self, action, context):
+        BasePrimitive.__init__(self, action, context)
+
+    def _perform(self):
+
+        # Header keyword to update
+        key = 'BIASSUB'
+        keycom = 'master bias subtracted?'
+
+        self.logger.info("Subtracting master bias")
+        tab = self.context.proctab.n_proctab(frame=self.action.args.ccddata,
+                                             target_type='MBIAS',
+                                             nearest=True)
+        self.logger.info("%d master bias frames found" % len(tab))
+
+        if len(tab) > 0:
+            mbname = tab['OFNAME'][0].split('.')[0] + "_master_bias.fits"
+            print("*************** READING IMAGE: %s" % mbname)
+            mbias = kcwi_fits_reader(
+                os.path.join(os.path.dirname(self.action.args.name), 'redux',
+                             mbname))[0]
+
+            # do the subtraction
+            self.action.args.ccddata.data -= mbias.data
+
+            # transfer bias read noise
+            namps = self.action.args.ccddata.header['NVIDINP']
+            for ia in range(namps):
+                self.action.args.ccddata.header['BIASRN%d' % (ia + 1)] = \
+                    mbias.header['BIASRN%d' % (ia + 1)]
+
+            self.action.args.ccddata.header[key] = (True, keycom)
+            self.action.args.ccddata.header['MBFILE'] = (mbname,
+                                                         "Master bias filename")
+        else:
+
+            self.action.args.ccddata.header[key] = (False, keycom)
+
+        logstr = self.__module__ + "." + self.__class__.__name__
+        self.action.args.ccddata.header['HISTORY'] = logstr
+
+        return self.action.args
+
+
 class process_bias(BaseImg):
 
     def __init__(self, action, context):
@@ -418,6 +464,24 @@ class process_bias(BaseImg):
 
 
 class process_contbars(BasePrimitive):
+
+    def __init__(self, action, context):
+        BasePrimitive.__init__(self, action, context)
+
+    def _perform(self):
+        return self.action.args
+
+
+class process_arc(BasePrimitive):
+
+    def __init__(self, action, context):
+        BasePrimitive.__init__(self, action, context)
+
+    def _perform(self):
+        return self.action.args
+
+
+class process_flat(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
@@ -1353,13 +1417,4 @@ class fit_center(BasePrimitive):
                 time.sleep(self.context.config.instrument.plot_pause)
 
         # print(self.action.args.centcoeff)
-        return self.action.args
-
-
-class process_arc(BasePrimitive):
-
-    def __init__(self, action, context):
-        BasePrimitive.__init__(self, action, context)
-
-    def _perform(self):
         return self.action.args

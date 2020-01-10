@@ -80,7 +80,10 @@ class Kcwi_pipeline(BasePipeline):
         # OBJECT PROCESSING
         "process_object": ("process_object",
                            "object_processing_started",
-                           "object_subtract_overscan"),
+                           "object_subtract_bias"),
+        "object_subtract_bias": ("subtract_bias",
+                                 "subtract_bias started",
+                                 "object_subtract_overscan"),
         "object_subtract_overscan": ("subtract_overscan",
                                      "subtract_overscan_started",
                                      "object_trim_overscan"),
