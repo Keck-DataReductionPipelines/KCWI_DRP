@@ -2,6 +2,7 @@ from keckdrpframework.models.arguments import Arguments
 from astropy.io import fits
 from astropy.nddata import CCDData
 from astropy.table import Table
+import numpy as np
 
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from keckdrpframework.models.data_set import DataSet
@@ -467,12 +468,17 @@ def kcwi_fits_reader(file):
         print(e.msg)
         raise e
 
+    ccddata = None
+    table = None
+
     if len(hdul) == 2:
         # raw data
         # 1- read the first extension into a ccddata
         ccddata = CCDData(hdul[0].data, meta=hdul[0].header, unit='adu')
         # 2- read the table
         table = hdul[1]
+        # 3- prepare for floating point
+        ccddata.data = ccddata.data.astype(np.float64)
     elif len(hdul) == 3:
         # pure ccd data
         ccddata = CCDData(hdul['PRIMARY'], meta=hdul['PRIMARY'].header,

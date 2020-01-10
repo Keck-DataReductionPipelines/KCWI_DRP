@@ -289,19 +289,22 @@ class rectify_image(BasePrimitive):
 
         if '__B' in ampmode or '__G' in ampmode:
             newimg = np.rot90(self.action.args.ccddata.data, 2)
-            newunc = np.rot90(self.action.args.ccddata.uncertainty.array, 2)
             self.action.args.ccddata.data = newimg
-            self.action.args.ccddata.uncertainty.array = newunc
+            if self.action.args.ccddata.uncertainty:
+                newunc = np.rot90(self.action.args.ccddata.uncertainty.array, 2)
+                self.action.args.ccddata.uncertainty.array = newunc
         elif '__D' in ampmode or '__F' in ampmode:
             newimg = np.fliplr(self.action.args.ccddata.data)
-            newunc = np.fliplr(self.action.args.ccddata.uncertainty.array)
             self.action.args.ccddata.data = newimg
-            self.action.args.ccddata.uncertainty.array = newunc
+            if self.action.args.ccddata.uncertainty:
+                newunc = np.fliplr(self.action.args.ccddata.uncertainty.array)
+                self.action.args.ccddata.uncertainty.array = newunc
         elif '__A' in ampmode or '__H' in ampmode or 'TUP' in ampmode:
             newimg = np.flipud(self.action.args.ccddata.data)
-            newunc = np.flipud(self.action.args.ccddata.uncertainty.array)
             self.action.args.ccddata.data = newimg
-            self.action.args.ccddata.uncertainty.array = newunc
+            if self.action.args.ccddata.uncertainty:
+                newunc = np.flipud(self.action.args.ccddata.uncertainty.array)
+                self.action.args.ccddata.uncertainty.array = newunc
 
         self.action.args.ccddata.header[key] = (True, keycom)
 
@@ -415,6 +418,15 @@ class process_bias(BaseImg):
 
 
 class process_contbars(BasePrimitive):
+
+    def __init__(self, action, context):
+        BasePrimitive.__init__(self, action, context)
+
+    def _perform(self):
+        return self.action.args
+
+
+class process_object(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)

@@ -23,7 +23,7 @@ class Kcwi_pipeline(BasePipeline):
         # "next_file": ("ingest_file", "file_ingested", None),
         "next_file": ("ingest_file", "file_ingested", "file_ingested"),
         "file_ingested": ("action_planner", None, None),
-        # BIAS
+        # BIAS PROCESSING
         "process_bias": ("process_bias", None, None),
         # CONTBARS PROCESSING
         "process_contbars": ("process_contbars",
@@ -57,7 +57,10 @@ class Kcwi_pipeline(BasePipeline):
                                "arcs_correct_gain"),
         "arcs_correct_gain": ("correct_gain",
                               "gain_correction_started",
-                              "arcs_extract_arcs"),
+                              "arcs_rectify_image"),
+        "arcs_rectify_image": ("rectify_image",
+                               "rectification_started",
+                               "arcs_extract_arcs"),
         "arcs_extract_arcs": ("extract_arcs",
                               "extract_arcs_started",
                               "arcs_arc_offsets"),
@@ -72,11 +75,25 @@ class Kcwi_pipeline(BasePipeline):
                             "arcs_fit_center"),
         "arcs_fit_center": ("fit_center",
                             "fit_center_started", None),
-        # FLAT
+        # FLAT PROCESSING
         "process_flat": ("process_flat", None, None),
-        # General processing
+        # OBJECT PROCESSING
+        "process_object": ("process_object",
+                           "object_processing_started",
+                           "object_subtract_overscan"),
+        "object_subtract_overscan": ("subtract_overscan",
+                                     "subtract_overscan_started",
+                                     "object_trim_overscan"),
+        "object_trim_overscan": ("trim_overscan",
+                                 "trim_overscan_started",
+                                 "object_correct_gain"),
+        "object_correct_gain": ("correct_gain",
+                                "gain_correction_started",
+                                "object_rectify_image"),
+        "object_rectify_image": ("rectify_image",
+                                 "rectification_started",
+                                 None),
         "next_file_stop": ("ingest_file", "file_ingested", None)
-        # "process_object": ("process_object", None, "save_png"),
         # "save_png": ("save_png", None, None)
     }
 
