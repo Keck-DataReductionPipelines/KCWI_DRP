@@ -88,6 +88,7 @@ def pascal_shift(coef=None, x0=None):
         fincoeff = fincoeff[0:len(coef)]
     # Reverse for python
     return list(reversed(fincoeff))
+    # END: def pascal_shift()
 
 
 class subtract_overscan(BasePrimitive):
@@ -172,6 +173,7 @@ class subtract_overscan(BasePrimitive):
         self.logger.info(logstr)
 
         return self.action.args
+    # END: class subtract_overscan()
 
 
 class trim_overscan(BasePrimitive):
@@ -233,6 +235,7 @@ class trim_overscan(BasePrimitive):
                              table=self.action.args.table,
                              output_file=self.action.args.name, suffix="trim")
         return self.action.args
+    # END: class trim_overscan()
 
 
 class correct_gain(BasePrimitive):
@@ -272,6 +275,7 @@ class correct_gain(BasePrimitive):
                              table=self.action.args.table,
                              output_file=self.action.args.name, suffix="gain")
         return self.action.args
+    # END: class correct_gain()
 
 
 class remove_badcols(BasePrimitive):
@@ -282,6 +286,7 @@ class remove_badcols(BasePrimitive):
     def _perform(self):
         self.logger.info("Removing bad columns (not yet implemented)")
         return self.action.args
+    # END: class remove_badcols()
 
 
 class remove_crs(BasePrimitive):
@@ -293,6 +298,7 @@ class remove_crs(BasePrimitive):
         self.logger.info("Finding and masking cosmic rays"
                          " (not yet implemented)")
         return self.action.args
+    # END: class remove_crs(
 
 
 class create_unc(BasePrimitive):
@@ -330,6 +336,7 @@ class create_unc(BasePrimitive):
         self.action.args.ccddata.header['HISTORY'] = logstr
 
         return self.action.args
+    # END: class create_unc()
 
 
 class rectify_image(BasePrimitive):
@@ -375,6 +382,7 @@ class rectify_image(BasePrimitive):
                          table=self.action.args.table,
                          output_file=self.action.args.name, suffix="int")
         return self.action.args
+    # END: class rectify_image()
 
 
 class subtract_bias(BasePrimitive):
@@ -421,6 +429,50 @@ class subtract_bias(BasePrimitive):
         self.action.args.ccddata.header['HISTORY'] = logstr
 
         return self.action.args
+    # END: class subtract_bias()
+
+
+class subtract_dark(BasePrimitive):
+
+    # TODO: add matching of dark config and scaling by exposure time
+
+    def __init__(self, action, context):
+        BasePrimitive.__init__(self, action, context)
+
+    def _perform(self):
+
+        # Header keyword to update
+        key = 'DARKSUB'
+        keycom = 'master dark subtracted?'
+
+        self.logger.info("Subtracting master dark")
+        tab = self.context.proctab.n_proctab(frame=self.action.args.ccddata,
+                                             target_type='MDARK',
+                                             nearest=True)
+        self.logger.info("%d master dark frames found" % len(tab))
+
+        if len(tab) > 0:
+            mdname = tab['OFNAME'][0].split('.')[0] + "_master_dark.fits"
+            print("*************** READING IMAGE: %s" % mdname)
+            mdark = kcwi_fits_reader(
+                os.path.join(os.path.dirname(self.action.args.name), 'redux',
+                             mdname))[0]
+
+            # do the subtraction
+            self.action.args.ccddata.data -= mdark.data
+
+            self.action.args.ccddata.header[key] = (True, keycom)
+            self.action.args.ccddata.header['MDFILE'] = (mdname,
+                                                         "Master dark filename")
+        else:
+            self.logger.info("No master dark frame available, skpping")
+            self.action.args.ccddata.header[key] = (False, keycom)
+
+        logstr = self.__module__ + "." + self.__class__.__name__
+        self.action.args.ccddata.header['HISTORY'] = logstr
+
+        return self.action.args
+    # END: class subtract_dark()
 
 
 class process_bias(BaseImg):
@@ -518,8 +570,101 @@ class process_bias(BaseImg):
 
         kcwi_fits_writer(stacked, output_file=mbname)
         self.context.proctab.update_proctab(frame=stacked, suffix=suffix,
-                                            newtype='MBIAS')
+                                            newtype=args.new_type)
         return Arguments(name=mbname)
+    # END: class process_bias()
+
+
+class stack_darks(BaseImg):
+
+    def __init__(self, action, context):
+        BaseImg.__init__(self, action, context)
+
+    def hello(self):
+        """
+        Checks if we can build a stacked dark frame
+        Expected arguments:
+            want_type: ie. DARK
+            min_files: ie 3
+            new_type: ie MASTER_DARK
+            new_file_name: master_dark.fits
+
+        """
+        try:
+            args = self.action.args
+            df = self.context.data_set.data_table
+            files = df[(df.IMTYPE == args.want_type) &
+                       (df.GROUPID == args.groupid)]
+            nfiles = len(files)
+
+            self.logger.info(f"pre condition got {nfiles},"
+                             f" expecting {args.min_files}")
+            if nfiles < 1 or nfiles < args.min_files:
+                return False
+            return True
+        except Exception as e:
+            self.logger.error(f"Exception in base_ccd_primitive: {e}")
+            return False
+
+    def _pre_condition(self):
+        """
+        Checks if we can build a stacked frame based on the processing table
+        :return:
+        """
+        # get current group id
+        self.logger.info("Checking precondition for process_dark")
+        self.combine_list = self.context.proctab.n_proctab(
+            frame=self.action.args.ccddata, target_type='DARK',
+            target_group=self.action.args.groupid)
+        self.logger.info(f"pre condition got {len(self.combine_list)},"
+                         f" expecting {self.action.args.min_files}")
+        # create master dark
+        if len(self.combine_list) >= self.action.args.min_files:
+            return True
+        else:
+            return False
+
+    def _perform(self):
+        """
+        Returns an Argument() with the parameters that depends on this operation
+        """
+        args = self.action.args
+        method = 'average'
+        suffix = 'master_dark'
+
+        combine_list = list(self.combine_list['OFNAME'])
+        # get master dark output name
+        mdname = combine_list[0].split('.fits')[0] + '_master_dark.fits'
+        stack = []
+        for dark in combine_list:
+            # get dark intensity (int) image file name in redux directory
+            darkfn = os.path.join(args.in_directory,
+                                  dark.split('.fits')[0] + '_int.fits')
+            # using [0] gets just the image data
+            stack.append(kcwi_fits_reader(darkfn)[0])
+
+        stacked = ccdproc.combine(stack, method=method, sigma_clip=True,
+                                  sigma_clip_low_thresh=None,
+                                  sigma_clip_high_thresh=2.0)
+        stacked.header.IMTYPE = args.new_type
+        stacked.header['NSTACK'] = (len(combine_list),
+                                    'number of images stacked')
+        stacked.header['STCKMETH'] = (method, 'method used for stacking')
+
+        kcwi_fits_writer(stacked, output_file=mdname)
+        self.context.proctab.update_proctab(frame=stacked, suffix=suffix,
+                                            newtype=args.new_type)
+        return Arguments(name=mdname)
+    # END: class stack_darks()
+
+
+class process_dark(BasePrimitive):
+
+    def __init__(self, action, context):
+        BasePrimitive.__init__(self, action, context)
+
+    def _perform(self):
+        return self.action.args
 
 
 class process_contbars(BasePrimitive):
@@ -654,7 +799,7 @@ class find_bars(BasePrimitive):
         self.action.args.cbarsno = self.action.args.ccddata.header['FRAMENO']
         self.action.args.cbarsfl = self.action.args.ccddata.header['OFNAME']
         return self.action.args
-    # END: find_bars
+    # END: class find_bars()
 
 
 class trace_bars(BasePrimitive):
@@ -808,6 +953,7 @@ class trace_bars(BasePrimitive):
                                  suffix='warped')
                 self.logger.info("Transformed bars produced")
             return self.action.args
+    # END: class trace_bars()
 
 
 class extract_arcs(BasePrimitive):
@@ -872,7 +1018,7 @@ class extract_arcs(BasePrimitive):
             self.logger.error("Did not extract %d arcs, extracted %d" %
                               (self.context.config.instrument.NBARS, len(arcs)))
         return self.action.args
-# END class extract_arcs(BasePrimative)
+# END: class extract_arcs()
 
 
 class arc_offsets(BasePrimitive):
@@ -929,6 +1075,7 @@ class arc_offsets(BasePrimitive):
         else:
             self.logger.error("No extracted arcs found")
         return self.action.args
+    # END: class arc_offsets()
 
 
 class calc_prelim_disp(BasePrimitive):
@@ -955,6 +1102,7 @@ class calc_prelim_disp(BasePrimitive):
                          prelim_disp)
         self.context.prelim_disp = prelim_disp
         return self.action.args
+    # END: class calc_prelim_disp()
 
 
 class read_atlas(BasePrimitive):
@@ -1115,6 +1263,7 @@ class read_atlas(BasePrimitive):
         self.action.args.xvals = xvals
         self.action.args.x0 = int(len(obsarc)/2)
         return self.action.args
+    # END: class read_atlas()
 
 
 def myhelper(argument):
@@ -1224,6 +1373,7 @@ def myhelper(argument):
     # centdisp.append(coeff[3])
     # Store results
     return b, scoeff, coeff[4], coeff[3]
+    # END: def myhelper()
 
 
 class fit_center(BasePrimitive):
@@ -1477,3 +1627,4 @@ class fit_center(BasePrimitive):
 
         # print(self.action.args.centcoeff)
         return self.action.args
+    # END: class fit_center()

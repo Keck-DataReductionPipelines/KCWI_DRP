@@ -107,7 +107,8 @@ class Proctab():
                               keep='last')
         self.proctab.sort('FRAMENO')
 
-    def n_proctab(self, frame, target_type=None, target_group=None, nearest=False):
+    def n_proctab(self, frame, target_type=None, target_group=None,
+                  nearest=False):
         self.frame = frame
         if target_type is not None and self.proctab is not None:
             self.log.info('Looking for %s frames' % target_type)
