@@ -14,6 +14,7 @@ import time
 import argparse
 import sys
 import traceback
+import os
 import threading
 
 from kcwidrp.pipelines.kcwi_pipeline import Kcwi_pipeline
@@ -69,6 +70,13 @@ def _parseArguments(in_args):
     return args
 
 
+def check_redux_dir():
+    if not os.path.isdir(config.instrument.output_directory):
+        os.makedirs(config.instrument.output_directory)
+        print("Output directory created: %s" %
+              config.instrument.output_directory)
+
+
 if __name__ == "__main__":
 
     args = _parseArguments(sys.argv)
@@ -84,6 +92,8 @@ if __name__ == "__main__":
         print("Failed to initialize framework, exiting ...", e)
         traceback.print_exc()
         sys.exit(1)
+
+    check_redux_dir()
 
     # initialize the proctab and read it
     framework.context.proctab = Proctab(framework.logger)
