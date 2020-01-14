@@ -381,6 +381,9 @@ class rectify_image(BasePrimitive):
         kcwi_fits_writer(self.action.args.ccddata,
                          table=self.action.args.table,
                          output_file=self.action.args.name, suffix="int")
+        self.context.proctab.update_proctab(frame=self.action.args.ccddata,
+                                            suffix="int")
+        self.context.proctab.write_proctab()
         return self.action.args
     # END: class rectify_image()
 
@@ -457,19 +460,38 @@ class subtract_dark(BasePrimitive):
             mdark = kcwi_fits_reader(
                 os.path.join(os.path.dirname(self.action.args.name), 'redux',
                              mdname))[0]
+            # scale by exposure time
+            fac = 1.0
+            if 'TTIME' in mdark.header and \
+               'TTIME' in self.action.args.ccddata.header:
+                fac = float(self.action.args.ccddata.header['TTIME']) / \
+                      float(mdark.header['TTIME'])
+                self.logger.info("dark scaled by %.3f" % fac)
+            else:
+                self.logger.warn("unable to scale dark by exposure time")
 
             # do the subtraction
-            self.action.args.ccddata.data -= mdark.data
+            self.action.args.ccddata.data -= mdark.data * fac
 
             self.action.args.ccddata.header[key] = (True, keycom)
             self.action.args.ccddata.header['MDFILE'] = (mdname,
                                                          "Master dark filename")
+            self.action.args.ccddata.header['DARKSCL'] = (fac,
+                                                          "dark scale factor")
         else:
-            self.logger.info("No master dark frame available, skpping")
+            self.logger.info("No master dark frame available, skipping")
             self.action.args.ccddata.header[key] = (False, keycom)
 
         logstr = self.__module__ + "." + self.__class__.__name__
         self.action.args.ccddata.header['HISTORY'] = logstr
+
+        # write out int image
+        kcwi_fits_writer(self.action.args.ccddata,
+                         table=self.action.args.table,
+                         output_file=self.action.args.name, suffix="intd")
+        self.context.proctab.update_proctab(frame=self.action.args.ccddata,
+                                            suffix="intd")
+        self.context.proctab.write_proctab()
 
         return self.action.args
     # END: class subtract_dark()
@@ -571,6 +593,7 @@ class process_bias(BaseImg):
         kcwi_fits_writer(stacked, output_file=mbname)
         self.context.proctab.update_proctab(frame=stacked, suffix=suffix,
                                             newtype=args.new_type)
+        self.context.proctab.write_proctab()
         return Arguments(name=mbname)
     # END: class process_bias()
 
@@ -654,6 +677,7 @@ class stack_darks(BaseImg):
         kcwi_fits_writer(stacked, output_file=mdname)
         self.context.proctab.update_proctab(frame=stacked, suffix=suffix,
                                             newtype=args.new_type)
+        self.context.proctab.write_proctab()
         return Arguments(name=mdname)
     # END: class stack_darks()
 
