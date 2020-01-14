@@ -131,7 +131,8 @@ class Proctab():
                                               self.frame.header['TTIME']))
                 tab = tab[tab['DID'] == int(self.frame.header['CCDCFG'])]
                 tab = tab[tab['TTIME'] == float(self.frame.header['TTIME'])]
-                tab = tab[tab['GRPID'] == target_group]
+                if target_group is not None:
+                    tab = tab[tab['GRPID'] == target_group]
             # MDARKS must have the same CCDCFG, will be scaled to match TTIME
             elif target_type == 'MDARK':
                 self.log.info('Looking for frames with CCDCFG = %s' %
