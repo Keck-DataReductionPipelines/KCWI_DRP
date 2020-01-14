@@ -430,7 +430,8 @@ class ingest_file(BasePrimitive):
         # SHUFROWS
         out_args.shufrows = self.shufrows()
         # BINNING
-        out_args.xbinsize, out_args.ybinsize = map(int, self.get_keyword('BINNING').split(','))
+        out_args.xbinsize, out_args.ybinsize = \
+            map(int, self.get_keyword('BINNING').split(','))
         # IFUNUM
         out_args.ifunum = int(self.get_keyword('IFUNUM'))
         # IFUNAM
@@ -445,9 +446,10 @@ class ingest_file(BasePrimitive):
         # for arg in str(out_args).split(','):
         #    print(arg)
 
-        self.context.proctab.update_proctab(frame=out_args.ccddata,
-                                            suffix='RAW')
-        self.context.proctab.write_proctab()
+        if 'BIAS' in imtype:
+            self.context.proctab.update_proctab(frame=out_args.ccddata,
+                                                suffix='RAW')
+            self.context.proctab.write_proctab()
 
         return out_args
 
@@ -480,6 +482,13 @@ def kcwi_fits_reader(file):
         table = hdul[1]
         # 3- prepare for floating point
         ccddata.data = ccddata.data.astype(np.float64)
+        # 4- Check for CCDCFG keyword
+        if 'CCDCFG' not in ccddata.header:
+            ccdcfg = ccddata.header['CCDSUM'].replace(" ", "")
+            ccdcfg += "%1d" % ccddata.header['CCDMODE']
+            ccdcfg += "%02d" % ccddata.header['GAINMUL']
+            ccdcfg += "%02d" % ccddata.header['AMPMNUM']
+            ccddata.header['CCDCFG'] = ccdcfg
     elif len(hdul) == 3:
         # pure ccd data
         ccddata = CCDData(hdul['PRIMARY'], meta=hdul['PRIMARY'].header,
