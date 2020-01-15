@@ -426,7 +426,7 @@ class ingest_file(BasePrimitive):
         # NAMPS
         out_args.namps = int(self.get_keyword('NVIDINP'))
         # NASMASK
-        out_args.nasmak = self.nasmask()
+        out_args.nasmask = self.nasmask()
         # SHUFROWS
         out_args.shufrows = self.shufrows()
         # BINNING
