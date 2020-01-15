@@ -133,6 +133,9 @@ class Kcwi_pipeline(BasePipeline):
                                       "object_subtract_dark"),
         "object_subtract_dark":      ("subtract_dark",
                                       "subtract_dark started",
+                                      "object_subtract_scat"),
+        "object_subtract_scat":      ("subtract_scattered_light",
+                                      "scat_subtract_started",
                                       None),
         "next_file_stop":            ("ingest_file", "file_ingested", None)
         # "save_png": ("save_png", None, None)

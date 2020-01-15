@@ -11,7 +11,8 @@ import os
 
 import matplotlib.pyplot as pl
 import numpy as np
-from bokeh.plotting import figure
+import scipy as sp
+from bokeh.plotting import figure, show
 from bokeh.models import Range1d
 from bokeh.models.markers import X
 from bokeh.io import curdoc
@@ -437,8 +438,6 @@ class subtract_bias(BasePrimitive):
 
 class subtract_dark(BasePrimitive):
 
-    # TODO: add matching of dark config and scaling by exposure time
-
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
 
@@ -485,13 +484,14 @@ class subtract_dark(BasePrimitive):
         logstr = self.__module__ + "." + self.__class__.__name__
         self.action.args.ccddata.header['HISTORY'] = logstr
 
+        # Below now done in subtract_scattered_light()
         # write out int image
-        kcwi_fits_writer(self.action.args.ccddata,
-                         table=self.action.args.table,
-                         output_file=self.action.args.name, suffix="intd")
-        self.context.proctab.update_proctab(frame=self.action.args.ccddata,
-                                            suffix="intd")
-        self.context.proctab.write_proctab()
+        # kcwi_fits_writer(self.action.args.ccddata,
+        #                 table=self.action.args.table,
+        #                 output_file=self.action.args.name, suffix="intd")
+        # self.context.proctab.update_proctab(frame=self.action.args.ccddata,
+        #                                    suffix="intd")
+        # self.context.proctab.write_proctab()
 
         return self.action.args
     # END: class subtract_dark()
@@ -680,6 +680,87 @@ class stack_darks(BaseImg):
         self.context.proctab.write_proctab()
         return Arguments(name=mdname)
     # END: class stack_darks()
+
+
+class subtract_scattered_light(BasePrimitive):
+
+    def __init__(self, action, context):
+        BasePrimitive.__init__(self, action, context)
+
+    def _perform(self):
+
+        # Header keyword to update
+        key = 'SCATSUB'
+        keycom = "was scattered light subtracted?"
+
+        # Skip if nod-and-shuffle
+        if self.action.args.nasmask:
+            self.logger.info("NAS Mask: skipping scattered light subtraction")
+            self.action.args.ccddata.header[key] = (False, keycom)
+        elif self.context.config.instrument.skipscat:
+            self.logger.info("Skipping scattered light subtraction by request")
+            self.action.args.ccddata.header[key] = (False, keycom)
+        else:
+            # Get size of image
+            siz = self.action.args.ccddata.data.shape
+            # Get x range for scattered light
+            x0 = int(siz[1] / 2 - 180 / self.action.args.xbinsize)
+            x1 = int(siz[1] / 2 + 180 / self.action.args.xbinsize)
+            # Get y limits
+            y0 = 0
+            # y1 = int(siz[0] / 2 - 1)
+            # y2 = y1 + 1
+            y3 = siz[0]
+            # print("x limits: %d, %d, y limits: %d, %d" % (x0, x1, y0, y3))
+            # Y data values
+            yvals = np.nanmedian(self.action.args.ccddata.data[y0:y3, x0:x1],
+                                 axis=1)
+            # X data values
+            xvals = np.arange(len(yvals), dtype=np.float)
+            # Break points
+            nbkpt = int(siz[1] / 40.)
+            bkpt = xvals[nbkpt:-nbkpt:nbkpt]
+            # B-spline fit
+            bspl = sp.interpolate.LSQUnivariateSpline(xvals, yvals, bkpt)
+            if self.context.config.plot_level >= 1:
+                # plot
+                p = figure(title=self.action.args.plotlabel +
+                           " Scattered Light",
+                           x_axis_label='y pixel', y_axis_label='e-',
+                           plot_width=self.config.instrument.plot_width,
+                           plot_height=self.config.instrument.plot_height)
+                p.circle(xvals, yvals, fill_color='red', line_color='red',
+                         legend="Scat")
+                xx = np.linspace(0, max(xvals), len(yvals) * 5)
+                p.line(xx, bspl(xx), line_color='blue', line_width=3,
+                       legend="fit")
+                show(p)
+                # bokeh_plot(p)
+                if self.context.config.plot_level >= 2:
+                    input("Next? <cr>: ")
+                else:
+                    time.sleep(self.context.config.instrument.plot_pause)
+            # Scattered light vector
+            scat = bspl(xvals)
+            # Subtract scattered light
+            self.logger.info("Starting scattered light subtraction")
+            for ix in range(0, siz[1]):
+                self.action.args.ccddata.data[y0:y3, ix] = \
+                    self.action.args.ccddata.data[y0:y3, ix] - scat
+            self.action.args.ccddata.header[key] = (True, keycom)
+
+        logstr = self.__module__ + "." + self.__class__.__name__
+        self.action.args.ccddata.header['HISTORY'] = logstr
+
+        # write out int image
+        kcwi_fits_writer(self.action.args.ccddata,
+                         table=self.action.args.table,
+                         output_file=self.action.args.name, suffix="intd")
+        self.context.proctab.update_proctab(frame=self.action.args.ccddata,
+                                            suffix="intd")
+        self.context.proctab.write_proctab()
+
+        return self.action.args
 
 
 class process_dark(BasePrimitive):
