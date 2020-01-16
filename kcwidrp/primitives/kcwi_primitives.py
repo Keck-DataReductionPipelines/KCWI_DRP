@@ -533,14 +533,18 @@ class process_bias(BaseImg):
         Checks if we can build a stacked frame based on the processing table
         :return:
         """
-        # get current group id
+        # Add to proctab
+        self.context.proctab.update_proctab(frame=self.action.args.ccddata,
+                                            suffix='RAW')
+        self.context.proctab.write_proctab()
+        # Get bias count
         self.logger.info("Checking precondition for process_bias")
         self.combine_list = self.context.proctab.n_proctab(
             frame=self.action.args.ccddata, target_type='BIAS',
             target_group=self.action.args.groupid)
         self.logger.info(f"pre condition got {len(self.combine_list)},"
                          f" expecting {self.action.args.min_files}")
-        # create master bias
+        # Did we meet our pre-condition?
         if len(self.combine_list) >= self.action.args.min_files:
             return True
         else:
