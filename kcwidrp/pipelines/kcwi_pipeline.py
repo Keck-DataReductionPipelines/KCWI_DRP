@@ -20,8 +20,9 @@ class Kcwi_pipeline(BasePipeline):
 
     event_table = {
         "start_bokeh":               ("start_bokeh", None, None),
+        # For every file do this
         "next_file":                 ("ingest_file",
-                                      "file_ingested",
+                                      "ingest_file_started",
                                       "file_ingested"),
         "file_ingested":             ("action_planner", None, None),
         # BIAS PROCESSING
@@ -153,9 +154,13 @@ class Kcwi_pipeline(BasePipeline):
     def action_planner(self, action, context):
         self.logger.info("******* FILE TYPE DETERMINED AS %s" %
                          action.args.imtype)
+
         groupid = action.args.groupid
         self.logger.info("******* GROUPID is %s " % action.args.groupid)
-        if action.args.imtype == "BIAS":
+        if action.args.in_proctab:
+            self.logger.warn("Already processed")
+            context.push_event("noop", action.args)
+        elif action.args.imtype == "BIAS":
             bias_args = action.args
             bias_args.groupid = groupid
             bias_args.want_type = "BIAS"

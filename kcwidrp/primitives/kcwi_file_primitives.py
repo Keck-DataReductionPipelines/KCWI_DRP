@@ -442,14 +442,9 @@ class ingest_file(BasePrimitive):
         out_args.illum = self.illum()
         # MAPCCD
         out_args.map_ccd = self.map_ccd()
-
-        # for arg in str(out_args).split(','):
-        #    print(arg)
-
-        if 'BIAS' in imtype:
-            self.context.proctab.update_proctab(frame=out_args.ccddata,
-                                                suffix='RAW')
-            self.context.proctab.write_proctab()
+        # Are we already in proctab?
+        out_args.in_proctab = self.context.proctab.in_proctab(
+            frame=out_args.ccddata)
 
         return out_args
 
