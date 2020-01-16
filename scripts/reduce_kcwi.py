@@ -26,15 +26,15 @@ def _parseArguments(in_args):
     # this is a simple case where we provide a frame and a configuration file
     parser = argparse.ArgumentParser(prog=f"{in_args[0]}",
                                      description=description)
-    parser.add_argument('-c', dest="config_file", type=str,
+    parser.add_argument('-c', '--config', dest="config_file", type=str,
                         help="Configuration file", default='config.cfg')
-    parser.add_argument('-frames', nargs='*', type=str,
+    parser.add_argument('-f', '--frames', nargs='*', type=str,
                         help='input image files (full path, list ok)',
                         default=None)
 
     # in this case, we are loading an entire directory,
     # and ingesting all the files in that directory
-    parser.add_argument('-infiles', dest="infiles", help="Input files",
+    parser.add_argument('-i', '--infiles', dest="infiles", help="Input files",
                         nargs="*")
     parser.add_argument('-d', '--directory', dest="dirname", type=str,
                         help="Input directory", nargs='?', default=None)
@@ -46,7 +46,7 @@ def _parseArguments(in_args):
                         action='store_true', default=False)
 
     # special arguments, ignore
-    parser.add_argument("-i", "--ingest_data_only", dest="ingest_data_only",
+    parser.add_argument("-I", "--ingest_data_only", dest="ingest_data_only",
                         action="store_true",
                         help="Ingest data and terminate")
     parser.add_argument("-w", "--wait_for_event", dest="wait_for_event",
@@ -54,16 +54,12 @@ def _parseArguments(in_args):
     parser.add_argument("-W", "--continue", dest="continuous",
                         action="store_true",
                         help="Continue processing, wait for ever")
-    parser.add_argument(
-        "-s",
-        "--start_queue_manager_only",
-        dest="queue_manager_only",
-        action="store_true",
-        help="Starts queue manager only, no processing",
-    )
+    parser.add_argument("-s", "--start_queue_manager_only",
+                        dest="queue_manager_only", action="store_true",
+                        help="Starts queue manager only, no processing",)
 
     # kcwi specific parameter
-    parser.add_argument('-proctab', dest='proctab', help='Proctab file',
+    parser.add_argument("-p", "--proctab", dest='proctab', help='Proctab file',
                         default='kcwi.proc')
 
     args = parser.parse_args(in_args[1:])
