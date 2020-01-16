@@ -103,7 +103,7 @@ class Proctab:
             new_row = None
         # print("Attempting to add %s" % str(new_row))
         self.proctab.add_row(new_row)
-        self.proctab = unique(self.proctab, keys=['CID', 'FRAMENO', 'STAGE'],
+        self.proctab = unique(self.proctab, keys=['CID', 'FRAMENO', 'TYPE'],
                               keep='last')
         self.proctab.sort('FRAMENO')
 
