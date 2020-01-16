@@ -101,9 +101,56 @@ class Kcwi_pipeline(BasePipeline):
                                       "arcs_fit_center"),
         "arcs_fit_center":           ("fit_center",
                                       "fit_center_started",
+                                      "arcs_get_atlas_lines"),
+        "arcs_get_atlas_lines":      ("get_atlas_lines",
+                                      "getting_atlas_lines_started",
+                                      "atlas_solve_arcs"),
+        "arcs_solve_arcs":           ("solve_arcs",
+                                      "solving_arcs_started",
+                                      "arcs_solve_geom"),
+        "arcs_solve_geom":           ("solve_geom",
+                                      "solving_geom_started",
+                                      "arcs_generate_maps"),
+        "arcs_generate_maps":        ("generate_maps",
+                                      "generating_maps_started",
                                       None),
         # FLAT PROCESSING
-        "process_flat":              ("process_flat", None, None),
+        "process_flat":              ("process_flat",
+                                      "flat_processing_started",
+                                      "flat_subtract_bias"),
+        "flat_subtract_bias":        ("subtract_bias",
+                                      "subtract_bias started",
+                                      "flat_subtract_overscan"),
+        "flat_subtract_overscan":    ("subtract_overscan",
+                                      "subtract_overscan_started",
+                                      "flat_trim_overscan"),
+        "flat_trim_overscan":        ("trim_overscan",
+                                      "trim_overscan_started",
+                                      "flat_correct_gain"),
+        "flat_correct_gain":         ("correct_gain",
+                                      "gain_correction_started",
+                                      "flat_remove_badcols"),
+        "flat_remove_badcols":       ("remove_badcols",
+                                      "badcol_removal_started",
+                                      "flat_remove_crs"),
+        "flat_remove_crs":           ("remove_crs",
+                                      "remove_crs_started",
+                                      "flat_create_unc"),
+        "flat_create_unc":           ("create_unc",
+                                      "create_unc_started",
+                                      "flat_rectify_image"),
+        "flat_rectify_image":        ("rectify_image",
+                                      "rectification_started",
+                                      "flat_subtract_dark"),
+        "flat_subtract_dark":        ("subtract_dark",
+                                      "subtract_dark started",
+                                      "flat_subtract_scat"),
+        "flat_subtract_scat":        ("subtract_scattered_light",
+                                      "scat_subtract_started",
+                                      "flat_stack_flats"),
+        "flat_stack_flats":          ("stack_flats",
+                                      "stacking_flats_started",
+                                      None),
         # OBJECT PROCESSING
         "process_object":            ("process_object",
                                       "object_processing_started",
@@ -137,9 +184,17 @@ class Kcwi_pipeline(BasePipeline):
                                       "object_subtract_scat"),
         "object_subtract_scat":      ("subtract_scattered_light",
                                       "scat_subtract_started",
+                                      "object_make_cube"),
+        "object_make_cube":          ("make_cube",
+                                      "making_cube_started",
+                                      "object_correct_dar"),
+        "object_correct_dar":        ("correct_dar",
+                                      "correcting_dar_started",
+                                      "object_flux_calibrate"),
+        "object_flux_calibrate":     ("flux_calibrate",
+                                      "flux_calibration_started",
                                       None),
         "next_file_stop":            ("ingest_file", "file_ingested", None)
-        # "save_png": ("save_png", None, None)
     }
 
     # event_table = kcwi_event_table
@@ -181,8 +236,15 @@ class Kcwi_pipeline(BasePipeline):
             context.push_event("process_dark", dark_args)
         elif "CONTBARS" in action.args.imtype:
             context.push_event("process_contbars", action.args)
-        elif "FLAT" in action.args.imtype:
-            context.push_event("process_flat", action.args)
+        elif "FLATLAMP" in action.args.imtype:
+            flat_args = action.args
+            flat_args.groupid = groupid
+            flat_args.want_type = "FLATLAMP"
+            flat_args.new_type = "FLAT"
+            flat_args.min_files = context.config.instrument.flat_min_nframes
+            flat_args.new_file_name = "master_flat_%s.fits" % groupid
+            flat_args.in_directory = "redux"
+            context.push_event("process_flat", flat_args)
         elif "ARCLAMP" in action.args.imtype:
             context.push_event("process_arc", action.args)
         elif "OBJECT" in action.args.imtype:

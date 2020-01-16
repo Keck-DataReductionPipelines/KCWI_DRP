@@ -607,39 +607,13 @@ class stack_darks(BaseImg):
     def __init__(self, action, context):
         BaseImg.__init__(self, action, context)
 
-    def hello(self):
-        """
-        Checks if we can build a stacked dark frame
-        Expected arguments:
-            want_type: ie. DARK
-            min_files: ie 3
-            new_type: ie MASTER_DARK
-            new_file_name: master_dark.fits
-
-        """
-        try:
-            args = self.action.args
-            df = self.context.data_set.data_table
-            files = df[(df.IMTYPE == args.want_type) &
-                       (df.GROUPID == args.groupid)]
-            nfiles = len(files)
-
-            self.logger.info(f"pre condition got {nfiles},"
-                             f" expecting {args.min_files}")
-            if nfiles < 1 or nfiles < args.min_files:
-                return False
-            return True
-        except Exception as e:
-            self.logger.error(f"Exception in base_ccd_primitive: {e}")
-            return False
-
     def _pre_condition(self):
         """
         Checks if we can build a stacked frame based on the processing table
         :return:
         """
         # get current group id
-        self.logger.info("Checking precondition for process_dark")
+        self.logger.info("Checking precondition for stack_darks")
         self.combine_list = self.context.proctab.n_proctab(
             frame=self.action.args.ccddata, target_type='DARK',
             target_group=self.action.args.groupid)
@@ -765,6 +739,64 @@ class subtract_scattered_light(BasePrimitive):
         self.context.proctab.write_proctab()
 
         return self.action.args
+
+
+class stack_flats(BaseImg):
+
+    def __init__(self, action, context):
+        BaseImg.__init__(self, action, context)
+
+    def _pre_condition(self):
+        """
+        Checks if we can build a stacked frame based on the processing table
+        :return:
+        """
+        # get current group id
+        self.logger.info("Checking precondition for stack_flats")
+        self.combine_list = self.context.proctab.n_proctab(
+            frame=self.action.args.ccddata, target_type='FLATLAMP',
+            target_group=self.action.args.groupid)
+        self.logger.info(f"pre condition got {len(self.combine_list)},"
+                         f" expecting {self.action.args.min_files}")
+        # create master flat
+        if len(self.combine_list) >= self.action.args.min_files:
+            return True
+        else:
+            return False
+
+    def _perform(self):
+        """
+        Returns an Argument() with the parameters that depends on this operation
+        """
+        args = self.action.args
+        method = 'average'
+        suffix = 'master_flat'
+
+        combine_list = list(self.combine_list['OFNAME'])
+        # get master dark output name
+        mdname = combine_list[0].split('.fits')[0] + '_master_flat.fits'
+        stack = []
+        for flat in combine_list:
+            # get dark intensity (int) image file name in redux directory
+            flatfn = os.path.join(args.in_directory,
+                                  flat.split('.fits')[0] + '_intd.fits')
+            # using [0] gets just the image data
+            stack.append(kcwi_fits_reader(flatfn)[0])
+
+        stacked = ccdproc.combine(stack, method=method, sigma_clip=True,
+                                  sigma_clip_low_thresh=None,
+                                  sigma_clip_high_thresh=2.0)
+        stacked.header.IMTYPE = args.new_type
+        stacked.header['NSTACK'] = (len(combine_list),
+                                    'number of images stacked')
+        stacked.header['STCKMETH'] = (method, 'method used for stacking')
+
+        kcwi_fits_writer(stacked, output_file=mdname)
+        self.context.proctab.update_proctab(frame=stacked, suffix=suffix,
+                                            newtype=args.new_type)
+        self.context.proctab.write_proctab()
+        return Arguments(name=mdname)
+    # END: class stack_flats()
 
 
 class process_dark(BasePrimitive):
@@ -1737,3 +1769,115 @@ class fit_center(BasePrimitive):
         # print(self.action.args.centcoeff)
         return self.action.args
     # END: class fit_center()
+
+
+class get_atlas_lines(BasePrimitive):
+
+    def __init__(self, action, context):
+        BasePrimitive.__init__(self, action, context)
+
+    def _perform(self):
+        self.logger.info("Finding isolated atlas lines (not yet implemented)")
+        return self.action.args
+    # END: class get_atlas_lines()
+
+
+class solve_arcs(BasePrimitive):
+
+    def __init__(self, action, context):
+        self.logger.info("Solving individual arc spectra (not yet implemented)")
+        BasePrimitive.__init__(self, action, context)
+
+    def _perform(self):
+        return self.action.args
+    # END: class solve_arcs()
+
+
+class solve_geom(BasePrimitive):
+
+    def __init__(self, action, context):
+        BasePrimitive.__init__(self, action, context)
+
+    def _perform(self):
+        self.logger.info("Solving overall geometry (not yet implemented)")
+        return self.action.args
+    # END: class solve_geom()
+
+
+class generate_maps(BasePrimitive):
+
+    def __init__(self, action, context):
+        BasePrimitive.__init__(self, action, context)
+
+    def _perform(self):
+        self.logger.info("Generating geometry maps (not yet implemented)")
+        return self.action.args
+    # END: class generate_maps()
+
+
+class apply_flat(BasePrimitive):
+
+    def __init__(self, action, context):
+        BasePrimitive.__init__(self, action, context)
+
+    def _perform(self):
+        self.logger.info("Applying flat field (not yet implemented)")
+        return self.action.args
+    # END: class apply_flat()
+
+
+class subtract_sky(BasePrimitive):
+
+    def __init__(self, action, context):
+        BasePrimitive.__init__(self, action, context)
+
+    def _perform(self):
+        self.logger.info("Subtracting sky background (not yet implemented)")
+        return self.action.args
+    # END: class subtract_sky()
+
+
+class make_cube(BasePrimitive):
+
+    def __init__(self, action, context):
+        BasePrimitive.__init__(self, action, context)
+
+    def _perform(self):
+        self.logger.info("Creating data cube (not yet implemented)")
+        return self.action.args
+    # END: class make_cube()
+
+
+class correct_dar(BasePrimitive):
+
+    def __init__(self, action, context):
+        BasePrimitive.__init__(self, action, context)
+
+    def _perform(self):
+        self.logger.info("Correcting for DAR (not yet implemented)")
+        return self.action.args
+    # END: class correct_dar()
+
+
+class flux_calibrate(BasePrimitive):
+
+    def __init__(self, action, context):
+        BasePrimitive.__init__(self, action, context)
+
+    def _perform(self):
+        self.logger.info("Calibrating object flux (not yet implemented)")
+        return self.action.args
+    # END: class flux_calibrate()
+
+
+class make_invsens(BasePrimitive):
+
+    def __init__(self, action, context):
+        BasePrimitive.__init__(self, action, context)
+
+    def _perform(self):
+        self.logger.info("Making inverse sensitivity curve "
+                         "(not yet implemented)")
+        return self.action.args
+    # END: class make_invsens()
+
