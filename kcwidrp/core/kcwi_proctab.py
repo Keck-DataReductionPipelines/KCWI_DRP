@@ -2,7 +2,7 @@ from astropy.table import Table, unique
 import os
 
 
-class Proctab():
+class Proctab:
 
     def __init__(self, logger):
         self.log = logger
@@ -160,7 +160,8 @@ class Proctab():
             tab = None
         return tab
 
-    def in_proctab(self):
+    def in_proctab(self, frame):
+        self.frame = frame
         # get relevant camera (blue or red)
         tab = self.proctab[(self.proctab['CAM'] ==
                             self.frame.header['CAMERA'].strip())]
