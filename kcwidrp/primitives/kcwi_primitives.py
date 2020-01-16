@@ -148,12 +148,13 @@ class subtract_overscan(BasePrimitive):
 
                 if self.context.config.plot_level >= 1:
                     x = np.arange(len(osvec))
-                    p = figure(title='Overscan amp %d' % (ia+1),
+                    p = figure(title=self.action.args.plotlabel +
+                               ', Overscan amp %d' % (ia+1),
                                x_axis_label='x', y_axis_label='counts',
                                plot_width=self.config.instrument.plot_width,
                                plot_height=self.config.instrument.plot_height)
                     p.line(x, osvec)
-                    p.line(x, osfit)
+                    p.line(x, osfit, line_color='red', line_width=3)
                     bokeh_plot(p)
                     if self.context.config.plot_level >= 2:
                         input("Next? <cr>: ")
@@ -264,8 +265,7 @@ class correct_gain(BasePrimitive):
                                           sec[2]:(sec[3]+1)] *= gain
 
         self.action.args.ccddata.header[key] = (True, keycom)
-        self.action.args.ccddata.header['BUNIT'] = ('electron',
-                                                    'Units set to electrons')
+        self.action.args.ccddata.header['BUNIT'] = ('electron', 'Pixel units')
         self.action.args.ccddata.unit = 'electron'
 
         logstr = self.__module__ + "." + self.__class__.__name__
@@ -562,7 +562,9 @@ class process_bias(BaseImg):
         # get master bias output name
         mbname = combine_list[0].split('.fits')[0] + '_master_bias.fits'
         stack = []
+        stackf = []
         for bias in combine_list:
+            stackf.append(bias)
             # using [0] drops the table
             stack.append(kcwi_fits_reader(bias)[0])
 
@@ -573,6 +575,8 @@ class process_bias(BaseImg):
         stacked.header['NSTACK'] = (len(combine_list),
                                     'number of images stacked')
         stacked.header['STCKMETH'] = (method, 'method used for stacking')
+        for ii, fname in enumerate(stackf):
+            stacked.header['STACKF%d' % (ii + 1)] = (fname, "stack input file")
 
         # for readnoise stats use 2nd and 3rd bias
         diff = stack[1].data.astype(np.float64) - \
@@ -593,6 +597,9 @@ class process_bias(BaseImg):
                              ((ia + 1), bias_rn))
             stacked.header['BIASRN%d' % (ia + 1)] = \
                 (float("%.3f" % bias_rn), "RN in e- from bias")
+
+        logstr = self.__module__ + "." + self.__class__.__name__
+        stacked.header['HISTORY'] = logstr
 
         kcwi_fits_writer(stacked, output_file=mbname)
         self.context.proctab.update_proctab(frame=stacked, suffix=suffix,
@@ -637,20 +644,27 @@ class stack_darks(BaseImg):
         # get master dark output name
         mdname = combine_list[0].split('.fits')[0] + '_master_dark.fits'
         stack = []
+        stackf = []
         for dark in combine_list:
             # get dark intensity (int) image file name in redux directory
-            darkfn = os.path.join(args.in_directory,
-                                  dark.split('.fits')[0] + '_int.fits')
+            stackf.append(dark.split('.fits')[0] + '_int.fits')
+            darkfn = os.path.join(args.in_directory, stackf[-1])
             # using [0] gets just the image data
             stack.append(kcwi_fits_reader(darkfn)[0])
 
         stacked = ccdproc.combine(stack, method=method, sigma_clip=True,
                                   sigma_clip_low_thresh=None,
                                   sigma_clip_high_thresh=2.0)
+        stacked.unit = stack[0].unit
         stacked.header.IMTYPE = args.new_type
         stacked.header['NSTACK'] = (len(combine_list),
                                     'number of images stacked')
         stacked.header['STCKMETH'] = (method, 'method used for stacking')
+        for ii, fname in enumerate(stackf):
+            stacked.header['STACKF%d' % (ii + 1)] = (fname, "stack input file")
+
+        logstr = self.__module__ + "." + self.__class__.__name__
+        stacked.header['HISTORY'] = logstr
 
         kcwi_fits_writer(stacked, output_file=mdname)
         self.context.proctab.update_proctab(frame=stacked, suffix=suffix,
@@ -703,17 +717,14 @@ class subtract_scattered_light(BasePrimitive):
             if self.context.config.plot_level >= 1:
                 # plot
                 p = figure(title=self.action.args.plotlabel +
-                           " Scattered Light",
+                           ", Scattered Light",
                            x_axis_label='y pixel', y_axis_label='e-',
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height)
-                p.circle(xvals, yvals, fill_color='red', line_color='red',
-                         legend="Scat")
+                p.circle(xvals, yvals, color='red', legend="Scat")
                 xx = np.linspace(0, max(xvals), len(yvals) * 5)
-                p.line(xx, bspl(xx), line_color='blue', line_width=3,
-                       legend="fit")
-                show(p)
-                # bokeh_plot(p)
+                p.line(xx, bspl(xx), color='blue', line_width=3, legend="fit")
+                bokeh_plot(p)
                 if self.context.config.plot_level >= 2:
                     input("Next? <cr>: ")
                 else:
@@ -770,26 +781,33 @@ class stack_flats(BaseImg):
         """
         args = self.action.args
         method = 'average'
-        suffix = 'master_flat'
+        suffix = 'flat_stack'
 
         combine_list = list(self.combine_list['OFNAME'])
         # get master dark output name
-        mdname = combine_list[0].split('.fits')[0] + '_master_flat.fits'
+        mdname = combine_list[0].split('.fits')[0] + '_flat_stack.fits'
         stack = []
+        stackf = []
         for flat in combine_list:
             # get dark intensity (int) image file name in redux directory
-            flatfn = os.path.join(args.in_directory,
-                                  flat.split('.fits')[0] + '_intd.fits')
+            stackf.append(flat.split('.fits')[0] + '_intd.fits')
+            flatfn = os.path.join(args.in_directory, stackf[-1])
             # using [0] gets just the image data
             stack.append(kcwi_fits_reader(flatfn)[0])
 
         stacked = ccdproc.combine(stack, method=method, sigma_clip=True,
                                   sigma_clip_low_thresh=None,
                                   sigma_clip_high_thresh=2.0)
+        stacked.unit = stack[0].unit
         stacked.header.IMTYPE = args.new_type
         stacked.header['NSTACK'] = (len(combine_list),
                                     'number of images stacked')
         stacked.header['STCKMETH'] = (method, 'method used for stacking')
+        for ii, fname in enumerate(stackf):
+            stacked.header['STACKF%d' % (ii + 1)] = (fname, "stack input file")
+
+        logstr = self.__module__ + "." + self.__class__.__name__
+        stacked.header['HISTORY'] = logstr
 
         kcwi_fits_writer(stacked, output_file=mdname)
         self.context.proctab.update_proctab(frame=stacked, suffix=suffix,
@@ -885,9 +903,8 @@ class find_bars(BasePrimitive):
                 # plot the peak positions
                 x = np.arange(len(midvec))
                 # pl.plot(midvec, '-')
-                p = figure(title="Img %d, Thresh = %.2f" %
-                                 (self.action.args.ccddata.header['FRAMENO'],
-                                  midavg),
+                p = figure(title=self.action.args.plotlabel +
+                           ", Thresh = %.2f" % midavg,
                            x_axis_label='CCD X (px)', y_axis_label='e-',
                            plot_width=self.context.config.instrument.plot_width,
                            plot_height=self.context.config.instrument.plot_height)
@@ -911,14 +928,11 @@ class find_bars(BasePrimitive):
                 plotting_vector_y.append(midvec[peak])
                 plotting_vector_x.append(xc)
                 plotting_vector_y.append(midavg)
-
-                # p=figure()
             if do_plot:
                 p.line(plotting_vector_x, plotting_vector_y, color='grey')
                 # p.line([xc, xc], [midavg, midvec[peak]], color='grey')
 
             if do_plot:
-                # p = figure()
                 p.scatter(midcntr, midvec[midpeaks], marker='x', color='green')
                 bokeh_plot(p)
                 if self.context.config.plot_level >= 2:
@@ -1031,17 +1045,13 @@ class trace_bars(BasePrimitive):
             if do_plot:
                 # plot them
                 # pl.ioff()
-                p = figure(title="Img %d" %
-                                 self.action.args.ccddata.header['FRAMENO'],
+                p = figure(title=self.action.args.plotlabel,
                            x_axis_label="CCD X (px)", y_axis_label="CCD Y (px)",
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height)
                 p.scatter(xi, yi, marker='x', size=2, color='blue')
-                # pl.plot(xi, yi, 'x', ms=0.5)
                 p.scatter(self.action.args.midcntr,
                           [self.action.args.midrow]*120, color='red')
-                # pl.plot(self.action.args.midcntr,
-                # [self.action.args.midrow]*120, 'x', color='red')
                 bokeh_plot(p)
                 if self.context.config.plot_level >= 2:
                     input("next: ")
@@ -1194,20 +1204,15 @@ class arc_offsets(BasePrimitive):
                                  (na, int(na/5), offset))
                 # display if requested
                 if do_plot:
-                    p = figure(title="Arc %d Slice %d XCorr, Shift = %d" %
-                                     (na, int(na/5), offset),
+                    p = figure(title=self.action.args.plotlabel +
+                               ", Arc %d Slice %d XCorr, Shift = %d" %
+                               (na, int(na/5), offset),
                                x_axis_label="CCD y (px)", y_axis_label="e-",
                                plot_width=self.config.instrument.plot_width,
                                plot_height=self.config.instrument.plot_height)
                     x = range(len(refarc))
                     p.line(x, refarc, color='green')
                     p.line(x, np.roll(arc, offset), color='red')
-                    # pl.ylim(bottom=0.)
-                    # pl.xlabel("CCD y (px)")
-                    # pl.ylabel("e-")
-                    # pl.title("Arc %d Slice %d XCorr, Shift = %d" %
-                    #         (na, int(na/5), offset))
-                    # pl.show()
                     bokeh_plot(p)
                     q = input("<cr> - Next, q to quit: ")
                     if 'Q' in q.upper():
@@ -1328,14 +1333,9 @@ class read_atlas(BasePrimitive):
         self.logger.info("Initial arc-atlas offset (px, Ang): %d, %.1f" %
                          (offset_pix, offset_wav))
         if self.context.config.plot_level >= 1:
-            # if self.frame.inter() >= 2:
-            #    pl.ion()
-            # else:
-            #    pl.ioff()
             # Plot
-            p = figure(title="Img # %d (%s), Offset = %d px" %
-                             (self.action.args.ccddata.header['FRAMENO'], lamp,
-                              offset_pix),
+            p = figure(title=self.action.args.plotlabel +
+                       ", (%s), Offset = %d px" % (lamp, offset_pix),
                        x_axis_label="Offset(px)", y_axis_label="X-corr",
                        plot_width=self.context.config.instrument.plot_width,
                        plot_height=self.context.config.instrument.plot_height)
@@ -1343,7 +1343,6 @@ class read_atlas(BasePrimitive):
             p.line(offar_central, xcorr_central)
             ylim_min = min(xcorr_central)
             ylim_max = max(xcorr_central)
-            # ylim = pl.gca().get_ylim()
             p.line([offset_pix, offset_pix], [ylim_min, ylim_max],
                    color='green')
             bokeh_plot(p)
@@ -1357,9 +1356,10 @@ class read_atlas(BasePrimitive):
             q = 'test'
             while q:
                 # Plot the two spectra
-                p = figure(title="Img # %d (%s), Offset = %.1f Ang (%d px)" %
-                                 (self.action.args.ccddata.header['FRAMENO'],
-                                  lamp, offset_wav, offset_pix),
+                p = figure(title=self.action.args.plotlabel +
+                           ", (%s), Offset = %.1f Ang (%d px)" % (lamp,
+                                                                  offset_wav,
+                                                                  offset_pix),
                            x_axis_label="Wave(A)", y_axis_label="Rel. Flux",
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height)
@@ -1374,7 +1374,6 @@ class read_atlas(BasePrimitive):
                                     np.nanmax(obswav[minow:maxow]))
                 ylim_min = min(obsarc[minow:maxow]/np.nanmax(obsarc[minow:maxow]))
                 ylim_max = max(obsarc[minow:maxow]/np.nanmax(obsarc[minow:maxow]))
-                # ylim = pl.gca().get_ylim()
                 p.line([cwave, cwave], [ylim_min, ylim_max], color="green",
                        legend="CWAVE")
                 bokeh_plot(p)
@@ -1737,7 +1736,7 @@ class fit_center(BasePrimitive):
 
         if self.context.config.plot_level >= 1:
             # Plot results
-            p = figure(title=imlab, x_axis_label="Bar #",
+            p = figure(title=self.action.args.plotlabel, x_axis_label="Bar #",
                        y_axis_label="Central Wavelength (A)")
             x = range(len(centwave))
             p.scatter(x, centwave, marker='x')
@@ -1751,7 +1750,7 @@ class fit_center(BasePrimitive):
                 input("Next? <cr>: ")
             else:
                 time.sleep(self.context.config.instrument.plot_pause)
-            p = figure(title=imlab, x_axis_label="Bar #",
+            p = figure(title=self.action.args.plotlabel, x_axis_label="Bar #",
                        y_axis_label="Central Dispersion (A)")
             x = range(len(centdisp))
             p.scatter(x, centdisp, marker='x')
