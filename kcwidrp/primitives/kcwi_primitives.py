@@ -30,6 +30,8 @@ import time
 from multiprocessing import Pool
 import pkg_resources
 
+import pandas as pd
+
 
 def pascal_shift(coef=None, x0=None):
     """Shift coefficients to a new reference value (X0)
@@ -287,19 +289,60 @@ class correct_defects(BasePrimitive):
     def _perform(self):
         self.logger.info("Correcting detector defects (not yet implemented)")
 
+        # Header keyword to update
+        key = 'BPCLEAN'
+        keycom = 'cleaned bad pixels?'
+
         # Does the defect file exist?
         path = "data/defect_%s_%dx%d.dat" % (self.action.args.ampmode.strip(),
                                              self.action.args.xbinsize,
                                              self.action.args.ybinsize)
         pkg = __name__.split('.')[0]
         defpath = pkg_resources.resource_filename(pkg, path)
+        nbpix = 0   # count of defective pixels cleaned
         if os.path.exists(defpath):
             self.logger.info("Reading defect list in: %s" % defpath)
+            deftab = pd.read_csv(defpath, sep='\s+')
+            bcdel = 5   # range of pixels for calculation
+            for indx, row in deftab.iterrows():
+                # Get coords and adjust for python zero bias
+                x0 = row['X0'] - 1
+                x1 = row['X1']
+                y0 = row['Y0'] - 1
+                y1 = row['Y1']
+                # Loop over y range
+                for by in range(y0, y1):
+                    vals = list(self.action.args.ccddata.data[by,
+                                x0-bcdel:x0])
+                    vals.extend(self.action.args.ccddata.data[by,
+                                x1+1:x1+bcdel+1])
+                    vals = np.asarray(vals)
+                    gval = np.nanmedian(vals)
+                    # Replace with gval
+                    for bx in range(x0, x1):
+                        self.action.args.ccddata.data[by, bx] = gval
+                        # mask[by, bx] += 2b
+                        nbpix += 1
+            self.action.args.ccddata.header[key] = (True, keycom)
+            self.action.args.ccddata.header['BPFILE'] = (path, 'defect list')
         else:
             self.logger.error("Defect list not found for %s" % defpath)
+            self.action.args.ccddata.header[key] = (False, keycom)
+
+        self.logger.info("Cleaned %d bad pixels" % nbpix)
+        self.action.args.ccddata.header['NBPCLEAN'] = \
+            (nbpix, 'number of bad pixels cleaned')
+
+        logstr = self.__module__ + "." + self.__class__.__name__
+        self.action.args.ccddata.header['HISTORY'] = logstr
+
+        if self.config.instrument.saveintims:
+            kcwi_fits_writer(self.action.args.ccddata,
+                             table=self.action.args.table,
+                             output_file=self.action.args.name, suffix="def")
 
         return self.action.args
-    # END: class remove_badcols()
+    # END: class correct_defects()
 
 
 class remove_crs(BasePrimitive):
