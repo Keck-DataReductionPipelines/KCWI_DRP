@@ -279,13 +279,25 @@ class correct_gain(BasePrimitive):
     # END: class correct_gain()
 
 
-class remove_badcols(BasePrimitive):
+class correct_defects(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
 
     def _perform(self):
-        self.logger.info("Removing bad columns (not yet implemented)")
+        self.logger.info("Correcting detector defects (not yet implemented)")
+
+        # Does the defect file exist?
+        path = "data/defect_%s_%dx%d.dat" % (self.action.args.ampmode.strip(),
+                                             self.action.args.xbinsize,
+                                             self.action.args.ybinsize)
+        pkg = __name__.split('.')[0]
+        defpath = pkg_resources.resource_filename(pkg, path)
+        if os.path.exists(defpath):
+            self.logger.info("Reading defect list in: %s" % defpath)
+        else:
+            self.logger.error("Defect list not found for %s" % defpath)
+
         return self.action.args
     # END: class remove_badcols()
 
