@@ -223,6 +223,9 @@ class ingest_file(BasePrimitive):
     def shufrows(self):
         return self.get_keyword('SHUFROWS')
 
+    def ampmode(self):
+        return self.get_keyword('AMPMODE')
+
     def xbinsize(self):
         return int(self.get_keyword('BINNING').split(',')[0])
 
@@ -429,6 +432,8 @@ class ingest_file(BasePrimitive):
         out_args.nasmask = self.nasmask()
         # SHUFROWS
         out_args.shufrows = self.shufrows()
+        # AMPMODE
+        out_args.ampmode = self.ampmode()
         # BINNING
         out_args.xbinsize, out_args.ybinsize = \
             map(int, self.get_keyword('BINNING').split(','))
