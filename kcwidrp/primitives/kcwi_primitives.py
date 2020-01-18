@@ -32,6 +32,12 @@ import pkg_resources
 
 import pandas as pd
 
+try:
+    import _lacosmicx
+except ImportError:
+    print("Please install lacosmicx from github.com/cmccully/lacosmicx.")
+    quit()
+
 
 def pascal_shift(coef=None, x0=None):
     """Shift coefficients to a new reference value (X0)
@@ -197,7 +203,7 @@ class trim_overscan(BasePrimitive):
         # get output image dimensions
         max_sec = max(tsec)
         # create new blank image
-        new = np.zeros((max_sec[1]+1, max_sec[3]+1), dtype=np.float64)
+        new = np.zeros((max_sec[1]+1, max_sec[3]+1), dtype=np.float32)
         # loop over amps
         for ia in range(namps):
             # input range indices
@@ -287,11 +293,14 @@ class correct_defects(BasePrimitive):
         BasePrimitive.__init__(self, action, context)
 
     def _perform(self):
-        self.logger.info("Correcting detector defects (not yet implemented)")
+        self.logger.info("Correcting detector defects")
 
         # Header keyword to update
         key = 'BPCLEAN'
         keycom = 'cleaned bad pixels?'
+
+        # Create flags for bad columns fixed
+        flags = np.zeros(self.action.args.ccddata.data.shape, dtype=np.uint8)
 
         # Does the defect file exist?
         path = "data/defect_%s_%dx%d.dat" % (self.action.args.ampmode.strip(),
@@ -303,7 +312,7 @@ class correct_defects(BasePrimitive):
         if os.path.exists(defpath):
             self.logger.info("Reading defect list in: %s" % defpath)
             deftab = pd.read_csv(defpath, sep='\s+')
-            bcdel = 5   # range of pixels for calculation
+            bcdel = 5   # range of pixels for calculating good value
             for indx, row in deftab.iterrows():
                 # Get coords and adjust for python zero bias
                 x0 = row['X0'] - 1
@@ -312,16 +321,18 @@ class correct_defects(BasePrimitive):
                 y1 = row['Y1']
                 # Loop over y range
                 for by in range(y0, y1):
+                    # sample on low side of bad area
                     vals = list(self.action.args.ccddata.data[by,
                                 x0-bcdel:x0])
+                    # sample on high side
                     vals.extend(self.action.args.ccddata.data[by,
                                 x1+1:x1+bcdel+1])
-                    vals = np.asarray(vals)
-                    gval = np.nanmedian(vals)
-                    # Replace with gval
+                    # get replacement value
+                    gval = np.nanmedian(np.asarray(vals))
+                    # Replace baddies with gval
                     for bx in range(x0, x1):
                         self.action.args.ccddata.data[by, bx] = gval
-                        # mask[by, bx] += 2b
+                        flags[by, bx] += 2
                         nbpix += 1
             self.action.args.ccddata.header[key] = (True, keycom)
             self.action.args.ccddata.header['BPFILE'] = (path, 'defect list')
@@ -335,6 +346,10 @@ class correct_defects(BasePrimitive):
 
         logstr = self.__module__ + "." + self.__class__.__name__
         self.action.args.ccddata.header['HISTORY'] = logstr
+
+        # add flags array
+        self.action.args.ccddata.mask = flags
+        self.action.args.ccddata.flags = flags
 
         if self.config.instrument.saveintims:
             kcwi_fits_writer(self.action.args.ccddata,
@@ -351,10 +366,82 @@ class remove_crs(BasePrimitive):
         BasePrimitive.__init__(self, action, context)
 
     def _perform(self):
-        self.logger.info("Finding and masking cosmic rays"
-                         " (not yet implemented)")
+        # TODO: implement options from kcwi_stage1.pro
+        self.logger.info("Finding and masking cosmic rays")
+
+        # Header keyword to update
+        key = 'CRCLEAN'
+        keycom = 'cosmic rays cleaned?'
+
+        header = self.action.args.ccddata.header
+        namps = header['NVIDINP']
+        read_noise = 0.
+        for ia in range(namps):
+            read_noise += header['BIASRN%d' % (ia + 1)]
+        read_noise /= float(namps)
+
+        # Set sigclip according to image parameters
+        sigclip = self.context.config.instrument.CRR_SIGCLIP
+        if 'FLATLAMP' in self.action.args.ccddata.header['IMTYPE']:
+            if self.action.args.nasmask:
+                sigclip = 10.
+            else:
+                sigclip = 7.
+        if 'OBJECT' in self.action.args.ccddata.header['IMTYPE']:
+            if self.action.args.ccddata.header['TTIME'] < 300.:
+                sigclip = 10.
+
+        if header['TTIME'] >= self.context.config.instrument.CRR_MINEXPTIME:
+            mask, clean = _lacosmicx.lacosmicx(
+                self.action.args.ccddata.data, gain=1.0, readnoise=read_noise,
+                psffwhm=self.context.config.instrument.CRR_PSFFWHM,
+                sigclip=sigclip,
+                sigfrac=self.context.config.instrument.CRR_SIGFRAC,
+                objlim=self.context.config.instrument.CRR_OBJLIM,
+                fsmode=self.context.config.instrument.CRR_FSMODE,
+                psfmodel=self.context.config.instrument.CRR_PSFMODEL,
+                verbose=self.context.config.instrument.CRR_VERBOSE,
+                sepmed=self.context.config.instrument.CRR_SEPMED,
+                cleantype=self.context.config.instrument.CRR_CLEANTYPE)
+
+            header['history'] = "LA CosmicX: cleaned cosmic rays"
+            header[
+                'history'] = "LA CosmicX params: sigclip=%5.2f sigfrac=%5.2f objlim=%5.2f" % (
+                self.context.config.instrument.CRR_SIGCLIP,
+                self.context.config.instrument.CRR_SIGFRAC,
+                self.context.config.instrument.CRR_OBJLIM)
+            header[
+                'history'] = "LA CosmicX params: fsmode=%s psfmodel=%s psffwhm=%5.2f" % (
+                self.context.config.instrument.CRR_FSMODE,
+                self.context.config.instrument.CRR_PSFMODEL,
+                self.context.config.instrument.CRR_PSFFWHM)
+            header['history'] = "LA CosmicX params: sepmed=%s minexptime=%f" % (
+                self.context.config.instrument.CRR_SEPMED,
+                self.context.config.instrument.CRR_MINEXPTIME)
+            # header['history'] = "LA CosmicX run on %s" % time.strftime("%c")
+
+            mask = np.cast["bool"](mask)
+            n_crs = mask.sum()
+            self.action.args.ccddata.header[key] = (True, keycom)
+            self.action.args.ccddata.header['NCRCLEAN'] = (
+                n_crs, "number of cosmic ray pixels")
+            self.action.args.ccddata.mask += mask
+            self.action.args.ccddata.data = clean
+        else:
+            header[
+                'history'] = "LA CosmicX: exptime < minexptime=%.1f" % \
+                             self.context.config.instrument.CRR_MINEXPTIME
+
+        logstr = self.__module__ + "." + self.__class__.__name__
+        self.action.args.ccddata.header['HISTORY'] = logstr
+
+        if self.config.instrument.saveintims:
+            kcwi_fits_writer(self.action.args.ccddata,
+                             table=self.action.args.table,
+                             output_file=self.action.args.name, suffix="crr")
+
         return self.action.args
-    # END: class remove_crs(
+    # END: class remove_crs()
 
 
 class create_unc(BasePrimitive):
@@ -634,8 +721,8 @@ class process_bias(BaseImg):
             stacked.header['STACKF%d' % (ii + 1)] = (fname, "stack input file")
 
         # for readnoise stats use 2nd and 3rd bias
-        diff = stack[1].data.astype(np.float64) - \
-               stack[2].data.astype(np.float64)
+        diff = stack[1].data.astype(np.float32) - \
+               stack[2].data.astype(np.float32)
         namps = stack[1].header['NVIDINP']
         for ia in range(namps):
             # get gain
