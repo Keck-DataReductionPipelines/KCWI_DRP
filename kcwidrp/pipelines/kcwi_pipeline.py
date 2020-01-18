@@ -168,7 +168,7 @@ class Kcwi_pipeline(BasePipeline):
                                       "gain_correction_started",
                                       "object_correct_defects"),
         "object_correct_defects":    ("correct_defects",
-                                      "badcol_removal_started",
+                                      "defect_correction_started",
                                       "object_remove_crs"),
         "object_remove_crs":         ("remove_crs",
                                       "remove_crs_started",
