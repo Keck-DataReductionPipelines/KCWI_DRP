@@ -9,25 +9,29 @@ Test Fits to PNG pipeline with HTTP server.
 from keckdrpframework.core.framework import Framework
 from keckdrpframework.config.framework_config import ConfigClass
 from keckdrpframework.models.arguments import Arguments
+from kcwidrp.logger import start_logger
+
 import subprocess
 import time
 import argparse
 import sys
 import traceback
 import os
+import pkg_resources
 import threading
 
 from kcwidrp.pipelines.kcwi_pipeline import Kcwi_pipeline
 from kcwidrp.core.kcwi_proctab import Proctab
 
 
-def _parseArguments(in_args):
+def _parseArguments(in_args: list) -> argparse.Namespace:
     description = "KCWI pipeline CLI"
+
     # this is a simple case where we provide a frame and a configuration file
     parser = argparse.ArgumentParser(prog=f"{in_args[0]}",
                                      description=description)
-    parser.add_argument('-c', '--config', dest="config_file", type=str,
-                        help="Configuration file", default='config.cfg')
+    parser.add_argument('-c', '--config', dest="kcwi_config_file", type=str,
+                        help="KCWI configuration file", default=None)
     parser.add_argument('-f', '--frames', nargs='*', type=str,
                         help='input image files (full path, list ok)',
                         default=None)
@@ -67,36 +71,67 @@ def _parseArguments(in_args):
 
 
 def check_redux_dir():
-    if not os.path.isdir(config.instrument.output_directory):
-        os.makedirs(config.instrument.output_directory)
+    if not os.path.isdir(framework.config.instrument.output_directory):
+        os.makedirs(framework.config.instrument.output_directory)
         print("Output directory created: %s" %
-              config.instrument.output_directory)
+              framework.config.instrument.output_directory)
+
+def check_logs_dir():
+    if not os.path.isdir('logs'):
+        os.makedirs('logs')
+        print("Logs directory created")
 
 
 if __name__ == "__main__":
 
     args = _parseArguments(sys.argv)
 
-    config = ConfigClass(args.config_file)
-    if config.enable_bokeh is True:
-        subprocess.Popen('bokeh serve', shell=True)
-        time.sleep(5)
+    # configuration files
+    pkg = __name__.split('.')[0]
+    pkg='kcwidrp'
+
+    # check for the logs diretory
+    check_logs_dir()
+
+    framework_config_file = "configs/framework.cfg"
+    framework_config_path = pkg_resources.resource_filename(pkg, framework_config_file)
+
+    framework_logcfg_file = 'configs/framework_logger.cfg'
+    framework_logcfg_path = pkg_resources.resource_filename(pkg, framework_logcfg_file)
+
+    # add kcwi specific config files # make changes here to allow this file to be loaded from the command line
+    if args.kcwi_config_file is None:
+        kcwi_config_file = 'configs/kcwi.cfg'
+        kcwi_config_path = pkg_resources.resource_filename(pkg, kcwi_config_file)
+        kcwi_config = ConfigClass(kcwi_config_path)
+    else:
+        kcwi_config = ConfigClass(args.kcwi_config_file)
 
     try:
-        framework = Framework(Kcwi_pipeline, config)
+        framework = Framework(Kcwi_pipeline, framework_config_path)
+        framework.config.instrument = kcwi_config
+        print(framework.config.instrument.properties)
     except Exception as e:
         print("Failed to initialize framework, exiting ...", e)
         traceback.print_exc()
         sys.exit(1)
 
+    framework.logger = start_logger('DRPFrame', framework_logcfg_path)
+
+    # check for the REDUX directory
     check_redux_dir()
+
+    if framework.config.enable_bokeh is True:
+        subprocess.Popen('bokeh serve', shell=True)
+        time.sleep(5)
+
 
     # initialize the proctab and read it
     framework.context.proctab = Proctab(framework.logger)
     framework.context.proctab.read_proctab(tfil=args.proctab)
 
     framework.logger.info("Framework initialized")
-    if config.enable_bokeh:
+    if framework.config.enable_bokeh:
         framework.append_event('start_bokeh', None)
 
     # start queue manager only (useful for RPC)

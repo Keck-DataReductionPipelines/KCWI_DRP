@@ -5,7 +5,7 @@ KCWI
 """
 
 from keckdrpframework.pipelines.base_pipeline import BasePipeline
-
+from keckdrpframework.models.processing_context import ProcessingContext
 from ..primitives.kcwi_primitives import *
 from ..primitives.kcwi_file_primitives import *
 from ..primitives.kcwi_bokeh import *
@@ -199,11 +199,11 @@ class Kcwi_pipeline(BasePipeline):
 
     # event_table = kcwi_event_table
 
-    def __init__(self):
+    def __init__(self, context: ProcessingContext):
         """
         Constructor
         """
-        BasePipeline.__init__(self)
+        BasePipeline.__init__(self, context)
         self.cnt = 0
 
     def action_planner(self, action, context):
