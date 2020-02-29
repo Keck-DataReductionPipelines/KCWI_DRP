@@ -35,6 +35,9 @@ def _parseArguments(in_args: list) -> argparse.Namespace:
     parser.add_argument('-f', '--frames', nargs='*', type=str,
                         help='input image files (full path, list ok)',
                         default=None)
+    parser.add_argument('-l', '--list', dest='file_list',
+                        help='File containing a list of files to be processed',
+                        default=None)
 
     # in this case, we are loading an entire directory,
     # and ingesting all the files in that directory
@@ -147,6 +150,20 @@ if __name__ == "__main__":
         for frame in args.frames:
             arguments = Arguments(name=frame)
             framework.append_event('next_file', arguments)
+
+    elif args.file_list:
+        frames = []
+        with open(args.file_list) as file_list:
+            for frame in file_list:
+                if "#" not in frame:
+                    frames.append(frame.strip('\n'))
+        for frame in frames:
+            framework.ingest_data(None, [frame], False)
+        for frame in frames:
+            arguments = Arguments(name=frame)
+            framework.append_event('next_file', arguments)
+
+
 
     # ingest an entire directory, trigger "next_file" on each file,
     # optionally continue to monitor if -m is specified

@@ -1292,12 +1292,14 @@ class extract_arcs(BasePrimitive):
         else:
             trace = read_table(input_dir=os.path.dirname(self.action.args.name),
                                file_name=ofname)
-            self.context.trace = trace
-        midrow = trace.meta['MIDROW']
-        win = trace.meta['WINDOW']
-        self.action.args.refdelx = trace.meta['REFDELX']
-        self.action.args.cbarsno = trace.meta['CBARSNO']
-        self.action.args.cbarsfl = trace.meta['CBARSFL']
+            self.context.trace={}
+            for key in trace.meta.keys():
+                self.context.trace[key]=trace.meta[key]
+        midrow = self.context.trace['MIDROW']
+        win = self.context.trace['WINDOW']
+        self.action.args.refdelx = self.context.trace['REFDELX']
+        self.action.args.cbarsno = self.context.trace['CBARSNO']
+        self.action.args.cbarsfl = self.context.trace['CBARSFL']
         self.action.args.arcno = self.action.args.ccddata.header['FRAMENO']
         self.action.args.arcfl = self.action.args.ccddata.header['OFNAME']
 

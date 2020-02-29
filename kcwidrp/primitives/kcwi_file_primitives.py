@@ -492,17 +492,17 @@ def kcwi_fits_reader(file):
             ccddata.header['CCDCFG'] = ccdcfg
     elif len(hdul) == 3:
         # pure ccd data
-        ccddata = CCDData(hdul['PRIMARY'], meta=hdul['PRIMARY'].header,
+        ccddata = CCDData(hdul['PRIMARY'].data, meta=hdul['PRIMARY'].header,
                           unit='adu')
-        ccddata.mask = hdul['MASK']
-        ccddata.uncertainty = hdul['UNCERT']
+        ccddata.mask = hdul['MASK'].data
+        ccddata.uncertainty = hdul['UNCERT'].data
         table = None
     elif len(hdul) == 4:
         # pure ccd data
-        ccddata = CCDData(hdul['PRIMARY'], meta=hdul['PRIMARY'].header,
+        ccddata = CCDData(hdul['PRIMARY'].data, meta=hdul['PRIMARY'].header,
                           unit='adu')
-        ccddata.mask = hdul['MASK']
-        ccddata.uncertainty = hdul['UNCERT']
+        ccddata.mask = hdul['MASK'].data
+        ccddata.uncertainty = hdul['UNCERT'].data
         table = Table(hdul[3])
     else:
         print("Wrong number of HDUnits in %s: should be 1-4, but is %d"
