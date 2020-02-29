@@ -6,6 +6,7 @@ KCWI
 
 from keckdrpframework.pipelines.base_pipeline import BasePipeline
 from keckdrpframework.models.processing_context import ProcessingContext
+from kcwidrp.logger import start_logger
 from ..primitives.kcwi_primitives import *
 from ..primitives.kcwi_file_primitives import *
 from ..primitives.kcwi_bokeh import *
@@ -17,6 +18,7 @@ class Kcwi_pipeline(BasePipeline):
     Pipeline to process KCWI data
 
     """
+    name = 'KCWI-DRP'
 
     event_table = {
         "start_bokeh":               ("start_bokeh", None, None),
@@ -204,6 +206,8 @@ class Kcwi_pipeline(BasePipeline):
         Constructor
         """
         BasePipeline.__init__(self, context)
+        print(context.config.instrument)
+        #self.logger = self.context.pipeline_logger
         self.cnt = 0
 
     def action_planner(self, action, context):

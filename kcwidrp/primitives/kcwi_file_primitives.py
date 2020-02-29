@@ -49,6 +49,7 @@ class ingest_file(BasePrimitive):
         Constructor
         """
         BasePrimitive.__init__(self, action, context)
+        self.logger = context.pipeline_logger
 
     def get_keyword(self, keyword):
         return self.context.data_set.get_info_column(self.name, keyword)
@@ -527,6 +528,7 @@ class kcwi_fits_ingest(BasePrimitive):
         Constructor
         """
         BasePrimitive.__init__(self, action, context)
+        self.logger = context.pipeline_logger
 
     def _perform(self):
         """

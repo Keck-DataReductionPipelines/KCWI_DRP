@@ -104,6 +104,7 @@ class subtract_overscan(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
+        self.logger = context.pipeline_logger
 
     def _perform(self):
         # image sections for each amp
@@ -190,6 +191,7 @@ class trim_overscan(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
+        self.logger = context.pipeline_logger
 
     def _perform(self):
 
@@ -252,6 +254,7 @@ class correct_gain(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
+        self.logger = context.pipeline_logger
 
     def _perform(self):
         # Header keyword to update
@@ -291,6 +294,7 @@ class correct_defects(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
+        self.logger = context.pipeline_logger
 
     def _perform(self):
         self.logger.info("Correcting detector defects")
@@ -364,6 +368,7 @@ class remove_crs(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
+        self.logger = context.pipeline_logger
 
     def _perform(self):
         # TODO: implement options from kcwi_stage1.pro
@@ -448,6 +453,7 @@ class create_unc(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
+        self.logger = context.pipeline_logger
 
     def _perform(self):
         """Assumes units of image are electron"""
@@ -486,6 +492,8 @@ class rectify_image(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
+        self.logger = context.pipeline_logger
+
 
     def _perform(self):
 
@@ -535,6 +543,7 @@ class subtract_bias(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
+        self.logger = context.pipeline_logger
 
     def _perform(self):
 
@@ -582,6 +591,7 @@ class subtract_dark(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
+        self.logger = context.pipeline_logger
 
     def _perform(self):
 
@@ -643,6 +653,7 @@ class process_bias(BaseImg):
 
     def __init__(self, action, context):
         BaseImg.__init__(self, action, context)
+        self.logger = context.pipeline_logger
 
     def hello(self):
         """
@@ -755,6 +766,7 @@ class stack_darks(BaseImg):
 
     def __init__(self, action, context):
         BaseImg.__init__(self, action, context)
+        self.logger = context.pipeline_logger
 
     def _pre_condition(self):
         """
@@ -820,6 +832,7 @@ class subtract_scattered_light(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
+        self.logger = context.pipeline_logger
 
     def _perform(self):
 
@@ -898,6 +911,7 @@ class stack_flats(BaseImg):
 
     def __init__(self, action, context):
         BaseImg.__init__(self, action, context)
+        self.logger = context.pipeline_logger
 
     def _pre_condition(self):
         """
@@ -963,6 +977,7 @@ class process_dark(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
+        self.logger = context.pipeline_logger
 
     def _perform(self):
         return self.action.args
@@ -972,6 +987,7 @@ class process_contbars(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
+        self.logger = context.pipeline_logger
 
     def _perform(self):
         return self.action.args
@@ -981,6 +997,7 @@ class process_arc(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
+        self.logger = context.pipeline_logger
 
     def _perform(self):
         return self.action.args
@@ -990,6 +1007,7 @@ class process_flat(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
+        self.logger = context.pipeline_logger
 
     def _perform(self):
         return self.action.args
@@ -999,6 +1017,7 @@ class process_object(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
+        self.logger = context.pipeline_logger
 
     def _perform(self):
         return self.action.args
@@ -1008,6 +1027,7 @@ class find_bars(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
+        self.logger = context.pipeline_logger
         basicConfig(level=logging.ERROR)
 
     def _perform(self):
@@ -1103,6 +1123,7 @@ class trace_bars(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
+        self.logger = context.pipeline_logger
 
     def _perform(self):
         self.logger.info("Tracing continuum bars")
@@ -1253,6 +1274,7 @@ class extract_arcs(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
+        self.logger = context.pipeline_logger
 
     def _perform(self):
         self.logger.info("Extracting arc spectra")
@@ -1318,6 +1340,7 @@ class arc_offsets(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
+        self.logger = context.pipeline_logger
 
     def _perform(self):
         self.logger.info("Finding inter-bar offsets")
@@ -1370,6 +1393,7 @@ class calc_prelim_disp(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
+        self.logger = context.pipeline_logger
 
     def _perform(self):
         # get binning
@@ -1397,6 +1421,7 @@ class read_atlas(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
+        self.logger = context.pipeline_logger
 
     def _perform(self):
         # What lamp are we using?
@@ -1662,6 +1687,7 @@ class fit_center(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
+        self.logger = context.pipeline_logger
         self.action.args.centcoeff = []
 
     def _perform(self):
@@ -1916,6 +1942,7 @@ class get_atlas_lines(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
+        self.logger = context.pipeline_logger
 
     def _perform(self):
         self.logger.info("Finding isolated atlas lines (not yet implemented)")
@@ -1928,6 +1955,7 @@ class solve_arcs(BasePrimitive):
     def __init__(self, action, context):
         self.logger.info("Solving individual arc spectra (not yet implemented)")
         BasePrimitive.__init__(self, action, context)
+        self.logger = context.pipeline_logger
 
     def _perform(self):
         return self.action.args
@@ -1938,6 +1966,7 @@ class solve_geom(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
+        self.logger = context.pipeline_logger
 
     def _perform(self):
         self.logger.info("Solving overall geometry (not yet implemented)")
@@ -1949,6 +1978,7 @@ class generate_maps(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
+        self.logger = context.pipeline_logger
 
     def _perform(self):
         self.logger.info("Generating geometry maps (not yet implemented)")
@@ -1960,6 +1990,7 @@ class apply_flat(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
+        self.logger = context.pipeline_logger
 
     def _perform(self):
         self.logger.info("Applying flat field (not yet implemented)")
@@ -1971,6 +2002,7 @@ class subtract_sky(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
+        self.logger = context.pipeline_logger
 
     def _perform(self):
         self.logger.info("Subtracting sky background (not yet implemented)")
@@ -1982,6 +2014,7 @@ class make_cube(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
+        self.logger = context.pipeline_logger
 
     def _perform(self):
         self.logger.info("Creating data cube (not yet implemented)")
@@ -1993,6 +2026,7 @@ class correct_dar(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
+        self.logger = context.pipeline_logger
 
     def _perform(self):
         self.logger.info("Correcting for DAR (not yet implemented)")
@@ -2004,6 +2038,7 @@ class flux_calibrate(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
+        self.logger = context.pipeline_logger
 
     def _perform(self):
         self.logger.info("Calibrating object flux (not yet implemented)")
@@ -2015,6 +2050,7 @@ class make_invsens(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
+        self.logger = context.pipeline_logger0
 
     def _perform(self):
         self.logger.info("Making inverse sensitivity curve "

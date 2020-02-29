@@ -46,6 +46,7 @@ def start_logger(logger_name: str, config: str) -> logging.Logger:
         # setup a log format
         formatter = logging.Formatter('[%(name)s][%(levelname)s]:%(message)s')
         # setup a log file
+        print("****** STARTING A LOG WITH FILE %s" % log_path)
         f_handle = logging.FileHandler(log_path, mode='a') # logging to file
         f_handle.setLevel(get_level(log_lvl))
         f_handle.setFormatter(formatter)

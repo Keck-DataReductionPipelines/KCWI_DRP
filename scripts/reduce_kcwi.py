@@ -87,7 +87,6 @@ if __name__ == "__main__":
     args = _parseArguments(sys.argv)
 
     # configuration files
-    pkg = __name__.split('.')[0]
     pkg='kcwidrp'
 
     # check for the logs diretory
@@ -109,14 +108,15 @@ if __name__ == "__main__":
 
     try:
         framework = Framework(Kcwi_pipeline, framework_config_path)
+        framework.logger = start_logger('DRPFrame', framework_logcfg_path)
         framework.config.instrument = kcwi_config
-        print(framework.config.instrument.properties)
     except Exception as e:
         print("Failed to initialize framework, exiting ...", e)
         traceback.print_exc()
         sys.exit(1)
 
-    framework.logger = start_logger('DRPFrame', framework_logcfg_path)
+
+    framework.context.pipeline_logger = start_logger(pkg, kcwi_config_path)
 
     # check for the REDUX directory
     check_redux_dir()
