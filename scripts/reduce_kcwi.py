@@ -18,13 +18,12 @@ import sys
 import traceback
 import os
 import pkg_resources
-import threading
 
 from kcwidrp.pipelines.kcwi_pipeline import Kcwi_pipeline
 from kcwidrp.core.kcwi_proctab import Proctab
 
 
-def _parseArguments(in_args: list) -> argparse.Namespace:
+def _parse_arguments(in_args: list) -> argparse.Namespace:
     description = "KCWI pipeline CLI"
 
     # this is a simple case where we provide a frame and a configuration file
@@ -69,8 +68,8 @@ def _parseArguments(in_args: list) -> argparse.Namespace:
     parser.add_argument("-p", "--proctab", dest='proctab', help='Proctab file',
                         default='kcwi.proc')
 
-    args = parser.parse_args(in_args[1:])
-    return args
+    out_args = parser.parse_args(in_args[1:])
+    return out_args
 
 
 def check_redux_dir():
@@ -78,6 +77,7 @@ def check_redux_dir():
         os.makedirs(framework.config.instrument.output_directory)
         print("Output directory created: %s" %
               framework.config.instrument.output_directory)
+
 
 def check_logs_dir():
     if not os.path.isdir('logs'):
@@ -87,26 +87,31 @@ def check_logs_dir():
 
 if __name__ == "__main__":
 
-    args = _parseArguments(sys.argv)
+    args = _parse_arguments(sys.argv)
 
     # configuration files
-    pkg='kcwidrp'
+    pkg = 'kcwidrp'
 
     # check for the logs diretory
     check_logs_dir()
 
     framework_config_file = "configs/framework.cfg"
-    framework_config_path = pkg_resources.resource_filename(pkg, framework_config_file)
+    framework_config_path = pkg_resources.resource_filename(
+        pkg, framework_config_file)
 
     framework_logcfg_file = 'configs/framework_logger.cfg'
-    framework_logcfg_path = pkg_resources.resource_filename(pkg, framework_logcfg_file)
+    framework_logcfg_path = pkg_resources.resource_filename(
+        pkg, framework_logcfg_file)
 
-    # add kcwi specific config files # make changes here to allow this file to be loaded from the command line
+    # add kcwi specific config files # make changes here to allow this file
+    # to be loaded from the command line
     if args.kcwi_config_file is None:
         kcwi_config_file = 'configs/kcwi.cfg'
-        kcwi_config_path = pkg_resources.resource_filename(pkg, kcwi_config_file)
+        kcwi_config_path = pkg_resources.resource_filename(
+            pkg, kcwi_config_file)
         kcwi_config = ConfigClass(kcwi_config_path)
     else:
+        kcwi_config_path = os.path.abspath(args.kcwi_config_file)
         kcwi_config = ConfigClass(args.kcwi_config_file)
 
     try:
@@ -118,7 +123,6 @@ if __name__ == "__main__":
         traceback.print_exc()
         sys.exit(1)
 
-
     framework.context.pipeline_logger = start_logger(pkg, kcwi_config_path)
 
     # check for the REDUX directory
@@ -127,7 +131,6 @@ if __name__ == "__main__":
     if framework.config.enable_bokeh is True:
         subprocess.Popen('bokeh serve', shell=True)
         time.sleep(5)
-
 
     # initialize the proctab and read it
     framework.context.proctab = Proctab(framework.logger)
@@ -162,8 +165,6 @@ if __name__ == "__main__":
         for frame in frames:
             arguments = Arguments(name=frame)
             framework.append_event('next_file', arguments)
-
-
 
     # ingest an entire directory, trigger "next_file" on each file,
     # optionally continue to monitor if -m is specified
