@@ -100,7 +100,7 @@ def pascal_shift(coef=None, x0=None):
     # END: def pascal_shift()
 
 
-class subtract_overscan(BasePrimitive):
+class SubtractOverscan(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
@@ -184,10 +184,10 @@ class subtract_overscan(BasePrimitive):
         self.logger.info(logstr)
 
         return self.action.args
-    # END: class subtract_overscan()
+    # END: class SubtractOverscan()
 
 
-class trim_overscan(BasePrimitive):
+class TrimOverscan(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
@@ -247,10 +247,10 @@ class trim_overscan(BasePrimitive):
                              table=self.action.args.table,
                              output_file=self.action.args.name, suffix="trim")
         return self.action.args
-    # END: class trim_overscan()
+    # END: class TrimOverscan()
 
 
-class correct_gain(BasePrimitive):
+class CorrectGain(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
@@ -287,10 +287,10 @@ class correct_gain(BasePrimitive):
                              table=self.action.args.table,
                              output_file=self.action.args.name, suffix="gain")
         return self.action.args
-    # END: class correct_gain()
+    # END: class CorrectGain()
 
 
-class correct_defects(BasePrimitive):
+class CorrectDefects(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
@@ -361,10 +361,10 @@ class correct_defects(BasePrimitive):
                              output_file=self.action.args.name, suffix="def")
 
         return self.action.args
-    # END: class correct_defects()
+    # END: class CorrectDefects()
 
 
-class remove_crs(BasePrimitive):
+class RemoveCosmicRays(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
@@ -411,12 +411,14 @@ class remove_crs(BasePrimitive):
 
             header['history'] = "LA CosmicX: cleaned cosmic rays"
             header[
-                'history'] = "LA CosmicX params: sigclip=%5.2f sigfrac=%5.2f objlim=%5.2f" % (
+                'history'] = "LA CosmicX params: " \
+                             "sigclip=%5.2f sigfrac=%5.2f objlim=%5.2f" % (
                 self.context.config.instrument.CRR_SIGCLIP,
                 self.context.config.instrument.CRR_SIGFRAC,
                 self.context.config.instrument.CRR_OBJLIM)
             header[
-                'history'] = "LA CosmicX params: fsmode=%s psfmodel=%s psffwhm=%5.2f" % (
+                'history'] = "LA CosmicX params: " \
+                             "fsmode=%s psfmodel=%s psffwhm=%5.2f" % (
                 self.context.config.instrument.CRR_FSMODE,
                 self.context.config.instrument.CRR_PSFMODEL,
                 self.context.config.instrument.CRR_PSFFWHM)
@@ -446,10 +448,10 @@ class remove_crs(BasePrimitive):
                              output_file=self.action.args.name, suffix="crr")
 
         return self.action.args
-    # END: class remove_crs()
+    # END: class RemoveCosmicRays()
 
 
-class create_unc(BasePrimitive):
+class CreateUncertaintyImage(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
@@ -485,15 +487,14 @@ class create_unc(BasePrimitive):
         self.action.args.ccddata.header['HISTORY'] = logstr
 
         return self.action.args
-    # END: class create_unc()
+    # END: class CreateUncertaintyImage()
 
 
-class rectify_image(BasePrimitive):
+class RectifyImage(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
         self.logger = context.pipeline_logger
-
 
     def _perform(self):
 
@@ -536,10 +537,10 @@ class rectify_image(BasePrimitive):
                                             suffix="int")
         self.context.proctab.write_proctab()
         return self.action.args
-    # END: class rectify_image()
+    # END: class RectifyImage()
 
 
-class subtract_bias(BasePrimitive):
+class SubtractBias(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
@@ -584,10 +585,10 @@ class subtract_bias(BasePrimitive):
         self.action.args.ccddata.header['HISTORY'] = logstr
 
         return self.action.args
-    # END: class subtract_bias()
+    # END: class SubtractBias()
 
 
-class subtract_dark(BasePrimitive):
+class SubtractDark(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
@@ -646,10 +647,10 @@ class subtract_dark(BasePrimitive):
         # self.context.proctab.write_proctab()
 
         return self.action.args
-    # END: class subtract_dark()
+    # END: class SubtractDark()
 
 
-class process_bias(BaseImg):
+class ProcessBias(BaseImg):
 
     def __init__(self, action, context):
         BaseImg.__init__(self, action, context)
@@ -733,7 +734,7 @@ class process_bias(BaseImg):
 
         # for readnoise stats use 2nd and 3rd bias
         diff = stack[1].data.astype(np.float32) - \
-               stack[2].data.astype(np.float32)
+            stack[2].data.astype(np.float32)
         namps = stack[1].header['NVIDINP']
         for ia in range(namps):
             # get gain
@@ -742,7 +743,7 @@ class process_bias(BaseImg):
             sec, rfor = parse_imsec(stacked.header['DSEC%d' % (ia + 1)])
             noise = diff[sec[0]:(sec[1]+1), sec[2]:(sec[3]+1)]
             noise = np.reshape(noise, noise.shape[0]*noise.shape[1]) * \
-                    gain / 1.414
+                gain / 1.414
             # get stats on noise
             c, upp, low = sigmaclip(noise, low=3.5, high=3.5)
             bias_rn = c.std()
@@ -759,10 +760,10 @@ class process_bias(BaseImg):
                                             newtype=args.new_type)
         self.context.proctab.write_proctab()
         return Arguments(name=mbname)
-    # END: class process_bias()
+    # END: class ProcessBias()
 
 
-class stack_darks(BaseImg):
+class StackDarks(BaseImg):
 
     def __init__(self, action, context):
         BaseImg.__init__(self, action, context)
@@ -825,10 +826,10 @@ class stack_darks(BaseImg):
                                             newtype=args.new_type)
         self.context.proctab.write_proctab()
         return Arguments(name=mdname)
-    # END: class stack_darks()
+    # END: class StackDarks()
 
 
-class subtract_scattered_light(BasePrimitive):
+class SubtractScatteredLight(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
@@ -907,7 +908,7 @@ class subtract_scattered_light(BasePrimitive):
         return self.action.args
 
 
-class stack_flats(BaseImg):
+class StackFlats(BaseImg):
 
     def __init__(self, action, context):
         BaseImg.__init__(self, action, context)
@@ -954,7 +955,6 @@ class stack_flats(BaseImg):
         stacked = ccdproc.combine(stack, method=method, sigma_clip=True,
                                   sigma_clip_low_thresh=None,
                                   sigma_clip_high_thresh=2.0)
-        stacked.unit = stack[0].unit
         stacked.header.IMTYPE = args.new_type
         stacked.header['NSTACK'] = (len(combine_list),
                                     'number of images stacked')
@@ -970,20 +970,10 @@ class stack_flats(BaseImg):
                                             newtype=args.new_type)
         self.context.proctab.write_proctab()
         return Arguments(name=mdname)
-    # END: class stack_flats()
+    # END: class StackFlats()
 
 
-class process_dark(BasePrimitive):
-
-    def __init__(self, action, context):
-        BasePrimitive.__init__(self, action, context)
-        self.logger = context.pipeline_logger
-
-    def _perform(self):
-        return self.action.args
-
-
-class process_contbars(BasePrimitive):
+class ProcessDark(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
@@ -993,7 +983,7 @@ class process_contbars(BasePrimitive):
         return self.action.args
 
 
-class process_arc(BasePrimitive):
+class ProcessContbars(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
@@ -1003,7 +993,7 @@ class process_arc(BasePrimitive):
         return self.action.args
 
 
-class process_flat(BasePrimitive):
+class ProcessArc(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
@@ -1013,7 +1003,7 @@ class process_flat(BasePrimitive):
         return self.action.args
 
 
-class process_object(BasePrimitive):
+class ProcessFlat(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
@@ -1023,7 +1013,17 @@ class process_object(BasePrimitive):
         return self.action.args
 
 
-class find_bars(BasePrimitive):
+class ProcessObject(BasePrimitive):
+
+    def __init__(self, action, context):
+        BasePrimitive.__init__(self, action, context)
+        self.logger = context.pipeline_logger
+
+    def _perform(self):
+        return self.action.args
+
+
+class FindBars(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
@@ -1065,11 +1065,13 @@ class find_bars(BasePrimitive):
                 # plot the peak positions
                 x = np.arange(len(midvec))
                 # pl.plot(midvec, '-')
-                p = figure(title=self.action.args.plotlabel +
-                           ", Thresh = %.2f" % midavg,
-                           x_axis_label='CCD X (px)', y_axis_label='e-',
-                           plot_width=self.context.config.instrument.plot_width,
-                           plot_height=self.context.config.instrument.plot_height)
+                p = figure(
+                    title=self.action.args.plotlabel +
+                    ", Thresh = %.2f" % midavg,
+                    x_axis_label='CCD X (px)', y_axis_label='e-',
+                    plot_width=self.context.config.instrument.plot_width,
+                    plot_height=self.context.config.instrument.plot_height
+                )
                 p.line(x, midvec, color='blue')
                 p.scatter(midpeaks, midvec[midpeaks], marker='x', color='red')
                 p.line([0, nx], [midavg, midavg], color='grey',
@@ -1116,10 +1118,10 @@ class find_bars(BasePrimitive):
         self.action.args.cbarsno = self.action.args.ccddata.header['FRAMENO']
         self.action.args.cbarsfl = self.action.args.ccddata.header['OFNAME']
         return self.action.args
-    # END: class find_bars()
+    # END: class FindBars()
 
 
-class trace_bars(BasePrimitive):
+class TraceBars(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
@@ -1267,10 +1269,10 @@ class trace_bars(BasePrimitive):
                                  suffix='warped')
                 self.logger.info("Transformed bars produced")
             return self.action.args
-    # END: class trace_bars()
+    # END: class TraceBars()
 
 
-class extract_arcs(BasePrimitive):
+class ExtractArcs(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
@@ -1292,9 +1294,9 @@ class extract_arcs(BasePrimitive):
         else:
             trace = read_table(input_dir=os.path.dirname(self.action.args.name),
                                file_name=ofname)
-            self.context.trace={}
+            self.context.trace = {}
             for key in trace.meta.keys():
-                self.context.trace[key]=trace.meta[key]
+                self.context.trace[key] = trace.meta[key]
         midrow = self.context.trace['MIDROW']
         win = self.context.trace['WINDOW']
         self.action.args.refdelx = self.context.trace['REFDELX']
@@ -1335,10 +1337,10 @@ class extract_arcs(BasePrimitive):
             self.logger.error("Did not extract %d arcs, extracted %d" %
                               (self.context.config.instrument.NBARS, len(arcs)))
         return self.action.args
-# END: class extract_arcs()
+# END: class ExtractArcs()
 
 
-class arc_offsets(BasePrimitive):
+class ArcOffsets(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
@@ -1388,10 +1390,10 @@ class arc_offsets(BasePrimitive):
         else:
             self.logger.error("No extracted arcs found")
         return self.action.args
-    # END: class arc_offsets()
+    # END: class ArcOffsets()
 
 
-class calc_prelim_disp(BasePrimitive):
+class CalcPrelimDisp(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
@@ -1416,10 +1418,10 @@ class calc_prelim_disp(BasePrimitive):
                          prelim_disp)
         self.context.prelim_disp = prelim_disp
         return self.action.args
-    # END: class calc_prelim_disp()
+    # END: class CalcPrelimDisp()
 
 
-class read_atlas(BasePrimitive):
+class ReadAtlas(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
@@ -1429,10 +1431,10 @@ class read_atlas(BasePrimitive):
         # What lamp are we using?
         lamp = self.action.args.illum
         # rez factor
-        if 'fear' in lamp.lower():
-            rezfact = 0.5
-        else:
-            rezfact = 1.0
+        # if 'fear' in lamp.lower():
+        #    rezfact = 0.5
+        # else:
+        #    rezfact = 1.0
         # atpath = os.path.join("../data", "%s.fits" % lamp.lower())
         # Does the atlas file exist?
         path = "data/%s.fits" % lamp.lower()  # always use slash
@@ -1483,10 +1485,10 @@ class read_atlas(BasePrimitive):
                                       )
         cc_obsarc = obsint(cc_refwav)
         # Apply cosign bell taper to both
-        cc_obsarc *= signal.windows.tukey(len(cc_obsarc),
-                                          alpha=self.config.instrument.TAPERFRAC)
-        cc_reflux *= signal.windows.tukey(len(cc_reflux),
-                                          alpha=self.config.instrument.TAPERFRAC)
+        cc_obsarc *= signal.windows.tukey(
+            len(cc_obsarc), alpha=self.config.instrument.TAPERFRAC)
+        cc_reflux *= signal.windows.tukey(
+            len(cc_reflux), alpha=self.config.instrument.TAPERFRAC)
         nsamp = len(cc_refwav)
         offar = np.arange(1 - nsamp, nsamp)
         # Cross-correlate
@@ -1541,8 +1543,10 @@ class read_atlas(BasePrimitive):
                        color="red", legend="Atlas")
                 p.x_range = Range1d(np.nanmin(obswav[minow:maxow]),
                                     np.nanmax(obswav[minow:maxow]))
-                ylim_min = min(obsarc[minow:maxow]/np.nanmax(obsarc[minow:maxow]))
-                ylim_max = max(obsarc[minow:maxow]/np.nanmax(obsarc[minow:maxow]))
+                ylim_min = min(
+                    obsarc[minow:maxow]/np.nanmax(obsarc[minow:maxow]))
+                ylim_max = max(
+                    obsarc[minow:maxow]/np.nanmax(obsarc[minow:maxow]))
                 p.line([cwave, cwave], [ylim_min, ylim_max], color="green",
                        legend="CWAVE")
                 bokeh_plot(p)
@@ -1572,7 +1576,7 @@ class read_atlas(BasePrimitive):
         self.action.args.xvals = xvals
         self.action.args.x0 = int(len(obsarc)/2)
         return self.action.args
-    # END: class read_atlas()
+    # END: class ReadAtlas()
 
 
 def myhelper(argument):
@@ -1685,7 +1689,7 @@ def myhelper(argument):
     # END: def myhelper()
 
 
-class fit_center(BasePrimitive):
+class FitCenter(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
@@ -1706,7 +1710,7 @@ class fit_center(BasePrimitive):
         #    pl.ion()
         # else:
         #    do_inter = False
-        do_inter = False
+        # do_inter = False
         # image label
         imlab = "Img # %d (%s) Sl: %s Fl: %s Gr: %s" % \
                 (self.action.args.ccddata.header['FRAMENO'],
@@ -1717,7 +1721,7 @@ class fit_center(BasePrimitive):
         ybin = self.action.args.ybinsize
         # let's populate the 0 points vector
         p0 = self.action.args.cwave + np.array(self.context.baroffs) * \
-             self.context.prelim_disp - self.action.args.offset_wave
+            self.context.prelim_disp - self.action.args.offset_wave
         # next we are going to brute-force scan around the preliminary
         # dispersion for a better solution. We will wander 5% away from it.
         max_ddisp = 0.05    # fraction
@@ -1783,8 +1787,7 @@ class fit_center(BasePrimitive):
         self.action.args.centcoeff = centcoeff
 
         # for b, bs in enumerate(self.context.arcs):
-        if False:
-
+        """
             # wavelength coefficients
             coeff = [0., 0., 0., 0., 0.]
             # container for maxima, shifts
@@ -1797,20 +1800,26 @@ class fit_center(BasePrimitive):
                 # populate the coefficients
                 coeff[4] = p0[b]
                 coeff[3] = disp
-                cosbeta = disp / (self.context.config.instrument.PIX*ybin) * self.action.args.rho * \
+                cosbeta = disp / (self.context.config.instrument.PIX*ybin) * \
+                self.action.args.rho * \
                     self.context.config.instrument.FCAM * 1.e-4
                 if cosbeta > 1.:
                     cosbeta = 1.
                 beta = math.acos(cosbeta)
-                coeff[2] = -(self.context.config.instrument.PIX * ybin / self.context.config.instrument.FCAM) ** 2 * \
+                coeff[2] = -(self.context.config.instrument.PIX * ybin / \
+                self.context.config.instrument.FCAM) ** 2 * \
                     math.sin(beta) / 2. / self.action.args.rho * 1.e4
-                coeff[1] = -(self.context.config.instrument.PIX * ybin / self.context.config.instrument.FCAM) ** 3 * \
+                coeff[1] = -(self.context.config.instrument.PIX * ybin / \
+                self.context.config.instrument.FCAM) ** 3 * \
                     math.cos(beta) / 6. / self.action.args.rho * 1.e4
-                coeff[0] = (self.context.config.instrument.PIX * ybin / self.context.config.instrument.FCAM) ** 4 * \
+                coeff[0] = (self.context.config.instrument.PIX * ybin / \
+                self.context.config.instrument.FCAM) ** 4 * \
                     math.sin(beta) / 24. / self.action.args.rho * 1.e4
                 # what are the min and max wavelengths to consider?
-                wl0 = np.polyval(coeff, self.action.args.xvals[self.action.args.minrow])
-                wl1 = np.polyval(coeff, self.action.args.xvals[self.action.args.maxrow])
+                wl0 = np.polyval(coeff, self.action.args.xvals[
+                self.action.args.minrow])
+                wl1 = np.polyval(coeff, self.action.args.xvals[
+                self.action.args.maxrow])
                 minwvl = np.nanmin([wl0, wl1])
                 maxwvl = np.nanmax([wl0, wl1])
                 # where will we need to interpolate to cross-correlate?
@@ -1864,16 +1873,20 @@ class fit_center(BasePrimitive):
             # update coeffs
             coeff[4] = p0[b] - barshift[-1]
             coeff[3] = bardisp[-1]
-            cosbeta = coeff[3] / (self.context.config.instrument.PIX * ybin) * self.action.args.rho * \
+            cosbeta = coeff[3] / (self.context.config.instrument.PIX * ybin) * \
+            self.action.args.rho * \
                 self.context.config.instrument.FCAM * 1.e-4
             if cosbeta > 1.:
                 cosbeta = 1.
             beta = math.acos(cosbeta)
-            coeff[2] = -(self.context.config.instrument.PIX * ybin / self.context.config.instrument.FCAM) ** 2 * \
+            coeff[2] = -(self.context.config.instrument.PIX * ybin / \
+            self.context.config.instrument.FCAM) ** 2 * \
                 math.sin(beta) / 2. / self.action.args.rho * 1.e4
-            coeff[1] = -(self.context.config.instrument.PIX * ybin / self.context.config.instrument.FCAM) ** 3 * \
+            coeff[1] = -(self.context.config.instrument.PIX * ybin / \
+            self.context.config.instrument.FCAM) ** 3 * \
                 math.cos(beta) / 6. / self.action.args.rho * 1.e4
-            coeff[0] = (self.context.config.instrument.PIX * ybin / self.context.config.instrument.FCAM) ** 4 * \
+            coeff[0] = (self.context.config.instrument.PIX * ybin / \
+            self.context.config.instrument.FCAM) ** 4 * \
                 math.sin(beta) / 24. / self.action.args.rho * 1.e4
             scoeff = pascal_shift(coeff, self.action.args.x0)
             self.logger.info("Central Fit: Bar#, Cdisp, Coefs: "
@@ -1889,13 +1902,15 @@ class fit_center(BasePrimitive):
             if self.context.config.plot_level >= 1:
                 # plot maxima
                 p = figure(title="Bar %d, Slice %d" % (b, int(b/5)),
-                           x_axis_label="Central dispersion (Ang/px)", y_axis_label="X-Corr Peak Value")
+                           x_axis_label="Central dispersion (Ang/px)",
+                           y_axis_label="X-Corr Peak Value")
 
                 p.scatter(disps, maxima, color='red')
                 p.line(xdisps, int_max(xdisps))
                 ylim_min = min(maxima)
                 ylim_max = max(maxima)
-                p.line([bardisp[-1], bardisp[-1]], [ylim_min, ylim_max], color='green')
+                p.line([bardisp[-1], bardisp[-1]], [ylim_min, ylim_max],
+                 color='green')
                 bokeh_plot(p)
                 if do_inter:
                     q = input("<cr> - Next, q to quit: ")
@@ -1903,6 +1918,7 @@ class fit_center(BasePrimitive):
                         do_inter = False
                 else:
                     time.sleep(0.01)
+        """
 
         if self.context.config.plot_level >= 1:
             # Plot results
@@ -1912,8 +1928,8 @@ class fit_center(BasePrimitive):
             p.scatter(x, centwave, marker='x')
             ylim = [min(centwave), max(centwave)]
             for ix in range(1, 24):
-                 sx = ix*5 - 0.5
-                 p.line([sx, sx], ylim, color='black', line_dash='dotted')
+                sx = ix*5 - 0.5
+                p.line([sx, sx], ylim, color='black', line_dash='dotted')
             p.x_range = Range1d(-1, 120)
             bokeh_plot(p)
             if self.context.config.plot_level >= 2:
@@ -1937,10 +1953,10 @@ class fit_center(BasePrimitive):
 
         # print(self.action.args.centcoeff)
         return self.action.args
-    # END: class fit_center()
+    # END: class FitCenter()
 
 
-class get_atlas_lines(BasePrimitive):
+class GetAtlasLines(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
@@ -1949,10 +1965,10 @@ class get_atlas_lines(BasePrimitive):
     def _perform(self):
         self.logger.info("Finding isolated atlas lines (not yet implemented)")
         return self.action.args
-    # END: class get_atlas_lines()
+    # END: class GetAtlasLines()
 
 
-class solve_arcs(BasePrimitive):
+class SolveArcs(BasePrimitive):
 
     def __init__(self, action, context):
         self.logger.info("Solving individual arc spectra (not yet implemented)")
@@ -1961,10 +1977,10 @@ class solve_arcs(BasePrimitive):
 
     def _perform(self):
         return self.action.args
-    # END: class solve_arcs()
+    # END: class SolveArcs()
 
 
-class solve_geom(BasePrimitive):
+class SolveGeom(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
@@ -1973,10 +1989,10 @@ class solve_geom(BasePrimitive):
     def _perform(self):
         self.logger.info("Solving overall geometry (not yet implemented)")
         return self.action.args
-    # END: class solve_geom()
+    # END: class SolveGeom()
 
 
-class generate_maps(BasePrimitive):
+class GenerateMaps(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
@@ -1985,10 +2001,10 @@ class generate_maps(BasePrimitive):
     def _perform(self):
         self.logger.info("Generating geometry maps (not yet implemented)")
         return self.action.args
-    # END: class generate_maps()
+    # END: class GenerateMaps()
 
 
-class apply_flat(BasePrimitive):
+class ApplyFlat(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
@@ -1997,10 +2013,10 @@ class apply_flat(BasePrimitive):
     def _perform(self):
         self.logger.info("Applying flat field (not yet implemented)")
         return self.action.args
-    # END: class apply_flat()
+    # END: class ApplyFlat()
 
 
-class subtract_sky(BasePrimitive):
+class SubtractSky(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
@@ -2009,10 +2025,10 @@ class subtract_sky(BasePrimitive):
     def _perform(self):
         self.logger.info("Subtracting sky background (not yet implemented)")
         return self.action.args
-    # END: class subtract_sky()
+    # END: class SubtractSky()
 
 
-class make_cube(BasePrimitive):
+class MakeCube(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
@@ -2021,10 +2037,10 @@ class make_cube(BasePrimitive):
     def _perform(self):
         self.logger.info("Creating data cube (not yet implemented)")
         return self.action.args
-    # END: class make_cube()
+    # END: class MakeCube()
 
 
-class correct_dar(BasePrimitive):
+class CorrectDar(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
@@ -2033,10 +2049,10 @@ class correct_dar(BasePrimitive):
     def _perform(self):
         self.logger.info("Correcting for DAR (not yet implemented)")
         return self.action.args
-    # END: class correct_dar()
+    # END: class CorrectDar()
 
 
-class flux_calibrate(BasePrimitive):
+class FluxCalibrate(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
@@ -2045,10 +2061,10 @@ class flux_calibrate(BasePrimitive):
     def _perform(self):
         self.logger.info("Calibrating object flux (not yet implemented)")
         return self.action.args
-    # END: class flux_calibrate()
+    # END: class FluxCalibrate()
 
 
-class make_invsens(BasePrimitive):
+class MakeInvsens(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
@@ -2058,5 +2074,4 @@ class make_invsens(BasePrimitive):
         self.logger.info("Making inverse sensitivity curve "
                          "(not yet implemented)")
         return self.action.args
-    # END: class make_invsens()
-
+    # END: class MakeInvsens()
