@@ -1380,8 +1380,10 @@ class ArcOffsets(BasePrimitive):
                                plot_width=self.config.instrument.plot_width,
                                plot_height=self.config.instrument.plot_height)
                     x = range(len(refarc))
-                    p.line(x, refarc, color='green')
-                    p.line(x, np.roll(arc, offset), color='red')
+                    p.line(x, refarc, color='green', legend='ref bar (%d)' %
+                           self.context.config.instrument.REFBAR)
+                    p.line(x, np.roll(arc, offset), color='red',
+                           legend='bar %d' % na)
                     bokeh_plot(p)
                     q = input("<cr> - Next, q to quit: ")
                     if 'Q' in q.upper():
@@ -1511,11 +1513,11 @@ class ReadAtlas(BasePrimitive):
                        plot_width=self.context.config.instrument.plot_width,
                        plot_height=self.context.config.instrument.plot_height)
 
-            p.line(offar_central, xcorr_central)
+            p.line(offar_central, xcorr_central, legend='Data')
             ylim_min = min(xcorr_central)
             ylim_max = max(xcorr_central)
             p.line([offset_pix, offset_pix], [ylim_min, ylim_max],
-                   color='green')
+                   color='green', legend='Peak')
             bokeh_plot(p)
             if self.context.config.plot_level >= 2:
                 input("Next? <cr>: ")
@@ -1579,7 +1581,7 @@ class ReadAtlas(BasePrimitive):
     # END: class ReadAtlas()
 
 
-def myhelper(argument):
+def bar_fit_helper(argument):
 
     b = argument['b']
     bs = argument['bs']
@@ -1681,12 +1683,9 @@ def myhelper(argument):
     print("Central Fit: Bar#, Cdisp, Coefs: "
           "%3d  %.4f  %.2f  %.4f  %13.5e %13.5e" %
           (b, bardisp, scoeff[4], scoeff[3], scoeff[2], scoeff[1]))
-    # store central values
-    # centwave.append(coeff[4])
-    # centdisp.append(coeff[3])
-    # Store results
-    return b, scoeff, coeff[4], coeff[3]
-    # END: def myhelper()
+    # Return results
+    return b, scoeff, coeff[4], coeff[3], maxima
+    # END: def bar_fit_helper()
 
 
 class FitCenter(BasePrimitive):
@@ -1705,18 +1704,8 @@ class FitCenter(BasePrimitive):
         """
         self.logger.info("Finding wavelength solution for central region")
         # Are we interactive?
-        # if KcwiConf.INTER >= 2:
-        #    do_inter = True
-        #    pl.ion()
-        # else:
-        #    do_inter = False
-        # do_inter = False
-        # image label
-        imlab = "Img # %d (%s) Sl: %s Fl: %s Gr: %s" % \
-                (self.action.args.ccddata.header['FRAMENO'],
-                 self.action.args.illum,
-                 self.action.args.ifuname, self.action.args.filter,
-                 self.action.args.grating)
+        do_inter = (self.context.config.plot_level >= 2)
+
         # y binning
         ybin = self.action.args.ybinsize
         # let's populate the 0 points vector
@@ -1738,17 +1727,11 @@ class FitCenter(BasePrimitive):
         disps = self.context.prelim_disp * (1.0 + max_ddisp *
                                             (np.arange(0, nn+1) - nn/2.) *
                                             2.0 / nn)
-        # containers for bar-specific values
-        bardisp = []
-        barshift = []
-        centwave = []
-        centdisp = []
-
         # values for central fit
         subxvals = self.action.args.xvals[
                    self.action.args.minrow:self.action.args.maxrow]
-        # loop over bars
 
+        # loop over bars and assemble input arguments
         my_arguments = []
         for b, bs in enumerate(self.context.arcs):
             arguments = {
@@ -1766,13 +1749,12 @@ class FitCenter(BasePrimitive):
             }
             my_arguments.append(arguments)
 
-        results = []
         centcoeff = []
         centwave = []
         centdisp = []
 
         p = Pool()
-        results = p.map(myhelper, list(my_arguments))
+        results = p.map(bar_fit_helper, list(my_arguments))
         p.close()
 
         for result in results:
@@ -1783,153 +1765,44 @@ class FitCenter(BasePrimitive):
             centcoeff.append({b: scoeff})
             centwave.append(_centwave)
             centdisp.append(_centdisp)
-
-        self.action.args.centcoeff = centcoeff
-
-        # for b, bs in enumerate(self.context.arcs):
-        """
-            # wavelength coefficients
-            coeff = [0., 0., 0., 0., 0.]
-            # container for maxima, shifts
-            maxima = []
-            shifts = []
-            # get sub spectrum for this bar
-            subspec = bs[self.action.args.minrow:self.action.args.maxrow]
-            # now loop over dispersions
-            for di, disp in enumerate(disps):
-                # populate the coefficients
-                coeff[4] = p0[b]
-                coeff[3] = disp
-                cosbeta = disp / (self.context.config.instrument.PIX*ybin) * \
-                self.action.args.rho * \
-                    self.context.config.instrument.FCAM * 1.e-4
-                if cosbeta > 1.:
-                    cosbeta = 1.
-                beta = math.acos(cosbeta)
-                coeff[2] = -(self.context.config.instrument.PIX * ybin / \
-                self.context.config.instrument.FCAM) ** 2 * \
-                    math.sin(beta) / 2. / self.action.args.rho * 1.e4
-                coeff[1] = -(self.context.config.instrument.PIX * ybin / \
-                self.context.config.instrument.FCAM) ** 3 * \
-                    math.cos(beta) / 6. / self.action.args.rho * 1.e4
-                coeff[0] = (self.context.config.instrument.PIX * ybin / \
-                self.context.config.instrument.FCAM) ** 4 * \
-                    math.sin(beta) / 24. / self.action.args.rho * 1.e4
-                # what are the min and max wavelengths to consider?
-                wl0 = np.polyval(coeff, self.action.args.xvals[
-                self.action.args.minrow])
-                wl1 = np.polyval(coeff, self.action.args.xvals[
-                self.action.args.maxrow])
-                minwvl = np.nanmin([wl0, wl1])
-                maxwvl = np.nanmax([wl0, wl1])
-                # where will we need to interpolate to cross-correlate?
-                minrw = [i for i, v in enumerate(self.action.args.refwave)
-                         if v >= minwvl][0]
-                maxrw = [i for i, v in enumerate(self.action.args.refwave)
-                         if v <= maxwvl][-1]
-                subrefwvl = self.action.args.refwave[minrw:maxrw]
-                subrefspec = self.action.args.reflux[minrw:maxrw]
-                # get bell cosine taper to avoid nasty edge effects
-                tkwgt = signal.windows.tukey(len(subrefspec),
-                                             alpha=self.context.config.instrument.TAPERFRAC)
-                # apply taper to atlas spectrum
-                subrefspec *= tkwgt
-                # adjust wavelengths
-                waves = np.polyval(coeff, subxvals)
-                # interpolate the bar spectrum
-                obsint = interpolate.interp1d(waves, subspec, kind='cubic',
-                                              bounds_error=False,
-                                              fill_value='extrapolate')
-                intspec = obsint(subrefwvl)
-                # apply taper to bar spectrum
-                intspec *= tkwgt
-                # get a label
-                # cross correlate the interpolated spectrum with the atlas spec
-                nsamp = len(subrefwvl)
-                offar = np.arange(1 - nsamp, nsamp)
-                # Cross-correlate
-                xcorr = np.correlate(intspec, subrefspec, mode='full')
-                # Get central region
-                x0c = int(len(xcorr) / 3)
-                x1c = int(2 * (len(xcorr) / 3))
-                xcorr_central = xcorr[x0c:x1c]
-                offar_central = offar[x0c:x1c]
-                # Calculate offset
-                maxima.append(xcorr_central[xcorr_central.argmax()])
-                shifts.append(offar_central[xcorr_central.argmax()])
-            # Get interpolations
-            int_max = interpolate.interp1d(disps, maxima, kind='cubic',
-                                           bounds_error=False,
-                                           fill_value='extrapolate')
-            int_shift = interpolate.interp1d(disps, shifts, kind='cubic',
-                                             bounds_error=False,
-                                             fill_value='extrapolate')
-            xdisps = np.linspace(min(disps), max(disps), num=nn*100)
-            # get peak values
-            maxima_res = int_max(xdisps)
-            shifts_res = int_shift(xdisps) * self.action.args.refdisp
-            bardisp.append(xdisps[maxima_res.argmax()])
-            barshift.append(shifts_res[maxima_res.argmax()])
-            # update coeffs
-            coeff[4] = p0[b] - barshift[-1]
-            coeff[3] = bardisp[-1]
-            cosbeta = coeff[3] / (self.context.config.instrument.PIX * ybin) * \
-            self.action.args.rho * \
-                self.context.config.instrument.FCAM * 1.e-4
-            if cosbeta > 1.:
-                cosbeta = 1.
-            beta = math.acos(cosbeta)
-            coeff[2] = -(self.context.config.instrument.PIX * ybin / \
-            self.context.config.instrument.FCAM) ** 2 * \
-                math.sin(beta) / 2. / self.action.args.rho * 1.e4
-            coeff[1] = -(self.context.config.instrument.PIX * ybin / \
-            self.context.config.instrument.FCAM) ** 3 * \
-                math.cos(beta) / 6. / self.action.args.rho * 1.e4
-            coeff[0] = (self.context.config.instrument.PIX * ybin / \
-            self.context.config.instrument.FCAM) ** 4 * \
-                math.sin(beta) / 24. / self.action.args.rho * 1.e4
-            scoeff = pascal_shift(coeff, self.action.args.x0)
-            self.logger.info("Central Fit: Bar#, Cdisp, Coefs: "
-                          "%3d  %.4f  %.2f  %.4f  %13.5e %13.5e" %
-                          (b, bardisp[-1], scoeff[4], scoeff[3], scoeff[2],
-                           scoeff[1]))
-            # store central values
-            centwave.append(coeff[4])
-            centdisp.append(coeff[3])
-            # Store results
-            self.action.args.centcoeff.append(coeff)
-
-            if self.context.config.plot_level >= 1:
+            maxima = result[4]
+            if do_inter:
                 # plot maxima
-                p = figure(title="Bar %d, Slice %d" % (b, int(b/5)),
+                # image label
+                imlab = "Img # %d (%s) Sl: %s Fl: %s Gr: %s" % \
+                        (self.action.args.ccddata.header['FRAMENO'],
+                         self.action.args.illum,
+                         self.action.args.ifuname, self.action.args.filter,
+                         self.action.args.grating)
+                p = figure(title=imlab+": Bar %d, Slice %d" % (b, int(b / 5)),
                            x_axis_label="Central dispersion (Ang/px)",
                            y_axis_label="X-Corr Peak Value")
-
-                p.scatter(disps, maxima, color='red')
-                p.line(xdisps, int_max(xdisps))
-                ylim_min = min(maxima)
-                ylim_max = max(maxima)
-                p.line([bardisp[-1], bardisp[-1]], [ylim_min, ylim_max],
-                 color='green')
+                p.scatter(disps, maxima, color='red', legend="Data")
+                p.line(disps, maxima, color='blue')
+                ylim = [min(maxima), max(maxima)]
+                p.line([_centdisp, _centdisp], ylim, color='green',
+                       legend="Fit Disp")
+                p.line([self.context.prelim_disp, self.context.prelim_disp],
+                       ylim, color='red', legend="Prelim Disp")
                 bokeh_plot(p)
-                if do_inter:
-                    q = input("<cr> - Next, q to quit: ")
-                    if 'Q' in q.upper():
-                        do_inter = False
-                else:
-                    time.sleep(0.01)
-        """
+                q = input("<cr> - Next, q to quit: ")
+                if 'Q' in q.upper():
+                    do_inter = False
+
+        self.action.args.centcoeff = centcoeff
 
         if self.context.config.plot_level >= 1:
             # Plot results
             p = figure(title=self.action.args.plotlabel, x_axis_label="Bar #",
                        y_axis_label="Central Wavelength (A)")
             x = range(len(centwave))
-            p.scatter(x, centwave, marker='x')
+            p.scatter(x, centwave, marker='x', legend='bar wave')
+            p.line([0, 120], [self.action.args.cwave, self.action.args.cwave],
+                   color='red', legend='CWAVE')
             ylim = [min(centwave), max(centwave)]
             for ix in range(1, 24):
                 sx = ix*5 - 0.5
-                p.line([sx, sx], ylim, color='black', line_dash='dotted')
+                p.line([sx, sx], ylim, color='black')
             p.x_range = Range1d(-1, 120)
             bokeh_plot(p)
             if self.context.config.plot_level >= 2:
@@ -1939,11 +1812,14 @@ class FitCenter(BasePrimitive):
             p = figure(title=self.action.args.plotlabel, x_axis_label="Bar #",
                        y_axis_label="Central Dispersion (A)")
             x = range(len(centdisp))
-            p.scatter(x, centdisp, marker='x')
+            p.scatter(x, centdisp, marker='x', legend='bar disp')
+            p.line([0, 120], [self.context.prelim_disp,
+                              self.context.prelim_disp], color='red',
+                   legend='Prelim Disp')
             ylim = [min(centdisp), max(centdisp)]
             for ix in range(1, 24):
                 sx = ix * 5 - 0.5
-                p.line([sx, sx], ylim,  color='black', line_dash='dotted')
+                p.line([sx, sx], ylim,  color='black')
             p.x_range = Range1d(-1, 120)
             bokeh_plot(p)
             if self.context.config.plot_level >= 2:
