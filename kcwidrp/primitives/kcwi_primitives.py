@@ -17,7 +17,7 @@ from scipy.optimize import curve_fit
 from bokeh.plotting import figure, show
 from bokeh.models import Range1d
 from bokeh.models.markers import X
-from bokeh.io import curdoc
+from bokeh.io import export_png
 from bokeh.util.logconfig import basicConfig, bokeh_logger as bl
 import logging
 
@@ -1930,6 +1930,8 @@ class FitCenter(BasePrimitive):
                          self.action.args.ifuname, self.action.args.filter,
                          self.action.args.grating)
                 p = figure(title=imlab+": Bar %d, Slice %d" % (b, int(b / 5)),
+                           plot_width=self.config.instrument.plot_width,
+                           plot_height=self.config.instrument.plot_height,
                            x_axis_label="Central dispersion (Ang/px)",
                            y_axis_label="X-Corr Peak Value")
                 p.scatter(disps, maxima, color='red', legend="Data")
@@ -1938,18 +1940,20 @@ class FitCenter(BasePrimitive):
                 p.line([_centdisp, _centdisp], ylim, color='green',
                        legend="Fit Disp")
                 p.line([self.context.prelim_disp, self.context.prelim_disp],
-                       ylim, color='red', legend="Prelim Disp")
+                       ylim, color='red', legend="Calc Disp")
                 bokeh_plot(p)
                 q = input("<cr> - Next, q to quit: ")
                 if 'Q' in q.upper():
                     do_inter = False
 
         self.action.args.twkcoeff = twkcoeff
-
+        # Plot results
         if self.context.config.plot_level >= 1:
-            # Plot results
+            # Plot central wavelength
             p = figure(title=self.action.args.plotlabel, x_axis_label="Bar #",
-                       y_axis_label="Central Wavelength (A)")
+                       y_axis_label="Central Wavelength (A)",
+                       plot_width=self.config.instrument.plot_width,
+                       plot_height=self.config.instrument.plot_height)
             x = range(len(centwave))
             p.scatter(x, centwave, marker='x', legend='bar wave')
             p.line([0, 120], [self.action.args.cwave, self.action.args.cwave],
@@ -1959,23 +1963,28 @@ class FitCenter(BasePrimitive):
                 sx = ix*5 - 0.5
                 p.line([sx, sx], ylim, color='black')
             p.x_range = Range1d(-1, 120)
+            p.legend.location = "top_center"
             bokeh_plot(p)
             if self.context.config.plot_level >= 2:
                 input("Next? <cr>: ")
             else:
                 time.sleep(self.context.config.instrument.plot_pause)
+            # Plot central dispersion
             p = figure(title=self.action.args.plotlabel, x_axis_label="Bar #",
-                       y_axis_label="Central Dispersion (A)")
+                       y_axis_label="Central Dispersion (A)",
+                       plot_width=self.config.instrument.plot_width,
+                       plot_height=self.config.instrument.plot_height)
             x = range(len(centdisp))
             p.scatter(x, centdisp, marker='x', legend='bar disp')
             p.line([0, 120], [self.context.prelim_disp,
                               self.context.prelim_disp], color='red',
-                   legend='Prelim Disp')
+                   legend='Calc Disp')
             ylim = [min(centdisp), max(centdisp)]
             for ix in range(1, 24):
                 sx = ix * 5 - 0.5
                 p.line([sx, sx], ylim,  color='black')
             p.x_range = Range1d(-1, 120)
+            p.legend.location = "bottom_center"
             bokeh_plot(p)
             if self.context.config.plot_level >= 2:
                 input("Next? <cr>: ")
@@ -1995,6 +2004,7 @@ class GetAtlasLines(BasePrimitive):
         self.action.args.atmaxrow = None
         self.action.args.atminwave = None
         self.action.args.atmaxwave = None
+        self.action.args.at_wave = None
 
     def _perform(self):
         self.logger.info("Finding isolated atlas lines")
@@ -2069,6 +2079,7 @@ class GetAtlasLines(BasePrimitive):
         # clean near neighbors
         diffs = np.diff(init_cent)
         spec_cent = []
+        spec_hgt = []
         rej_neigh_w = []
         rej_neigh_y = []
         neigh_fact = 1.25
@@ -2090,22 +2101,24 @@ class GetAtlasLines(BasePrimitive):
                     rej_neigh_y.append(init_hgt[i])
                     continue
             spec_cent.append(w)
+            spec_hgt.append(init_hgt[i])
         self.logger.info("Found %d isolated peaks" % len(spec_cent))
         #
         # generate an atlas line list
         refws = []
         refas = []
         rej_fit_w = []
+        rej_fit_y = []
         rej_par_w = []
         rej_par_a = []
         nrej = 0
         for i, pk in enumerate(spec_cent):
-
             # Fit Atlas Peak
-            line_x = [i for i, v in enumerate(atwave) if v >= pk][0]
+            line_x = [ii for ii, v in enumerate(atwave) if v >= pk][0]
             minow, maxow, count = get_line_window(atspec, line_x)
             if count < 5 or not minow or not maxow:
                 rej_fit_w.append(pk)
+                rej_fit_y.append(spec_hgt[i])
                 nrej += 1
                 self.logger.info("Atlas window rejected for line %.3f" % pk)
                 continue
@@ -2115,6 +2128,7 @@ class GetAtlasLines(BasePrimitive):
                 fit, _ = curve_fit(gaus, xvec, yvec, p0=[100., pk, 1.])
             except RuntimeError:
                 rej_fit_w.append(pk)
+                rej_fit_y.append(spec_hgt[i])
                 nrej += 1
                 self.logger.info("Atlas Gaussian fit rejected for line %.3f" %
                                  pk)
@@ -2143,7 +2157,7 @@ class GetAtlasLines(BasePrimitive):
             refws.append(pkw)
             refas.append(y_dense[pki])
         # store wavelengths
-        self.at_wave = refws
+        self.action.args.at_wave = refws
         # plot results
         # image label
         imlab = "Img # %d (%s) Sl: %s Fl: %s Gr: %s" % \
@@ -2152,77 +2166,40 @@ class GetAtlasLines(BasePrimitive):
                  self.action.args.ifuname, self.action.args.filter,
                  self.action.args.grating)
         norm_fac = np.nanmax(atspec)
-        p = figure(title=imlab + " Ngood = %d, Nrej = %d" % (len(self.at_wave),
-                                                             nrej),
+        p = figure(title=imlab + ": Ngood = %d, Nrej = %d" % (len(refws), nrej),
                    x_axis_label="Wavelength (A)",
-                   y_axis_label="Normalized Flux")
-        p.line(subwvals, subyvals / np.nanmax(subyvals), legend='RefArc')
-        ylim = [-0.1, 1.05]
-        p.line(atwave, atspec / norm_fac, legend='Atlas')
-        # yvals = np.zeros(len(rej_neigh_w)) + 1.0
-        p.square(rej_neigh_w, rej_neigh_y / norm_fac, legend='NeighRej',
-                 color='red')
-        """
-        # Initial findpeaks list
-        plot_first = True
-        for iw, w in enumerate(init_cent):
-            if plot_first:
-                p.line([w, w], ylim, color='black', line_dash='dashed',
-                       legend='Fpks')
-                plot_first = False
-            else:
-                p.line([w, w], ylim, color='black', line_dash='dashed')
-        # Nearby Neighbor rejections
-        plot_first = True
-        for iw, w in enumerate(rej_neigh_w):
-            if plot_first:
-                p.line([w, w], ylim, color='red', line_dash='dashed',
-                       legend='NeighRej')
-                plot_first = False
-            else:
-                p.line([w, w], ylim, color='red', line_dash='dashed')
-        # Fit failure rejections
-        plot_first = True
-        for iw, w in enumerate(rej_fit_w):
-            if plot_first:
-                p.line([w, w], ylim, color='magenta', line_dash='dashed',
-                       legend='FitRej')
-                plot_first = False
-            else:
-                p.line([w, w], ylim, color='magenta', line_dash='dashed')
-        # Line Parameter rejections
-        plot_first = True
-        for iw, w in enumerate(rej_par_w):
-            if plot_first:
-                p.square([w, w], [rej_par_a[iw], rej_par_a[iw]] / norm_fac,
-                         color='red', legend='ParRej')
-                plot_first = False
-            else:
-                p.square([w, w], [rej_par_a[iw], rej_par_a[iw]] / norm_fac,
-                         color='red')
-        # Final Kept list
-        plot_first = True
-        for iw, w in enumerate(self.at_wave):
-            if plot_first:
-                p.square([w, w], [refas[iw], refas[iw]] / norm_fac,
-                         color='black', legend='Kept')
-                plot_first = False
-            else:
-                p.square([w, w], [refas[iw], refas[iw]] / norm_fac,
-                         color='black')
-        """
+                   y_axis_label="Normalized Flux",
+                   plot_width=self.config.instrument.plot_width,
+                   plot_height=self.config.instrument.plot_height)
+        p.line(subwvals, subyvals / np.nanmax(subyvals), legend='RefArc',
+               color='lightgray')
+        p.line(atwave, atspec / norm_fac, legend='Atlas', color='blue')
+        # Initial line list
+        # p.diamond(init_cent, init_hgt / norm_fac, legend='Fpks',
+        #          color='black', size=10, fill_alpha=0.1)
+        # Rejected: nearby neighbor
+        p.diamond(rej_neigh_w, rej_neigh_y / norm_fac, legend='NeighRej',
+                  color='red', size=8)
+        # Rejected: fit failure
+        p.diamond(rej_fit_w, rej_fit_y / norm_fac, legend='FitRej',
+                  color='cyan', size=8)
+        # Rejected: line parameter outside range
+        p.diamond(rej_par_w, rej_par_a / norm_fac, legend='ParRej',
+                  color='orange', size=8)
+        p.diamond(refws, refas / norm_fac, legend='Kept', color='green',
+                  size=10)
         p.x_range = Range1d(min(subwvals), max(subwvals))
-        # p.savefig("atlas_lines_%s_%s_%s_%05d.png" %
-        #           (self.action.args.illum, self.action.args.grating,
-        #            self.action.args.ifuname,
-        #            self.action.args.ccddata.header['FRAMENO']))
         bokeh_plot(p)
-        self.logger.info("Final atlas list has %d lines" % len(self.at_wave))
+        export_png(p, "atlas_lines_%s_%s_%s_%05d.png" %
+                   (self.action.args.illum, self.action.args.grating,
+                    self.action.args.ifuname,
+                    self.action.args.ccddata.header['FRAMENO']))
+        self.logger.info("Final atlas list has %d lines" % len(refws))
         if self.context.config.plot_level >= 2:
             input("Next? <cr>: ")
         else:
             pl.pause(self.context.config.instrument.plot_pause)
-        # END: get_atlas_lines()
+
         return self.action.args
     # END: class GetAtlasLines()
 
