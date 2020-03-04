@@ -2189,16 +2189,17 @@ class GetAtlasLines(BasePrimitive):
         p.diamond(refws, refas / norm_fac, legend='Kept', color='green',
                   size=10)
         p.x_range = Range1d(min(subwvals), max(subwvals))
-        bokeh_plot(p)
+        if self.context.config.plot_level >= 1:
+            bokeh_plot(p)
+            if self.context.config.plot_level >= 2:
+                input("Next? <cr>: ")
+            else:
+                pl.pause(self.context.config.instrument.plot_pause)
         export_png(p, "atlas_lines_%s_%s_%s_%05d.png" %
                    (self.action.args.illum, self.action.args.grating,
                     self.action.args.ifuname,
                     self.action.args.ccddata.header['FRAMENO']))
         self.logger.info("Final atlas list has %d lines" % len(refws))
-        if self.context.config.plot_level >= 2:
-            input("Next? <cr>: ")
-        else:
-            pl.pause(self.context.config.instrument.plot_pause)
 
         return self.action.args
     # END: class GetAtlasLines()
@@ -2210,8 +2211,384 @@ class SolveArcs(BasePrimitive):
         self.logger.info("Solving individual arc spectra (not yet implemented)")
         BasePrimitive.__init__(self, action, context)
         self.logger = context.pipeline_logger
+        self.fincoeff = []
 
     def _perform(self):
+        """Solve the bar arc wavelengths"""
+        if self.context.config.plot_level >= 2:
+            master_inter = True
+        else:
+            master_inter = False
+        if self.context.config.plot_level >= 3:
+            do_inter = True
+        else:
+            do_inter = False
+        verbose = False
+        # Bar statistics
+        bar_sig = []
+        bar_nls = []
+        # set thresh for finding lines
+        hgt = 50.
+        self.logger.info("line thresh = %.2f" % hgt)
+        # get relevant part of atlas spectrum
+        atwave = self.action.args.refwave[self.action.args.atminrow:
+                                          self.action.args.atmaxrow]
+        atspec = self.action.args.reflux[self.action.args.atminrow:
+                                         self.action.args.atmaxrow]
+        # get x values starting at zero pixels
+        self.xsvals = np.arange(0, len(
+            self.context.arcs[self.context.config.instrument.REFBAR]))
+        # loop over arcs and generate a wavelength solution for each
+        for ib, b in enumerate(self.context.arcs):
+            # print("")
+            # self.logger.info("BAR %d" % ib)
+            # print("")
+            # Starting pascal shifted coeffs from fit_center()
+            coeff = self.action.args.twkcoeff[ib]
+            # get bar wavelengths
+            bw = np.polyval(coeff, self.xsvals)
+            # smooth spectrum according to slicer
+            if 'Small' in self.action.args.ifuname():
+                bspec = b
+            else:
+                if 'Large' in self.action.args.ifuname():
+                    win = boxcar(5)
+                else:
+                    win = boxcar(3)
+                bspec = sp.signal.convolve(b, win, mode='same') / sum(win)
+            # spmode = mode(np.round(bspec))
+            # spmed = np.nanmedian(bspec)
+            # self.logger.info("Arc spec median = %.3f, mode = %d" %
+            #              (spmed, spmode.mode[0]))
+            # store values to fit
+            at_wave_dat = []
+            arc_pix_dat = []
+            rej_wave = []
+            nrej = 0
+            # loop over lines
+            for iw, aw in enumerate(self.action.args.at_wave):
+                # get window for this line
+                try:
+                    line_x = [i for i, v in enumerate(bw) if v >= aw][0]
+                    minow, maxow, count = get_line_window(bspec, line_x,
+                                                          thresh=hgt)
+                    if count < 5 or not minow or not maxow:
+                        rej_wave.append(aw)
+                        nrej += 1
+                        if verbose:
+                            self.logger.info("Arc window rejected for line %.3f"
+                                             % aw)
+                        continue
+                    # check if window no longer contains initial value
+                    if minow > line_x > maxow:
+                        rej_wave.append(aw)
+                        nrej += 1
+                        if verbose:
+                            self.logger.info(
+                                "Arc window wandered off for line %.3f" % aw)
+                        continue
+                    yvec = bspec[minow:maxow + 1]
+                    xvec = self.xsvals[minow:maxow + 1]
+                    wvec = bw[minow:maxow + 1]
+                    max_value = yvec[yvec.argmax()]
+                    # Gaussian fit
+                    try:
+                        fit, _ = curve_fit(gaus, xvec, yvec,
+                                           p0=[100., line_x, 1.])
+                    except RuntimeError:
+                        nrej += 1
+                        if verbose:
+                            self.logger.info(
+                                "Arc Gaussian fit rejected for line %.3f" % aw)
+                        continue
+                    sp_pk_x = fit[1]
+                    # Get interpolation
+                    int_line = interpolate.interp1d(xvec, yvec, kind='cubic',
+                                                    bounds_error=False,
+                                                    fill_value='extrapolate')
+                    xplot = np.linspace(min(xvec), max(xvec), num=1000)
+                    # get peak value
+                    plt_line = int_line(xplot)
+                    max_index = plt_line.argmax()
+                    peak = xplot[max_index]
+                    # Calculate centroid
+                    cent = np.sum(xvec * yvec) / np.sum(yvec)
+                    if abs(cent - peak) > 0.7:
+                        rej_wave.append(aw)
+                        nrej += 1
+                        if verbose:
+                            self.logger.info("Arc peak - cent offset rejected "
+                                             "for line %.3f" % aw)
+                        continue
+                    # store data
+                    arc_pix_dat.append(peak)
+                    at_wave_dat.append(aw)
+                    # plot, if requested
+                    if do_inter:
+                        ptitle = "Bar: %d - %3d/%3d: x0, x1, Cent, Wave = " \
+                                 "%d, %d, %8.1f, %9.2f" % \
+                                 (ib, (iw + 1), len(self.action.args.at_wave),
+                                  minow, maxow, cent, aw)
+                        atx0 = [i for i, v in enumerate(atwave)
+                                if v >= min(wvec)][0]
+                        atx1 = [i for i, v in enumerate(atwave)
+                                if v >= max(wvec)][0]
+                        atnorm = np.nanmax(yvec) / np.nanmax(atspec[atx0:atx1])
+                        p = figure(
+                            title=ptitle, x_axis_label="Wavelength (A)",
+                            y_axis_label="Relative Flux",
+                            plot_width=self.config.instrument.plot_width,
+                            plot_height=self.config.instrument.plot_height)
+                        p.line(wvec, yvec, legend='Arc', color='black')
+                        p.circle(wvec, yvec, color='red')
+                        ylim = [0, np.nanmax(yvec)]
+                        p.circle(atwave[atx0:atx1], atspec[atx0:atx1] * atnorm,
+                                 color='green', legend='Atlas')
+                        p.line([aw, aw], ylim, color='red', legend='W in')
+                        input("next - <cr>: ")
+                        pl.clf()
+                        pl.plot(xvec, yvec, 'r.', label='Data')
+                        pl.plot(xplot, plt_line, label='Interp')
+                        ylim = [0, pl.gca().get_ylim()[1]]
+                        xlim = pl.gca().get_xlim()
+                        pl.plot(xlim, [max_value * 0.5, max_value * 0.5], 'k--')
+                        pl.plot([cent, cent], ylim, 'g--', label='Cntr')
+                        pl.plot([line_x, line_x], ylim, 'r-.', label='X in')
+                        pl.plot([peak, peak], ylim, 'c-.', label='Peak')
+                        pl.plot([sp_pk_x, sp_pk_x], ylim, 'm-.', label='Gpeak')
+                        pl.xlabel("CCD Y (px)")
+                        pl.ylabel("Flux (DN)")
+                        pl.ylim(ylim)
+                        pl.title(ptitle)
+                        pl.legend()
+
+                        q = input(ptitle + "; <cr> - Next, q to quit: ")
+                        if 'Q' in q.upper():
+                            do_inter = False
+                            pl.ioff()
+                except IndexError:
+                    if verbose:
+                        self.logger.info(
+                            "Atlas line not in observation: %.2f" % aw)
+                    rej_wave.append(aw)
+                    nrej += 1
+                    continue
+                except ValueError:
+                    if verbose:
+                        self.logger.info(
+                            "Interpolation error for line at %.2f" % aw)
+                    rej_wave.append(aw)
+                    nrej += 1
+            self.logger.info("Fitting wavelength solution starting with %d "
+                             "lines after rejecting %d lines" %
+                             (len(arc_pix_dat), nrej))
+            # Fit wavelengths
+            # Initial fit
+            wfit = np.polyfit(arc_pix_dat, at_wave_dat, 4)
+            pwfit = np.poly1d(wfit)
+            arc_wave_fit = pwfit(arc_pix_dat)
+            resid = arc_wave_fit - at_wave_dat
+            resid_c, low, upp = sigmaclip(resid, low=3., high=3.)
+            wsig = resid_c.std()
+            rej_rsd = []
+            rej_rsd_wave = []
+            # Iteratively remove outliers
+            for it in range(4):
+                # self.logger.info("Iteration %d" % it)
+                arc_dat = []
+                at_dat = []
+                # Trim outliers
+                for il, rsd in enumerate(resid):
+                    if low < rsd < upp:
+                        arc_dat.append(arc_pix_dat[il])
+                        at_dat.append(at_wave_dat[il])
+                    else:
+                        # self.logger.info("REJ: %d, %.2f, %.3f" %
+                        #              (il, arc_pix_dat[il], at_wave_dat[il]))
+                        rej_rsd_wave.append(at_wave_dat[il])
+                        rej_rsd.append(rsd)
+                # refit
+                arc_pix_dat = arc_dat.copy()
+                at_wave_dat = at_dat.copy()
+                wfit = np.polyfit(arc_pix_dat, at_wave_dat, 4)
+                pwfit = np.poly1d(wfit)
+                arc_wave_fit = pwfit(arc_pix_dat)
+                resid = arc_wave_fit - at_wave_dat
+                resid_c, low, upp = sigmaclip(resid, low=3., high=3.)
+                wsig = np.nanstd(resid)
+            # store results
+            # print("")
+            self.logger.info("Bar %03d, Slice = %02d, RMS = %.3f, N = %d" %
+                             (ib, int(ib / 5), wsig, len(arc_pix_dat)))
+            # print("")
+            self.fincoeff.append(wfit)
+            bar_sig.append(wsig)
+            bar_nls.append(len(arc_pix_dat))
+            # plot bar fit residuals
+            if master_inter:
+                pl.ion()
+                pl.clf()
+                pl.plot(at_wave_dat, resid, 'd', label='Rsd')
+                ylim = pl.gca().get_ylim()
+                if rej_rsd_wave:
+                    pl.plot(rej_rsd_wave, rej_rsd, 'rd', label='Rej')
+                pl.xlabel("Wavelength (A)")
+                pl.ylabel("Fit - Inp (A)")
+                pl.title(self.action.args.plotlabel() +
+                         " Bar = %03d, Slice = %02d, RMS = %.3f, N = %d" %
+                         (ib, int(ib / 5), wsig, len(arc_pix_dat)))
+                xlim = [self.action.args.atminwave, self.action.args.atmaxwave]
+                pl.plot(xlim, [0., 0.], '-')
+                pl.plot(xlim, [wsig, wsig], '-.', color='gray')
+                pl.plot(xlim, [-wsig, -wsig], '-.', color='gray')
+                pl.plot([self.action.args.cwave(), self.action.args.cwave()],
+                        ylim, '-.', label='CWAV')
+                pl.xlim(xlim)
+                pl.ylim(ylim)
+                pl.legend()
+                input("Next? <cr>: ")
+
+                # overplot atlas and bar using fit wavelengths
+                pl.clf()
+                bwav = pwfit(self.xsvals)
+                pl.plot(bwav, b, label='Arc')
+                ylim = pl.gca().get_ylim()
+                atnorm = np.nanmax(b) / np.nanmax(atspec)
+                pl.plot(atwave, atspec * atnorm, label='Atlas')
+                pl.plot([self.action.args.cwave(), self.action.args.cwave()],
+                        ylim, 'm-.', label='CWAV')
+                pl.xlim(xlim)
+                pl.ylim(ylim)
+                pl.xlabel("Wavelength (A)")
+                pl.ylabel("Flux")
+                pl.title(self.action.args.plotlabel() +
+                         " Bar = %03d, Slice = %02d, RMS = %.3f, N = %d" %
+                         (ib, int(ib / 5), wsig, len(arc_pix_dat)))
+                leg_first = True
+                for w in self.action.args.at_wave:
+                    if leg_first:
+                        pl.plot([w, w], ylim, 'k-.', label='Orig')
+                        leg_first = False
+                    else:
+                        pl.plot([w, w], ylim, 'k-.')
+                leg_first = True
+                for w in arc_wave_fit:
+                    if leg_first:
+                        pl.plot([w, w], ylim, 'c-.', label='Kept')
+                        leg_first = False
+                    else:
+                        pl.plot([w, w], ylim, 'c-.')
+                leg_first = True
+                for w in rej_rsd_wave:
+                    if leg_first:
+                        pl.plot([w, w], ylim, 'r-.', label='RejRsd')
+                        leg_first = False
+                    else:
+                        pl.plot([w, w], ylim, 'r-.')
+                leg_first = True
+                for w in rej_wave:
+                    if leg_first:
+                        pl.plot([w, w], ylim, 'y-.', label='RejFit')
+                        leg_first = False
+                    else:
+                        pl.plot([w, w], ylim, 'y-.')
+                pl.legend()
+                q = input("Next? <cr>, q - quit: ")
+                if 'Q' in q.upper():
+                    master_inter = False
+                    pl.ioff()
+        # Plot final results
+        # Plot fit sigmas
+        pl.clf()
+        pl.plot(bar_sig, 'd', label='RMS')
+        xlim = [-1, 120]
+        ylim = pl.gca().get_ylim()
+        self.av_bar_sig = float(np.nanmean(bar_sig))
+        self.st_bar_sig = float(np.nanstd(bar_sig))
+        self.logger.info("<STD>     = %.3f +- %.3f (A)" % (self.av_bar_sig,
+                                                           self.st_bar_sig))
+        pl.plot(xlim, [self.av_bar_sig, self.av_bar_sig], 'k--')
+        pl.plot(xlim, [(self.av_bar_sig - self.st_bar_sig),
+                       (self.av_bar_sig - self.st_bar_sig)], 'k:')
+        pl.plot(xlim, [(self.av_bar_sig + self.st_bar_sig),
+                       (self.av_bar_sig + self.st_bar_sig)], 'k:')
+        for ix in range(1, 24):
+            sx = ix * 5 - 0.5
+            pl.plot([sx, sx], ylim, '-.', color='black')
+        pl.xlabel("Bar #")
+        pl.ylabel("RMS (A)")
+        pl.title(self.action.args.plotlabel() +
+                 " <RMS>: %.3f +- %.3f" % (self.av_bar_sig, self.st_bar_sig))
+        pl.xlim(xlim)
+        pl.gca().margins(0)
+        pl.savefig("arc_%05d_resid_%s_%s_%s.png" %
+                   (self.action.args.ccddata.header['FRAMENO'],
+                    self.action.args.illum(),
+                    self.action.args.grating(), self.action.args.ifuname()))
+        if self.context.config.plot_level >= 1:
+            bokeh_plot(p)
+            if self.context.config.plot_level >= 2:
+                input("Next? <cr>: ")
+            else:
+                pl.pause(self.context.config.instrument.plot_pause)
+        # Plot number of lines fit
+        pl.clf()
+        pl.plot(bar_nls, 'd', label='N lines')
+        ylim = pl.gca().get_ylim()
+        self.av_bar_nls = float(np.nanmean(bar_nls))
+        self.st_bar_nls = float(np.nanstd(bar_nls))
+        self.logger.info("<N Lines> = %.1f +- %.1f" % (self.av_bar_nls,
+                                                       self.st_bar_nls))
+        pl.plot(xlim, [self.av_bar_nls, self.av_bar_nls], 'k--')
+        pl.plot(xlim, [(self.av_bar_nls - self.st_bar_nls),
+                       (self.av_bar_nls - self.st_bar_nls)], 'k:')
+        pl.plot(xlim, [(self.av_bar_nls + self.st_bar_nls),
+                       (self.av_bar_nls + self.st_bar_nls)], 'k:')
+        for ix in range(1, 24):
+            sx = ix * 5 - 0.5
+            pl.plot([sx, sx], ylim, '-.', color='black')
+        pl.xlabel("Bar #")
+        pl.ylabel("N Lines")
+        pl.title(self.action.args.plotlabel() + " <N Lines>: %.3f +- %.3f" %
+                 (self.av_bar_nls, self.st_bar_nls))
+        pl.xlim(xlim)
+        pl.gca().margins(0)
+        pl.savefig("arc_%05d_nlines_%s_%s_%s.png" %
+                   (self.action.args.ccddata.header['FRAMENO'],
+                    self.action.args.illum(),
+                    self.action.args.grating(), self.action.args.ifuname()))
+        if self.context.config.plot_level >= 1:
+            bokeh_plot(p)
+            if self.context.config.plot_level >= 2:
+                input("Next? <cr>: ")
+            else:
+                pl.pause(self.context.config.instrument.plot_pause)
+        # Plot coefs
+        ylabs = ['Ang/px^4', 'Ang/px^3', 'Ang/px^2', 'Ang/px', 'Ang']
+        for ic in reversed(range(len(self.fincoeff[0]))):
+            pl.clf()
+            coef = []
+            for c in self.fincoeff:
+                coef.append(c[ic])
+            pl.plot(coef, 'd')
+            ylim = pl.gca().get_ylim()
+            for ix in range(1, 24):
+                sx = ix * 5 - 0.5
+                pl.plot([sx, sx], ylim, '-.', color='black')
+            pl.xlabel("Bar #")
+            pl.ylabel("Coef %d (%s)" % (ic, ylabs[ic]))
+            pl.title(self.action.args.plotlabel() + " Coef %d" % ic)
+            pl.xlim(xlim)
+            pl.gca().margins(0)
+            pl.savefig("arc_%05d_coef%d_%s_%s_%s.png" %
+                       (self.action.args.ccddata.header['FRAMENO'], ic,
+                        self.action.args.illum(), self.action.args.grating(),
+                        self.action.args.ifuname()))
+            if self.context.config.plot_level >= 2:
+                input("Next? <cr>: ")
+            else:
+                pl.pause(self.context.config.instrument.plot_pause)
+
         return self.action.args
     # END: class SolveArcs()
 
