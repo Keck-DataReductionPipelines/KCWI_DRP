@@ -12,6 +12,8 @@ import os
 import matplotlib.pyplot as pl
 import numpy as np
 import scipy as sp
+from scipy.signal.windows import boxcar
+from scipy.optimize import curve_fit
 from bokeh.plotting import figure, show
 from bokeh.models import Range1d
 from bokeh.models.markers import X
@@ -98,6 +100,158 @@ def pascal_shift(coef=None, x0=None):
     # Reverse for python
     return list(reversed(fincoeff))
     # END: def pascal_shift()
+
+
+def gaus(x, a, mu, sigma):
+    """Gaussian fitting function"""
+    return a * np.exp(-(x - mu) ** 2 / (2. * sigma ** 2))
+
+
+def get_line_window(y, c, thresh=0., verbose=False):
+    """Find a window that includes the fwhm of the line"""
+    nx = len(y)
+    # check edges
+    if c < 2 or c > nx - 2:
+        if verbose:
+            print("input center too close to edge")
+        return None, None, 0
+    # get initial values
+    x0 = c - 2
+    x1 = c + 2
+    mx = np.nanmax(y[x0:x1+1])
+    count = 5
+    # check low side
+    if x0 - 1 < 0:
+        if verbose:
+            print("max check: low edge hit")
+        return None, None, 0
+    while y[x0-1] > mx:
+        x0 -= 1
+        count += 1
+        if x0 - 1 < 0:
+            if verbose:
+                print("Max check: low edge hit")
+            return None, None, 0
+
+    # check high side
+    if x1 + 1 > nx:
+        if verbose:
+            print("max check: high edge hit")
+        return None, None, 0
+    while y[x1+1] > mx:
+        x1 += 1
+        count += 1
+        if x1 + 1 > nx:
+            if verbose:
+                print("Max check: high edge hit")
+            return None, None, 0
+    # adjust starting window to center on max
+    cmx = x0 + y[x0:x1+1].argmax()
+    x0 = cmx - 2
+    x1 = cmx + 2
+    mx = np.nanmax(y[x0:x1 + 1])
+    # make sure max is high enough
+    if mx < thresh:
+        return None, None, 0
+    #
+    # expand until we get to half max
+    hmx = mx * 0.5
+    #
+    # Low index side
+    prev = mx
+    while y[x0] > hmx:
+        if y[x0] > mx or x0 <= 0 or y[x0] > prev:
+            if verbose:
+                if y[x0] > mx:
+                    print("hafmax check: low index err - missed max")
+                if x0 <= 0:
+                    print("hafmax check: low index err - at edge")
+                if y[x0] > prev:
+                    print("hafmax check: low index err - wiggly")
+            return None, None, 0
+        prev = y[x0]
+        x0 -= 1
+        count += 1
+    # High index side
+    prev = mx
+    while y[x1] > hmx:
+        if y[x1] > mx or x1 >= nx or y[x1] > prev:
+            if verbose:
+                if y[x1] > mx:
+                    print("hafmax check: high index err - missed max")
+                if x1 >= nx:
+                    print("hafmax check: high index err - at edge")
+                if y[x1] > prev:
+                    print("hafmax check: high index err - wiggly")
+            return None, None, 0
+        prev = y[x1]
+        x1 += 1
+        count += 1
+    # where did we end up?
+    if c < x0 or x1 < c:
+        if verbose:
+            print("initial position outside final window")
+        return None, None, 0
+
+    return x0, x1, count
+    # END: get_line_window()
+
+
+def findpeaks(x, y, wid, sth, ath, pkg=None, verbose=False):
+    """Find peaks in spectrum"""
+    # derivative
+    grad = np.gradient(y)
+    # smooth derivative
+    win = boxcar(wid)
+    d = sp.signal.convolve(grad, win, mode='same') / sum(win)
+    # size
+    nx = len(x)
+    # set up windowing
+    if not pkg:
+        pkg = wid
+    hgrp = int(pkg/2)
+    pks = []
+    sgs = []
+    # loop over spectrum
+    # limits to avoid edges given pkg
+    for i in np.arange(pkg, (nx - pkg)):
+        # find zero crossings
+        if np.sign(d[i]) > np.sign(d[i+1]):
+            # pass slope threshhold?
+            if (d[i] - d[i+1]) > sth * y[i]:
+                # pass amplitude threshhold?
+                if y[i] > ath or y[i+1] > ath:
+                    # get subvectors around peak in window
+                    xx = x[(i-hgrp):(i+hgrp+1)]
+                    yy = y[(i-hgrp):(i+hgrp+1)]
+                    if len(yy) > 3:
+                        try:
+                            res, _ = curve_fit(gaus, xx, yy,
+                                               p0=[100., x[i], 1.])
+                            r = abs(x - res[1])
+                            t = r.argmin()
+                            if abs(i - t) > pkg:
+                                if verbose:
+                                    print(i, t, x[i], res[1], x[t])
+                            else:
+                                pks.append(res[1])
+                                sgs.append(abs(res[2]))
+                        except RuntimeError:
+                            continue
+    # clean by sigmas
+    cpks = []
+    sgmd = None
+    if len(pks) > 0:
+        cln_sgs, low, upp = sigmaclip(sgs, low=3., high=3.)
+        for i in range(len(pks)):
+            if low < sgs[i] < upp:
+                cpks.append(pks[i])
+        # sgmn = cln_sgs.mean()
+        sgmd = float(np.nanmedian(cln_sgs))
+    else:
+        print("No peaks found!")
+    return cpks, sgmd
+    # END: findpeaks()
 
 
 class SubtractOverscan(BasePrimitive):
@@ -1078,25 +1232,22 @@ class FindBars(BasePrimitive):
                        line_dash='dashed')
                 bokeh_plot(p)
                 time.sleep(self.context.config.instrument.plot_pause)
-            # calculate the bar centroids
-            plotting_vector_x = []
-            plotting_vector_y = []
-            for peak in midpeaks:
-                xs = list(range(peak-win, peak+win+1))
-                ys = midvec[xs] - np.nanmin(midvec[xs])
-                xc = np.sum(xs*ys) / np.sum(ys)
-                midcntr.append(xc)
-                plotting_vector_x.append(xc)
-                plotting_vector_y.append(midavg)
-                plotting_vector_x.append(xc)
-                plotting_vector_y.append(midvec[peak])
-                plotting_vector_x.append(xc)
-                plotting_vector_y.append(midavg)
-            if do_plot:
+                # calculate the bar centroids
+                plotting_vector_x = []
+                plotting_vector_y = []
+                for peak in midpeaks:
+                    xs = list(range(peak-win, peak+win+1))
+                    ys = midvec[xs] - np.nanmin(midvec[xs])
+                    xc = np.sum(xs*ys) / np.sum(ys)
+                    midcntr.append(xc)
+                    plotting_vector_x.append(xc)
+                    plotting_vector_y.append(midavg)
+                    plotting_vector_x.append(xc)
+                    plotting_vector_y.append(midvec[peak])
+                    plotting_vector_x.append(xc)
+                    plotting_vector_y.append(midavg)
                 p.line(plotting_vector_x, plotting_vector_y, color='grey')
                 # p.line([xc, xc], [midavg, midvec[peak]], color='grey')
-
-            if do_plot:
                 p.scatter(midcntr, midvec[midpeaks], marker='x', color='green')
                 bokeh_plot(p)
                 if self.context.config.plot_level >= 2:
@@ -1693,7 +1844,7 @@ class FitCenter(BasePrimitive):
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
         self.logger = context.pipeline_logger
-        self.action.args.centcoeff = []
+        self.action.args.twkcoeff = []
 
     def _perform(self):
         """ Fit central region
@@ -1749,7 +1900,7 @@ class FitCenter(BasePrimitive):
             }
             my_arguments.append(arguments)
 
-        centcoeff = []
+        twkcoeff = {}
         centwave = []
         centdisp = []
 
@@ -1762,7 +1913,7 @@ class FitCenter(BasePrimitive):
             scoeff = result[1]
             _centwave = result[2]
             _centdisp = result[3]
-            centcoeff.append({b: scoeff})
+            twkcoeff[b] = scoeff
             centwave.append(_centwave)
             centdisp.append(_centdisp)
             maxima = result[4]
@@ -1789,7 +1940,7 @@ class FitCenter(BasePrimitive):
                 if 'Q' in q.upper():
                     do_inter = False
 
-        self.action.args.centcoeff = centcoeff
+        self.action.args.twkcoeff = twkcoeff
 
         if self.context.config.plot_level >= 1:
             # Plot results
@@ -1827,7 +1978,6 @@ class FitCenter(BasePrimitive):
             else:
                 time.sleep(self.context.config.instrument.plot_pause)
 
-        # print(self.action.args.centcoeff)
         return self.action.args
     # END: class FitCenter()
 
@@ -1837,9 +1987,232 @@ class GetAtlasLines(BasePrimitive):
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
         self.logger = context.pipeline_logger
+        self.action.args.atminrow = None
+        self.action.args.atmaxrow = None
+        self.action.args.atminwave = None
+        self.action.args.atmaxwave = None
 
     def _perform(self):
-        self.logger.info("Finding isolated atlas lines (not yet implemented)")
+        self.logger.info("Finding isolated atlas lines")
+        """Get relevant atlas line positions and wavelengths"""
+        # get atlas wavelength range
+        #
+        # get pixel values (no longer centered in the middle)
+        specsz = len(self.context.arcs[self.context.config.instrument.REFBAR])
+        xvals = np.arange(0, specsz)
+        # min, max rows
+        minrow = 50
+        maxrow = specsz - 50
+        # wavelength range
+        mnwvs = []
+        mxwvs = []
+        # Get wavelengths
+        for b in range(self.context.config.instrument.NBARS):
+            waves = np.polyval(self.action.args.twkcoeff[b], xvals)
+            mnwvs.append(np.min(waves))
+            mxwvs.append(np.max(waves))
+        minwav = min(mnwvs) + 10.
+        maxwav = max(mxwvs) - 10.
+        # Get corresponding atlas range
+        minrw = [i for i, v in enumerate(self.action.args.refwave)
+                 if v >= minwav][0]
+        maxrw = [i for i, v in enumerate(self.action.args.refwave)
+                 if v <= maxwav][-1]
+        self.logger.info("Min, Max wave (A): %.2f, %.2f" % (minwav, maxwav))
+        # store atlas ranges
+        self.action.args.atminrow = minrw
+        self.action.args.atmaxrow = maxrw
+        self.action.args.atminwave = minwav
+        self.action.args.atmaxwave = maxwav
+        # get atlas sub spectrum
+        atspec = self.action.args.reflux[minrw:maxrw]
+        atwave = self.action.args.refwave[minrw:maxrw]
+        # get reference bar spectrum
+        subxvals = xvals[minrow:maxrow]
+        subyvals = self.context.arcs[self.context.config.instrument.REFBAR][
+                   minrow:maxrow].copy()
+        subwvals = np.polyval(
+            self.action.args.twkcoeff[self.context.config.instrument.REFBAR],
+            subxvals)
+        # smooth subyvals
+        win = boxcar(3)
+        subyvals = sp.signal.convolve(subyvals, win, mode='same') / sum(win)
+        # find good peaks in arc spectrum
+        smooth_width = 4  # in pixels
+        ampl_thresh = 0.
+        # slope_thresh = 0.7 * smooth_width / 1000.   # more severe for arc
+        # for fitting peaks
+        peak_width = int(self.action.args.resolution /
+                         self.action.args.refdisp)  # in pixels
+        if peak_width < 4:
+            peak_width = 4
+        # slope_thresh = peak_width / 12000.
+        slope_thresh = 0.016 / peak_width
+        self.logger.info("Using a peak_width of %d px, a slope_thresh of %.5f "
+                         "a smooth_width of %d and an ampl_thresh of %.3f" %
+                         (peak_width, slope_thresh, smooth_width, ampl_thresh))
+        init_cent, avwsg = findpeaks(atwave, atspec, smooth_width,
+                                     slope_thresh, ampl_thresh, peak_width)
+        avwfwhm = avwsg * 2.354
+        self.logger.info("Found %d peaks with <sig> = %.3f (A),"
+                         " <FWHM> = %.3f (A)" % (len(init_cent), avwsg,
+                                                 avwfwhm))
+        if 'BH' in self.action.args.grating or 'BM' in self.action.args.grating:
+            fwid = avwfwhm
+        else:
+            fwid = avwfwhm
+        # clean near neighbors
+        diffs = np.diff(init_cent)
+        spec_cent = []
+        rej_neigh_w = []
+        neigh_fact = 1.25
+        for i, w in enumerate(init_cent):
+            if i == 0:
+                if diffs[i] < avwfwhm * neigh_fact:
+                    rej_neigh_w.append(w)
+                    continue
+            elif i == len(diffs):
+                if diffs[i - 1] < avwfwhm * neigh_fact:
+                    rej_neigh_w.append(w)
+                    continue
+            else:
+                if diffs[i - 1] < avwfwhm * neigh_fact or \
+                        diffs[i] < avwfwhm * neigh_fact:
+                    rej_neigh_w.append(w)
+                    continue
+            spec_cent.append(w)
+        self.logger.info("Found %d isolated peaks" % len(spec_cent))
+        #
+        # generate an atlas line list
+        refws = []
+        refas = []
+        rej_fit_w = []
+        rej_par_w = []
+        rej_par_a = []
+        nrej = 0
+        for i, pk in enumerate(spec_cent):
+
+            # Fit Atlas Peak
+            line_x = [i for i, v in enumerate(atwave) if v >= pk][0]
+            minow, maxow, count = get_line_window(atspec, line_x)
+            if count < 5 or not minow or not maxow:
+                rej_fit_w.append(pk)
+                nrej += 1
+                self.logger.info("Atlas window rejected for line %.3f" % pk)
+                continue
+            yvec = atspec[minow:maxow + 1]
+            xvec = atwave[minow:maxow + 1]
+            try:
+                fit, _ = curve_fit(gaus, xvec, yvec, p0=[100., pk, 1.])
+            except RuntimeError:
+                rej_fit_w.append(pk)
+                nrej += 1
+                self.logger.info("Atlas Gaussian fit rejected for line %.3f" %
+                                 pk)
+                continue
+            int_line = interpolate.interp1d(xvec, yvec, kind='cubic',
+                                            bounds_error=False,
+                                            fill_value='extrapolate')
+            x_dense = np.linspace(min(xvec), max(xvec), num=1000)
+            # get peak value
+            y_dense = int_line(x_dense)
+            pki = y_dense.argmax()
+            pkw = x_dense[pki]
+            # pka = yvec.argmax()
+            xoff = abs(pkw - fit[1]) / self.action.args.refdisp  # in pixels
+            woff = abs(pkw - pk)  # in Angstroms
+            wrat = abs(fit[2]) / fwid  # can be neg or pos
+            if woff > 1. or xoff > 1. or wrat > 1.1:
+                rej_par_w.append(pkw)
+                rej_par_a.append(y_dense[pki])
+                nrej += 1
+                self.logger.info("Atlas line parameters rejected for line %.3f"
+                                 % pk)
+                self.logger.info("woff = %.3f, xoff = %.2f, wrat = %.3f" %
+                                 (woff, xoff, wrat))
+                continue
+            refws.append(pkw)
+            refas.append(y_dense[pki])
+        # store wavelengths
+        self.at_wave = refws
+        # plot results
+        # image label
+        imlab = "Img # %d (%s) Sl: %s Fl: %s Gr: %s" % \
+                (self.action.args.ccddata.header['FRAMENO'],
+                 self.action.args.illum,
+                 self.action.args.ifuname, self.action.args.filter,
+                 self.action.args.grating)
+        norm_fac = np.nanmax(atspec)
+        p = figure(title=imlab + " Ngood = %d, Nrej = %d" % (len(self.at_wave),
+                                                             nrej),
+                   x_axis_label="Wavelength (A)",
+                   y_axis_label="Normalized Flux")
+        p.line(subwvals, subyvals / np.nanmax(subyvals), legend='RefArc')
+        ylim = [-0.1, 1.05]
+        p.line(atwave, atspec / norm_fac, legend='Atlas')
+        yvals = np.zeros(len(rej_neigh_w)) + 1.0
+        p.square(rej_neigh_w, yvals, legend='NeighRej', color='red')
+        """
+        # Initial findpeaks list
+        plot_first = True
+        for iw, w in enumerate(init_cent):
+            if plot_first:
+                p.line([w, w], ylim, color='black', line_dash='dashed',
+                       legend='Fpks')
+                plot_first = False
+            else:
+                p.line([w, w], ylim, color='black', line_dash='dashed')
+        # Nearby Neighbor rejections
+        plot_first = True
+        for iw, w in enumerate(rej_neigh_w):
+            if plot_first:
+                p.line([w, w], ylim, color='red', line_dash='dashed',
+                       legend='NeighRej')
+                plot_first = False
+            else:
+                p.line([w, w], ylim, color='red', line_dash='dashed')
+        # Fit failure rejections
+        plot_first = True
+        for iw, w in enumerate(rej_fit_w):
+            if plot_first:
+                p.line([w, w], ylim, color='magenta', line_dash='dashed',
+                       legend='FitRej')
+                plot_first = False
+            else:
+                p.line([w, w], ylim, color='magenta', line_dash='dashed')
+        # Line Parameter rejections
+        plot_first = True
+        for iw, w in enumerate(rej_par_w):
+            if plot_first:
+                p.square([w, w], [rej_par_a[iw], rej_par_a[iw]] / norm_fac,
+                         color='red', legend='ParRej')
+                plot_first = False
+            else:
+                p.square([w, w], [rej_par_a[iw], rej_par_a[iw]] / norm_fac,
+                         color='red')
+        # Final Kept list
+        plot_first = True
+        for iw, w in enumerate(self.at_wave):
+            if plot_first:
+                p.square([w, w], [refas[iw], refas[iw]] / norm_fac,
+                         color='black', legend='Kept')
+                plot_first = False
+            else:
+                p.square([w, w], [refas[iw], refas[iw]] / norm_fac,
+                         color='black')
+        """
+        p.x_range = Range1d(min(subwvals), max(subwvals))
+        # p.savefig("atlas_lines_%s_%s_%s_%05d.png" %
+        #           (self.action.args.illum, self.action.args.grating,
+        #            self.action.args.ifuname,
+        #            self.action.args.ccddata.header['FRAMENO']))
+        bokeh_plot(p)
+        self.logger.info("Final atlas list has %d lines" % len(self.at_wave))
+        if self.context.config.plot_level >= 2:
+            input("Next? <cr>: ")
+        else:
+            pl.pause(self.context.config.instrument.plot_pause)
+        # END: get_atlas_lines()
         return self.action.args
     # END: class GetAtlasLines()
 
