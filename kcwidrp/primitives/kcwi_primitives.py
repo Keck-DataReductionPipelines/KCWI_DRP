@@ -210,6 +210,7 @@ def findpeaks(x, y, wid, sth, ath, pkg=None, verbose=False):
     if not pkg:
         pkg = wid
     hgrp = int(pkg/2)
+    hgt = []
     pks = []
     sgs = []
     # loop over spectrum
@@ -234,11 +235,13 @@ def findpeaks(x, y, wid, sth, ath, pkg=None, verbose=False):
                                 if verbose:
                                     print(i, t, x[i], res[1], x[t])
                             else:
+                                hgt.append(res[0])
                                 pks.append(res[1])
                                 sgs.append(abs(res[2]))
                         except RuntimeError:
                             continue
     # clean by sigmas
+    cvals = []
     cpks = []
     sgmd = None
     if len(pks) > 0:
@@ -246,11 +249,12 @@ def findpeaks(x, y, wid, sth, ath, pkg=None, verbose=False):
         for i in range(len(pks)):
             if low < sgs[i] < upp:
                 cpks.append(pks[i])
+                cvals.append(hgt[i])
         # sgmn = cln_sgs.mean()
         sgmd = float(np.nanmedian(cln_sgs))
     else:
         print("No peaks found!")
-    return cpks, sgmd
+    return cpks, sgmd, cvals
     # END: findpeaks()
 
 
@@ -2051,8 +2055,9 @@ class GetAtlasLines(BasePrimitive):
         self.logger.info("Using a peak_width of %d px, a slope_thresh of %.5f "
                          "a smooth_width of %d and an ampl_thresh of %.3f" %
                          (peak_width, slope_thresh, smooth_width, ampl_thresh))
-        init_cent, avwsg = findpeaks(atwave, atspec, smooth_width,
-                                     slope_thresh, ampl_thresh, peak_width)
+        init_cent, avwsg, init_hgt = findpeaks(atwave, atspec, smooth_width,
+                                               slope_thresh, ampl_thresh,
+                                               peak_width)
         avwfwhm = avwsg * 2.354
         self.logger.info("Found %d peaks with <sig> = %.3f (A),"
                          " <FWHM> = %.3f (A)" % (len(init_cent), avwsg,
@@ -2065,20 +2070,24 @@ class GetAtlasLines(BasePrimitive):
         diffs = np.diff(init_cent)
         spec_cent = []
         rej_neigh_w = []
+        rej_neigh_y = []
         neigh_fact = 1.25
         for i, w in enumerate(init_cent):
             if i == 0:
                 if diffs[i] < avwfwhm * neigh_fact:
                     rej_neigh_w.append(w)
+                    rej_neigh_y.append(init_hgt[i])
                     continue
             elif i == len(diffs):
                 if diffs[i - 1] < avwfwhm * neigh_fact:
                     rej_neigh_w.append(w)
+                    rej_neigh_y.append(init_hgt[i])
                     continue
             else:
                 if diffs[i - 1] < avwfwhm * neigh_fact or \
                         diffs[i] < avwfwhm * neigh_fact:
                     rej_neigh_w.append(w)
+                    rej_neigh_y.append(init_hgt[i])
                     continue
             spec_cent.append(w)
         self.logger.info("Found %d isolated peaks" % len(spec_cent))
@@ -2150,8 +2159,9 @@ class GetAtlasLines(BasePrimitive):
         p.line(subwvals, subyvals / np.nanmax(subyvals), legend='RefArc')
         ylim = [-0.1, 1.05]
         p.line(atwave, atspec / norm_fac, legend='Atlas')
-        yvals = np.zeros(len(rej_neigh_w)) + 1.0
-        p.square(rej_neigh_w, yvals, legend='NeighRej', color='red')
+        # yvals = np.zeros(len(rej_neigh_w)) + 1.0
+        p.square(rej_neigh_w, rej_neigh_y / norm_fac, legend='NeighRej',
+                 color='red')
         """
         # Initial findpeaks list
         plot_first = True
