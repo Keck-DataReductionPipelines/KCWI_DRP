@@ -2346,26 +2346,29 @@ class SolveArcs(BasePrimitive):
                                  color='green', legend='Atlas')
                         p.line([aw, aw], ylim, color='red', legend='W in')
                         input("next - <cr>: ")
-                        pl.clf()
-                        pl.plot(xvec, yvec, 'r.', label='Data')
-                        pl.plot(xplot, plt_line, label='Interp')
-                        ylim = [0, pl.gca().get_ylim()[1]]
-                        xlim = pl.gca().get_xlim()
-                        pl.plot(xlim, [max_value * 0.5, max_value * 0.5], 'k--')
-                        pl.plot([cent, cent], ylim, 'g--', label='Cntr')
-                        pl.plot([line_x, line_x], ylim, 'r-.', label='X in')
-                        pl.plot([peak, peak], ylim, 'c-.', label='Peak')
-                        pl.plot([sp_pk_x, sp_pk_x], ylim, 'm-.', label='Gpeak')
-                        pl.xlabel("CCD Y (px)")
-                        pl.ylabel("Flux (DN)")
-                        pl.ylim(ylim)
-                        pl.title(ptitle)
-                        pl.legend()
+                        p = figure(
+                            title=ptitle, x_axis_label="CCD Y (px)",
+                            y_axis_label="Flux (DN)",
+                            plot_width=self.config.instrument.plot_width,
+                            plot_height=self.config.instrument.plot_height)
+                        p.circle(xvec, yvec, color='red', legend='Data')
+                        p.line(xplot, plt_line, color='black', legend='Interp')
+                        ylim = [0, np.nanmax(yvec)]
+                        xlim = [np.nanmin(xvec), np.nanmax(xvec)]
+                        p.line(xlim, [max_value * 0.5, max_value * 0.5],
+                               color='black', line_dash='dashed')
+                        p.line([cent, cent], ylim, color='green', legend='Cntr',
+                               line_dash='dashed')
+                        p.line([line_x, line_x], ylim, color='red',
+                               legend='X in', line_dash='dashdot')
+                        p.line([peak, peak], ylim, color='black', legend='Peak',
+                               line_dash='dashdot')
+                        p.line([sp_pk_x, sp_pk_x], ylim, color='magenta',
+                               legend='Gpeak', line_dash='dashdot')
 
                         q = input(ptitle + "; <cr> - Next, q to quit: ")
                         if 'Q' in q.upper():
                             do_inter = False
-                            pl.ioff()
                 except IndexError:
                     if verbose:
                         self.logger.info(
@@ -2426,26 +2429,24 @@ class SolveArcs(BasePrimitive):
             bar_nls.append(len(arc_pix_dat))
             # plot bar fit residuals
             if master_inter:
-                pl.ion()
-                pl.clf()
-                pl.plot(at_wave_dat, resid, 'd', label='Rsd')
-                ylim = pl.gca().get_ylim()
+                ptitle = self.action.args.plotlabel() + \
+                         " Bar = %03d, Slice = %02d, RMS = %.3f, N = %d" % \
+                         (ib, int(ib / 5), wsig, len(arc_pix_dat))
+                p = figure(
+                    title=ptitle, x_axis_label="Wavelength (A)",
+                    y_axis_label="Fit - Inp (A)",
+                    plot_width=self.config.instrument.plot_width,
+                    plot_height=self.config.instrument.plot_height)
+                p.diamond(at_wave_dat, resid, legend='Rsd')
+                ylim = [np.nanmin(resid), np.nanmax(resid)]
                 if rej_rsd_wave:
-                    pl.plot(rej_rsd_wave, rej_rsd, 'rd', label='Rej')
-                pl.xlabel("Wavelength (A)")
-                pl.ylabel("Fit - Inp (A)")
-                pl.title(self.action.args.plotlabel() +
-                         " Bar = %03d, Slice = %02d, RMS = %.3f, N = %d" %
-                         (ib, int(ib / 5), wsig, len(arc_pix_dat)))
+                    p.diamond(rej_rsd_wave, rej_rsd, color='red', legend='Rej')
                 xlim = [self.action.args.atminwave, self.action.args.atmaxwave]
-                pl.plot(xlim, [0., 0.], '-')
-                pl.plot(xlim, [wsig, wsig], '-.', color='gray')
-                pl.plot(xlim, [-wsig, -wsig], '-.', color='gray')
-                pl.plot([self.action.args.cwave(), self.action.args.cwave()],
-                        ylim, '-.', label='CWAV')
-                pl.xlim(xlim)
-                pl.ylim(ylim)
-                pl.legend()
+                p.line(xlim, [0., 0.])
+                p.line(xlim, [wsig, wsig], color='gray', line_dash='dashdot')
+                p.line(xlim, [-wsig, -wsig], color='gray', line_dash='dashdot')
+                p.line([self.action.args.cwave(), self.action.args.cwave()],
+                       ylim, legend='CWAV', line_dash='dashdot')
                 input("Next? <cr>: ")
 
                 # overplot atlas and bar using fit wavelengths
