@@ -2005,6 +2005,7 @@ class GetAtlasLines(BasePrimitive):
         self.action.args.atminwave = None
         self.action.args.atmaxwave = None
         self.action.args.at_wave = None
+        self.action.args.at_flux = None
 
     def _perform(self):
         self.logger.info("Finding isolated atlas lines")
@@ -2158,6 +2159,7 @@ class GetAtlasLines(BasePrimitive):
             refas.append(y_dense[pki])
         # store wavelengths
         self.action.args.at_wave = refws
+        self.action.args.at_flux = refas
         # plot results
         # image label
         imlab = "Img # %d (%s) Sl: %s Fl: %s Gr: %s" % \
@@ -2211,7 +2213,8 @@ class SolveArcs(BasePrimitive):
         self.logger.info("Solving individual arc spectra (not yet implemented)")
         BasePrimitive.__init__(self, action, context)
         self.logger = context.pipeline_logger
-        self.fincoeff = []
+        self.action.args.fincoeff = []
+        self.action.args.xsvals = None
 
     def _perform(self):
         """Solve the bar arc wavelengths"""
@@ -2236,7 +2239,7 @@ class SolveArcs(BasePrimitive):
         atspec = self.action.args.reflux[self.action.args.atminrow:
                                          self.action.args.atmaxrow]
         # get x values starting at zero pixels
-        self.xsvals = np.arange(0, len(
+        self.action.args.xsvals = np.arange(0, len(
             self.context.arcs[self.context.config.instrument.REFBAR]))
         # loop over arcs and generate a wavelength solution for each
         for ib, b in enumerate(self.context.arcs):
@@ -2246,7 +2249,7 @@ class SolveArcs(BasePrimitive):
             # Starting pascal shifted coeffs from fit_center()
             coeff = self.action.args.twkcoeff[ib]
             # get bar wavelengths
-            bw = np.polyval(coeff, self.xsvals)
+            bw = np.polyval(coeff, self.action.args.xsvals)
             # smooth spectrum according to slicer
             if 'Small' in self.action.args.ifuname():
                 bspec = b
@@ -2262,8 +2265,10 @@ class SolveArcs(BasePrimitive):
             #              (spmed, spmode.mode[0]))
             # store values to fit
             at_wave_dat = []
+            at_flux_dat = []
             arc_pix_dat = []
             rej_wave = []
+            rej_flux = []
             nrej = 0
             # loop over lines
             for iw, aw in enumerate(self.action.args.at_wave):
@@ -2282,13 +2287,14 @@ class SolveArcs(BasePrimitive):
                     # check if window no longer contains initial value
                     if minow > line_x > maxow:
                         rej_wave.append(aw)
+                        rej_flux.append(self.action.args.at_flux[iw])
                         nrej += 1
                         if verbose:
                             self.logger.info(
                                 "Arc window wandered off for line %.3f" % aw)
                         continue
                     yvec = bspec[minow:maxow + 1]
-                    xvec = self.xsvals[minow:maxow + 1]
+                    xvec = self.action.args.xsvals[minow:maxow + 1]
                     wvec = bw[minow:maxow + 1]
                     max_value = yvec[yvec.argmax()]
                     # Gaussian fit
@@ -2315,6 +2321,7 @@ class SolveArcs(BasePrimitive):
                     cent = np.sum(xvec * yvec) / np.sum(yvec)
                     if abs(cent - peak) > 0.7:
                         rej_wave.append(aw)
+                        rej_flux.append(self.action.args.at_flux[iw])
                         nrej += 1
                         if verbose:
                             self.logger.info("Arc peak - cent offset rejected "
@@ -2323,6 +2330,7 @@ class SolveArcs(BasePrimitive):
                     # store data
                     arc_pix_dat.append(peak)
                     at_wave_dat.append(aw)
+                    at_flux_dat.append(self.action.args.at_flux[iw])
                     # plot, if requested
                     if do_inter:
                         ptitle = "Bar: %d - %3d/%3d: x0, x1, Cent, Wave = " \
@@ -2374,6 +2382,7 @@ class SolveArcs(BasePrimitive):
                         self.logger.info(
                             "Atlas line not in observation: %.2f" % aw)
                     rej_wave.append(aw)
+                    rej_flux.append(self.action.args.at_flux[iw])
                     nrej += 1
                     continue
                 except ValueError:
@@ -2381,6 +2390,7 @@ class SolveArcs(BasePrimitive):
                         self.logger.info(
                             "Interpolation error for line at %.2f" % aw)
                     rej_wave.append(aw)
+                    rej_flux.append(self.action.args.at_flux[iw])
                     nrej += 1
             self.logger.info("Fitting wavelength solution starting with %d "
                              "lines after rejecting %d lines" %
@@ -2395,24 +2405,29 @@ class SolveArcs(BasePrimitive):
             wsig = resid_c.std()
             rej_rsd = []
             rej_rsd_wave = []
+            rej_rsd_flux = []
             # Iteratively remove outliers
             for it in range(4):
                 # self.logger.info("Iteration %d" % it)
                 arc_dat = []
                 at_dat = []
+                at_fdat = []
                 # Trim outliers
                 for il, rsd in enumerate(resid):
                     if low < rsd < upp:
                         arc_dat.append(arc_pix_dat[il])
                         at_dat.append(at_wave_dat[il])
+                        at_fdat.append(at_flux_dat[il])
                     else:
                         # self.logger.info("REJ: %d, %.2f, %.3f" %
                         #              (il, arc_pix_dat[il], at_wave_dat[il]))
                         rej_rsd_wave.append(at_wave_dat[il])
+                        rej_rsd_flux.append(at_flux_dat[il])
                         rej_rsd.append(rsd)
                 # refit
                 arc_pix_dat = arc_dat.copy()
                 at_wave_dat = at_dat.copy()
+                at_flux_dat = at_fdat.copy()
                 wfit = np.polyfit(arc_pix_dat, at_wave_dat, 4)
                 pwfit = np.poly1d(wfit)
                 arc_wave_fit = pwfit(arc_pix_dat)
@@ -2424,11 +2439,12 @@ class SolveArcs(BasePrimitive):
             self.logger.info("Bar %03d, Slice = %02d, RMS = %.3f, N = %d" %
                              (ib, int(ib / 5), wsig, len(arc_pix_dat)))
             # print("")
-            self.fincoeff.append(wfit)
+            self.action.args.fincoeff.append(wfit)
             bar_sig.append(wsig)
             bar_nls.append(len(arc_pix_dat))
-            # plot bar fit residuals
+            # do plotting?
             if master_inter:
+                # plot bar fit residuals
                 ptitle = self.action.args.plotlabel() + \
                          " Bar = %03d, Slice = %02d, RMS = %.3f, N = %d" % \
                          (ib, int(ib / 5), wsig, len(arc_pix_dat))
@@ -2450,28 +2466,22 @@ class SolveArcs(BasePrimitive):
                 input("Next? <cr>: ")
 
                 # overplot atlas and bar using fit wavelengths
-                pl.clf()
-                bwav = pwfit(self.xsvals)
-                pl.plot(bwav, b, label='Arc')
+                p = figure(
+                    title=ptitle, x_axis_label="Wavelength (A)",
+                    y_axis_label="Flux",
+                    plot_width=self.config.instrument.plot_width,
+                    plot_height=self.config.instrument.plot_height)
+                bwav = pwfit(self.action.args.xsvals)
+                p.line(bwav, b, legend='Arc')
                 ylim = pl.gca().get_ylim()
                 atnorm = np.nanmax(b) / np.nanmax(atspec)
-                pl.plot(atwave, atspec * atnorm, label='Atlas')
-                pl.plot([self.action.args.cwave(), self.action.args.cwave()],
-                        ylim, 'm-.', label='CWAV')
-                pl.xlim(xlim)
-                pl.ylim(ylim)
-                pl.xlabel("Wavelength (A)")
-                pl.ylabel("Flux")
-                pl.title(self.action.args.plotlabel() +
-                         " Bar = %03d, Slice = %02d, RMS = %.3f, N = %d" %
-                         (ib, int(ib / 5), wsig, len(arc_pix_dat)))
-                leg_first = True
-                for w in self.action.args.at_wave:
-                    if leg_first:
-                        pl.plot([w, w], ylim, 'k-.', label='Orig')
-                        leg_first = False
-                    else:
-                        pl.plot([w, w], ylim, 'k-.')
+                p.line(atwave, atspec * atnorm, legend='Atlas')
+                p.line([self.action.args.cwave(), self.action.args.cwave()],
+                        ylim, color='magenta', line_dash='dashdot',
+                       legend='CWAV')
+                p.diamond(self.action.args.at_wave, self.action.args.at_flux *
+                          atnorm, legend='Orig', color='black',
+                          line_dash='dashdot')
                 leg_first = True
                 for w in arc_wave_fit:
                     if leg_first:
@@ -2566,10 +2576,10 @@ class SolveArcs(BasePrimitive):
                 pl.pause(self.context.config.instrument.plot_pause)
         # Plot coefs
         ylabs = ['Ang/px^4', 'Ang/px^3', 'Ang/px^2', 'Ang/px', 'Ang']
-        for ic in reversed(range(len(self.fincoeff[0]))):
+        for ic in reversed(range(len(self.action.args.fincoeff[0]))):
             pl.clf()
             coef = []
-            for c in self.fincoeff:
+            for c in self.action.args.fincoeff:
                 coef.append(c[ic])
             pl.plot(coef, 'd')
             ylim = pl.gca().get_ylim()
