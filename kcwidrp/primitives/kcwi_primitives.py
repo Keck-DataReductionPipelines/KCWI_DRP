@@ -2210,14 +2210,18 @@ class GetAtlasLines(BasePrimitive):
 class SolveArcs(BasePrimitive):
 
     def __init__(self, action, context):
-        self.logger.info("Solving individual arc spectra (not yet implemented)")
         BasePrimitive.__init__(self, action, context)
         self.logger = context.pipeline_logger
         self.action.args.fincoeff = []
         self.action.args.xsvals = None
+        self.action.args.av_bar_sig = []
+        self.action.args.st_bar_sig = []
+        self.action.args.av_bar_nls = []
+        self.action.args.st_bar_nls = []
 
     def _perform(self):
         """Solve the bar arc wavelengths"""
+        self.logger.info("Solving individual arc spectra")
         if self.context.config.plot_level >= 2:
             master_inter = True
         else:
@@ -2238,6 +2242,9 @@ class SolveArcs(BasePrimitive):
                                           self.action.args.atmaxrow]
         atspec = self.action.args.reflux[self.action.args.atminrow:
                                          self.action.args.atmaxrow]
+        # convert list into ndarray
+        at_wave = np.asarray(self.action.args.at_wave)
+        at_flux = np.asarray(self.action.args.at_flux)
         # get x values starting at zero pixels
         self.action.args.xsvals = np.arange(0, len(
             self.context.arcs[self.context.config.instrument.REFBAR]))
@@ -2251,10 +2258,10 @@ class SolveArcs(BasePrimitive):
             # get bar wavelengths
             bw = np.polyval(coeff, self.action.args.xsvals)
             # smooth spectrum according to slicer
-            if 'Small' in self.action.args.ifuname():
+            if 'Small' in self.action.args.ifuname:
                 bspec = b
             else:
-                if 'Large' in self.action.args.ifuname():
+                if 'Large' in self.action.args.ifuname:
                     win = boxcar(5)
                 else:
                     win = boxcar(3)
@@ -2267,6 +2274,7 @@ class SolveArcs(BasePrimitive):
             at_wave_dat = []
             at_flux_dat = []
             arc_pix_dat = []
+            arc_int_dat = []
             rej_wave = []
             rej_flux = []
             nrej = 0
@@ -2329,6 +2337,7 @@ class SolveArcs(BasePrimitive):
                         continue
                     # store data
                     arc_pix_dat.append(peak)
+                    arc_int_dat.append(plt_line[max_index])
                     at_wave_dat.append(aw)
                     at_flux_dat.append(self.action.args.at_flux[iw])
                     # plot, if requested
@@ -2353,6 +2362,7 @@ class SolveArcs(BasePrimitive):
                         p.circle(atwave[atx0:atx1], atspec[atx0:atx1] * atnorm,
                                  color='green', legend='Atlas')
                         p.line([aw, aw], ylim, color='red', legend='W in')
+                        bokeh_plot(p)
                         input("next - <cr>: ")
                         p = figure(
                             title=ptitle, x_axis_label="CCD Y (px)",
@@ -2373,6 +2383,7 @@ class SolveArcs(BasePrimitive):
                                line_dash='dashdot')
                         p.line([sp_pk_x, sp_pk_x], ylim, color='magenta',
                                legend='Gpeak', line_dash='dashdot')
+                        bokeh_plot(p)
 
                         q = input(ptitle + "; <cr> - Next, q to quit: ")
                         if 'Q' in q.upper():
@@ -2410,12 +2421,14 @@ class SolveArcs(BasePrimitive):
             for it in range(4):
                 # self.logger.info("Iteration %d" % it)
                 arc_dat = []
+                arc_fdat = []
                 at_dat = []
                 at_fdat = []
                 # Trim outliers
                 for il, rsd in enumerate(resid):
                     if low < rsd < upp:
                         arc_dat.append(arc_pix_dat[il])
+                        arc_fdat.append(arc_int_dat[il])
                         at_dat.append(at_wave_dat[il])
                         at_fdat.append(at_flux_dat[il])
                     else:
@@ -2426,6 +2439,7 @@ class SolveArcs(BasePrimitive):
                         rej_rsd.append(rsd)
                 # refit
                 arc_pix_dat = arc_dat.copy()
+                arc_int_dat = arc_fdat.copy()
                 at_wave_dat = at_dat.copy()
                 at_flux_dat = at_fdat.copy()
                 wfit = np.polyfit(arc_pix_dat, at_wave_dat, 4)
@@ -2445,7 +2459,7 @@ class SolveArcs(BasePrimitive):
             # do plotting?
             if master_inter:
                 # plot bar fit residuals
-                ptitle = self.action.args.plotlabel() + \
+                ptitle = self.action.args.plotlabel + \
                          " Bar = %03d, Slice = %02d, RMS = %.3f, N = %d" % \
                          (ib, int(ib / 5), wsig, len(arc_pix_dat))
                 p = figure(
@@ -2461,8 +2475,9 @@ class SolveArcs(BasePrimitive):
                 p.line(xlim, [0., 0.])
                 p.line(xlim, [wsig, wsig], color='gray', line_dash='dashdot')
                 p.line(xlim, [-wsig, -wsig], color='gray', line_dash='dashdot')
-                p.line([self.action.args.cwave(), self.action.args.cwave()],
+                p.line([self.action.args.cwave, self.action.args.cwave],
                        ylim, legend='CWAV', line_dash='dashdot')
+                bokeh_plot(p)
                 input("Next? <cr>: ")
 
                 # overplot atlas and bar using fit wavelengths
@@ -2473,69 +2488,62 @@ class SolveArcs(BasePrimitive):
                     plot_height=self.config.instrument.plot_height)
                 bwav = pwfit(self.action.args.xsvals)
                 p.line(bwav, b, legend='Arc')
-                ylim = pl.gca().get_ylim()
                 atnorm = np.nanmax(b) / np.nanmax(atspec)
                 p.line(atwave, atspec * atnorm, legend='Atlas')
-                p.line([self.action.args.cwave(), self.action.args.cwave()],
+                p.line([self.action.args.cwave, self.action.args.cwave],
                         ylim, color='magenta', line_dash='dashdot',
                        legend='CWAV')
-                p.diamond(self.action.args.at_wave, self.action.args.at_flux *
-                          atnorm, legend='Orig', color='black',
-                          line_dash='dashdot')
-                leg_first = True
-                for w in arc_wave_fit:
-                    if leg_first:
-                        pl.plot([w, w], ylim, 'c-.', label='Kept')
-                        leg_first = False
-                    else:
-                        pl.plot([w, w], ylim, 'c-.')
-                leg_first = True
-                for w in rej_rsd_wave:
-                    if leg_first:
-                        pl.plot([w, w], ylim, 'r-.', label='RejRsd')
-                        leg_first = False
-                    else:
-                        pl.plot([w, w], ylim, 'r-.')
-                leg_first = True
-                for w in rej_wave:
-                    if leg_first:
-                        pl.plot([w, w], ylim, 'y-.', label='RejFit')
-                        leg_first = False
-                    else:
-                        pl.plot([w, w], ylim, 'y-.')
-                pl.legend()
+                p.diamond(at_wave, at_flux * atnorm, legend='Orig',
+                          color='black')
+                p.diamond(arc_wave_fit, arc_int_dat, color='cyan',
+                          legend='Kept')
+                p.diamond(rej_rsd_wave, [rj*atnorm for rj in rej_rsd_flux],
+                          color='red',
+                          legend='RejRsd')
+                p.diamond(rej_wave, [rj*atnorm for rj in rej_flux],
+                          color='yellow',
+                          legend='RejFit')
+                bokeh_plot(p)
                 q = input("Next? <cr>, q - quit: ")
                 if 'Q' in q.upper():
                     master_inter = False
-                    pl.ioff()
         # Plot final results
         # Plot fit sigmas
-        pl.clf()
-        pl.plot(bar_sig, 'd', label='RMS')
+        self.action.args.av_bar_sig = float(np.nanmean(bar_sig))
+        self.action.args.st_bar_sig = float(np.nanstd(bar_sig))
+        ptitle = self.action.args.plotlabel + \
+            " <RMS>: %.3f +- %.3f" % (self.action.args.av_bar_sig,
+                                      self.action.args.st_bar_sig)
+        p = figure(
+            title=ptitle, x_axis_label="Bar #", y_axis_label="RMS (A)",
+            plot_width=self.config.instrument.plot_width,
+            plot_height=self.config.instrument.plot_height)
+        p.diamond(list(range(120)), bar_sig, legend='RMS')
         xlim = [-1, 120]
-        ylim = pl.gca().get_ylim()
-        self.av_bar_sig = float(np.nanmean(bar_sig))
-        self.st_bar_sig = float(np.nanstd(bar_sig))
-        self.logger.info("<STD>     = %.3f +- %.3f (A)" % (self.av_bar_sig,
-                                                           self.st_bar_sig))
-        pl.plot(xlim, [self.av_bar_sig, self.av_bar_sig], 'k--')
-        pl.plot(xlim, [(self.av_bar_sig - self.st_bar_sig),
-                       (self.av_bar_sig - self.st_bar_sig)], 'k:')
-        pl.plot(xlim, [(self.av_bar_sig + self.st_bar_sig),
-                       (self.av_bar_sig + self.st_bar_sig)], 'k:')
+        ylim = [np.nanmin(bar_sig), np.nanmax(bar_sig)]
+
+        self.logger.info("<STD>     = %.3f +- %.3f (A)" %
+                         (self.action.args.av_bar_sig,
+                          self.action.args.st_bar_sig))
+        p.line(xlim, [self.action.args.av_bar_sig,
+                      self.action.args.av_bar_sig], color='black')
+        p.line(xlim, [(self.action.args.av_bar_sig -
+                       self.action.args.st_bar_sig),
+                      (self.action.args.av_bar_sig -
+                       self.action.args.st_bar_sig)], color='black',
+               line_dash='dotted')
+        p.line(xlim, [(self.action.args.av_bar_sig +
+                       self.action.args.st_bar_sig),
+                      (self.action.args.av_bar_sig +
+                       self.action.args.st_bar_sig)], color='black',
+               line_dash='dotted')
         for ix in range(1, 24):
             sx = ix * 5 - 0.5
-            pl.plot([sx, sx], ylim, '-.', color='black')
-        pl.xlabel("Bar #")
-        pl.ylabel("RMS (A)")
-        pl.title(self.action.args.plotlabel() +
-                 " <RMS>: %.3f +- %.3f" % (self.av_bar_sig, self.st_bar_sig))
-        pl.xlim(xlim)
-        pl.gca().margins(0)
-        pl.savefig("arc_%05d_resid_%s_%s_%s.png" %
-                   (self.action.args.ccddata.header['FRAMENO'],
-                    self.action.args.illum(),
-                    self.action.args.grating(), self.action.args.ifuname()))
+            p.line([sx, sx], ylim, color='black')
+        # pl.savefig("arc_%05d_resid_%s_%s_%s.png" %
+        #           (self.action.args.ccddata.header['FRAMENO'],
+        #            self.action.args.illum(),
+        #            self.action.args.grating(), self.action.args.ifuname()))
         if self.context.config.plot_level >= 1:
             bokeh_plot(p)
             if self.context.config.plot_level >= 2:
@@ -2543,31 +2551,40 @@ class SolveArcs(BasePrimitive):
             else:
                 pl.pause(self.context.config.instrument.plot_pause)
         # Plot number of lines fit
-        pl.clf()
-        pl.plot(bar_nls, 'd', label='N lines')
-        ylim = pl.gca().get_ylim()
-        self.av_bar_nls = float(np.nanmean(bar_nls))
-        self.st_bar_nls = float(np.nanstd(bar_nls))
-        self.logger.info("<N Lines> = %.1f +- %.1f" % (self.av_bar_nls,
-                                                       self.st_bar_nls))
-        pl.plot(xlim, [self.av_bar_nls, self.av_bar_nls], 'k--')
-        pl.plot(xlim, [(self.av_bar_nls - self.st_bar_nls),
-                       (self.av_bar_nls - self.st_bar_nls)], 'k:')
-        pl.plot(xlim, [(self.av_bar_nls + self.st_bar_nls),
-                       (self.av_bar_nls + self.st_bar_nls)], 'k:')
+        self.action.args.av_bar_nls = float(np.nanmean(bar_nls))
+        self.action.args.st_bar_nls = float(np.nanstd(bar_nls))
+        ptitle = self.action.args.plotlabel + \
+            " <RMS>: %.1f +- %.1f" % (self.action.args.av_bar_nls,
+                                      self.action.args.st_bar_nls)
+        p = figure(
+            title=ptitle, x_axis_label="Bar #", y_axis_label="N Lines",
+            plot_width=self.config.instrument.plot_width,
+            plot_height=self.config.instrument.plot_height)
+        p.diamond(list(range(120)), bar_nls, legend='N lines')
+        xlim = [-1, 120]
+        ylim = [np.nanmin(bar_nls), np.nanmax(bar_nls)]
+        self.logger.info("<N Lines> = %.1f +- %.1f" %
+                         (self.action.args.av_bar_nls,
+                          self.action.args.st_bar_nls))
+        p.line(xlim, [self.action.args.av_bar_nls,
+                      self.action.args.av_bar_nls], color='black')
+        p.line(xlim, [(self.action.args.av_bar_nls -
+                       self.action.args.st_bar_nls),
+                      (self.action.args.av_bar_nls -
+                       self.action.args.st_bar_nls)], color='black',
+               line_dash='dotted')
+        p.line(xlim, [(self.action.args.av_bar_nls +
+                       self.action.args.st_bar_nls),
+                      (self.action.args.av_bar_nls +
+                       self.action.args.st_bar_nls)], color='black',
+               line_dash='dotted')
         for ix in range(1, 24):
             sx = ix * 5 - 0.5
-            pl.plot([sx, sx], ylim, '-.', color='black')
-        pl.xlabel("Bar #")
-        pl.ylabel("N Lines")
-        pl.title(self.action.args.plotlabel() + " <N Lines>: %.3f +- %.3f" %
-                 (self.av_bar_nls, self.st_bar_nls))
-        pl.xlim(xlim)
-        pl.gca().margins(0)
-        pl.savefig("arc_%05d_nlines_%s_%s_%s.png" %
-                   (self.action.args.ccddata.header['FRAMENO'],
-                    self.action.args.illum(),
-                    self.action.args.grating(), self.action.args.ifuname()))
+            p.line([sx, sx], ylim, color='black')
+        # pl.savefig("arc_%05d_nlines_%s_%s_%s.png" %
+        #           (self.action.args.ccddata.header['FRAMENO'],
+        #            self.action.args.illum(),
+        #            self.action.args.grating(), self.action.args.ifuname()))
         if self.context.config.plot_level >= 1:
             bokeh_plot(p)
             if self.context.config.plot_level >= 2:
@@ -2577,24 +2594,25 @@ class SolveArcs(BasePrimitive):
         # Plot coefs
         ylabs = ['Ang/px^4', 'Ang/px^3', 'Ang/px^2', 'Ang/px', 'Ang']
         for ic in reversed(range(len(self.action.args.fincoeff[0]))):
-            pl.clf()
+            ptitle = self.action.args.plotlabel + " Coef %d" % ic
+            p = figure(
+                title=ptitle, x_axis_label="Bar #",
+                y_axis_label="Coef %d (%s)" % (ic, ylabs[ic]),
+                plot_width=self.config.instrument.plot_width,
+                plot_height=self.config.instrument.plot_height)
             coef = []
             for c in self.action.args.fincoeff:
                 coef.append(c[ic])
-            pl.plot(coef, 'd')
-            ylim = pl.gca().get_ylim()
+            p.diamond(list(range(120)), coef)
+            ylim = [np.nanmin(coef), np.nanmax(coef)]
             for ix in range(1, 24):
                 sx = ix * 5 - 0.5
-                pl.plot([sx, sx], ylim, '-.', color='black')
-            pl.xlabel("Bar #")
-            pl.ylabel("Coef %d (%s)" % (ic, ylabs[ic]))
-            pl.title(self.action.args.plotlabel() + " Coef %d" % ic)
-            pl.xlim(xlim)
-            pl.gca().margins(0)
-            pl.savefig("arc_%05d_coef%d_%s_%s_%s.png" %
-                       (self.action.args.ccddata.header['FRAMENO'], ic,
-                        self.action.args.illum(), self.action.args.grating(),
-                        self.action.args.ifuname()))
+                p.line([sx, sx], ylim, color='black')
+            bokeh_plot(p)
+            # pl.savefig("arc_%05d_coef%d_%s_%s_%s.png" %
+            #           (self.action.args.ccddata.header['FRAMENO'], ic,
+            #            self.action.args.illum(), self.action.args.grating(),
+            #            self.action.args.ifuname()))
             if self.context.config.plot_level >= 2:
                 input("Next? <cr>: ")
             else:
