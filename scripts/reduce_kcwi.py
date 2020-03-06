@@ -109,10 +109,10 @@ if __name__ == "__main__":
         kcwi_config_file = 'configs/kcwi.cfg'
         kcwi_config_path = pkg_resources.resource_filename(
             pkg, kcwi_config_file)
-        kcwi_config = ConfigClass(kcwi_config_path)
+        kcwi_config = ConfigClass(kcwi_config_path, default_section='KCWI')
     else:
         kcwi_config_path = os.path.abspath(args.kcwi_config_file)
-        kcwi_config = ConfigClass(args.kcwi_config_file)
+        kcwi_config = ConfigClass(args.kcwi_config_file, default_section='KCWI')
 
     try:
         framework = Framework(Kcwi_pipeline, framework_config_path)
@@ -128,7 +128,7 @@ if __name__ == "__main__":
     # check for the REDUX directory
     check_redux_dir()
 
-    if framework.config.enable_bokeh is True:
+    if framework.config.instrument.enable_bokeh is True:
         subprocess.Popen('bokeh serve', shell=True)
         time.sleep(5)
 
@@ -137,7 +137,7 @@ if __name__ == "__main__":
     framework.context.proctab.read_proctab(tfil=args.proctab)
 
     framework.logger.info("Framework initialized")
-    if framework.config.enable_bokeh:
+    if framework.config.instrument.enable_bokeh:
         framework.append_event('start_bokeh', None)
 
     # start queue manager only (useful for RPC)

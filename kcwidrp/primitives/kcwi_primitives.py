@@ -313,7 +313,7 @@ class SubtractOverscan(BasePrimitive):
                 self.action.args.ccddata.header['OSCNRN%d' % (ia + 1)] = \
                     (sdrs, "amp%d RN in e- from oscan" % (ia + 1))
 
-                if self.context.config.plot_level >= 1:
+                if self.context.config.instrument.plot_level >= 1:
                     x = np.arange(len(osvec))
                     p = figure(title=self.action.args.plotlabel +
                                ', Overscan amp %d' % (ia+1),
@@ -323,7 +323,7 @@ class SubtractOverscan(BasePrimitive):
                     p.line(x, osvec)
                     p.line(x, osfit, line_color='red', line_width=3)
                     bokeh_plot(p)
-                    if self.context.config.plot_level >= 2:
+                    if self.context.config.instrument.plot_level >= 2:
                         input("Next? <cr>: ")
                     else:
                         time.sleep(self.context.config.instrument.plot_pause)
@@ -1028,7 +1028,7 @@ class SubtractScatteredLight(BasePrimitive):
             bkpt = xvals[nbkpt:-nbkpt:nbkpt]
             # B-spline fit
             bspl = sp.interpolate.LSQUnivariateSpline(xvals, yvals, bkpt)
-            if self.context.config.plot_level >= 1:
+            if self.context.config.instrument.plot_level >= 1:
                 # plot
                 p = figure(title=self.action.args.plotlabel +
                            ", Scattered Light",
@@ -1039,7 +1039,7 @@ class SubtractScatteredLight(BasePrimitive):
                 xx = np.linspace(0, max(xvals), len(yvals) * 5)
                 p.line(xx, bspl(xx), color='blue', line_width=3, legend="fit")
                 bokeh_plot(p)
-                if self.context.config.plot_level >= 2:
+                if self.context.config.instrument.plot_level >= 2:
                     input("Next? <cr>: ")
                 else:
                     time.sleep(self.context.config.instrument.plot_pause)
@@ -1191,7 +1191,7 @@ class FindBars(BasePrimitive):
     def _perform(self):
         self.logger.info("Finding continuum bars")
         # Do we plot?
-        if self.context.config.plot_level >= 1:
+        if self.context.config.instrument.plot_level >= 1:
             do_plot = True
         else:
             do_plot = False
@@ -1256,7 +1256,7 @@ class FindBars(BasePrimitive):
                 # p.line([xc, xc], [midavg, midvec[peak]], color='grey')
                 p.scatter(midcntr, midvec[midpeaks], marker='x', color='green')
                 bokeh_plot(p)
-                if self.context.config.plot_level >= 2:
+                if self.context.config.instrument.plot_level >= 2:
                     input("next: ")
                 else:
                     time.sleep(self.context.config.instrument.plot_pause)
@@ -1286,7 +1286,7 @@ class TraceBars(BasePrimitive):
 
     def _perform(self):
         self.logger.info("Tracing continuum bars")
-        if self.context.config.plot_level >= 1:
+        if self.context.config.instrument.plot_level >= 1:
             do_plot = True
             pl.ion()
         else:
@@ -1375,7 +1375,7 @@ class TraceBars(BasePrimitive):
                 p.scatter(self.action.args.midcntr,
                           [self.action.args.midrow]*120, color='red')
                 bokeh_plot(p)
-                if self.context.config.plot_level >= 2:
+                if self.context.config.instrument.plot_level >= 2:
                     input("next: ")
                 else:
                     time.sleep(self.context.config.instrument.plot_pause)
@@ -1508,7 +1508,7 @@ class ArcOffsets(BasePrimitive):
         arcs = self.context.arcs
         if arcs is not None:
             # Do we plot?
-            if self.context.config.plot_level >= 2:
+            if self.context.config.instrument.plot_level >= 2:
                 do_plot = True
             else:
                 do_plot = False
@@ -1662,7 +1662,7 @@ class ReadAtlas(BasePrimitive):
         offset_wav = offset_pix * refdisp
         self.logger.info("Initial arc-atlas offset (px, Ang): %d, %.1f" %
                          (offset_pix, offset_wav))
-        if self.context.config.plot_level >= 1:
+        if self.context.config.instrument.plot_level >= 1:
             # Plot
             p = figure(title=self.action.args.plotlabel +
                        ", (%s), Offset = %d px" % (lamp, offset_pix),
@@ -1676,7 +1676,7 @@ class ReadAtlas(BasePrimitive):
             p.line([offset_pix, offset_pix], [ylim_min, ylim_max],
                    color='green', legend='Peak')
             bokeh_plot(p)
-            if self.context.config.plot_level >= 2:
+            if self.context.config.instrument.plot_level >= 2:
                 input("Next? <cr>: ")
             else:
                 time.sleep(self.context.config.instrument.plot_pause)
@@ -1710,7 +1710,7 @@ class ReadAtlas(BasePrimitive):
                        legend="CWAVE")
                 bokeh_plot(p)
 
-                if self.context.config.plot_level >= 2:
+                if self.context.config.instrument.plot_level >= 2:
                     q = input("Enter: <cr> - next, new offset (px): ")
                     if q:
                         offset_pix = int(q)
@@ -1861,7 +1861,7 @@ class FitCenter(BasePrimitive):
         """
         self.logger.info("Finding wavelength solution for central region")
         # Are we interactive?
-        do_inter = (self.context.config.plot_level >= 2)
+        do_inter = (self.context.config.instrument.plot_level >= 2)
 
         # y binning
         ybin = self.action.args.ybinsize
@@ -1950,7 +1950,7 @@ class FitCenter(BasePrimitive):
 
         self.action.args.twkcoeff = twkcoeff
         # Plot results
-        if self.context.config.plot_level >= 1:
+        if self.context.config.instrument.plot_level >= 1:
             # Plot central wavelength
             p = figure(title=self.action.args.plotlabel, x_axis_label="Bar #",
                        y_axis_label="Central Wavelength (A)",
@@ -1967,7 +1967,7 @@ class FitCenter(BasePrimitive):
             p.x_range = Range1d(-1, 120)
             p.legend.location = "top_center"
             bokeh_plot(p)
-            if self.context.config.plot_level >= 2:
+            if self.context.config.instrument.plot_level >= 2:
                 input("Next? <cr>: ")
             else:
                 time.sleep(self.context.config.instrument.plot_pause)
@@ -1988,7 +1988,7 @@ class FitCenter(BasePrimitive):
             p.x_range = Range1d(-1, 120)
             p.legend.location = "bottom_center"
             bokeh_plot(p)
-            if self.context.config.plot_level >= 2:
+            if self.context.config.instrument.plot_level >= 2:
                 input("Next? <cr>: ")
             else:
                 time.sleep(self.context.config.instrument.plot_pause)
@@ -2193,9 +2193,9 @@ class GetAtlasLines(BasePrimitive):
         p.diamond(refws, refas / norm_fac, legend='Kept', color='green',
                   size=10)
         p.x_range = Range1d(min(subwvals), max(subwvals))
-        if self.context.config.plot_level >= 1:
+        if self.context.config.instrument.plot_level >= 1:
             bokeh_plot(p)
-            if self.context.config.plot_level >= 2:
+            if self.context.config.instrument.plot_level >= 2:
                 input("Next? <cr>: ")
             else:
                 pl.pause(self.context.config.instrument.plot_pause)
@@ -2224,11 +2224,11 @@ class SolveArcs(BasePrimitive):
     def _perform(self):
         """Solve the bar arc wavelengths"""
         self.logger.info("Solving individual arc spectra")
-        if self.context.config.plot_level >= 2:
+        if self.context.config.instrument.plot_level >= 2:
             master_inter = True
         else:
             master_inter = False
-        if self.context.config.plot_level >= 3:
+        if self.context.config.instrument.plot_level >= 3:
             do_inter = True
         else:
             do_inter = False
@@ -2546,9 +2546,9 @@ class SolveArcs(BasePrimitive):
         #           (self.action.args.ccddata.header['FRAMENO'],
         #            self.action.args.illum(),
         #            self.action.args.grating(), self.action.args.ifuname()))
-        if self.context.config.plot_level >= 1:
+        if self.context.config.instrument.plot_level >= 1:
             bokeh_plot(p)
-            if self.context.config.plot_level >= 2:
+            if self.context.config.instrument.plot_level >= 2:
                 input("Next? <cr>: ")
             else:
                 pl.pause(self.context.config.instrument.plot_pause)
@@ -2587,14 +2587,14 @@ class SolveArcs(BasePrimitive):
         #           (self.action.args.ccddata.header['FRAMENO'],
         #            self.action.args.illum(),
         #            self.action.args.grating(), self.action.args.ifuname()))
-        if self.context.config.plot_level >= 1:
+        if self.context.config.instrument.plot_level >= 1:
             bokeh_plot(p)
-            if self.context.config.plot_level >= 2:
+            if self.context.config.instrument.plot_level >= 2:
                 input("Next? <cr>: ")
             else:
                 pl.pause(self.context.config.instrument.plot_pause)
         # Plot coefs
-        if self.context.config.plot_level >=1:
+        if self.context.config.instrument.plot_level >=1:
             ylabs = ['Ang/px^4', 'Ang/px^3', 'Ang/px^2', 'Ang/px', 'Ang']
             for ic in reversed(range(len(self.action.args.fincoeff[0]))):
                 ptitle = self.action.args.plotlabel + " Coef %d" % ic
@@ -2612,7 +2612,7 @@ class SolveArcs(BasePrimitive):
                     sx = ix * 5 - 0.5
                     p.line([sx, sx], ylim, color='black')
                 bokeh_plot(p)
-                if self.context.config.plot_level >= 2:
+                if self.context.config.instrument.plot_level >= 2:
                     input("Next? <cr>: ")
                 else:
                     pl.pause(self.context.config.instrument.plot_pause)
