@@ -52,7 +52,7 @@ class Kcwi_pipeline(BasePipeline):
                                       "stacking_darks_started",
                                       None),
         # CONTBARS PROCESSING
-        "Process_contbars":          ("ProcessContbars",
+        "process_contbars":          ("ProcessContbars",
                                       "contbars_processing_started",
                                       "contbar_subtract_overscan"),
         "contbar_subtract_overscan": ("SubtractOverscan",
