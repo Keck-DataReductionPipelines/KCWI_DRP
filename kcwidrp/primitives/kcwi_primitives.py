@@ -1239,17 +1239,19 @@ class FindBars(BasePrimitive):
                 # calculate the bar centroids
                 plotting_vector_x = []
                 plotting_vector_y = []
-                for peak in midpeaks:
-                    xs = list(range(peak-win, peak+win+1))
-                    ys = midvec[xs] - np.nanmin(midvec[xs])
-                    xc = np.sum(xs*ys) / np.sum(ys)
-                    midcntr.append(xc)
+            for peak in midpeaks:
+                xs = list(range(peak-win, peak+win+1))
+                ys = midvec[xs] - np.nanmin(midvec[xs])
+                xc = np.sum(xs*ys) / np.sum(ys)
+                midcntr.append(xc)
+                if do_plot:
                     plotting_vector_x.append(xc)
                     plotting_vector_y.append(midavg)
                     plotting_vector_x.append(xc)
                     plotting_vector_y.append(midvec[peak])
                     plotting_vector_x.append(xc)
                     plotting_vector_y.append(midavg)
+            if do_plot:
                 p.line(plotting_vector_x, plotting_vector_y, color='grey')
                 # p.line([xc, xc], [midavg, midvec[peak]], color='grey')
                 p.scatter(midcntr, midvec[midpeaks], marker='x', color='green')
@@ -2197,7 +2199,7 @@ class GetAtlasLines(BasePrimitive):
                 input("Next? <cr>: ")
             else:
                 pl.pause(self.context.config.instrument.plot_pause)
-        export_png(p, "atlas_lines_%s_%s_%s_%05d.png" %
+            export_png(p, "atlas_lines_%s_%s_%s_%05d.png" %
                    (self.action.args.illum, self.action.args.grating,
                     self.action.args.ifuname,
                     self.action.args.ccddata.header['FRAMENO']))
@@ -2592,31 +2594,28 @@ class SolveArcs(BasePrimitive):
             else:
                 pl.pause(self.context.config.instrument.plot_pause)
         # Plot coefs
-        ylabs = ['Ang/px^4', 'Ang/px^3', 'Ang/px^2', 'Ang/px', 'Ang']
-        for ic in reversed(range(len(self.action.args.fincoeff[0]))):
-            ptitle = self.action.args.plotlabel + " Coef %d" % ic
-            p = figure(
-                title=ptitle, x_axis_label="Bar #",
-                y_axis_label="Coef %d (%s)" % (ic, ylabs[ic]),
-                plot_width=self.config.instrument.plot_width,
-                plot_height=self.config.instrument.plot_height)
-            coef = []
-            for c in self.action.args.fincoeff:
-                coef.append(c[ic])
-            p.diamond(list(range(120)), coef)
-            ylim = [np.nanmin(coef), np.nanmax(coef)]
-            for ix in range(1, 24):
-                sx = ix * 5 - 0.5
-                p.line([sx, sx], ylim, color='black')
-            bokeh_plot(p)
-            # pl.savefig("arc_%05d_coef%d_%s_%s_%s.png" %
-            #           (self.action.args.ccddata.header['FRAMENO'], ic,
-            #            self.action.args.illum(), self.action.args.grating(),
-            #            self.action.args.ifuname()))
-            if self.context.config.plot_level >= 2:
-                input("Next? <cr>: ")
-            else:
-                pl.pause(self.context.config.instrument.plot_pause)
+        if self.context.config.plot_level >=1:
+            ylabs = ['Ang/px^4', 'Ang/px^3', 'Ang/px^2', 'Ang/px', 'Ang']
+            for ic in reversed(range(len(self.action.args.fincoeff[0]))):
+                ptitle = self.action.args.plotlabel + " Coef %d" % ic
+                p = figure(
+                    title=ptitle, x_axis_label="Bar #",
+                    y_axis_label="Coef %d (%s)" % (ic, ylabs[ic]),
+                    plot_width=self.config.instrument.plot_width,
+                    plot_height=self.config.instrument.plot_height)
+                coef = []
+                for c in self.action.args.fincoeff:
+                    coef.append(c[ic])
+                p.diamond(list(range(120)), coef)
+                ylim = [np.nanmin(coef), np.nanmax(coef)]
+                for ix in range(1, 24):
+                    sx = ix * 5 - 0.5
+                    p.line([sx, sx], ylim, color='black')
+                bokeh_plot(p)
+                if self.context.config.plot_level >= 2:
+                    input("Next? <cr>: ")
+                else:
+                    pl.pause(self.context.config.instrument.plot_pause)
 
         return self.action.args
     # END: class SolveArcs()
