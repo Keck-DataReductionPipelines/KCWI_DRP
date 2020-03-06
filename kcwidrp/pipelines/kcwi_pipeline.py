@@ -107,7 +107,7 @@ class Kcwi_pipeline(BasePipeline):
         "arcs_get_atlas_lines":      ("GetAtlasLines",
                                       "getting_atlas_lines_started",
                                       "atlas_solve_arcs"),
-        "arcs_solve_arcs":           ("SolveArcs",
+        "atlas_solve_arcs":          ("SolveArcs",
                                       "solving_arcs_started",
                                       "arcs_solve_geom"),
         "arcs_solve_geom":           ("SolveGeom",
