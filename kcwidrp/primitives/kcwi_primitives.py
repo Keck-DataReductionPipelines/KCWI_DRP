@@ -315,13 +315,15 @@ class SubtractOverscan(BasePrimitive):
 
                 if self.context.config.instrument.plot_level >= 1:
                     x = np.arange(len(osvec))
-                    p = figure(title=self.action.args.plotlabel +
-                               ', Overscan amp %d' % (ia+1),
+                    p = figure(title="Overscan Fit: " +
+                                     self.action.args.plotlabel +
+                                     ', Overscan amp %d' % (ia+1),
                                x_axis_label='x', y_axis_label='counts',
                                plot_width=self.config.instrument.plot_width,
                                plot_height=self.config.instrument.plot_height)
-                    p.line(x, osvec)
-                    p.line(x, osfit, line_color='red', line_width=3)
+                    p.line(x, osvec, legend="Data")
+                    p.line(x, osfit, line_color='red', line_width=3,
+                           legend="Fit")
                     bokeh_plot(p)
                     if self.context.config.instrument.plot_level >= 2:
                         input("Next? <cr>: ")
@@ -1530,9 +1532,10 @@ class ArcOffsets(BasePrimitive):
                                  (na, int(na/5), offset))
                 # display if requested
                 if do_plot:
-                    p = figure(title=self.action.args.plotlabel +
-                               ", Arc %d Slice %d XCorr, Shift = %d" %
-                               (na, int(na/5), offset),
+                    p = figure(title="Bar Offsets: " +
+                                     self.action.args.plotlabel +
+                                     ", Arc %d Slice %d XCorr, Shift = %d" %
+                                     (na, int(na/5), offset),
                                x_axis_label="CCD y (px)", y_axis_label="e-",
                                plot_width=self.config.instrument.plot_width,
                                plot_height=self.config.instrument.plot_height)
@@ -1664,7 +1667,7 @@ class ReadAtlas(BasePrimitive):
                          (offset_pix, offset_wav))
         if self.context.config.instrument.plot_level >= 1:
             # Plot
-            p = figure(title=self.action.args.plotlabel +
+            p = figure(title="Atlas Offset: " + self.action.args.plotlabel +
                        ", (%s), Offset = %d px" % (lamp, offset_pix),
                        x_axis_label="Offset(px)", y_axis_label="X-corr",
                        plot_width=self.context.config.instrument.plot_width,
@@ -1674,7 +1677,7 @@ class ReadAtlas(BasePrimitive):
             ylim_min = min(xcorr_central)
             ylim_max = max(xcorr_central)
             p.line([offset_pix, offset_pix], [ylim_min, ylim_max],
-                   color='green', legend='Peak')
+                   color='red', legend='Peak')
             bokeh_plot(p)
             if self.context.config.instrument.plot_level >= 2:
                 input("Next? <cr>: ")
@@ -1686,7 +1689,7 @@ class ReadAtlas(BasePrimitive):
             q = 'test'
             while q:
                 # Plot the two spectra
-                p = figure(title=self.action.args.plotlabel +
+                p = figure(title="Atlas Offset: "+self.action.args.plotlabel +
                            ", (%s), Offset = %.1f Ang (%d px)" % (lamp,
                                                                   offset_wav,
                                                                   offset_pix),
@@ -1706,8 +1709,8 @@ class ReadAtlas(BasePrimitive):
                     obsarc[minow:maxow]/np.nanmax(obsarc[minow:maxow]))
                 ylim_max = max(
                     obsarc[minow:maxow]/np.nanmax(obsarc[minow:maxow]))
-                p.line([cwave, cwave], [ylim_min, ylim_max], color="green",
-                       legend="CWAVE")
+                p.line([cwave, cwave], [ylim_min, ylim_max], color="magenta",
+                       legend="CWAVE", line_dash="dashdot")
                 bokeh_plot(p)
 
                 if self.context.config.instrument.plot_level >= 2:
@@ -1931,7 +1934,8 @@ class FitCenter(BasePrimitive):
                          self.action.args.illum,
                          self.action.args.ifuname, self.action.args.filter,
                          self.action.args.grating)
-                p = figure(title=imlab+": Bar %d, Slice %d" % (b, int(b / 5)),
+                p = figure(title="Central Dispersion Fit: " + imlab +
+                                 ": Bar %d, Slice %d" % (b, int(b / 5)),
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height,
                            x_axis_label="Central dispersion (Ang/px)",
@@ -1952,7 +1956,8 @@ class FitCenter(BasePrimitive):
         # Plot results
         if self.context.config.instrument.plot_level >= 1:
             # Plot central wavelength
-            p = figure(title=self.action.args.plotlabel, x_axis_label="Bar #",
+            p = figure(title="Central Values: " + self.action.args.plotlabel,
+                       x_axis_label="Bar #",
                        y_axis_label="Central Wavelength (A)",
                        plot_width=self.config.instrument.plot_width,
                        plot_height=self.config.instrument.plot_height)
@@ -1972,7 +1977,8 @@ class FitCenter(BasePrimitive):
             else:
                 time.sleep(self.context.config.instrument.plot_pause)
             # Plot central dispersion
-            p = figure(title=self.action.args.plotlabel, x_axis_label="Bar #",
+            p = figure(title="Central Values: " + self.action.args.plotlabel,
+                       x_axis_label="Bar #",
                        y_axis_label="Central Dispersion (A)",
                        plot_width=self.config.instrument.plot_width,
                        plot_height=self.config.instrument.plot_height)
@@ -2179,15 +2185,12 @@ class GetAtlasLines(BasePrimitive):
         p.line(subwvals, subyvals / np.nanmax(subyvals), legend='RefArc',
                color='lightgray')
         p.line(atwave, atspec / norm_fac, legend='Atlas', color='blue')
-        # Initial line list
-        # p.diamond(init_cent, init_hgt / norm_fac, legend='Fpks',
-        #          color='black', size=10, fill_alpha=0.1)
         # Rejected: nearby neighbor
         p.diamond(rej_neigh_w, rej_neigh_y / norm_fac, legend='NeighRej',
-                  color='red', size=8)
+                  color='cyan', size=8)
         # Rejected: fit failure
         p.diamond(rej_fit_w, rej_fit_y / norm_fac, legend='FitRej',
-                  color='cyan', size=8)
+                  color='red', size=8)
         # Rejected: line parameter outside range
         p.diamond(rej_par_w, rej_par_a / norm_fac, legend='ParRej',
                   color='orange', size=8)
@@ -2201,9 +2204,9 @@ class GetAtlasLines(BasePrimitive):
             else:
                 pl.pause(self.context.config.instrument.plot_pause)
             export_png(p, "atlas_lines_%s_%s_%s_%05d.png" %
-                   (self.action.args.illum, self.action.args.grating,
-                    self.action.args.ifuname,
-                    self.action.args.ccddata.header['FRAMENO']))
+                       (self.action.args.illum, self.action.args.grating,
+                        self.action.args.ifuname,
+                        self.action.args.ccddata.header['FRAMENO']))
         self.logger.info("Final atlas list has %d lines" % len(refws))
 
         return self.action.args
@@ -2356,7 +2359,8 @@ class SolveArcs(BasePrimitive):
                                 if v >= max(wvec)][0]
                         atnorm = np.nanmax(yvec) / np.nanmax(atspec[atx0:atx1])
                         p = figure(
-                            title=ptitle, x_axis_label="Wavelength (A)",
+                            title="Arc Line Fit: " + ptitle,
+                            x_axis_label="Wavelength (A)",
                             y_axis_label="Relative Flux",
                             plot_width=self.config.instrument.plot_width,
                             plot_height=self.config.instrument.plot_height)
@@ -2365,11 +2369,12 @@ class SolveArcs(BasePrimitive):
                         ylim = [0, np.nanmax(yvec)]
                         p.circle(atwave[atx0:atx1], atspec[atx0:atx1] * atnorm,
                                  color='green', legend='Atlas')
-                        p.line([aw, aw], ylim, color='red', legend='W in')
+                        p.line([aw, aw], ylim, color='red', legend='Wl in')
                         bokeh_plot(p)
                         input("next - <cr>: ")
                         p = figure(
-                            title=ptitle, x_axis_label="CCD Y (px)",
+                            title="Line Fit Results: " + ptitle,
+                            x_axis_label="CCD Y (px)",
                             y_axis_label="Flux (DN)",
                             plot_width=self.config.instrument.plot_width,
                             plot_height=self.config.instrument.plot_height)
@@ -2469,16 +2474,18 @@ class SolveArcs(BasePrimitive):
                          " Bar = %03d, Slice = %02d, RMS = %.3f, N = %d" % \
                          (ib, int(ib / 5), wsig, len(arc_pix_dat))
                 p = figure(
-                    title=ptitle, x_axis_label="Wavelength (A)",
+                    title="Residuals: " + ptitle, x_axis_label="Wavelength (A)",
                     y_axis_label="Fit - Inp (A)",
                     plot_width=self.config.instrument.plot_width,
                     plot_height=self.config.instrument.plot_height)
-                p.diamond(at_wave_dat, resid, legend='Rsd')
+                p.diamond(at_wave_dat, resid, legend='Rsd', size=8)
                 if rej_rsd_wave:
-                    p.diamond(rej_rsd_wave, rej_rsd, color='red', legend='Rej')
+                    p.diamond(rej_rsd_wave, rej_rsd, color='orange',
+                              legend='Rej', size=8)
                 xlim = [self.action.args.atminwave, self.action.args.atmaxwave]
-                ylim = [np.nanmin(resid), np.nanmax(resid)]
-                p.line(xlim, [0., 0.])
+                ylim = [np.nanmin(list(resid)+list(rej_rsd)),
+                        np.nanmax(list(resid)+list(rej_rsd))]
+                p.line(xlim, [0., 0.], color='black', line_dash='dotted')
                 p.line(xlim, [wsig, wsig], color='gray', line_dash='dashdot')
                 p.line(xlim, [-wsig, -wsig], color='gray', line_dash='dashdot')
                 p.line([self.action.args.cwave, self.action.args.cwave],
@@ -2489,7 +2496,8 @@ class SolveArcs(BasePrimitive):
 
                 # overplot atlas and bar using fit wavelengths
                 p = figure(
-                    title=ptitle, x_axis_label="Wavelength (A)",
+                    title="Atlas/Arc Fit: " + ptitle,
+                    x_axis_label="Wavelength (A)",
                     y_axis_label="Flux",
                     plot_width=self.config.instrument.plot_width,
                     plot_height=self.config.instrument.plot_height)
@@ -2501,14 +2509,13 @@ class SolveArcs(BasePrimitive):
                 p.line([self.action.args.cwave, self.action.args.cwave],
                        ylim, color='magenta', line_dash='dashdot',
                        legend='CWAV')
-                p.diamond(at_wave, at_flux * atnorm, legend='Orig',
-                          color='black', size=8)
-                p.diamond(rej_rsd_wave, [rj*atnorm for rj in rej_rsd_flux],
-                          color='red', legend='RejRsd', size=6)
+                p.diamond(at_wave, at_flux * atnorm, legend='Kept',
+                          color='green', size=8)
+                if rej_rsd_wave:
+                    p.diamond(rej_rsd_wave, [rj*atnorm for rj in rej_rsd_flux],
+                              color='orange', legend='RejRsd', size=6)
                 p.diamond(rej_wave, [rj*atnorm for rj in rej_flux],
-                          color='yellow', legend='RejFit', size=6)
-                p.diamond(arc_wave_fit, arc_int_dat, color='green',
-                          legend='Kept', size=10)
+                          color='red', legend='RejFit', size=6)
                 bokeh_plot(p)
                 q = input("Next? <cr>, q - quit: ")
                 if 'Q' in q.upper():
@@ -2521,10 +2528,11 @@ class SolveArcs(BasePrimitive):
             " <RMS>: %.3f +- %.3f" % (self.action.args.av_bar_sig,
                                       self.action.args.st_bar_sig)
         p = figure(
-            title=ptitle, x_axis_label="Bar #", y_axis_label="RMS (A)",
+            title="Fit Stats: " + ptitle,
+            x_axis_label="Bar #", y_axis_label="RMS (A)",
             plot_width=self.config.instrument.plot_width,
             plot_height=self.config.instrument.plot_height)
-        p.diamond(list(range(120)), bar_sig, legend='RMS')
+        p.diamond(list(range(120)), bar_sig, size=8)
         xlim = [-1, 120]
         ylim = [np.nanmin(bar_sig), np.nanmax(bar_sig)]
 
@@ -2545,28 +2553,29 @@ class SolveArcs(BasePrimitive):
                line_dash='dotted')
         for ix in range(1, 24):
             sx = ix * 5 - 0.5
-            p.line([sx, sx], ylim, color='black')
-        # pl.savefig("arc_%05d_resid_%s_%s_%s.png" %
-        #           (self.action.args.ccddata.header['FRAMENO'],
-        #            self.action.args.illum(),
-        #            self.action.args.grating(), self.action.args.ifuname()))
+            p.line([sx, sx], ylim, color='black', line_dash='dashdot')
         if self.context.config.instrument.plot_level >= 1:
             bokeh_plot(p)
             if self.context.config.instrument.plot_level >= 2:
                 input("Next? <cr>: ")
             else:
                 pl.pause(self.context.config.instrument.plot_pause)
+        export_png(p, "arc_%05d_resid_%s_%s_%s.png" %
+                   (self.action.args.ccddata.header['FRAMENO'],
+                    self.action.args.illum,
+                    self.action.args.grating, self.action.args.ifuname))
         # Plot number of lines fit
         self.action.args.av_bar_nls = float(np.nanmean(bar_nls))
         self.action.args.st_bar_nls = float(np.nanstd(bar_nls))
         ptitle = self.action.args.plotlabel + \
-            " <RMS>: %.1f +- %.1f" % (self.action.args.av_bar_nls,
-                                      self.action.args.st_bar_nls)
+            " <Nlns>: %.1f +- %.1f" % (self.action.args.av_bar_nls,
+                                       self.action.args.st_bar_nls)
         p = figure(
-            title=ptitle, x_axis_label="Bar #", y_axis_label="N Lines",
+            title="Fit Stats: " + ptitle,
+            x_axis_label="Bar #", y_axis_label="N Lines",
             plot_width=self.config.instrument.plot_width,
             plot_height=self.config.instrument.plot_height)
-        p.diamond(list(range(120)), bar_nls, legend='N lines')
+        p.diamond(list(range(120)), bar_nls,  size=8)
         xlim = [-1, 120]
         ylim = [np.nanmin(bar_nls), np.nanmax(bar_nls)]
         self.logger.info("<N Lines> = %.1f +- %.1f" %
@@ -2586,41 +2595,46 @@ class SolveArcs(BasePrimitive):
                line_dash='dotted')
         for ix in range(1, 24):
             sx = ix * 5 - 0.5
-            p.line([sx, sx], ylim, color='black')
-        # pl.savefig("arc_%05d_nlines_%s_%s_%s.png" %
-        #           (self.action.args.ccddata.header['FRAMENO'],
-        #            self.action.args.illum(),
-        #            self.action.args.grating(), self.action.args.ifuname()))
+            p.line([sx, sx], ylim, color='black', line_dash='dashdot')
+
         if self.context.config.instrument.plot_level >= 1:
             bokeh_plot(p)
             if self.context.config.instrument.plot_level >= 2:
                 input("Next? <cr>: ")
             else:
                 pl.pause(self.context.config.instrument.plot_pause)
+        export_png(p, "arc_%05d_nlines_%s_%s_%s.png" %
+                   (self.action.args.ccddata.header['FRAMENO'],
+                    self.action.args.illum,
+                    self.action.args.grating, self.action.args.ifuname))
         # Plot coefs
         if self.context.config.instrument.plot_level >=1:
             ylabs = ['Ang/px^4', 'Ang/px^3', 'Ang/px^2', 'Ang/px', 'Ang']
             for ic in reversed(range(len(self.action.args.fincoeff[0]))):
                 ptitle = self.action.args.plotlabel + " Coef %d" % ic
                 p = figure(
-                    title=ptitle, x_axis_label="Bar #",
+                    title="Fit Coeffs: " + ptitle, x_axis_label="Bar #",
                     y_axis_label="Coef %d (%s)" % (ic, ylabs[ic]),
                     plot_width=self.config.instrument.plot_width,
                     plot_height=self.config.instrument.plot_height)
                 coef = []
                 for c in self.action.args.fincoeff:
                     coef.append(c[ic])
-                p.diamond(list(range(120)), coef)
+                p.diamond(list(range(120)), coef, size=8)
                 ylim = [np.nanmin(coef), np.nanmax(coef)]
                 for ix in range(1, 24):
                     sx = ix * 5 - 0.5
-                    p.line([sx, sx], ylim, color='black')
+                    p.line([sx, sx], ylim, color='black', line_dash='dashdot')
                 bokeh_plot(p)
                 if self.context.config.instrument.plot_level >= 2:
                     input("Next? <cr>: ")
                 else:
                     pl.pause(self.context.config.instrument.plot_pause)
-
+                export_png(p, "arc_%05d_coef%d_%s_%s_%s.png" %
+                           (self.action.args.ccddata.header['FRAMENO'], ic,
+                            self.action.args.illum,
+                            self.action.args.grating,
+                            self.action.args.ifuname))
         return self.action.args
     # END: class SolveArcs()
 
