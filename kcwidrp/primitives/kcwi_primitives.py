@@ -2702,7 +2702,7 @@ class SolveGeom(BasePrimitive):
             trimw0 = y1min
             trimw1 = y0max
         # Calculate output wavelengths
-        dwout = self.action.args.delta_wave_out
+        dwout = self.action.args.dwout
         ndels = int((trimw0 - self.config.instrument.WAVEFID) / dwout)
         self.action.args.wave0out = \
             self.config.instrument.WAVEFID + float(ndels) * dwout
