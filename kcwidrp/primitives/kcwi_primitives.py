@@ -325,7 +325,7 @@ class SubtractOverscan(BasePrimitive):
                                x_axis_label='x', y_axis_label='counts',
                                plot_width=self.config.instrument.plot_width,
                                plot_height=self.config.instrument.plot_height)
-                    p.line(x, osvec, legend="Data")
+                    p.circle(x, osvec, legend="Data")
                     p.line(x, osfit, line_color='red', line_width=3,
                            legend="Fit")
                     bokeh_plot(p)
@@ -3068,6 +3068,7 @@ class MakeCube(BasePrimitive):
         geom_file = os.path.join(self.config.instrument.output_directory,
                                  ofname.split('.')[0] + '_geom.pkl')
         if os.path.exists(geom_file):
+            self.logger.info("Reading %s" % geom_file)
             with open(geom_file, 'rb') as ifile:
                 geom = pickle.load(ifile)
             # Slice size
@@ -3108,22 +3109,30 @@ class MakeCube(BasePrimitive):
                         out_cube[iy, ix, isl] = warped[iy, ix]
                 wmed = np.nanmedian(warped)
                 wstd = np.nanstd(warped)
-                pl.clf()
-                pl.imshow(warped, vmin=(wmed - wstd * 2.),
-                          vmax=(wmed + wstd * 2.))
-                pl.ylim(0, ysize)
-                pl.title('warped slice %d' % isl)
+                print(wmed, wstd)
+                ptitle = self.action.args.plotlabel + ": warped slice %d" % isl
+                p = figure(tooltips=[("x", "$x"), ("y", "$y"),
+                                     ("value", "@image")],
+                           title=ptitle,
+                           x_axis_label="X (px)", y_axis_label="Y (px)",
+                           plot_width=self.config.instrument.plot_width,
+                           plot_height=self.config.instrument.plot_height)
+                p.x_range.range_padding = p.y_range.range_padding = 0
+                p.image([warped], x=0, y=0, dw=xsize, dh=ysize,
+                        palette="Spectral11", level="image")
+                        # vmin=(wmed - wstd * 2.), vmax=(wmed + wstd * 2.))
+                # pl.ylim(0, ysize)
+                bokeh_plot(p)
                 if do_inter:
                     q = input("<cr> - Next, q to quit: ")
                     if 'Q' in q.upper():
                         do_inter = False
-                        pl.ioff()
                 else:
-                    pl.pause(0.5)
+                    time.sleep(self.context.config.instrument.plot_pause)
             # Calculate some WCS parameters
             # Get object pointing
             try:
-                if self.action.args.ccddata.nasmask():
+                if self.action.args.nasmask:
                     rastr = self.action.args.ccddata.header['RABASE']
                     decstr = self.action.args.ccddata.header['DECBASE']
                 else:
@@ -3168,7 +3177,7 @@ class MakeCube(BasePrimitive):
             crpix2 = xsize / 2.
             crpix3 = 1.
             porg = self.action.args.ccddata.header['PONAME']
-            ifunum = self.action.args.ccddata.ifunum()
+            ifunum = self.action.args.ifunum
             if 'IFU' in porg:
                 if ifunum == 1:
                     off1 = 1.0
@@ -3183,8 +3192,8 @@ class MakeCube(BasePrimitive):
                     self.logger.warning("Unknown IFU number: %d" % ifunum)
                     off1 = 0.
                     off2 = 0.
-                off1 = off1 / float(self.action.args.ccddata.xbinsize())
-                off2 = off2 / float(self.action.args.ccddata.ybinsize())
+                off1 = off1 / float(self.action.args.xbinsize)
+                off2 = off2 / float(self.action.args.ybinsize)
                 crpix1 += off1
                 crpix2 += off2
             # Update header
