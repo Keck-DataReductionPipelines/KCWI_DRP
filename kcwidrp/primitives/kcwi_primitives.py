@@ -340,7 +340,8 @@ class SubtractOverscan(BasePrimitive):
 
         self.action.args.ccddata.header[key] = (performed, keycom)
 
-        logstr = self.__module__ + "." + self.__class__.__name__
+        logstr = SubtractOverscan.__module__ + "." + \
+            SubtractOverscan.__qualname__
         self.action.args.ccddata.header['HISTORY'] = logstr
         self.logger.info(logstr)
 
@@ -400,8 +401,9 @@ class TrimOverscan(BasePrimitive):
         self.action.args.ccddata.header['NAXIS2'] = max_sec[1] + 1
         self.action.args.ccddata.header[key] = (True, keycom)
 
-        logstr = self.__module__ + "." + self.__class__.__name__
+        logstr = TrimOverscan.__module__ + "." + TrimOverscan.__qualname__
         self.action.args.ccddata.header['HISTORY'] = logstr
+        self.logger.info(logstr)
 
         if self.config.instrument.saveintims:
             kcwi_fits_writer(self.action.args.ccddata,
@@ -440,8 +442,9 @@ class CorrectGain(BasePrimitive):
         self.action.args.ccddata.header['BUNIT'] = ('electron', 'Pixel units')
         self.action.args.ccddata.unit = 'electron'
 
-        logstr = self.__module__ + "." + self.__class__.__name__
+        logstr = CorrectGain.__module__ + "." + CorrectGain.__qualname__
         self.action.args.ccddata.header['HISTORY'] = logstr
+        self.logger.info(logstr)
 
         if self.config.instrument.saveintims:
             kcwi_fits_writer(self.action.args.ccddata,
@@ -509,8 +512,9 @@ class CorrectDefects(BasePrimitive):
         self.action.args.ccddata.header['NBPCLEAN'] = \
             (nbpix, 'number of bad pixels cleaned')
 
-        logstr = self.__module__ + "." + self.__class__.__name__
+        logstr = CorrectDefects.__module__ + "." + CorrectDefects.__qualname__
         self.action.args.ccddata.header['HISTORY'] = logstr
+        self.logger.info(logstr)
 
         # add flags array
         self.action.args.ccddata.mask = flags
@@ -600,8 +604,10 @@ class RemoveCosmicRays(BasePrimitive):
                 'history'] = "LA CosmicX: exptime < minexptime=%.1f" % \
                              self.context.config.instrument.CRR_MINEXPTIME
 
-        logstr = self.__module__ + "." + self.__class__.__name__
+        logstr = RemoveCosmicRays.__module__ + \
+            "." + RemoveCosmicRays.__qualname__
         self.action.args.ccddata.header['HISTORY'] = logstr
+        self.logger.info(logstr)
 
         if self.config.instrument.saveintims:
             kcwi_fits_writer(self.action.args.ccddata,
@@ -644,8 +650,10 @@ class CreateUncertaintyImage(BasePrimitive):
         # document variance image creation
         self.action.args.ccddata.header[key] = (True, keycom)
 
-        logstr = self.__module__ + "." + self.__class__.__name__
+        logstr = CreateUncertaintyImage.__module__ + \
+            "." + CreateUncertaintyImage.__qualname__
         self.action.args.ccddata.header['HISTORY'] = logstr
+        self.logger.info(logstr)
 
         return self.action.args
     # END: class CreateUncertaintyImage()
@@ -687,8 +695,9 @@ class RectifyImage(BasePrimitive):
 
         self.action.args.ccddata.header[key] = (True, keycom)
 
-        logstr = self.__module__ + "." + self.__class__.__name__
+        logstr = RectifyImage.__module__ + "." + RectifyImage.__qualname__
         self.action.args.ccddata.header['HISTORY'] = logstr
+        self.logger.info(logstr)
 
         # write out int image
         kcwi_fits_writer(self.action.args.ccddata,
@@ -742,8 +751,9 @@ class SubtractBias(BasePrimitive):
 
             self.action.args.ccddata.header[key] = (False, keycom)
 
-        logstr = self.__module__ + "." + self.__class__.__name__
+        logstr = SubtractBias.__module__ + "." + SubtractBias.__qualname__
         self.action.args.ccddata.header['HISTORY'] = logstr
+        self.logger.info(logstr)
 
         return self.action.args
     # END: class SubtractBias()
@@ -795,17 +805,9 @@ class SubtractDark(BasePrimitive):
             self.logger.info("No master dark frame available, skipping")
             self.action.args.ccddata.header[key] = (False, keycom)
 
-        logstr = self.__module__ + "." + self.__class__.__name__
+        logstr = SubtractDark.__module__ + "." + SubtractDark.__qualname__
         self.action.args.ccddata.header['HISTORY'] = logstr
-
-        # Below now done in subtract_scattered_light()
-        # write out int image
-        # kcwi_fits_writer(self.action.args.ccddata,
-        #                 table=self.action.args.table,
-        #                 output_file=self.action.args.name, suffix="intd")
-        # self.context.proctab.update_proctab(frame=self.action.args.ccddata,
-        #                                    suffix="intd")
-        # self.context.proctab.write_proctab()
+        self.logger.info(logstr)
 
         return self.action.args
     # END: class SubtractDark()
@@ -913,8 +915,9 @@ class ProcessBias(BaseImg):
             stacked.header['BIASRN%d' % (ia + 1)] = \
                 (float("%.3f" % bias_rn), "RN in e- from bias")
 
-        logstr = self.__module__ + "." + self.__class__.__name__
+        logstr = ProcessBias.__module__ + "." + ProcessBias.__qualname__
         stacked.header['HISTORY'] = logstr
+        self.logger.info(logstr)
 
         kcwi_fits_writer(stacked, output_file=mbname)
         self.context.proctab.update_proctab(frame=stacked, suffix=suffix,
@@ -979,8 +982,9 @@ class StackDarks(BaseImg):
         for ii, fname in enumerate(stackf):
             stacked.header['STACKF%d' % (ii + 1)] = (fname, "stack input file")
 
-        logstr = self.__module__ + "." + self.__class__.__name__
+        logstr = StackDarks.__module__ + "." + StackDarks.__qualname__
         stacked.header['HISTORY'] = logstr
+        self.logger.info(logstr)
 
         kcwi_fits_writer(stacked, output_file=mdname)
         self.context.proctab.update_proctab(frame=stacked, suffix=suffix,
@@ -1055,8 +1059,10 @@ class SubtractScatteredLight(BasePrimitive):
                     self.action.args.ccddata.data[y0:y3, ix] - scat
             self.action.args.ccddata.header[key] = (True, keycom)
 
-        logstr = self.__module__ + "." + self.__class__.__name__
+        logstr = SubtractScatteredLight.__module__ + \
+            "." + SubtractScatteredLight.__qualname__
         self.action.args.ccddata.header['HISTORY'] = logstr
+        self.logger.info(logstr)
 
         # write out int image
         kcwi_fits_writer(self.action.args.ccddata,
@@ -1067,6 +1073,7 @@ class SubtractScatteredLight(BasePrimitive):
         self.context.proctab.write_proctab()
 
         return self.action.args
+    # END: SubtractScatteredLight()
 
 
 class StackFlats(BaseImg):
@@ -1123,8 +1130,9 @@ class StackFlats(BaseImg):
         for ii, fname in enumerate(stackf):
             stacked.header['STACKF%d' % (ii + 1)] = (fname, "stack input file")
 
-        logstr = self.__module__ + "." + self.__class__.__name__
+        logstr = StackFlats.__module__ + "." + StackFlats.__qualname__
         stacked.header['HISTORY'] = logstr
+        self.logger.info(logstr)
 
         kcwi_fits_writer(stacked, output_file=mdname)
         self.context.proctab.update_proctab(frame=stacked, suffix=suffix,
@@ -1280,7 +1288,13 @@ class FindBars(BasePrimitive):
         # store image info
         self.action.args.cbarsno = self.action.args.ccddata.header['FRAMENO']
         self.action.args.cbarsfl = self.action.args.ccddata.header['OFNAME']
+
+        logstr = FindBars.__module__ + "." + FindBars.__qualname__
+        self.action.args.ccddata.header['HISTORY'] = logstr
+        self.logger.info(logstr)
+
         return self.action.args
+
     # END: class FindBars()
 
 
@@ -1431,6 +1445,11 @@ class TraceBars(BasePrimitive):
                                  output_file=self.action.args.name,
                                  suffix='warped')
                 self.logger.info("Transformed bars produced")
+
+            logstr = TraceBars.__module__ + "." + TraceBars.__qualname__
+            self.action.args.ccddata.header['HISTORY'] = logstr
+            self.logger.info(logstr)
+
             return self.action.args
     # END: class TraceBars()
 
@@ -1512,6 +1531,11 @@ class ExtractArcs(BasePrimitive):
         else:
             self.logger.error("Did not extract %d arcs, extracted %d" %
                               (self.context.config.instrument.NBARS, len(arcs)))
+
+        logstr = ExtractArcs.__module__ + "." + ExtractArcs.__qualname__
+        self.action.args.ccddata.header['HISTORY'] = logstr
+        self.logger.info(logstr)
+
         return self.action.args
 # END: class ExtractArcs()
 
@@ -1568,6 +1592,11 @@ class ArcOffsets(BasePrimitive):
             self.context.baroffs = offsets
         else:
             self.logger.error("No extracted arcs found")
+
+        logstr = ArcOffsets.__module__ + "." + ArcOffsets.__qualname__
+        self.action.args.ccddata.header['HISTORY'] = logstr
+        self.logger.info(logstr)
+
         return self.action.args
     # END: class ArcOffsets()
 
@@ -1596,6 +1625,11 @@ class CalcPrelimDisp(BasePrimitive):
         self.logger.info("Initial calculated dispersion (A/binned pix): %.3f" %
                          prelim_disp)
         self.context.prelim_disp = prelim_disp
+
+        logstr = CalcPrelimDisp.__module__ + "." + CalcPrelimDisp.__qualname__
+        self.action.args.ccddata.header['HISTORY'] = logstr
+        self.logger.info(logstr)
+
         return self.action.args
     # END: class CalcPrelimDisp()
 
@@ -1731,10 +1765,14 @@ class ReadAtlas(BasePrimitive):
                 bokeh_plot(p)
 
                 if self.context.config.instrument.plot_level >= 2:
-                    q = input("Enter: <cr> - next, new offset (px): ")
+                    q = input("Enter: <cr> - next, new offset (int px): ")
                     if q:
-                        offset_pix = int(q)
-                        offset_wav = offset_pix * refdisp
+                        try:
+                            offset_pix = int(q)
+                            offset_wav = offset_pix * refdisp
+                        except ValueError:
+                            print("Try again: integer pixel values accepted")
+                            q = 'test'
                 else:
                     time.sleep(self.context.config.instrument.plot_pause)
                     q = None
@@ -1754,6 +1792,11 @@ class ReadAtlas(BasePrimitive):
         # Store x values
         self.action.args.xvals = xvals
         self.action.args.x0 = int(len(obsarc)/2)
+
+        logstr = ReadAtlas.__module__ + "." + ReadAtlas.__qualname__
+        self.action.args.ccddata.header['HISTORY'] = logstr
+        self.logger.info(logstr)
+
         return self.action.args
     # END: class ReadAtlas()
 
@@ -2016,6 +2059,10 @@ class FitCenter(BasePrimitive):
             else:
                 time.sleep(self.context.config.instrument.plot_pause)
 
+        logstr = FitCenter.__module__ + "." + FitCenter.__qualname__
+        self.action.args.ccddata.header['HISTORY'] = logstr
+        self.logger.info(logstr)
+
         return self.action.args
     # END: class FitCenter()
 
@@ -2225,6 +2272,10 @@ class GetAtlasLines(BasePrimitive):
                         self.action.args.ifuname,
                         self.action.args.ccddata.header['FRAMENO']))
         self.logger.info("Final atlas list has %d lines" % len(refws))
+
+        logstr = GetAtlasLines.__module__ + "." + GetAtlasLines.__qualname__
+        self.action.args.ccddata.header['HISTORY'] = logstr
+        self.logger.info(logstr)
 
         return self.action.args
     # END: class GetAtlasLines()
@@ -2652,6 +2703,11 @@ class SolveArcs(BasePrimitive):
                             self.action.args.illum,
                             self.action.args.grating,
                             self.action.args.ifuname))
+
+        logstr = SolveArcs.__module__ + "." + SolveArcs.__qualname__
+        self.action.args.ccddata.header['HISTORY'] = logstr
+        self.logger.info(logstr)
+
         return self.action.args
     # END: class SolveArcs()
 
@@ -2844,9 +2900,10 @@ class SolveGeom(BasePrimitive):
                 pickle.dump(geom, ofile)
             self.logger.info("Geometry written to: %s" %
                              self.action.args.geom_file)
+
         logstr = SolveGeom.__module__ + "." + SolveGeom.__qualname__
         self.action.args.ccddata.header['HISTORY'] = logstr
-        self.logger.info(SolveGeom.__qualname__)
+        self.logger.info(logstr)
 
         return self.action.args
     # END: class SolveGeom()
@@ -2860,6 +2917,11 @@ class GenerateMaps(BasePrimitive):
 
     def _perform(self):
         self.logger.info("Generating geometry maps (not yet implemented)")
+
+        logstr = GenerateMaps.__module__ + "." + GenerateMaps.__qualname__
+        self.action.args.ccddata.header['HISTORY'] = logstr
+        self.logger.info(logstr)
+
         return self.action.args
     # END: class GenerateMaps()
 
@@ -2872,6 +2934,11 @@ class ApplyFlat(BasePrimitive):
 
     def _perform(self):
         self.logger.info("Applying flat field (not yet implemented)")
+
+        logstr = ApplyFlat.__module__ + "." + ApplyFlat.__qualname__
+        self.action.args.ccddata.header['HISTORY'] = logstr
+        self.logger.info(logstr)
+
         return self.action.args
     # END: class ApplyFlat()
 
@@ -2884,6 +2951,11 @@ class SubtractSky(BasePrimitive):
 
     def _perform(self):
         self.logger.info("Subtracting sky background (not yet implemented)")
+
+        logstr = SubtractSky.__module__ + "." + SubtractSky.__qualname__
+        self.action.args.ccddata.header['HISTORY'] = logstr
+        self.logger.info(logstr)
+
         return self.action.args
     # END: class SubtractSky()
 
@@ -2896,6 +2968,11 @@ class MakeCube(BasePrimitive):
 
     def _perform(self):
         self.logger.info("Creating data cube (not yet implemented)")
+
+        logstr = MakeCube.__module__ + "." + MakeCube.__qualname__
+        self.action.args.ccddata.header['HISTORY'] = logstr
+        self.logger.info(logstr)
+
         return self.action.args
     # END: class MakeCube()
 
@@ -2908,6 +2985,11 @@ class CorrectDar(BasePrimitive):
 
     def _perform(self):
         self.logger.info("Correcting for DAR (not yet implemented)")
+
+        logstr = CorrectDar.__module__ + "." + CorrectDar.__qualname__
+        self.action.args.ccddata.header['HISTORY'] = logstr
+        self.logger.info(logstr)
+
         return self.action.args
     # END: class CorrectDar()
 
@@ -2920,6 +3002,11 @@ class FluxCalibrate(BasePrimitive):
 
     def _perform(self):
         self.logger.info("Calibrating object flux (not yet implemented)")
+
+        logstr = FluxCalibrate.__module__ + "." + FluxCalibrate.__qualname__
+        self.action.args.ccddata.header['HISTORY'] = logstr
+        self.logger.info(logstr)
+
         return self.action.args
     # END: class FluxCalibrate()
 
@@ -2933,5 +3020,10 @@ class MakeInvsens(BasePrimitive):
     def _perform(self):
         self.logger.info("Making inverse sensitivity curve "
                          "(not yet implemented)")
+
+        logstr = MakeInvsens.__module__ + "." + MakeInvsens.__qualname__
+        self.action.args.ccddata.header['HISTORY'] = logstr
+        self.logger.info(logstr)
+
         return self.action.args
     # END: class MakeInvsens()
