@@ -345,7 +345,7 @@ class SubtractOverscan(BasePrimitive):
                 self.action.args.ccddata.header['OSCNRN%d' % (ia + 1)] = \
                     (sdrs, "amp%d RN in e- from oscan" % (ia + 1))
 
-                if self.context.config.instrument.plot_level >= 1:
+                if self.config.instrument.plot_level >= 1:
                     x = np.arange(len(osvec))
                     p = figure(title="Overscan Fit: " +
                                      self.action.args.plotlabel +
@@ -357,10 +357,10 @@ class SubtractOverscan(BasePrimitive):
                     p.line(x, osfit, line_color='red', line_width=3,
                            legend="Fit")
                     bokeh_plot(p)
-                    if self.context.config.instrument.plot_level >= 2:
+                    if self.config.instrument.plot_level >= 2:
                         input("Next? <cr>: ")
                     else:
-                        time.sleep(self.context.config.instrument.plot_pause)
+                        time.sleep(self.config.instrument.plot_pause)
                 # subtract it
                 for ix in range(dsec[ia][2], dsec[ia][3] + 1):
                     self.action.args.ccddata.data[y0:y1, ix] = \
@@ -586,7 +586,7 @@ class RemoveCosmicRays(BasePrimitive):
         read_noise /= float(namps)
 
         # Set sigclip according to image parameters
-        sigclip = self.context.config.instrument.CRR_SIGCLIP
+        sigclip = self.config.instrument.CRR_SIGCLIP
         if 'FLATLAMP' in self.action.args.ccddata.header['IMTYPE']:
             if self.action.args.nasmask:
                 sigclip = 10.
@@ -596,35 +596,35 @@ class RemoveCosmicRays(BasePrimitive):
             if self.action.args.ccddata.header['TTIME'] < 300.:
                 sigclip = 10.
 
-        if header['TTIME'] >= self.context.config.instrument.CRR_MINEXPTIME:
+        if header['TTIME'] >= self.config.instrument.CRR_MINEXPTIME:
             mask, clean = _lacosmicx.lacosmicx(
                 self.action.args.ccddata.data, gain=1.0, readnoise=read_noise,
-                psffwhm=self.context.config.instrument.CRR_PSFFWHM,
+                psffwhm=self.config.instrument.CRR_PSFFWHM,
                 sigclip=sigclip,
-                sigfrac=self.context.config.instrument.CRR_SIGFRAC,
-                objlim=self.context.config.instrument.CRR_OBJLIM,
-                fsmode=self.context.config.instrument.CRR_FSMODE,
-                psfmodel=self.context.config.instrument.CRR_PSFMODEL,
-                verbose=self.context.config.instrument.CRR_VERBOSE,
-                sepmed=self.context.config.instrument.CRR_SEPMED,
-                cleantype=self.context.config.instrument.CRR_CLEANTYPE)
+                sigfrac=self.config.instrument.CRR_SIGFRAC,
+                objlim=self.config.instrument.CRR_OBJLIM,
+                fsmode=self.config.instrument.CRR_FSMODE,
+                psfmodel=self.config.instrument.CRR_PSFMODEL,
+                verbose=self.config.instrument.CRR_VERBOSE,
+                sepmed=self.config.instrument.CRR_SEPMED,
+                cleantype=self.config.instrument.CRR_CLEANTYPE)
 
             header['history'] = "LA CosmicX: cleaned cosmic rays"
             header[
                 'history'] = "LA CosmicX params: " \
                              "sigclip=%5.2f sigfrac=%5.2f objlim=%5.2f" % (
-                self.context.config.instrument.CRR_SIGCLIP,
-                self.context.config.instrument.CRR_SIGFRAC,
-                self.context.config.instrument.CRR_OBJLIM)
+                self.config.instrument.CRR_SIGCLIP,
+                self.config.instrument.CRR_SIGFRAC,
+                self.config.instrument.CRR_OBJLIM)
             header[
                 'history'] = "LA CosmicX params: " \
                              "fsmode=%s psfmodel=%s psffwhm=%5.2f" % (
-                self.context.config.instrument.CRR_FSMODE,
-                self.context.config.instrument.CRR_PSFMODEL,
-                self.context.config.instrument.CRR_PSFFWHM)
+                self.config.instrument.CRR_FSMODE,
+                self.config.instrument.CRR_PSFMODEL,
+                self.config.instrument.CRR_PSFFWHM)
             header['history'] = "LA CosmicX params: sepmed=%s minexptime=%f" % (
-                self.context.config.instrument.CRR_SEPMED,
-                self.context.config.instrument.CRR_MINEXPTIME)
+                self.config.instrument.CRR_SEPMED,
+                self.config.instrument.CRR_MINEXPTIME)
             # header['history'] = "LA CosmicX run on %s" % time.strftime("%c")
 
             mask = np.cast["bool"](mask)
@@ -637,7 +637,7 @@ class RemoveCosmicRays(BasePrimitive):
         else:
             header[
                 'history'] = "LA CosmicX: exptime < minexptime=%.1f" % \
-                             self.context.config.instrument.CRR_MINEXPTIME
+                             self.config.instrument.CRR_MINEXPTIME
 
         logstr = RemoveCosmicRays.__module__ + \
             "." + RemoveCosmicRays.__qualname__
@@ -717,18 +717,33 @@ class RectifyImage(BasePrimitive):
             if self.action.args.ccddata.uncertainty:
                 newunc = np.rot90(self.action.args.ccddata.uncertainty.array, 2)
                 self.action.args.ccddata.uncertainty.array = newunc
+            if hasattr(self.action.args.ccddata, 'mask'):
+                newmask = np.rot90(self.action.args.ccddata.mask, 2)
+                self.action.args.ccddata.mask = newmask
+            else:
+                self.logger.info("No mask data to rectify")
         elif '__D' in ampmode or '__F' in ampmode:
             newimg = np.fliplr(self.action.args.ccddata.data)
             self.action.args.ccddata.data = newimg
             if self.action.args.ccddata.uncertainty:
                 newunc = np.fliplr(self.action.args.ccddata.uncertainty.array)
                 self.action.args.ccddata.uncertainty.array = newunc
+            if hasattr(self.action.args.ccddata, 'mask'):
+                newmask = np.fliplr(self.action.args.ccddata.mask)
+                self.action.args.ccddata.mask = newmask
+            else:
+                self.logger.info("No mask data to rectify")
         elif '__A' in ampmode or '__H' in ampmode or 'TUP' in ampmode:
             newimg = np.flipud(self.action.args.ccddata.data)
             self.action.args.ccddata.data = newimg
             if self.action.args.ccddata.uncertainty:
                 newunc = np.flipud(self.action.args.ccddata.uncertainty.array)
                 self.action.args.ccddata.uncertainty.array = newunc
+            if hasattr(self.action.args.ccddata, 'mask'):
+                newmask = np.flipud(self.action.args.ccddata.mask)
+                self.action.args.ccddata.mask = newmask
+            else:
+                self.logger.info("No mask data to rectify")
 
         self.action.args.ccddata.header[key] = (True, keycom)
 
@@ -1052,7 +1067,7 @@ class SubtractScatteredLight(BasePrimitive):
         if self.action.args.nasmask:
             self.logger.info("NAS Mask: skipping scattered light subtraction")
             self.action.args.ccddata.header[key] = (False, keycom)
-        elif self.context.config.instrument.skipscat:
+        elif self.config.instrument.skipscat:
             self.logger.info("Skipping scattered light subtraction by request")
             self.action.args.ccddata.header[key] = (False, keycom)
         else:
@@ -1077,7 +1092,7 @@ class SubtractScatteredLight(BasePrimitive):
             bkpt = xvals[nbkpt:-nbkpt:nbkpt]
             # B-spline fit
             bspl = sp.interpolate.LSQUnivariateSpline(xvals, yvals, bkpt)
-            if self.context.config.instrument.plot_level >= 1:
+            if self.config.instrument.plot_level >= 1:
                 # plot
                 p = figure(title=self.action.args.plotlabel +
                            ", Scattered Light",
@@ -1088,10 +1103,10 @@ class SubtractScatteredLight(BasePrimitive):
                 xx = np.linspace(0, max(xvals), len(yvals) * 5)
                 p.line(xx, bspl(xx), color='red', line_width=3, legend="fit")
                 bokeh_plot(p)
-                if self.context.config.instrument.plot_level >= 2:
+                if self.config.instrument.plot_level >= 2:
                     input("Next? <cr>: ")
                 else:
-                    time.sleep(self.context.config.instrument.plot_pause)
+                    time.sleep(self.config.instrument.plot_pause)
             # Scattered light vector
             scat = bspl(xvals)
             # Subtract scattered light
@@ -1246,12 +1261,12 @@ class FindBars(BasePrimitive):
     def _perform(self):
         self.logger.info("Finding continuum bars")
         # Do we plot?
-        if self.context.config.instrument.plot_level >= 1:
+        if self.config.instrument.plot_level >= 1:
             do_plot = True
         else:
             do_plot = False
         # initialize
-        refbar = self.context.config.instrument.REFBAR
+        refbar = self.config.instrument.REFBAR
         midcntr = []
         # get image dimensions
         nx = self.action.args.ccddata.data.shape[1]
@@ -1269,7 +1284,7 @@ class FindBars(BasePrimitive):
         # find peaks above threshold
         midpeaks, _ = find_peaks(midvec, height=midavg)
         # do we have the requisite number?
-        if len(midpeaks) != self.context.config.instrument.NBARS:
+        if len(midpeaks) != self.config.instrument.NBARS:
             self.logger.error("Did not find %d peaks: n peaks = %d" %
                               (self.config.instrument.NBARS, len(midpeaks)))
         else:
@@ -1286,15 +1301,15 @@ class FindBars(BasePrimitive):
                     title=self.action.args.plotlabel +
                     ", Thresh = %.2f" % midavg,
                     x_axis_label='CCD X (px)', y_axis_label='e-',
-                    plot_width=self.context.config.instrument.plot_width,
-                    plot_height=self.context.config.instrument.plot_height
+                    plot_width=self.config.instrument.plot_width,
+                    plot_height=self.config.instrument.plot_height
                 )
                 p.line(x, midvec, color='blue')
                 p.scatter(midpeaks, midvec[midpeaks], marker='x', color='red')
                 p.line([0, nx], [midavg, midavg], color='grey',
                        line_dash='dashed')
                 bokeh_plot(p)
-                time.sleep(self.context.config.instrument.plot_pause)
+                time.sleep(self.config.instrument.plot_pause)
                 # calculate the bar centroids
 
             for peak in midpeaks:
@@ -1314,10 +1329,10 @@ class FindBars(BasePrimitive):
                 # p.line([xc, xc], [midavg, midvec[peak]], color='grey')
                 p.scatter(midcntr, midvec[midpeaks], marker='x', color='green')
                 bokeh_plot(p)
-                if self.context.config.instrument.plot_level >= 2:
+                if self.config.instrument.plot_level >= 2:
                     input("next: ")
                 else:
-                    time.sleep(self.context.config.instrument.plot_pause)
+                    time.sleep(self.config.instrument.plot_pause)
             self.logger.info("Found middle centroids for continuum bars")
         # store peaks
         self.action.args.midcntr = midcntr
@@ -1350,7 +1365,7 @@ class TraceBars(BasePrimitive):
 
     def _perform(self):
         self.logger.info("Tracing continuum bars")
-        if self.context.config.instrument.plot_level >= 1:
+        if self.config.instrument.plot_level >= 1:
             do_plot = True
             pl.ion()
         else:
@@ -1439,10 +1454,10 @@ class TraceBars(BasePrimitive):
                 p.scatter(self.action.args.midcntr,
                           [self.action.args.midrow]*120, color='red')
                 bokeh_plot(p)
-                if self.context.config.instrument.plot_level >= 2:
+                if self.config.instrument.plot_level >= 2:
                     input("next: ")
                 else:
-                    time.sleep(self.context.config.instrument.plot_pause)
+                    time.sleep(self.config.instrument.plot_pause)
             trace = {
                 'src': src,
                 'dst': dst,
@@ -1476,7 +1491,7 @@ class TraceBars(BasePrimitive):
                                   'CBARSFL': (self.action.args.cbarsfl,
                                               "Cont. bars image")})
 
-            if self.context.config.instrument.saveintims:
+            if self.config.instrument.saveintims:
                 # fit transform
                 self.logger.info("Fitting spatial control points")
                 tform = tf.estimate_transform('polynomial', src, dst, order=3)
@@ -1554,7 +1569,7 @@ class ExtractArcs(BasePrimitive):
         self.logger.info("Transforming arc image")
         warped = tf.warp(self.action.args.ccddata.data, tform)
         # Write warped arcs if requested
-        if self.context.config.instrument.saveintims:
+        if self.config.instrument.saveintims:
             # write out warped image
             self.action.args.ccddata.data = warped
             kcwi_fits_writer(self.action.args.ccddata,
@@ -1573,12 +1588,12 @@ class ExtractArcs(BasePrimitive):
                 arc = arc - np.nanmin(arc[100:-100])    # avoid ends
                 arcs.append(arc)
         # Did we get the correct number of arcs?
-        if len(arcs) == self.context.config.instrument.NBARS:
+        if len(arcs) == self.config.instrument.NBARS:
             self.logger.info("Extracted %d arcs" % len(arcs))
             self.context.arcs = arcs
         else:
             self.logger.error("Did not extract %d arcs, extracted %d" %
-                              (self.context.config.instrument.NBARS, len(arcs)))
+                              (self.config.instrument.NBARS, len(arcs)))
 
         logstr = ExtractArcs.__module__ + "." + ExtractArcs.__qualname__
         self.action.args.ccddata.header['HISTORY'] = logstr
@@ -1600,12 +1615,12 @@ class ArcOffsets(BasePrimitive):
         arcs = self.context.arcs
         if arcs is not None:
             # Do we plot?
-            if self.context.config.instrument.plot_level >= 2:
+            if self.config.instrument.plot_level >= 2:
                 do_plot = True
             else:
                 do_plot = False
             # Compare with reference arc
-            refarc = arcs[self.context.config.instrument.REFBAR][:]
+            refarc = arcs[self.config.instrument.REFBAR][:]
             # number of cross-correlation samples (avoiding ends)
             nsamp = len(refarc[10:-10])
             # possible offsets
@@ -1631,7 +1646,7 @@ class ArcOffsets(BasePrimitive):
                                plot_height=self.config.instrument.plot_height)
                     x = range(len(refarc))
                     p.line(x, refarc, color='green', legend='ref bar (%d)' %
-                           self.context.config.instrument.REFBAR)
+                           self.config.instrument.REFBAR)
                     p.line(x, np.roll(arc, offset), color='red',
                            legend='bar %d' % na)
                     bokeh_plot(p)
@@ -1666,10 +1681,10 @@ class CalcPrelimDisp(BasePrimitive):
         prelim_beta = self.action.args.camangle - prelim_alpha
         # 2 - compute preliminary dispersion
         prelim_disp = math.cos(prelim_beta/math.degrees(1.)) / \
-            self.action.args.rho / self.context.config.instrument.FCAM * \
-            (self.context.config.instrument.PIX*ybin) * 1.e4
+            self.action.args.rho / self.config.instrument.FCAM * \
+            (self.config.instrument.PIX*ybin) * 1.e4
         prelim_disp *= math.cos(
-            self.context.config.instrument.GAMMA/math.degrees(1.))
+            self.config.instrument.GAMMA/math.degrees(1.))
         self.logger.info("Initial alpha, beta (deg): %.3f, %.3f" %
                          (prelim_alpha, prelim_beta))
         self.logger.info("Initial calculated dispersion (A/binned pix): %.3f" %
@@ -1721,7 +1736,7 @@ class ReadAtlas(BasePrimitive):
                          (resolution, atrespix))
         reflux = gaussian_filter1d(reflux, atrespix/2.354)
         # Observed arc spectrum
-        obsarc = self.context.arcs[self.context.config.instrument.REFBAR]
+        obsarc = self.context.arcs[self.config.instrument.REFBAR]
         # Preliminary wavelength solution
         xvals = np.arange(0, len(obsarc)) - int(len(obsarc)/2)
         obswav = xvals * self.context.prelim_disp + self.action.args.cwave
@@ -1767,13 +1782,13 @@ class ReadAtlas(BasePrimitive):
         offset_wav = offset_pix * refdisp
         self.logger.info("Initial arc-atlas offset (px, Ang): %d, %.1f" %
                          (offset_pix, offset_wav))
-        if self.context.config.instrument.plot_level >= 1:
+        if self.config.instrument.plot_level >= 1:
             # Plot
             p = figure(title="Atlas Offset: " + self.action.args.plotlabel +
                        ", (%s), Offset = %d px" % (lamp, offset_pix),
                        x_axis_label="Offset(px)", y_axis_label="X-corr",
-                       plot_width=self.context.config.instrument.plot_width,
-                       plot_height=self.context.config.instrument.plot_height)
+                       plot_width=self.config.instrument.plot_width,
+                       plot_height=self.config.instrument.plot_height)
 
             p.line(offar_central, xcorr_central, legend='Data')
             ylim_min = min(xcorr_central)
@@ -1781,10 +1796,10 @@ class ReadAtlas(BasePrimitive):
             p.line([offset_pix, offset_pix], [ylim_min, ylim_max],
                    color='red', legend='Peak')
             bokeh_plot(p)
-            if self.context.config.instrument.plot_level >= 2:
+            if self.config.instrument.plot_level >= 2:
                 input("Next? <cr>: ")
             else:
-                time.sleep(self.context.config.instrument.plot_pause)
+                time.sleep(self.config.instrument.plot_pause)
             # Get central wavelength
             cwave = self.action.args.cwave
             # Set up offset tweaking
@@ -1801,7 +1816,7 @@ class ReadAtlas(BasePrimitive):
                 p.line(obswav[minow:maxow] - offset_wav,
                        obsarc[minow:maxow]/np.nanmax(obsarc[minow:maxow]),
                        legend="ref bar (%d)" %
-                              self.context.config.instrument.REFBAR)
+                              self.config.instrument.REFBAR)
                 p.line(refwav[minrw:maxrw],
                        reflux[minrw:maxrw]/np.nanmax(reflux[minrw:maxrw]),
                        color="red", legend="Atlas")
@@ -1815,7 +1830,7 @@ class ReadAtlas(BasePrimitive):
                        legend="CWAVE", line_dash="dashdot")
                 bokeh_plot(p)
 
-                if self.context.config.instrument.plot_level >= 2:
+                if self.config.instrument.plot_level >= 2:
                     q = input("Enter: <cr> - next, new offset (int px): ")
                     if q:
                         try:
@@ -1825,7 +1840,7 @@ class ReadAtlas(BasePrimitive):
                             print("Try again: integer pixel values accepted")
                             q = 'test'
                 else:
-                    time.sleep(self.context.config.instrument.plot_pause)
+                    time.sleep(self.config.instrument.plot_pause)
                     q = None
             self.logger.info("Final   arc-atlas offset (px, Ang): %d, %.1f" %
                              (offset_pix, offset_wav))
@@ -1974,7 +1989,7 @@ class FitCenter(BasePrimitive):
         """
         self.logger.info("Finding wavelength solution for central region")
         # Are we interactive?
-        do_inter = (self.context.config.instrument.plot_level >= 2)
+        do_inter = (self.config.instrument.plot_level >= 2)
 
         # y binning
         ybin = self.action.args.ybinsize
@@ -2007,13 +2022,13 @@ class FitCenter(BasePrimitive):
             arguments = {
                 'b': b, 'bs': bs, 'minrow': self.action.args.minrow,
                 'maxrow': self.action.args.maxrow, 'disps': disps, 'p0': p0,
-                'PIX': self.context.config.instrument.PIX, 'ybin': ybin,
+                'PIX': self.config.instrument.PIX, 'ybin': ybin,
                 'rho': self.action.args.rho,
-                'FCAM': self.context.config.instrument.FCAM,
+                'FCAM': self.config.instrument.FCAM,
                 'xvals': self.action.args.xvals,
                 'refwave': self.action.args.refwave,
                 'reflux': self.action.args.reflux,
-                'taperfrac': self.context.config.instrument.TAPERFRAC,
+                'taperfrac': self.config.instrument.TAPERFRAC,
                 'refdisp': self.action.args.refdisp, 'subxvals': subxvals,
                 'nn': nn, 'x0': self.action.args.x0
             }
@@ -2064,7 +2079,7 @@ class FitCenter(BasePrimitive):
 
         self.action.args.twkcoeff = twkcoeff
         # Plot results
-        if self.context.config.instrument.plot_level >= 1:
+        if self.config.instrument.plot_level >= 1:
             # Plot central wavelength
             p = figure(title="Central Values: " + self.action.args.plotlabel,
                        x_axis_label="Bar #",
@@ -2082,10 +2097,10 @@ class FitCenter(BasePrimitive):
             p.x_range = Range1d(-1, 120)
             p.legend.location = "top_center"
             bokeh_plot(p)
-            if self.context.config.instrument.plot_level >= 2:
+            if self.config.instrument.plot_level >= 2:
                 input("Next? <cr>: ")
             else:
-                time.sleep(self.context.config.instrument.plot_pause)
+                time.sleep(self.config.instrument.plot_pause)
             # Plot central dispersion
             p = figure(title="Central Values: " + self.action.args.plotlabel,
                        x_axis_label="Bar #",
@@ -2104,10 +2119,10 @@ class FitCenter(BasePrimitive):
             p.x_range = Range1d(-1, 120)
             p.legend.location = "bottom_center"
             bokeh_plot(p)
-            if self.context.config.instrument.plot_level >= 2:
+            if self.config.instrument.plot_level >= 2:
                 input("Next? <cr>: ")
             else:
-                time.sleep(self.context.config.instrument.plot_pause)
+                time.sleep(self.config.instrument.plot_pause)
 
         logstr = FitCenter.__module__ + "." + FitCenter.__qualname__
         self.action.args.ccddata.header['HISTORY'] = logstr
@@ -2135,7 +2150,7 @@ class GetAtlasLines(BasePrimitive):
         # get atlas wavelength range
         #
         # get pixel values (no longer centered in the middle)
-        specsz = len(self.context.arcs[self.context.config.instrument.REFBAR])
+        specsz = len(self.context.arcs[self.config.instrument.REFBAR])
         xvals = np.arange(0, specsz)
         # min, max rows
         minrow = 50
@@ -2144,7 +2159,7 @@ class GetAtlasLines(BasePrimitive):
         mnwvs = []
         mxwvs = []
         # Get wavelengths
-        for b in range(self.context.config.instrument.NBARS):
+        for b in range(self.config.instrument.NBARS):
             waves = np.polyval(self.action.args.twkcoeff[b], xvals)
             mnwvs.append(np.min(waves))
             mxwvs.append(np.max(waves))
@@ -2166,10 +2181,10 @@ class GetAtlasLines(BasePrimitive):
         atwave = self.action.args.refwave[minrw:maxrw]
         # get reference bar spectrum
         subxvals = xvals[minrow:maxrow]
-        subyvals = self.context.arcs[self.context.config.instrument.REFBAR][
+        subyvals = self.context.arcs[self.config.instrument.REFBAR][
                    minrow:maxrow].copy()
         subwvals = np.polyval(
-            self.action.args.twkcoeff[self.context.config.instrument.REFBAR],
+            self.action.args.twkcoeff[self.config.instrument.REFBAR],
             subxvals)
         # smooth subyvals
         win = boxcar(3)
@@ -2311,12 +2326,12 @@ class GetAtlasLines(BasePrimitive):
         p.diamond(refws, refas / norm_fac, legend='Kept', color='green',
                   size=10)
         p.x_range = Range1d(min(subwvals), max(subwvals))
-        if self.context.config.instrument.plot_level >= 1:
+        if self.config.instrument.plot_level >= 1:
             bokeh_plot(p)
-            if self.context.config.instrument.plot_level >= 2:
+            if self.config.instrument.plot_level >= 2:
                 input("Next? <cr>: ")
             else:
-                pl.pause(self.context.config.instrument.plot_pause)
+                pl.pause(self.config.instrument.plot_pause)
             export_png(p, "atlas_lines_%s_%s_%s_%05d.png" %
                        (self.action.args.illum, self.action.args.grating,
                         self.action.args.ifuname,
@@ -2346,11 +2361,11 @@ class SolveArcs(BasePrimitive):
 
     def _perform(self):
         self.logger.info("Solving individual arc spectra")
-        if self.context.config.instrument.plot_level >= 2:
+        if self.config.instrument.plot_level >= 2:
             master_inter = True
         else:
             master_inter = False
-        if self.context.config.instrument.plot_level >= 3:
+        if self.config.instrument.plot_level >= 3:
             do_inter = True
         else:
             do_inter = False
@@ -2371,7 +2386,7 @@ class SolveArcs(BasePrimitive):
         at_flux = np.asarray(self.action.args.at_flux)
         # get x values starting at zero pixels
         self.action.args.xsvals = np.arange(0, len(
-            self.context.arcs[self.context.config.instrument.REFBAR]))
+            self.context.arcs[self.config.instrument.REFBAR]))
         # loop over arcs and generate a wavelength solution for each
         for ib, b in enumerate(self.context.arcs):
             # print("")
@@ -2672,12 +2687,12 @@ class SolveArcs(BasePrimitive):
         for ix in range(1, 24):
             sx = ix * 5 - 0.5
             p.line([sx, sx], ylim, color='black', line_dash='dashdot')
-        if self.context.config.instrument.plot_level >= 1:
+        if self.config.instrument.plot_level >= 1:
             bokeh_plot(p)
-            if self.context.config.instrument.plot_level >= 2:
+            if self.config.instrument.plot_level >= 2:
                 input("Next? <cr>: ")
             else:
-                pl.pause(self.context.config.instrument.plot_pause)
+                pl.pause(self.config.instrument.plot_pause)
         export_png(p, "arc_%05d_resid_%s_%s_%s.png" %
                    (self.action.args.ccddata.header['FRAMENO'],
                     self.action.args.illum,
@@ -2715,18 +2730,18 @@ class SolveArcs(BasePrimitive):
             sx = ix * 5 - 0.5
             p.line([sx, sx], ylim, color='black', line_dash='dashdot')
 
-        if self.context.config.instrument.plot_level >= 1:
+        if self.config.instrument.plot_level >= 1:
             bokeh_plot(p)
-            if self.context.config.instrument.plot_level >= 2:
+            if self.config.instrument.plot_level >= 2:
                 input("Next? <cr>: ")
             else:
-                pl.pause(self.context.config.instrument.plot_pause)
+                pl.pause(self.config.instrument.plot_pause)
         export_png(p, "arc_%05d_nlines_%s_%s_%s.png" %
                    (self.action.args.ccddata.header['FRAMENO'],
                     self.action.args.illum,
                     self.action.args.grating, self.action.args.ifuname))
         # Plot coefs
-        if self.context.config.instrument.plot_level >= 1:
+        if self.config.instrument.plot_level >= 1:
             ylabs = ['Ang/px^4', 'Ang/px^3', 'Ang/px^2', 'Ang/px', 'Ang']
             for ic in reversed(range(len(self.action.args.fincoeff[0]))):
                 ptitle = self.action.args.plotlabel + " Coef %d" % ic
@@ -2744,10 +2759,10 @@ class SolveArcs(BasePrimitive):
                     sx = ix * 5 - 0.5
                     p.line([sx, sx], ylim, color='black', line_dash='dashdot')
                 bokeh_plot(p)
-                if self.context.config.instrument.plot_level >= 2:
+                if self.config.instrument.plot_level >= 2:
                     input("Next? <cr>: ")
                 else:
-                    pl.pause(self.context.config.instrument.plot_pause)
+                    pl.pause(self.config.instrument.plot_pause)
                 export_png(p, "arc_%05d_coef%d_%s_%s_%s.png" %
                            (self.action.args.ccddata.header['FRAMENO'], ic,
                             self.action.args.illum,
@@ -3082,7 +3097,7 @@ class MakeCube(BasePrimitive):
         logstr = MakeCube.__module__ + "." + MakeCube.__qualname__
 
         # Are we interactive?
-        if self.context.config.instrument.plot_level >= 2:
+        if self.config.instrument.plot_level >= 3:
             do_inter = True
         else:
             do_inter = False
@@ -3091,6 +3106,13 @@ class MakeCube(BasePrimitive):
         tab = self.context.proctab.n_proctab(frame=self.action.args.ccddata,
                                              target_type='ARCLAMP',
                                              nearest=True)
+        if not len(tab):
+            self.logger.error("No reference geometry, cannot make cube!")
+            self.action.args.ccddata.header['GEOMCOR'] = (False,
+                                                          'Geometry corrected?')
+            self.logger.info(logstr)
+            return self.action.args
+
         self.logger.info("%d arc frames found" % len(tab))
         ofname = tab['OFNAME'][0]
         geom_file = os.path.join(self.config.instrument.output_directory,
@@ -3102,15 +3124,13 @@ class MakeCube(BasePrimitive):
             # Slice size
             xsize = geom['xsize']
             ysize = geom['ysize']
-            out_cube = np.zeros((ysize, xsize, 24))
-            out_vube = np.zeros((ysize, xsize, 24))
-            # set up plots of transformed slices
-            pl.clf()
-            fig = pl.gcf()
-            fig.set_size_inches(5, 12, forward=True)
+            out_cube = np.zeros((ysize, xsize, 24), dtype=np.float64)
+            out_vube = np.zeros((ysize, xsize, 24), dtype=np.float64)
+            out_mube = np.zeros((ysize, xsize, 24), dtype=np.uint8)
             # Store original data
             data_img = self.action.args.ccddata.data
             data_var = self.action.args.ccddata.uncertainty.array
+            data_msk = self.action.args.ccddata.mask
             # Loop over 24 slices
             for isl in range(0, 24):
                 tform = geom['tform'][isl]
@@ -3119,6 +3139,7 @@ class MakeCube(BasePrimitive):
                 self.logger.info("Transforming image slice %d" % isl)
                 slice_img = data_img[:, xl0:xl1]
                 slice_var = data_var[:, xl0:xl1]
+                slice_msk = data_msk[:, xl0:xl1]
                 # wmed = np.nanmedian(slice_img)
                 # wstd = np.nanstd(slice_img)
                 # pl.clf()
@@ -3137,32 +3158,37 @@ class MakeCube(BasePrimitive):
                                  output_shape=(ysize, xsize))
                 varped = tf.warp(slice_var, tform, order=3,
                                  output_shape=(ysize, xsize))
+                marped = tf.warp(slice_msk, tform, order=3,
+                                 output_shape=(ysize, xsize))
                 for iy in range(ysize):
                     for ix in range(xsize):
                         out_cube[iy, ix, isl] = warped[iy, ix]
                         out_vube[iy, ix, isl] = varped[iy, ix]
+                        out_mube[iy, ix, isl] = int(marped[iy, ix])
                 wmed = np.nanmedian(warped)
                 wstd = np.nanstd(warped)
-                print(wmed, wstd)
-                ptitle = self.action.args.plotlabel + ": warped slice %d" % isl
-                p = figure(tooltips=[("x", "$x"), ("y", "$y"),
-                                     ("value", "@image")],
-                           title=ptitle,
-                           x_axis_label="X (px)", y_axis_label="Y (px)",
-                           plot_width=self.config.instrument.plot_width,
-                           plot_height=self.config.instrument.plot_height)
-                p.x_range.range_padding = p.y_range.range_padding = 0
-                p.image([warped], x=0, y=0, dw=xsize, dh=ysize,
-                        palette="Spectral11", level="image")
-                        # vmin=(wmed - wstd * 2.), vmax=(wmed + wstd * 2.))
-                # pl.ylim(0, ysize)
-                bokeh_plot(p)
-                if do_inter:
-                    q = input("<cr> - Next, q to quit: ")
-                    if 'Q' in q.upper():
-                        do_inter = False
-                else:
-                    time.sleep(self.context.config.instrument.plot_pause)
+                if self.config.instrument.plot_level >= 2:
+                    print(wmed, wstd)
+                    ptitle = self.action.args.plotlabel + ": warped slice %d" \
+                        % isl
+                    p = figure(tooltips=[("x", "$x"), ("y", "$y"),
+                                         ("value", "@image")],
+                               title=ptitle,
+                               x_axis_label="X (px)", y_axis_label="Y (px)",
+                               plot_width=self.config.instrument.plot_width,
+                               plot_height=self.config.instrument.plot_height)
+                    p.x_range.range_padding = p.y_range.range_padding = 0
+                    p.image([warped], x=0, y=0, dw=xsize, dh=ysize,
+                            palette="Spectral11", level="image")
+                    # vmin=(wmed - wstd * 2.), vmax=(wmed + wstd * 2.))
+                    # pl.ylim(0, ysize)
+                    bokeh_plot(p)
+                    if do_inter:
+                        q = input("<cr> - Next, q to quit: ")
+                        if 'Q' in q.upper():
+                            do_inter = False
+                    else:
+                        time.sleep(self.config.instrument.plot_pause)
             # Calculate some WCS parameters
             # Get object pointing
             try:
@@ -3231,6 +3257,9 @@ class MakeCube(BasePrimitive):
                 crpix1 += off1
                 crpix2 += off2
             # Update header
+            # Geometry corrected?
+            self.action.args.ccddata.header['GEOMCOR'] = (
+                True, 'Geometry corrected?')
             #
             # Spatial geometry
             self.action.args.ccddata.header['BARSEP'] = (
@@ -3319,6 +3348,7 @@ class MakeCube(BasePrimitive):
             self.action.args.ccddata.header['HISTORY'] = logstr
             self.action.args.ccddata.data = out_cube
             self.action.args.ccddata.uncertainty.array = out_vube
+            self.action.args.ccddata.mask = out_mube
 
             # write out int image
             kcwi_fits_writer(self.action.args.ccddata,
@@ -3344,18 +3374,33 @@ class CorrectDar(BasePrimitive):
         self.logger = context.pipeline_logger
 
     def _perform(self):
-        self.logger.info("Correcting for DAR (not yet implemented)")
+        self.logger.info("Correcting for DAR")
 
         logstr = CorrectDar.__module__ + "." + CorrectDar.__qualname__
 
+        # Check image
+        if 'GEOMCOR' not in self.action.args.ccddata.header:
+            self.logger.error("Can only correct DAR on geometrically corrected "
+                              "images")
+            self.action.args.ccddata.header['DARCOR'] = (False,
+                                                         'DAR corrected?')
+            return self.action.args
+        else:
+            if not self.action.args.ccddata.header['GEOMCOR']:
+                self.logger.error(
+                    "Can only correct DAR on geometrically corrected "
+                    "images")
+                self.action.args.ccddata.header['DARCOR'] = (False,
+                                                             'DAR corrected?')
+                return self.action.args
+
         # image size
         sz = self.action.args.ccddata.data.shape
-        print(sz)
 
         # get wavelengths
         w0 = self.action.args.ccddata.header['CRVAL3']
         dw = self.action.args.ccddata.header['CD3_3']
-        waves = w0 + np.arange(sz[2]) * dw
+        waves = w0 + np.arange(sz[0]) * dw
         wgoo0 = self.action.args.ccddata.header['WAVGOOD0']
         wgoo1 = self.action.args.ccddata.header['WAVGOOD1']
         wref = self.action.args.ccddata.header['WAVMID']
@@ -3416,28 +3461,34 @@ class CorrectDar(BasePrimitive):
                          "%.2f, %.2f, %.2f" % (dmax_px, xdmax_px, ydmax_px))
 
         # prepare output cubes
-        img_out = np.zeros((sz[0]+2*pad_y, sz[1]+2*pad_x, sz[2]),
+        img_out = np.zeros((sz[0], sz[1]+2*pad_y, sz[2]+2*pad_x),
                            dtype=np.float64)
         var_out = img_out.copy()
-        print(img_out.shape)
-        print(var_out.shape)
+        msk_out = np.zeros((sz[0], sz[1]+2*pad_y, sz[2]+2*pad_x),
+                           dtype=np.uint8)
 
-        img_out[pad_y:(pad_y+sz[0]), pad_x:(pad_x+sz[1]), :] = \
+        img_out[:, pad_y:(pad_y+sz[1]), pad_x:(pad_x+sz[2])] = \
             self.action.args.ccddata.data
 
-        var_out[pad_y:(pad_y+sz[0]), pad_x:(pad_x+sz[1]), :] = \
+        var_out[:, pad_y:(pad_y+sz[1]), pad_x:(pad_x+sz[2])] = \
             self.action.args.ccddata.uncertainty.array
 
+        msk_out[:, pad_y:(pad_y+sz[1]), pad_x:(pad_x+sz[2])] = \
+            self.action.args.ccddata.mask
+
         # Perform correction
+        print(img_out.shape)
         for j, wl in enumerate(waves):
             dcor = atm_disper(wref, wl, air)
             xsh = dcor * math.sin(projang) / xscl
             ysh = dcor * math.cos(projang) / yscl
-            img_out[:, :, j] = sp.ndimage.shift(img_out[:, :, j], (ysh, xsh))
-            var_out[:, :, j] = sp.ndimage.shift(var_out[:, :, j], (ysh, xsh))
+            img_out[j, :, :] = sp.ndimage.shift(img_out[j, :, :], (ysh, xsh))
+            var_out[j, :, :] = sp.ndimage.shift(var_out[j, :, :], (ysh, xsh))
+            msk_out[j, :, :] = sp.ndimage.shift(msk_out[j, :, :], (ysh, xsh))
 
         self.action.args.ccddata.data = img_out
         self.action.args.ccddata.uncertainty.array = var_out
+        self.action.args.ccddata.mask = msk_out
 
         # update header
         self.action.args.ccddata.header['HISTORY'] = logstr
