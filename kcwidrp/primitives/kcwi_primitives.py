@@ -289,6 +289,118 @@ def atm_disper(w0, w1, airmass, temperature=10.0, pressure_pa=61100.0,
     return 206265.0 * (n0 - n1) * math.tan(z)
 
 
+class ProcessBias(BasePrimitive):
+
+    def __init__(self, action, context):
+        BasePrimitive.__init__(self, action, context)
+        self.logger = context.pipeline_logger
+
+    def _perform(self):
+        return self.action.args
+
+
+class ProcessDark(BasePrimitive):
+
+    def __init__(self, action, context):
+        BasePrimitive.__init__(self, action, context)
+        self.logger = context.pipeline_logger
+
+    def _perform(self):
+        return self.action.args
+
+
+class ProcessContbars(BasePrimitive):
+
+    def __init__(self, action, context):
+        BasePrimitive.__init__(self, action, context)
+        self.logger = context.pipeline_logger
+
+    def _perform(self):
+        return self.action.args
+
+
+class ProcessArc(BasePrimitive):
+
+    def __init__(self, action, context):
+        BasePrimitive.__init__(self, action, context)
+        self.logger = context.pipeline_logger
+
+    def _perform(self):
+        return self.action.args
+
+
+class ProcessFlat(BasePrimitive):
+
+    def __init__(self, action, context):
+        BasePrimitive.__init__(self, action, context)
+        self.logger = context.pipeline_logger
+
+    def _perform(self):
+        return self.action.args
+
+
+class ProcessObject(BasePrimitive):
+
+    def __init__(self, action, context):
+        BasePrimitive.__init__(self, action, context)
+        self.logger = context.pipeline_logger
+
+    def _perform(self):
+        return self.action.args
+
+
+class SubtractBias(BasePrimitive):
+    """Subtract master bias frame"""
+
+    def __init__(self, action, context):
+        BasePrimitive.__init__(self, action, context)
+        self.logger = context.pipeline_logger
+
+    def _perform(self):
+
+        # Header keyword to update
+        key = 'BIASSUB'
+        keycom = 'master bias subtracted?'
+        target_type = 'MBIAS'
+
+        self.logger.info("Subtracting master bias")
+        tab = self.context.proctab.n_proctab(frame=self.action.args.ccddata,
+                                             target_type=target_type,
+                                             nearest=True)
+        self.logger.info("%d master bias frames found" % len(tab))
+
+        if len(tab) > 0:
+            mbname = tab['OFNAME'][0].split('.')[0] + '_' + \
+                     target_type.lower() + ".fits"
+            print("*************** READING IMAGE: %s" % mbname)
+            mbias = kcwi_fits_reader(
+                os.path.join(os.path.dirname(self.action.args.name), 'redux',
+                             mbname))[0]
+
+            # do the subtraction
+            self.action.args.ccddata.data -= mbias.data
+
+            # transfer bias read noise
+            namps = self.action.args.ccddata.header['NVIDINP']
+            for ia in range(namps):
+                self.action.args.ccddata.header['BIASRN%d' % (ia + 1)] = \
+                    mbias.header['BIASRN%d' % (ia + 1)]
+
+            self.action.args.ccddata.header[key] = (True, keycom)
+            self.action.args.ccddata.header['MBFILE'] = (mbname,
+                                                         "Master bias filename")
+        else:
+
+            self.action.args.ccddata.header[key] = (False, keycom)
+
+        logstr = SubtractBias.__module__ + "." + SubtractBias.__qualname__
+        self.action.args.ccddata.header['HISTORY'] = logstr
+        self.logger.info(logstr)
+
+        return self.action.args
+    # END: class SubtractBias()
+
+
 class SubtractOverscan(BasePrimitive):
     """Fit overscan region and subtract result from image"""
 
@@ -347,9 +459,8 @@ class SubtractOverscan(BasePrimitive):
 
                 if self.config.instrument.plot_level >= 1:
                     x = np.arange(len(osvec))
-                    p = figure(title="Overscan Fit: " +
-                                     self.action.args.plotlabel +
-                                     ', Overscan amp %d' % (ia+1),
+                    p = figure(title=self.action.args.plotlabel +
+                               'OVERSCAN FIT amp %d' % (ia+1),
                                x_axis_label='x', y_axis_label='counts',
                                plot_width=self.config.instrument.plot_width,
                                plot_height=self.config.instrument.plot_height)
@@ -762,56 +873,6 @@ class RectifyImage(BasePrimitive):
     # END: class RectifyImage()
 
 
-class SubtractBias(BasePrimitive):
-    """Subtract master bias frame"""
-
-    def __init__(self, action, context):
-        BasePrimitive.__init__(self, action, context)
-        self.logger = context.pipeline_logger
-
-    def _perform(self):
-
-        # Header keyword to update
-        key = 'BIASSUB'
-        keycom = 'master bias subtracted?'
-
-        self.logger.info("Subtracting master bias")
-        tab = self.context.proctab.n_proctab(frame=self.action.args.ccddata,
-                                             target_type='MBIAS',
-                                             nearest=True)
-        self.logger.info("%d master bias frames found" % len(tab))
-
-        if len(tab) > 0:
-            mbname = tab['OFNAME'][0].split('.')[0] + "_master_bias.fits"
-            print("*************** READING IMAGE: %s" % mbname)
-            mbias = kcwi_fits_reader(
-                os.path.join(os.path.dirname(self.action.args.name), 'redux',
-                             mbname))[0]
-
-            # do the subtraction
-            self.action.args.ccddata.data -= mbias.data
-
-            # transfer bias read noise
-            namps = self.action.args.ccddata.header['NVIDINP']
-            for ia in range(namps):
-                self.action.args.ccddata.header['BIASRN%d' % (ia + 1)] = \
-                    mbias.header['BIASRN%d' % (ia + 1)]
-
-            self.action.args.ccddata.header[key] = (True, keycom)
-            self.action.args.ccddata.header['MBFILE'] = (mbname,
-                                                         "Master bias filename")
-        else:
-
-            self.action.args.ccddata.header[key] = (False, keycom)
-
-        logstr = SubtractBias.__module__ + "." + SubtractBias.__qualname__
-        self.action.args.ccddata.header['HISTORY'] = logstr
-        self.logger.info(logstr)
-
-        return self.action.args
-    # END: class SubtractBias()
-
-
 class SubtractDark(BasePrimitive):
     """Subtract master dark frame"""
 
@@ -824,15 +885,17 @@ class SubtractDark(BasePrimitive):
         # Header keyword to update
         key = 'DARKSUB'
         keycom = 'master dark subtracted?'
+        target_type = 'MDARK'
 
         self.logger.info("Subtracting master dark")
         tab = self.context.proctab.n_proctab(frame=self.action.args.ccddata,
-                                             target_type='MDARK',
+                                             target_type=target_type,
                                              nearest=True)
         self.logger.info("%d master dark frames found" % len(tab))
 
         if len(tab) > 0:
-            mdname = tab['OFNAME'][0].split('.')[0] + "_master_dark.fits"
+            mdname = tab['OFNAME'][0].split('.')[0] + '_' + \
+                     target_type.lower() + ".fits"
             print("*************** READING IMAGE: %s" % mdname)
             mdark = kcwi_fits_reader(
                 os.path.join(os.path.dirname(self.action.args.name), 'redux',
@@ -865,219 +928,6 @@ class SubtractDark(BasePrimitive):
 
         return self.action.args
     # END: class SubtractDark()
-
-
-class ProcessBias(BaseImg):
-    """Generate a master bias image from individual bias frames"""
-
-    def __init__(self, action, context):
-        BaseImg.__init__(self, action, context)
-        self.logger = context.pipeline_logger
-
-    def hello(self):
-        """
-        Checks if we can build a stacked bias frame
-        Expected arguments:
-            want_type: ie. BIAS
-            min_files: ie 10
-            new_type: ie MASTER_BIAS
-            new_file_name: master_bias.fits
-
-        """
-        try:
-            args = self.action.args
-            df = self.context.data_set.data_table
-            files = df[(df.IMTYPE == args.want_type) &
-                       (df.GROUPID == args.groupid)]
-            nfiles = len(files)
-
-            self.logger.info(f"pre condition got {nfiles},"
-                             f" expecting {args.min_files}")
-            if nfiles < 1 or nfiles < args.min_files:
-                return False
-            return True
-        except Exception as e:
-            self.logger.error(f"Exception in base_ccd_primitive: {e}")
-            return False
-
-    def _pre_condition(self):
-        """
-        Checks if we can build a stacked frame based on the processing table
-        :return:
-        """
-        # Add to proctab
-        self.context.proctab.update_proctab(frame=self.action.args.ccddata,
-                                            suffix='RAW')
-        self.context.proctab.write_proctab()
-        # Get bias count
-        self.logger.info("Checking precondition for process_bias")
-        self.combine_list = self.context.proctab.n_proctab(
-            frame=self.action.args.ccddata, target_type='BIAS',
-            target_group=self.action.args.groupid)
-        self.logger.info(f"pre condition got {len(self.combine_list)},"
-                         f" expecting {self.action.args.min_files}")
-        # Did we meet our pre-condition?
-        if len(self.combine_list) >= self.action.args.min_files:
-            return True
-        else:
-            return False
-
-    def _perform(self):
-        """
-        Returns an Argument() with the parameters that depends on this operation
-        """
-        args = self.action.args
-        method = 'average'
-        suffix = 'master_bias'
-
-        combine_list = list(self.combine_list['OFNAME'])
-        # get master bias output name
-        mbname = combine_list[0].split('.fits')[0] + '_master_bias.fits'
-        stack = []
-        stackf = []
-        for bias in combine_list:
-            stackf.append(bias)
-            # using [0] drops the table
-            stack.append(kcwi_fits_reader(bias)[0])
-
-        stacked = ccdproc.combine(stack, method=method, sigma_clip=True,
-                                  sigma_clip_low_thresh=None,
-                                  sigma_clip_high_thresh=2.0)
-        stacked.header.IMTYPE = args.new_type
-        stacked.header['NSTACK'] = (len(combine_list),
-                                    'number of images stacked')
-        stacked.header['STCKMETH'] = (method, 'method used for stacking')
-        for ii, fname in enumerate(stackf):
-            stacked.header['STACKF%d' % (ii + 1)] = (fname, "stack input file")
-
-        # for readnoise stats use 2nd and 3rd bias
-        diff = stack[1].data.astype(np.float32) - \
-            stack[2].data.astype(np.float32)
-        namps = stack[1].header['NVIDINP']
-        for ia in range(namps):
-            # get gain
-            gain = stacked.header['GAIN%d' % (ia + 1)]
-            # get amp section
-            sec, rfor = parse_imsec(stacked.header['DSEC%d' % (ia + 1)])
-            noise = diff[sec[0]:(sec[1]+1), sec[2]:(sec[3]+1)]
-            noise = np.reshape(noise, noise.shape[0]*noise.shape[1]) * \
-                gain / 1.414
-            # get stats on noise
-            c, low, upp = sigmaclip(noise, low=3.5, high=3.5)
-            bias_rn = c.std()
-            self.logger.info("Amp%d read noise from bias in e-: %.3f" %
-                             ((ia + 1), bias_rn))
-            stacked.header['BIASRN%d' % (ia + 1)] = \
-                (float("%.3f" % bias_rn), "RN in e- from bias")
-            if self.config.instrument.plot_level >= 1:
-                plabel = 'Img # %d' % self.action.args.ccddata.header['FRAMENO']
-                plabel += ': %s' % self.action.args.ccddata.header['BINNING']
-                plabel += ' %s' % self.action.args.ccddata.header['AMPMODE']
-                plabel += ' %d' % self.action.args.ccddata.header['GAINMUL']
-                plabel += ' %s' % ('fast' if
-                                   self.action.args.ccddata.header['CCDMODE']
-                                   else 'slow')
-                hist, edges = np.histogram(noise, range=(low, upp),
-                                           density=False, bins=50)
-                x = np.linspace(low, upp, 500)
-                pdf = np.max(hist)*np.exp(-x**2/(2.*bias_rn**2))
-                p = figure(title=plabel+' : Bias noise amp %d = %.3f' %
-                           (ia+1, bias_rn),
-                           x_axis_label='e-', y_axis_label='N',
-                           plot_width=self.config.instrument.plot_width,
-                           plot_height=self.config.instrument.plot_height)
-                p.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:],
-                       fill_color="navy", line_color="white", alpha=0.5)
-                p.line(x, pdf, line_color="#ff8888", line_width=4, alpha=0.7,
-                       legend="PDF")
-                p.line([-bias_rn, -bias_rn], [0, np.max(hist)], color='red',
-                       legend="Sigma")
-                p.line([bias_rn, bias_rn], [0, np.max(hist)], color='red')
-                p.y_range.start = 0
-                bokeh_plot(p)
-                if self.config.instrument.plot_level >= 2:
-                    input("Next? <cr>: ")
-                else:
-                    time.sleep(self.config.instrument.plot_pause)
-
-        logstr = ProcessBias.__module__ + "." + ProcessBias.__qualname__
-        stacked.header['HISTORY'] = logstr
-        self.logger.info(logstr)
-
-        kcwi_fits_writer(stacked, output_file=mbname)
-        self.context.proctab.update_proctab(frame=stacked, suffix=suffix,
-                                            newtype=args.new_type)
-        self.context.proctab.write_proctab()
-        return Arguments(name=mbname)
-    # END: class ProcessBias()
-
-
-class StackDarks(BaseImg):
-    """Stack dark frames"""
-
-    def __init__(self, action, context):
-        BaseImg.__init__(self, action, context)
-        self.logger = context.pipeline_logger
-
-    def _pre_condition(self):
-        """
-        Checks if we can build a stacked frame based on the processing table
-        :return:
-        """
-        # get current group id
-        self.logger.info("Checking precondition for stack_darks")
-        self.combine_list = self.context.proctab.n_proctab(
-            frame=self.action.args.ccddata, target_type='DARK',
-            target_group=self.action.args.groupid)
-        self.logger.info(f"pre condition got {len(self.combine_list)},"
-                         f" expecting {self.action.args.min_files}")
-        # create master dark
-        if len(self.combine_list) >= self.action.args.min_files:
-            return True
-        else:
-            return False
-
-    def _perform(self):
-        """
-        Returns an Argument() with the parameters that depends on this operation
-        """
-        args = self.action.args
-        method = 'average'
-        suffix = 'master_dark'
-
-        combine_list = list(self.combine_list['OFNAME'])
-        # get master dark output name
-        mdname = combine_list[0].split('.fits')[0] + '_master_dark.fits'
-        stack = []
-        stackf = []
-        for dark in combine_list:
-            # get dark intensity (int) image file name in redux directory
-            stackf.append(dark.split('.fits')[0] + '_int.fits')
-            darkfn = os.path.join(args.in_directory, stackf[-1])
-            # using [0] gets just the image data
-            stack.append(kcwi_fits_reader(darkfn)[0])
-
-        stacked = ccdproc.combine(stack, method=method, sigma_clip=True,
-                                  sigma_clip_low_thresh=None,
-                                  sigma_clip_high_thresh=2.0)
-        stacked.unit = stack[0].unit
-        stacked.header.IMTYPE = args.new_type
-        stacked.header['NSTACK'] = (len(combine_list),
-                                    'number of images stacked')
-        stacked.header['STCKMETH'] = (method, 'method used for stacking')
-        for ii, fname in enumerate(stackf):
-            stacked.header['STACKF%d' % (ii + 1)] = (fname, "stack input file")
-
-        logstr = StackDarks.__module__ + "." + StackDarks.__qualname__
-        stacked.header['HISTORY'] = logstr
-        self.logger.info(logstr)
-
-        kcwi_fits_writer(stacked, output_file=mdname)
-        self.context.proctab.update_proctab(frame=stacked, suffix=suffix,
-                                            newtype=args.new_type)
-        self.context.proctab.write_proctab()
-        return Arguments(name=mdname)
-    # END: class StackDarks()
 
 
 class SubtractScatteredLight(BasePrimitive):
@@ -1125,7 +975,7 @@ class SubtractScatteredLight(BasePrimitive):
             if self.config.instrument.plot_level >= 1:
                 # plot
                 p = figure(title=self.action.args.plotlabel +
-                           ", Scattered Light",
+                           "SCATTERED LIGHT FIT",
                            x_axis_label='y pixel', y_axis_label='e-',
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height)
@@ -1163,8 +1013,8 @@ class SubtractScatteredLight(BasePrimitive):
     # END: SubtractScatteredLight()
 
 
-class StackFlats(BaseImg):
-    """Stack Flat images"""
+class MakeMasterBias(BaseImg):
+    """Generate a master bias image from individual bias frames"""
 
     def __init__(self, action, context):
         BaseImg.__init__(self, action, context)
@@ -1175,14 +1025,18 @@ class StackFlats(BaseImg):
         Checks if we can build a stacked frame based on the processing table
         :return:
         """
-        # get current group id
-        self.logger.info("Checking precondition for stack_flats")
+        # Add to proctab
+        self.context.proctab.update_proctab(frame=self.action.args.ccddata,
+                                            suffix='RAW')
+        self.context.proctab.write_proctab()
+        # Get bias count
+        self.logger.info("Checking precondition for MakeMasterBias")
         self.combine_list = self.context.proctab.n_proctab(
-            frame=self.action.args.ccddata, target_type='FLATLAMP',
+            frame=self.action.args.ccddata, target_type='BIAS',
             target_group=self.action.args.groupid)
         self.logger.info(f"pre condition got {len(self.combine_list)},"
                          f" expecting {self.action.args.min_files}")
-        # create master flat
+        # Did we meet our pre-condition?
         if len(self.combine_list) >= self.action.args.min_files:
             return True
         else:
@@ -1194,11 +1048,195 @@ class StackFlats(BaseImg):
         """
         args = self.action.args
         method = 'average'
-        suffix = 'flat_stack'
+        suffix = args.new_type.lower()
+
+        combine_list = list(self.combine_list['OFNAME'])
+        # get master bias output name
+        mbname = combine_list[0].split('.fits')[0] + '_' + suffix + '.fits'
+        stack = []
+        stackf = []
+        for bias in combine_list:
+            stackf.append(bias)
+            # using [0] drops the table
+            stack.append(kcwi_fits_reader(bias)[0])
+
+        stacked = ccdproc.combine(stack, method=method, sigma_clip=True,
+                                  sigma_clip_low_thresh=None,
+                                  sigma_clip_high_thresh=2.0)
+        stacked.header.IMTYPE = args.new_type
+        stacked.header['NSTACK'] = (len(combine_list),
+                                    'number of images stacked')
+        stacked.header['STCKMETH'] = (method, 'method used for stacking')
+        for ii, fname in enumerate(stackf):
+            stacked.header['STACKF%d' % (ii + 1)] = (fname, "stack input file")
+
+        # for readnoise stats use 2nd and 3rd bias
+        diff = stack[1].data.astype(np.float32) - \
+            stack[2].data.astype(np.float32)
+        namps = stack[1].header['NVIDINP']
+        for ia in range(namps):
+            # get gain
+            gain = stacked.header['GAIN%d' % (ia + 1)]
+            # get amp section
+            sec, rfor = parse_imsec(stacked.header['DSEC%d' % (ia + 1)])
+            noise = diff[sec[0]:(sec[1]+1), sec[2]:(sec[3]+1)]
+            noise = np.reshape(noise, noise.shape[0]*noise.shape[1]) * \
+                gain / 1.414
+            # get stats on noise
+            c, low, upp = sigmaclip(noise, low=3.5, high=3.5)
+            bias_rn = c.std()
+            self.logger.info("Amp%d read noise from bias in e-: %.3f" %
+                             ((ia + 1), bias_rn))
+            stacked.header['BIASRN%d' % (ia + 1)] = \
+                (float("%.3f" % bias_rn), "RN in e- from bias")
+            if self.config.instrument.plot_level >= 1:
+                plabel = '[Img # %d' % self.action.args.ccddata.header['FRAMENO']
+                plabel += ': %s' % self.action.args.ccddata.header['BINNING']
+                plabel += ' %s' % self.action.args.ccddata.header['AMPMODE']
+                plabel += ' %d' % self.action.args.ccddata.header['GAINMUL']
+                plabel += ' %s' % ('fast' if
+                                   self.action.args.ccddata.header['CCDMODE']
+                                   else 'slow')
+                plabel += '] '
+                hist, edges = np.histogram(noise, range=(low, upp),
+                                           density=False, bins=50)
+                x = np.linspace(low, upp, 500)
+                pdf = np.max(hist)*np.exp(-x**2/(2.*bias_rn**2))
+                p = figure(title=plabel+'BIAS NOISE amp %d = %.3f' %
+                           (ia+1, bias_rn),
+                           x_axis_label='e-', y_axis_label='N',
+                           plot_width=self.config.instrument.plot_width,
+                           plot_height=self.config.instrument.plot_height)
+                p.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:],
+                       fill_color="navy", line_color="white", alpha=0.5)
+                p.line(x, pdf, line_color="#ff8888", line_width=4, alpha=0.7,
+                       legend="PDF")
+                p.line([-bias_rn, -bias_rn], [0, np.max(hist)], color='red',
+                       legend="Sigma")
+                p.line([bias_rn, bias_rn], [0, np.max(hist)], color='red')
+                p.y_range.start = 0
+                bokeh_plot(p)
+                if self.config.instrument.plot_level >= 2:
+                    input("Next? <cr>: ")
+                else:
+                    time.sleep(self.config.instrument.plot_pause)
+
+        logstr = MakeMasterBias.__module__ + "." + MakeMasterBias.__qualname__
+        stacked.header['HISTORY'] = logstr
+        self.logger.info(logstr)
+
+        kcwi_fits_writer(stacked, output_file=mbname)
+        self.context.proctab.update_proctab(frame=stacked, suffix=suffix,
+                                            newtype=args.new_type)
+        self.context.proctab.write_proctab()
+        return Arguments(name=mbname)
+    # END: class ProcessBias()
+
+
+class MakeMasterDark(BaseImg):
+    """Stack dark frames into master dark"""
+
+    def __init__(self, action, context):
+        BaseImg.__init__(self, action, context)
+        self.logger = context.pipeline_logger
+
+    def _pre_condition(self):
+        """
+        Checks if we can build a stacked frame based on the processing table
+        :return:
+        """
+        # get list of dark frames
+        self.logger.info("Checking precondition for stack_darks")
+        self.combine_list = self.context.proctab.n_proctab(
+            frame=self.action.args.ccddata, target_type='DARK',
+            target_group=self.action.args.groupid)
+        self.logger.info(f"pre condition got {len(self.combine_list)},"
+                         f" expecting {self.action.args.min_files}")
+        # do we meet the criterion?
+        if len(self.combine_list) >= self.action.args.min_files:
+            return True
+        else:
+            return False
+
+    def _perform(self):
+        """
+        Returns an Argument() with the parameters that depends on this operation
+        """
+        args = self.action.args
+        method = 'average'
+        suffix = args.new_type.lower()
 
         combine_list = list(self.combine_list['OFNAME'])
         # get master dark output name
-        mdname = combine_list[0].split('.fits')[0] + '_flat_stack.fits'
+        mdname = combine_list[0].split('.fits')[0] + '_' + suffix + '.fits'
+        stack = []
+        stackf = []
+        for dark in combine_list:
+            # get dark intensity (int) image file name in redux directory
+            stackf.append(dark.split('.fits')[0] + '_int.fits')
+            darkfn = os.path.join(args.in_directory, stackf[-1])
+            # using [0] gets just the image data
+            stack.append(kcwi_fits_reader(darkfn)[0])
+
+        stacked = ccdproc.combine(stack, method=method, sigma_clip=True,
+                                  sigma_clip_low_thresh=None,
+                                  sigma_clip_high_thresh=2.0)
+        stacked.unit = stack[0].unit
+        stacked.header.IMTYPE = args.new_type
+        stacked.header['NSTACK'] = (len(combine_list),
+                                    'number of images stacked')
+        stacked.header['STCKMETH'] = (method, 'method used for stacking')
+        for ii, fname in enumerate(stackf):
+            stacked.header['STACKF%d' % (ii + 1)] = (fname, "stack input file")
+
+        logstr = MakeMasterDark.__module__ + "." + MakeMasterDark.__qualname__
+        stacked.header['HISTORY'] = logstr
+        self.logger.info(logstr)
+
+        kcwi_fits_writer(stacked, output_file=mdname)
+        self.context.proctab.update_proctab(frame=stacked, suffix=suffix,
+                                            newtype=args.new_type)
+        self.context.proctab.write_proctab()
+        return Arguments(name=mdname)
+    # END: class StackDarks()
+
+
+class MakeMasterFlat(BaseImg):
+    """Stack flat images and make master flat image"""
+
+    def __init__(self, action, context):
+        BaseImg.__init__(self, action, context)
+        self.logger = context.pipeline_logger
+
+    def _pre_condition(self):
+        """
+        Checks if we can build a stacked frame based on the processing table
+        :return:
+        """
+        # get list of input flats
+        self.logger.info("Checking precondition for StackFlats")
+        self.combine_list = self.context.proctab.n_proctab(
+            frame=self.action.args.ccddata, target_type='FLATLAMP',
+            target_group=self.action.args.groupid)
+        self.logger.info(f"pre condition got {len(self.combine_list)},"
+                         f" expecting {self.action.args.min_files}")
+        # do we meet the criterion?
+        if len(self.combine_list) >= self.action.args.min_files:
+            return True
+        else:
+            return False
+
+    def _perform(self):
+        """
+        Returns an Argument() with the parameters that depends on this operation
+        """
+        args = self.action.args
+        method = 'average'
+        suffix = args.new_type.lower()
+
+        combine_list = list(self.combine_list['OFNAME'])
+        # get flat stack output name
+        stname = combine_list[0].split('.fits')[0] + '_sflat.fits'
         stack = []
         stackf = []
         for flat in combine_list:
@@ -1211,73 +1249,32 @@ class StackFlats(BaseImg):
         stacked = ccdproc.combine(stack, method=method, sigma_clip=True,
                                   sigma_clip_low_thresh=None,
                                   sigma_clip_high_thresh=2.0)
-        stacked.header.IMTYPE = args.new_type
+        # stacked.header.IMTYPE = args.new_type
         stacked.header['NSTACK'] = (len(combine_list),
                                     'number of images stacked')
         stacked.header['STCKMETH'] = (method, 'method used for stacking')
         for ii, fname in enumerate(stackf):
             stacked.header['STACKF%d' % (ii + 1)] = (fname, "stack input file")
 
-        logstr = StackFlats.__module__ + "." + StackFlats.__qualname__
+        logstr = MakeMasterFlat.__module__ + "." + MakeMasterFlat.__qualname__
         stacked.header['HISTORY'] = logstr
-        self.logger.info(logstr)
 
-        kcwi_fits_writer(stacked, output_file=mdname)
+        # output stacked flat
+        kcwi_fits_writer(stacked, output_file=stname)
+
+        # get master flat output name
+        mfname = combine_list[0].split('.fits')[0] + '_' + suffix + '.fits'
+
+        # output master flat
+        kcwi_fits_writer(stacked, output_file=mfname)
         self.context.proctab.update_proctab(frame=stacked, suffix=suffix,
                                             newtype=args.new_type)
         self.context.proctab.write_proctab()
-        return Arguments(name=mdname)
-    # END: class StackFlats()
 
+        self.logger.info(logstr)
+        return Arguments(name=mfname)
 
-class ProcessDark(BasePrimitive):
-
-    def __init__(self, action, context):
-        BasePrimitive.__init__(self, action, context)
-        self.logger = context.pipeline_logger
-
-    def _perform(self):
-        return self.action.args
-
-
-class ProcessContbars(BasePrimitive):
-
-    def __init__(self, action, context):
-        BasePrimitive.__init__(self, action, context)
-        self.logger = context.pipeline_logger
-
-    def _perform(self):
-        return self.action.args
-
-
-class ProcessArc(BasePrimitive):
-
-    def __init__(self, action, context):
-        BasePrimitive.__init__(self, action, context)
-        self.logger = context.pipeline_logger
-
-    def _perform(self):
-        return self.action.args
-
-
-class ProcessFlat(BasePrimitive):
-
-    def __init__(self, action, context):
-        BasePrimitive.__init__(self, action, context)
-        self.logger = context.pipeline_logger
-
-    def _perform(self):
-        return self.action.args
-
-
-class ProcessObject(BasePrimitive):
-
-    def __init__(self, action, context):
-        BasePrimitive.__init__(self, action, context)
-        self.logger = context.pipeline_logger
-
-    def _perform(self):
-        return self.action.args
+    # END: class MakeMasterFlat()
 
 
 class FindBars(BasePrimitive):
@@ -1290,11 +1287,6 @@ class FindBars(BasePrimitive):
 
     def _perform(self):
         self.logger.info("Finding continuum bars")
-        # Do we plot?
-        if self.config.instrument.plot_level >= 1:
-            do_plot = True
-        else:
-            do_plot = False
         # initialize
         refbar = self.config.instrument.REFBAR
         midcntr = []
@@ -1319,50 +1311,57 @@ class FindBars(BasePrimitive):
                               (self.config.instrument.NBARS, len(midpeaks)))
         else:
             self.logger.info("found %d bars" % len(midpeaks))
-            plotting_vector_x = []
-            plotting_vector_y = []
-            p = None
 
-            if do_plot:
+            if self.config.instrument.plot_level >= 1:
                 # plot the peak positions
                 x = np.arange(len(midvec))
-                # pl.plot(midvec, '-')
                 p = figure(
                     title=self.action.args.plotlabel +
-                    ", Thresh = %.2f" % midavg,
+                    "BARS MID TRACE Thresh = %.2f" % midavg,
                     x_axis_label='CCD X (px)', y_axis_label='e-',
                     plot_width=self.config.instrument.plot_width,
-                    plot_height=self.config.instrument.plot_height
-                )
-                p.line(x, midvec, color='blue')
-                p.scatter(midpeaks, midvec[midpeaks], marker='x', color='red')
+                    plot_height=self.config.instrument.plot_height)
+                p.line(x, midvec, color='blue', legend="MidTrace")
+                p.scatter(midpeaks, midvec[midpeaks], marker='x', color='red',
+                          legend="FoundBar")
                 p.line([0, nx], [midavg, midavg], color='grey',
                        line_dash='dashed')
+                p.legend.location = "bottom_center"
                 bokeh_plot(p)
-                time.sleep(self.config.instrument.plot_pause)
+                if self.config.instrument.plot_level >= 2:
+                    input("Next? <cr>: ")
+                else:
+                    time.sleep(self.config.instrument.plot_pause)
                 # calculate the bar centroids
 
-            for peak in midpeaks:
+            # Do we plot?
+            if self.config.instrument.plot_level >= 2:
+                do_inter = True
+            else:
+                do_inter = False
+            for ip, peak in enumerate(midpeaks):
                 xs = list(range(peak-win, peak+win+1))
                 ys = midvec[xs] - np.nanmin(midvec[xs])
                 xc = np.sum(xs*ys) / np.sum(ys)
                 midcntr.append(xc)
-                if do_plot:
-                    plotting_vector_x.append(xc)
-                    plotting_vector_y.append(midavg)
-                    plotting_vector_x.append(xc)
-                    plotting_vector_y.append(midvec[peak])
-                    plotting_vector_x.append(xc)
-                    plotting_vector_y.append(midavg)
-            if do_plot:
-                p.line(plotting_vector_x, plotting_vector_y, color='grey')
-                # p.line([xc, xc], [midavg, midvec[peak]], color='grey')
-                p.scatter(midcntr, midvec[midpeaks], marker='x', color='green')
-                bokeh_plot(p)
-                if self.config.instrument.plot_level >= 2:
-                    input("next: ")
-                else:
-                    time.sleep(self.config.instrument.plot_pause)
+                if do_inter:
+                    p = figure(
+                        title=self.action.args.plotlabel +
+                        "BAR %d CENTRD = %.2f" % (ip, xc),
+                        x_axis_label='CCD X (px)', y_axis_label='e-',
+                        plot_width=self.config.instrument.plot_width,
+                        plot_height=self.config.instrument.plot_height)
+                    p.line(xs, ys, color='blue', legend='Bar Trace')
+                    p.circle(xs, ys, color='red', legend='Bar Trace')
+                    p.line([xc, xc], [midavg, midvec[peak]], color='green',
+                           legend='Cntrd')
+                    bokeh_plot(p)
+                    if do_inter:
+                        q = input("Next? <cr>, q - quit: ")
+                        if 'Q' in q.upper():
+                            do_inter = False
+                    else:
+                        time.sleep(self.config.instrument.plot_pause)
             self.logger.info("Found middle centroids for continuum bars")
         # store peaks
         self.action.args.midcntr = midcntr
@@ -1475,8 +1474,8 @@ class TraceBars(BasePrimitive):
             src = np.column_stack((xo, yo))
             if do_plot:
                 # plot them
-                # pl.ioff()
-                p = figure(title=self.action.args.plotlabel,
+                p = figure(title=self.action.args.plotlabel +
+                           'SPATIAL CONTROL POINTS',
                            x_axis_label="CCD X (px)", y_axis_label="CCD Y (px)",
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height)
@@ -1485,7 +1484,7 @@ class TraceBars(BasePrimitive):
                           [self.action.args.midrow]*120, color='red')
                 bokeh_plot(p)
                 if self.config.instrument.plot_level >= 2:
-                    input("next: ")
+                    input("Next? <cr>: ")
                 else:
                     time.sleep(self.config.instrument.plot_pause)
             trace = {
@@ -1667,10 +1666,9 @@ class ArcOffsets(BasePrimitive):
                                  (na, int(na/5), offset))
                 # display if requested
                 if do_plot:
-                    p = figure(title="Bar Offsets: " +
-                                     self.action.args.plotlabel +
-                                     ", Arc %d Slice %d XCorr, Shift = %d" %
-                                     (na, int(na/5), offset),
+                    p = figure(title=self.action.args.plotlabel +
+                               "BAR OFFSET for Arc: %d Slice: %d = %d" %
+                               (na, int(na/5), offset),
                                x_axis_label="CCD y (px)", y_axis_label="e-",
                                plot_width=self.config.instrument.plot_width,
                                plot_height=self.config.instrument.plot_height)
@@ -1680,7 +1678,7 @@ class ArcOffsets(BasePrimitive):
                     p.line(x, np.roll(arc, offset), color='red',
                            legend='bar %d' % na)
                     bokeh_plot(p)
-                    q = input("<cr> - Next, q to quit: ")
+                    q = input("Next? <cr>, q to quit: ")
                     if 'Q' in q.upper():
                         do_plot = False
             self.context.baroffs = offsets
@@ -1814,8 +1812,8 @@ class ReadAtlas(BasePrimitive):
                          (offset_pix, offset_wav))
         if self.config.instrument.plot_level >= 1:
             # Plot
-            p = figure(title="Atlas Offset: " + self.action.args.plotlabel +
-                       ", (%s), Offset = %d px" % (lamp, offset_pix),
+            p = figure(title=self.action.args.plotlabel +
+                       "ATLAS OFFSET = %d px" % offset_pix,
                        x_axis_label="Offset(px)", y_axis_label="X-corr",
                        plot_width=self.config.instrument.plot_width,
                        plot_height=self.config.instrument.plot_height)
@@ -1836,10 +1834,9 @@ class ReadAtlas(BasePrimitive):
             q = 'test'
             while q:
                 # Plot the two spectra
-                p = figure(title="Atlas Offset: "+self.action.args.plotlabel +
-                           ", (%s), Offset = %.1f Ang (%d px)" % (lamp,
-                                                                  offset_wav,
-                                                                  offset_pix),
+                p = figure(title=self.action.args.plotlabel +
+                           "ATLAS OFFSET = %.1f Ang (%d px)" %
+                           (offset_wav, offset_pix),
                            x_axis_label="Wave(A)", y_axis_label="Rel. Flux",
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height)
@@ -2083,14 +2080,9 @@ class FitCenter(BasePrimitive):
             maxima = result[4]
             if do_inter:
                 # plot maxima
-                # image label
-                imlab = "Img # %d (%s) Sl: %s Fl: %s Gr: %s" % \
-                        (self.action.args.ccddata.header['FRAMENO'],
-                         self.action.args.illum,
-                         self.action.args.ifuname, self.action.args.filter,
-                         self.action.args.grating)
-                p = figure(title="Central Dispersion Fit: " + imlab +
-                                 ": Bar %d, Slice %d" % (b, int(b / 5)),
+                p = figure(title=self.action.args.plotlabel +
+                           "CENTRAL DISPERSION FIT for Bar: %d Slice: %d" %
+                           (b, int(b / 5)),
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height,
                            x_axis_label="Central dispersion (Ang/px)",
@@ -2103,7 +2095,7 @@ class FitCenter(BasePrimitive):
                 p.line([self.context.prelim_disp, self.context.prelim_disp],
                        ylim, color='red', legend="Calc Disp")
                 bokeh_plot(p)
-                q = input("<cr> - Next, q to quit: ")
+                q = input("Next? <cr>, q to quit: ")
                 if 'Q' in q.upper():
                     do_inter = False
 
@@ -2111,7 +2103,7 @@ class FitCenter(BasePrimitive):
         # Plot results
         if self.config.instrument.plot_level >= 1:
             # Plot central wavelength
-            p = figure(title="Central Values: " + self.action.args.plotlabel,
+            p = figure(title=self.action.args.plotlabel + "CENTRAL VALUES",
                        x_axis_label="Bar #",
                        y_axis_label="Central Wavelength (A)",
                        plot_width=self.config.instrument.plot_width,
@@ -2132,7 +2124,7 @@ class FitCenter(BasePrimitive):
             else:
                 time.sleep(self.config.instrument.plot_pause)
             # Plot central dispersion
-            p = figure(title="Central Values: " + self.action.args.plotlabel,
+            p = figure(title=self.action.args.plotlabel + "CENTRAL VALUES",
                        x_axis_label="Bar #",
                        y_axis_label="Central Dispersion (A)",
                        plot_width=self.config.instrument.plot_width,
@@ -2328,15 +2320,9 @@ class GetAtlasLines(BasePrimitive):
         self.action.args.at_wave = refws
         self.action.args.at_flux = refas
         # plot results
-        # image label
-        imlab = "Img # %d (%s) Sl: %s Fl: %s Gr: %s" % \
-                (self.action.args.ccddata.header['FRAMENO'],
-                 self.action.args.illum,
-                 self.action.args.ifuname, self.action.args.filter,
-                 self.action.args.grating)
         norm_fac = np.nanmax(atspec)
-        p = figure(title="Atlas Lines: " + imlab + ": Ngood = %d, Nrej = %d" %
-                         (len(refws), nrej),
+        p = figure(title=self.action.args.plotlabel +
+                   "ATLAS LINES Ngood = %d, Nrej = %d" % (len(refws), nrej),
                    x_axis_label="Wavelength (A)",
                    y_axis_label="Normalized Flux",
                    plot_width=self.config.instrument.plot_width,
@@ -2512,8 +2498,8 @@ class SolveArcs(BasePrimitive):
                     at_flux_dat.append(self.action.args.at_flux[iw])
                     # plot, if requested
                     if do_inter:
-                        ptitle = "Bar# %d - line %3d/%3d: x0, x1, xc, Wave = " \
-                                 "%d, %d, %8.1f, %9.2f" % \
+                        ptitle = " Bar# %d - line %3d/%3d: [x0-x1], xc, " \
+                                 "Wave = [%d-%d], %8.1f, %9.2f" % \
                                  (ib, (iw + 1), len(self.action.args.at_wave),
                                   minow, maxow, peak, aw)
                         atx0 = [i for i, v in enumerate(atwave)
@@ -2522,7 +2508,8 @@ class SolveArcs(BasePrimitive):
                                 if v >= max(wvec)][0]
                         atnorm = np.nanmax(yvec) / np.nanmax(atspec[atx0:atx1])
                         p = figure(
-                            title="Arc Line Fit: " + ptitle,
+                            title=self.action.args.plotlabel +
+                            "ATLAS LINE FIT" + ptitle,
                             x_axis_label="Wavelength (A)",
                             y_axis_label="Relative Flux",
                             plot_width=self.config.instrument.plot_width,
@@ -2530,15 +2517,18 @@ class SolveArcs(BasePrimitive):
                         p.line(wvec, yvec, legend='Arc', color='black')
                         p.circle(wvec, yvec, legend='Arc', color='red')
                         ylim = [0, np.nanmax(yvec)]
+                        p.line(atwave[atx0:atx1], atspec[atx0:atx1] * atnorm,
+                               color='blue', legend='Atlas')
                         p.circle(atwave[atx0:atx1], atspec[atx0:atx1] * atnorm,
                                  color='green', legend='Atlas')
                         p.line([aw, aw], ylim, color='red', legend='Wl in')
                         bokeh_plot(p)
                         input("next - <cr>: ")
                         p = figure(
-                            title="Line Fit Results: " + ptitle,
+                            title=self.action.args.plotlabel +
+                            "ARC LINE FIT" + ptitle,
                             x_axis_label="CCD Y (px)",
-                            y_axis_label="Flux (DN)",
+                            y_axis_label="Flux (e-)",
                             plot_width=self.config.instrument.plot_width,
                             plot_height=self.config.instrument.plot_height)
                         p.circle(xvec, yvec, color='red', legend='Data')
@@ -2557,7 +2547,7 @@ class SolveArcs(BasePrimitive):
                                line_dash='dashdot')
                         bokeh_plot(p)
 
-                        q = input(ptitle + "; <cr> - Next, q to quit: ")
+                        q = input(ptitle + "; Next? <cr>, q to quit: ")
                         if 'Q' in q.upper():
                             do_inter = False
                 except IndexError:
@@ -2633,14 +2623,14 @@ class SolveArcs(BasePrimitive):
             # do plotting?
             if master_inter:
                 # plot bar fit residuals
-                ptitle = self.action.args.plotlabel + \
-                         " Bar = %03d, Slice = %02d, RMS = %.3f, N = %d" % \
+                ptitle = " for Bar %03d, Slice %02d, RMS = %.3f, N = %d" % \
                          (ib, int(ib / 5), wsig, len(arc_pix_dat))
-                p = figure(
-                    title="Residuals: " + ptitle, x_axis_label="Wavelength (A)",
-                    y_axis_label="Fit - Inp (A)",
-                    plot_width=self.config.instrument.plot_width,
-                    plot_height=self.config.instrument.plot_height)
+                p = figure(title=self.action.args.plotlabel +
+                           "RESIDUALS" + ptitle,
+                           x_axis_label="Wavelength (A)",
+                           y_axis_label="Fit - Inp (A)",
+                           plot_width=self.config.instrument.plot_width,
+                           plot_height=self.config.instrument.plot_height)
                 p.diamond(at_wave_dat, resid, legend='Rsd', size=8)
                 if rej_rsd_wave:
                     p.diamond(rej_rsd_wave, rej_rsd, color='orange',
@@ -2658,12 +2648,12 @@ class SolveArcs(BasePrimitive):
                 input("Next? <cr>: ")
 
                 # overplot atlas and bar using fit wavelengths
-                p = figure(
-                    title="Atlas/Arc Fit: " + ptitle,
-                    x_axis_label="Wavelength (A)",
-                    y_axis_label="Flux",
-                    plot_width=self.config.instrument.plot_width,
-                    plot_height=self.config.instrument.plot_height)
+                p = figure(title=self.action.args.plotlabel +
+                           "ATLAS/ARC FIT" + ptitle,
+                           x_axis_label="Wavelength (A)",
+                           y_axis_label="Flux",
+                           plot_width=self.config.instrument.plot_width,
+                           plot_height=self.config.instrument.plot_height)
                 bwav = pwfit(self.action.args.xsvals)
                 p.line(bwav, b, color='darkgrey', legend='Arc')
                 ylim = [np.nanmin(b), np.nanmax(b)]
@@ -2688,13 +2678,11 @@ class SolveArcs(BasePrimitive):
         self.action.args.av_bar_sig = float(np.nanmean(bar_sig))
         self.action.args.st_bar_sig = float(np.nanstd(bar_sig))
         ptitle = self.action.args.plotlabel + \
-            " <RMS>: %.3f +- %.3f" % (self.action.args.av_bar_sig,
-                                      self.action.args.st_bar_sig)
-        p = figure(
-            title="Fit Stats: " + ptitle,
-            x_axis_label="Bar #", y_axis_label="RMS (A)",
-            plot_width=self.config.instrument.plot_width,
-            plot_height=self.config.instrument.plot_height)
+            "FIT STATS <RMS> = %.3f +- %.3f" % (self.action.args.av_bar_sig,
+                                                self.action.args.st_bar_sig)
+        p = figure(title=ptitle, x_axis_label="Bar #", y_axis_label="RMS (A)",
+                   plot_width=self.config.instrument.plot_width,
+                   plot_height=self.config.instrument.plot_height)
         p.diamond(list(range(120)), bar_sig, size=8)
         xlim = [-1, 120]
         ylim = [np.nanmin(bar_sig), np.nanmax(bar_sig)]
@@ -2731,13 +2719,11 @@ class SolveArcs(BasePrimitive):
         self.action.args.av_bar_nls = float(np.nanmean(bar_nls))
         self.action.args.st_bar_nls = float(np.nanstd(bar_nls))
         ptitle = self.action.args.plotlabel + \
-            " <Nlns>: %.1f +- %.1f" % (self.action.args.av_bar_nls,
-                                       self.action.args.st_bar_nls)
-        p = figure(
-            title="Fit Stats: " + ptitle,
-            x_axis_label="Bar #", y_axis_label="N Lines",
-            plot_width=self.config.instrument.plot_width,
-            plot_height=self.config.instrument.plot_height)
+            "FIT STATS <Nlns> = %.1f +- %.1f" % (self.action.args.av_bar_nls,
+                                                 self.action.args.st_bar_nls)
+        p = figure(title=ptitle, x_axis_label="Bar #", y_axis_label="N Lines",
+                   plot_width=self.config.instrument.plot_width,
+                   plot_height=self.config.instrument.plot_height)
         p.diamond(list(range(120)), bar_nls,  size=8)
         xlim = [-1, 120]
         ylim = [np.nanmin(bar_nls), np.nanmax(bar_nls)]
@@ -2774,12 +2760,11 @@ class SolveArcs(BasePrimitive):
         if self.config.instrument.plot_level >= 1:
             ylabs = ['Ang/px^4', 'Ang/px^3', 'Ang/px^2', 'Ang/px', 'Ang']
             for ic in reversed(range(len(self.action.args.fincoeff[0]))):
-                ptitle = self.action.args.plotlabel + " Coef %d" % ic
-                p = figure(
-                    title="Fit Coeffs: " + ptitle, x_axis_label="Bar #",
-                    y_axis_label="Coef %d (%s)" % (ic, ylabs[ic]),
-                    plot_width=self.config.instrument.plot_width,
-                    plot_height=self.config.instrument.plot_height)
+                ptitle = self.action.args.plotlabel + "COEF %d VALUES" % ic
+                p = figure(title=ptitle, x_axis_label="Bar #",
+                           y_axis_label="Coef %d (%s)" % (ic, ylabs[ic]),
+                           plot_width=self.config.instrument.plot_width,
+                           plot_height=self.config.instrument.plot_height)
                 coef = []
                 for c in self.action.args.fincoeff:
                     coef.append(c[ic])
@@ -3178,7 +3163,7 @@ class MakeCube(BasePrimitive):
                 # pl.ylim(0, 2056)
                 # pl.title('raw slice %d' % isl)
                 # if do_inter:
-                #    q = input("<cr> - Next, q to quit: ")
+                #    q = input("Next? <cr>, q to quit: ")
                 #    if 'Q' in q.upper():
                 #        do_inter = False
                 #        pl.ioff()
@@ -3199,7 +3184,7 @@ class MakeCube(BasePrimitive):
                 wstd = np.nanstd(warped)
                 if self.config.instrument.plot_level >= 2:
                     print(wmed, wstd)
-                    ptitle = self.action.args.plotlabel + ": warped slice %d" \
+                    ptitle = self.action.args.plotlabel + "WARPED Slice %d" \
                         % isl
                     p = figure(tooltips=[("x", "$x"), ("y", "$y"),
                                          ("value", "@image")],
@@ -3214,7 +3199,7 @@ class MakeCube(BasePrimitive):
                     # pl.ylim(0, ysize)
                     bokeh_plot(p)
                     if do_inter:
-                        q = input("<cr> - Next, q to quit: ")
+                        q = input("Next? <cr>, q to quit: ")
                         if 'Q' in q.upper():
                             do_inter = False
                     else:

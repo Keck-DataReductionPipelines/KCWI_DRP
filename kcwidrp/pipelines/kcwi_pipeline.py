@@ -28,7 +28,12 @@ class Kcwi_pipeline(BasePipeline):
                                       "file_ingested"),
         "file_ingested":             ("action_planner", None, None),
         # BIAS PROCESSING
-        "process_bias":              ("ProcessBias", None, None),
+        "process_bias":              ("ProcessBias",
+                                      "bias_processing_started",
+                                      "bias_make_master"),
+        "bias_make_master":          ("MakeMasterBias",
+                                      "master_bias_started",
+                                      None),
         # DARK PROCESSING
         "process_dark":              ("ProcessDark",
                                       "dark_processing_started",
@@ -47,9 +52,9 @@ class Kcwi_pipeline(BasePipeline):
                                       "dark_rectify_image"),
         "dark_rectify_image":        ("RectifyImage",
                                       "rectification_started",
-                                      "dark_stack_darks"),
-        "dark_stack_darks":          ("StackDarks",
-                                      "stacking_darks_started",
+                                      "dark_make_master"),
+        "dark_make_master":          ("MakeMasterDark",
+                                      "master_dark_started",
                                       None),
         # CONTBARS PROCESSING
         "process_contbars":          ("ProcessContbars",
@@ -143,9 +148,9 @@ class Kcwi_pipeline(BasePipeline):
                                       "flat_subtract_scat"),
         "flat_subtract_scat":        ("SubtractScatteredLight",
                                       "scat_subtract_started",
-                                      "flat_stack_flats"),
-        "flat_stack_flats":          ("StackFlats",
-                                      "stacking_flats_started",
+                                      "flat_make_master"),
+        "flat_make_master":          ("MakeMasterFlat",
+                                      "master_flat_started",
                                       None),
         # OBJECT PROCESSING
         "process_object":            ("ProcessObject",
@@ -238,7 +243,7 @@ class Kcwi_pipeline(BasePipeline):
             flat_args = action.args
             flat_args.groupid = groupid
             flat_args.want_type = "FLATLAMP"
-            flat_args.new_type = "FLAT"
+            flat_args.new_type = "MFLAT"
             flat_args.min_files = context.config.instrument.flat_min_nframes
             flat_args.new_file_name = "master_flat_%s.fits" % groupid
             flat_args.in_directory = "redux"
