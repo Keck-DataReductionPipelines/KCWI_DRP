@@ -234,11 +234,12 @@ class ingest_file(BasePrimitive):
         return int(self.get_keyword('BINNING').split(',')[-1])
 
     def plotlabel(self):
-        lab = "Img # %d " % self.get_keyword('FRAMENO')
+        lab = "[Img # %d " % self.get_keyword('FRAMENO')
         lab += "(%s) " % self.illum()
-        lab += "Sl: %s " % self.ifuname()
-        lab += "Fl: %s " % self.filter()
-        lab += "Gr: %s " % self.grating()
+        lab += "Slice: %s " % self.ifuname()
+        lab += "Filt: %s " % self.filter()
+        lab += "Grat: %s" % self.grating()
+        lab += "] "
         return lab
 
     def ifuname(self):
