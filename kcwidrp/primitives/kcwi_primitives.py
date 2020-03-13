@@ -963,12 +963,37 @@ class ProcessBias(BaseImg):
             noise = np.reshape(noise, noise.shape[0]*noise.shape[1]) * \
                 gain / 1.414
             # get stats on noise
-            c, upp, low = sigmaclip(noise, low=3.5, high=3.5)
+            c, low, upp = sigmaclip(noise, low=3.5, high=3.5)
             bias_rn = c.std()
             self.logger.info("Amp%d read noise from bias in e-: %.3f" %
                              ((ia + 1), bias_rn))
             stacked.header['BIASRN%d' % (ia + 1)] = \
                 (float("%.3f" % bias_rn), "RN in e- from bias")
+            if self.config.instrument.plot_level >= 1:
+                plabel = 'Img # %d' % self.action.args.ccddata.header['FRAMENO']
+                plabel += ' %s' % self.action.args.ccddata.header['BINNING']
+                plabel += ' %s' % self.action.args.ccddata.header['AMPMODE']
+                plabel += ' %d' % self.action.args.ccddata.header['GAINMUL']
+                plabel += ' %s' % ('fast' if
+                                   self.action.args.ccddata.header['CCDMODE']
+                                   else 'slow')
+                hist, edges = np.histogram(noise, range=(low, upp),
+                                           density=False, bins=50)
+                p = figure(title=plabel+' : Bias noise amp %d' % (ia+1),
+                           x_axis_label='e-', y_axis_label='N',
+                           plot_width=self.config.instrument.plot_width,
+                           plot_height=self.config.instrument.plot_height)
+                p.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:],
+                       fill_color="navy", line_color="white", alpha=0.5)
+                p.line([-bias_rn, -bias_rn], [0, np.max(hist)], color='red')
+                p.line([bias_rn, bias_rn], [0, np.max(hist)], color='red')
+                p.line([0, 0], [0, np.max(hist)], line_dash='dotted',
+                       color='red')
+                bokeh_plot(p)
+                if self.config.instrument.plot_level >= 2:
+                    input("Next? <cr>: ")
+                else:
+                    time.sleep(self.config.instrument.plot_pause)
 
         logstr = ProcessBias.__module__ + "." + ProcessBias.__qualname__
         stacked.header['HISTORY'] = logstr
