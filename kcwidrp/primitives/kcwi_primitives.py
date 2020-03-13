@@ -971,7 +971,7 @@ class ProcessBias(BaseImg):
                 (float("%.3f" % bias_rn), "RN in e- from bias")
             if self.config.instrument.plot_level >= 1:
                 plabel = 'Img # %d' % self.action.args.ccddata.header['FRAMENO']
-                plabel += ' %s' % self.action.args.ccddata.header['BINNING']
+                plabel += ': %s' % self.action.args.ccddata.header['BINNING']
                 plabel += ' %s' % self.action.args.ccddata.header['AMPMODE']
                 plabel += ' %d' % self.action.args.ccddata.header['GAINMUL']
                 plabel += ' %s' % ('fast' if
@@ -979,16 +979,21 @@ class ProcessBias(BaseImg):
                                    else 'slow')
                 hist, edges = np.histogram(noise, range=(low, upp),
                                            density=False, bins=50)
-                p = figure(title=plabel+' : Bias noise amp %d' % (ia+1),
+                x = np.linspace(low, upp, 500)
+                pdf = np.max(hist)*np.exp(-x**2/(2.*bias_rn**2))
+                p = figure(title=plabel+' : Bias noise amp %d = %.3f' %
+                           (ia+1, bias_rn),
                            x_axis_label='e-', y_axis_label='N',
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height)
                 p.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:],
                        fill_color="navy", line_color="white", alpha=0.5)
-                p.line([-bias_rn, -bias_rn], [0, np.max(hist)], color='red')
+                p.line(x, pdf, line_color="#ff8888", line_width=4, alpha=0.7,
+                       legend="PDF")
+                p.line([-bias_rn, -bias_rn], [0, np.max(hist)], color='red',
+                       legend="Sigma")
                 p.line([bias_rn, bias_rn], [0, np.max(hist)], color='red')
-                p.line([0, 0], [0, np.max(hist)], line_dash='dotted',
-                       color='red')
+                p.y_range.start = 0
                 bokeh_plot(p)
                 if self.config.instrument.plot_level >= 2:
                     input("Next? <cr>: ")
