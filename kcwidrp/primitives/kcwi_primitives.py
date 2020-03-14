@@ -17,7 +17,8 @@ import scipy as sp
 from scipy.signal.windows import boxcar
 from scipy.optimize import curve_fit
 from bokeh.plotting import figure, show
-from bokeh.models import Range1d
+from bokeh.models import Range1d, LinearAxis
+from bokeh.layouts import gridplot
 from bokeh.models.markers import X
 from bokeh.io import export_png
 from bokeh.util.logconfig import basicConfig, bokeh_logger as bl
@@ -423,7 +424,7 @@ class SubtractOverscan(BasePrimitive):
         # is it performed?
         performed = False
         # loop over amps
-        # session = self.context.bokeh_session
+        # plts = []   # plots for each amp
 
         for ia in range(namps):
             # get gain
@@ -460,14 +461,16 @@ class SubtractOverscan(BasePrimitive):
                 if self.config.instrument.plot_level >= 1:
                     x = np.arange(len(osvec))
                     p = figure(title=self.action.args.plotlabel +
-                               'OVERSCAN FIT amp %d' % (ia+1),
-                               x_axis_label='x', y_axis_label='counts',
+                               'OSCAN amp %d' % (ia+1),
+                               x_axis_label='overscan px',
+                               y_axis_label='counts',
                                plot_width=self.config.instrument.plot_width,
                                plot_height=self.config.instrument.plot_height)
                     p.circle(x, osvec, legend="Data")
                     p.line(x, osfit, line_color='red', line_width=3,
                            legend="Fit")
                     bokeh_plot(p)
+                    # plts.append(p)
                     if self.config.instrument.plot_level >= 2:
                         input("Next? <cr>: ")
                     else:
@@ -479,6 +482,14 @@ class SubtractOverscan(BasePrimitive):
                 performed = True
             else:
                 self.logger.info("not enough overscan px to fit amp %d")
+        # if self.config.instrument.plot_level >= 1 and len(plts) > 0:
+        #    bokeh_plot(gridplot(plts, ncols=(2 if namps > 2 else 1),
+        #                        plot_width=500, plot_height=300,
+        #                        toolbar_location=None))
+        #    if self.config.instrument.plot_level >= 2:
+        #        input("Next? <cr>: ")
+        #    else:
+        #        time.sleep(self.config.instrument.plot_pause)
 
         self.action.args.ccddata.header[key] = (performed, keycom)
 
@@ -2498,10 +2509,10 @@ class SolveArcs(BasePrimitive):
                     at_flux_dat.append(self.action.args.at_flux[iw])
                     # plot, if requested
                     if do_inter:
-                        ptitle = " Bar# %d - line %3d/%3d: [x0-x1], xc, " \
-                                 "Wave = [%d-%d], %8.1f, %9.2f" % \
+                        ptitle = " Bar# %d - line %3d/%3d: xc = %.1f, " \
+                                 "Wave = %9.2f" % \
                                  (ib, (iw + 1), len(self.action.args.at_wave),
-                                  minow, maxow, peak, aw)
+                                  peak, aw)
                         atx0 = [i for i, v in enumerate(atwave)
                                 if v >= min(wvec)][0]
                         atx1 = [i for i, v in enumerate(atwave)
@@ -2509,45 +2520,39 @@ class SolveArcs(BasePrimitive):
                         atnorm = np.nanmax(yvec) / np.nanmax(atspec[atx0:atx1])
                         p = figure(
                             title=self.action.args.plotlabel +
-                            "ATLAS LINE FIT" + ptitle,
+                            "ATLAS/ARC LINE FITS" + ptitle,
                             x_axis_label="Wavelength (A)",
                             y_axis_label="Relative Flux",
                             plot_width=self.config.instrument.plot_width,
                             plot_height=self.config.instrument.plot_height)
-                        p.line(wvec, yvec, legend='Arc', color='black')
-                        p.circle(wvec, yvec, legend='Arc', color='red')
                         ylim = [0, np.nanmax(yvec)]
                         p.line(atwave[atx0:atx1], atspec[atx0:atx1] * atnorm,
                                color='blue', legend='Atlas')
                         p.circle(atwave[atx0:atx1], atspec[atx0:atx1] * atnorm,
                                  color='green', legend='Atlas')
-                        p.line([aw, aw], ylim, color='red', legend='Wl in')
-                        bokeh_plot(p)
-                        input("next - <cr>: ")
-                        p = figure(
-                            title=self.action.args.plotlabel +
-                            "ARC LINE FIT" + ptitle,
-                            x_axis_label="CCD Y (px)",
-                            y_axis_label="Flux (e-)",
-                            plot_width=self.config.instrument.plot_width,
-                            plot_height=self.config.instrument.plot_height)
-                        p.circle(xvec, yvec, color='red', legend='Data')
-                        p.line(xplot, plt_line, color='black', legend='Interp')
-                        ylim = [0, np.nanmax(yvec)]
-                        xlim = [np.nanmin(xvec), np.nanmax(xvec)]
-                        p.line(xlim, [max_value * 0.5, max_value * 0.5],
-                               color='black', line_dash='dashed')
+                        p.line([aw, aw], ylim, color='red', legend='AtCntr')
+                        p.x_range = Range1d(start=min(wvec), end=max(wvec))
+                        p.extra_x_ranges = {"pix": Range1d(start=min(xvec),
+                                                           end=max(xvec))}
+                        p.add_layout(LinearAxis(x_range_name="pix",
+                                                axis_label="CCD Y pix"),
+                                     'above')
+                        p.line(xplot, plt_line, color='black', legend='Arc',
+                               x_range_name="pix")
+                        p.circle(xvec, yvec, legend='Arc', color='red',
+                                 x_range_name="pix")
+                        ylim = [0, np.nanmax(plt_line)]
                         p.line([cent, cent], ylim, color='green', legend='Cntr',
-                               line_dash='dashed')
-                        p.line([line_x, line_x], ylim, color='red',
-                               legend='X in', line_dash='dashdot')
+                               line_dash='dashed', x_range_name="pix")
                         p.line([sp_pk_x, sp_pk_x], ylim, color='magenta',
-                               legend='Gpeak', line_dash='dashdot')
+                               legend='Gpeak', line_dash='dashdot',
+                               x_range_name="pix")
                         p.line([peak, peak], ylim, color='black', legend='Peak',
-                               line_dash='dashdot')
+                               line_dash='dashdot', x_range_name="pix")
+                        p.y_range.start = 0
                         bokeh_plot(p)
 
-                        q = input(ptitle + "; Next? <cr>, q to quit: ")
+                        q = input(ptitle + " - Next? <cr>, q to quit: ")
                         if 'Q' in q.upper():
                             do_inter = False
                 except IndexError:
