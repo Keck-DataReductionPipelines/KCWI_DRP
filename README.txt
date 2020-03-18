@@ -10,6 +10,8 @@ conda install bokeh
 conda install selenium
 conda install -c conda-forge phantomjs
 conda install -c astropy ccdproc
+pip install ref_index
+
 
 
 
