@@ -389,6 +389,7 @@ class ingest_file(BasePrimitive):
         #    self.context.data_set = DataSet(None, self.logger, self.config,
         #    self.context.event_queue)
         # self.context.data_set.append_item(self.action.args.name)
+        self.logger.info("Ingesting file %s" % self.action.args.name)
         self.name = self.action.args.name
         out_args = Arguments()
 
@@ -454,6 +455,18 @@ class ingest_file(BasePrimitive):
             frame=out_args.ccddata)
 
         return out_args
+
+    def apply(self):
+        if self._pre_condition():
+            try:
+                output = self._perform()
+            except ValueError as e:
+                self.logger.warn("UNABLE TO INGEST THE FILE")
+                self.logger.warn("Reason: %s" % e)
+                return None
+            if self._post_condition():
+                self.output = output
+        return self.output
 
 
 def kcwi_fits_reader(file):

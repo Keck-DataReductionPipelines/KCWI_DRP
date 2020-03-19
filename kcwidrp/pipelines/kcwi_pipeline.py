@@ -210,8 +210,11 @@ class Kcwi_pipeline(BasePipeline):
         self.cnt = 0
 
     def action_planner(self, action, context):
-        self.logger.info("******* FILE TYPE DETERMINED AS %s" %
+        try:
+            self.logger.info("******* FILE TYPE DETERMINED AS %s" %
                          action.args.imtype)
+        except:
+            return
 
         groupid = action.args.groupid
         self.logger.info("******* GROUPID is %s " % action.args.groupid)
