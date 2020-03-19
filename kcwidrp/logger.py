@@ -57,5 +57,5 @@ def start_logger(logger_name: str, config: str) -> logging.Logger:
             s_handle = logging.StreamHandler()
             s_handle.setLevel(get_level(log_lvl))
             s_handle.setFormatter(formatter)
-            logger.addHandler(s_handle)
+            #logger.addHandler(s_handle)
     return logger
