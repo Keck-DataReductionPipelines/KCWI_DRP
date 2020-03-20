@@ -704,7 +704,12 @@ class RemoveCosmicRays(BasePrimitive):
         namps = header['NVIDINP']
         read_noise = 0.
         for ia in range(namps):
-            read_noise += header['BIASRN%d' % (ia + 1)]
+            if 'BIASRN%d' % (ia + 1) in header:
+                read_noise += header['BIASRN%d' % (ia + 1)]
+            elif 'OSCNRN%d' % (ia + 1) in header:
+                read_noise += header['OSCNRN%d' % (ia + 1)]
+            else:
+                read_noise += 3.
         read_noise /= float(namps)
 
         # Set sigclip according to image parameters
