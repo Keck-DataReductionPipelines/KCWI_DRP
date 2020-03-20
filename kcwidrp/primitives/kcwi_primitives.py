@@ -738,38 +738,38 @@ class RemoveCosmicRays(BasePrimitive):
                 sepmed=self.config.instrument.CRR_SEPMED,
                 cleantype=self.config.instrument.CRR_CLEANTYPE)
 
-            self.action.args.ccddata.header['history'] = \
-                "LA CosmicX: cleaned cosmic rays"
-            self.action.args.ccddata.header['history'] = \
-                "LA CosmicX params: sigclip=%5.2f sigfrac=%5.2f "\
+            self.logger.info("LA CosmicX: cleaned cosmic rays")
+            header['history'] = "LA CosmicX: cleaned cosmic rays"
+            header['history'] = \
+                "LA CosmicX params: sigclip=%5.2f sigfrac=%5.2f " \
                 "objlim=%5.2f" % (
                 self.config.instrument.CRR_SIGCLIP,
                 self.config.instrument.CRR_SIGFRAC,
                 self.config.instrument.CRR_OBJLIM)
-            self.action.args.ccddata.header['history'] = \
+            header['history'] = \
                 "LA CosmicX params: fsmode=%s psfmodel=%s psffwhm=%5.2f" % (
                 self.config.instrument.CRR_FSMODE,
                 self.config.instrument.CRR_PSFMODEL,
                 self.config.instrument.CRR_PSFFWHM)
-            self.action.args.ccddata.header['history'] = \
-                "LA CosmicX params: sepmed=%s minexptime=%f" % (
+            header['history'] = "LA CosmicX params: sepmed=%s minexptime=%f" % (
                 self.config.instrument.CRR_SEPMED,
                 self.config.instrument.CRR_MINEXPTIME)
-            # self.action.args.ccddata.header['history'] =
-            # "LA CosmicX run on %s" % time.strftime("%c")
+            # header['history'] = "LA CosmicX run on %s" % time.strftime("%c")
 
             mask = np.cast["bool"](mask)
             n_crs = mask.sum()
-            self.action.args.ccddata.header[key] = (True, keycom)
-            self.action.args.ccddata.header['NCRCLEAN'] = (
-                n_crs, "number of cosmic ray pixels")
+            header[key] = (True, keycom)
+            header['NCRCLEAN'] = (n_crs, "number of cosmic ray pixels")
             self.action.args.ccddata.mask += mask
             self.action.args.ccddata.data = clean
         else:
-            header[
-                'history'] = "LA CosmicX: exptime < minexptime=%.1f" % \
-                             self.config.instrument.CRR_MINEXPTIME
-            self.action.args.ccddata.header[key] = (False, keycom)
+            self.logger.info("LA CosmicX: exptime < minexptime=%.1f" %
+                             self.config.instrument.CRR_MINEXPTIME)
+            header['history'] = \
+                "LA CosmicX: exptime < minexptime=%.1f" % \
+                self.config.instrument.CRR_MINEXPTIME
+            header[key] = (False, keycom)
+            header['NCRCLEAN'] = (0, "number of cosmic ray pixels")
 
         logstr = RemoveCosmicRays.__module__ + \
             "." + RemoveCosmicRays.__qualname__
