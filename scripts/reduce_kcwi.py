@@ -9,7 +9,7 @@ Test Fits to PNG pipeline with HTTP server.
 from keckdrpframework.core.framework import Framework
 from keckdrpframework.config.framework_config import ConfigClass
 from keckdrpframework.models.arguments import Arguments
-from kcwidrp.logger import start_logger
+from keckdrpframework.utils.drpf_logger import getLogger
 
 import subprocess
 import time
@@ -21,6 +21,7 @@ import pkg_resources
 
 from kcwidrp.pipelines.kcwi_pipeline import Kcwi_pipeline
 from kcwidrp.core.kcwi_proctab import Proctab
+import logging.config
 
 
 def _parse_arguments(in_args: list) -> argparse.Namespace:
@@ -99,7 +100,7 @@ if __name__ == "__main__":
     framework_config_path = pkg_resources.resource_filename(
         pkg, framework_config_file)
 
-    framework_logcfg_file = 'configs/framework_logger.cfg'
+    framework_logcfg_file = 'configs/logger.cfg'
     framework_logcfg_path = pkg_resources.resource_filename(
         pkg, framework_logcfg_file)
 
@@ -116,14 +117,14 @@ if __name__ == "__main__":
 
     try:
         framework = Framework(Kcwi_pipeline, framework_config_path)
-        framework.logger = start_logger('DRPFrame', framework_logcfg_path)
+        # add this line ONLY if you are using a local logging config file
+        logging.config.fileConfig(framework_logcfg_path)
         framework.config.instrument = kcwi_config
     except Exception as e:
         print("Failed to initialize framework, exiting ...", e)
         traceback.print_exc()
         sys.exit(1)
-
-    framework.context.pipeline_logger = start_logger(pkg, kcwi_config_path)
+    framework.context.pipeline_logger = getLogger(framework_logcfg_path, name="KCWI")
 
     # check for the REDUX directory
     check_redux_dir()
@@ -137,6 +138,7 @@ if __name__ == "__main__":
     framework.context.proctab.read_proctab(tfil=args.proctab)
 
     framework.logger.info("Framework initialized")
+
     if framework.config.instrument.enable_bokeh:
         framework.append_event('start_bokeh', None)
 
@@ -148,29 +150,21 @@ if __name__ == "__main__":
 
     # single frame processing
     elif args.frames:
-        for frame in args.frames:
-            framework.ingest_data(None, [frame], False)
-        for frame in args.frames:
-            arguments = Arguments(name=frame)
-            framework.append_event('next_file', arguments)
+        framework.ingest_data(None, args.frames, False)
 
+    # processing of a list of files contained in a file
     elif args.file_list:
         frames = []
         with open(args.file_list) as file_list:
             for frame in file_list:
                 if "#" not in frame:
                     frames.append(frame.strip('\n'))
-        for frame in frames:
-            framework.ingest_data(None, [frame], False)
-        for frame in frames:
-            arguments = Arguments(name=frame)
-            framework.append_event('next_file', arguments)
+        framework.ingest_data(None, frames, False)
 
-    # ingest an entire directory, trigger "next_file" on each file,
+    # ingest an entire directory, trigger "next_file" (which is an option specified in the config file) on each file,
     # optionally continue to monitor if -m is specified
     elif (len(args.infiles) > 0) or args.dirname is not None:
         framework.ingest_data(args.dirname, args.infiles, args.monitor)
-        # framework.context.data_set.start_monitor()
 
     framework.start(args.queue_manager_only, args.ingest_data_only,
                     args.wait_for_event, args.continuous)

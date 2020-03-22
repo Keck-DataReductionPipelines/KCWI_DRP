@@ -6,7 +6,6 @@ KCWI
 
 from keckdrpframework.pipelines.base_pipeline import BasePipeline
 from keckdrpframework.models.processing_context import ProcessingContext
-from kcwidrp.logger import start_logger
 from ..primitives.kcwi_primitives import *
 from ..primitives.kcwi_file_primitives import *
 from ..primitives.kcwi_bokeh import *
@@ -219,7 +218,7 @@ class Kcwi_pipeline(BasePipeline):
         groupid = action.args.groupid
         self.logger.info("******* GROUPID is %s " % action.args.groupid)
         if action.args.in_proctab:
-            self.logger.warn("Already processed")
+            self.logger.warn("Already processed (already in proctab")
         if action.args.in_proctab and not context.config.instrument.clobber:
             self.logger.warn("Pushing noop to queue")
             context.push_event("noop", action.args)
