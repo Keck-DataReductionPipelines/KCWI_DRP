@@ -90,35 +90,37 @@ if __name__ == "__main__":
 
     args = _parse_arguments(sys.argv)
 
-    # configuration files
+    # START HANDLING OF CONFIGURATION FILES ##########
     pkg = 'kcwidrp'
 
     # check for the logs diretory
     check_logs_dir()
 
     framework_config_file = "configs/framework.cfg"
-    framework_config_path = pkg_resources.resource_filename(
+    framework_config_fullpath = pkg_resources.resource_filename(
         pkg, framework_config_file)
 
     framework_logcfg_file = 'configs/logger.cfg'
-    framework_logcfg_path = pkg_resources.resource_filename(
+    framework_logcfg_fullpath = pkg_resources.resource_filename(
         pkg, framework_logcfg_file)
 
     # add kcwi specific config files # make changes here to allow this file
     # to be loaded from the command line
     if args.kcwi_config_file is None:
         kcwi_config_file = 'configs/kcwi.cfg'
-        kcwi_config_path = pkg_resources.resource_filename(
+        kcwi_config_fullpath = pkg_resources.resource_filename(
             pkg, kcwi_config_file)
-        kcwi_config = ConfigClass(kcwi_config_path, default_section='KCWI')
+        kcwi_config = ConfigClass(kcwi_config_fullpath, default_section='KCWI')
     else:
-        kcwi_config_path = os.path.abspath(args.kcwi_config_file)
+        kcwi_config_fullpath = os.path.abspath(args.kcwi_config_file)
         kcwi_config = ConfigClass(args.kcwi_config_file, default_section='KCWI')
 
+    # END HANDLING OF CONFIGURATION FILES ##########
+
     try:
-        framework = Framework(Kcwi_pipeline, framework_config_path)
+        framework = Framework(Kcwi_pipeline, framework_config_fullpath)
         # add this line ONLY if you are using a local logging config file
-        logging.config.fileConfig(framework_logcfg_path)
+        logging.config.fileConfig(framework_logcfg_fullpath)
         framework.config.instrument = kcwi_config
     except Exception as e:
         print("Failed to initialize framework, exiting ...", e)
@@ -163,8 +165,9 @@ if __name__ == "__main__":
 
     # ingest an entire directory, trigger "next_file" (which is an option specified in the config file) on each file,
     # optionally continue to monitor if -m is specified
-    elif (len(args.infiles) > 0) or args.dirname is not None:
-        framework.ingest_data(args.dirname, args.infiles, args.monitor)
+    elif args.dirname is not None:
+
+        framework.ingest_data(args.dirname, None, args.monitor)
 
     framework.start(args.queue_manager_only, args.ingest_data_only,
                     args.wait_for_event, args.continuous)
