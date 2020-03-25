@@ -126,7 +126,7 @@ if __name__ == "__main__":
         print("Failed to initialize framework, exiting ...", e)
         traceback.print_exc()
         sys.exit(1)
-    framework.context.pipeline_logger = getLogger(framework_logcfg_path, name="KCWI")
+    framework.context.pipeline_logger = getLogger(framework_logcfg_fullpath, name="KCWI")
 
     # check for the REDUX directory
     check_redux_dir()
