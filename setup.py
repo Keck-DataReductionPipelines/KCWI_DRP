@@ -25,9 +25,13 @@ RELEASE = 'dev' not in VERSION
 
 scripts = [fname for fname in glob.glob(os.path.join('scripts', '*'))
            if os.path.basename(fname) != 'README.rst']
-
+scripts = []
 # Define entry points for command-line scripts
-entry_points = {'console_scripts': []}
+entry_points = {
+    'console_scripts': [
+        "reduce_kcwi = kcwidrp.scripts.reduce_kcwi:__main__",
+        "smart_reduce_kcwi = kcwidrp.scripts.smart_reduce_kcwi:__main__"
+    ]}
 
 
 setup(name=NAME,

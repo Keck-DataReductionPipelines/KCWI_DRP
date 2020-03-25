@@ -73,11 +73,10 @@ def _parse_arguments(in_args: list) -> argparse.Namespace:
     return out_args
 
 
-def check_redux_dir():
-    if not os.path.isdir(framework.config.instrument.output_directory):
-        os.makedirs(framework.config.instrument.output_directory)
-        print("Output directory created: %s" %
-              framework.config.instrument.output_directory)
+def check_redux_dir(output_directory):
+    if not os.path.isdir(output_directory):
+        os.makedirs(output_directory)
+        print("Output directory created: %s" % output_directory)
 
 
 def check_logs_dir():
@@ -86,8 +85,7 @@ def check_logs_dir():
         print("Logs directory created")
 
 
-if __name__ == "__main__":
-
+def main():
     args = _parse_arguments(sys.argv)
 
     # START HANDLING OF CONFIGURATION FILES ##########
@@ -129,7 +127,7 @@ if __name__ == "__main__":
     framework.context.pipeline_logger = getLogger(framework_logcfg_fullpath, name="KCWI")
 
     # check for the REDUX directory
-    check_redux_dir()
+    check_redux_dir(framework.config.instrument.output_directory)
 
     if framework.config.instrument.enable_bokeh is True:
         subprocess.Popen('bokeh serve', shell=True)
@@ -171,3 +169,6 @@ if __name__ == "__main__":
 
     framework.start(args.queue_manager_only, args.ingest_data_only,
                     args.wait_for_event, args.continuous)
+
+if __name__ == "__main__":
+    main()
