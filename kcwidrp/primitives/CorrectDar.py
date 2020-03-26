@@ -1,5 +1,37 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from keckdrpframework.models.arguments import Arguments
+from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer
+
+import numpy as np
+import scipy as sp
+import math
+import ref_index
+
+
+def atm_disper(w0, w1, airmass, temperature=10.0, pressure_pa=61100.0,
+               humidity=50.0, co2=400.0):
+    """Calculate atmospheric dispersion at w1 relative to w0
+
+    Args:
+        w0 (float): reference wavelength (Angstroms)
+        w1 (float): offset wavelength (Angstroms)
+        airmass (float): unitless airmass
+        temperature (float): atmospheric temperature (C)
+        pressure_pa (float): atmospheric pressure (Pa)
+        humidity (float): relative humidity (%)
+        co2 (float): Carbon-Dioxide (mu-mole/mole)
+
+    """
+
+    # Calculate
+    z = math.acos(1.0/airmass)
+
+    n0 = ref_index.ciddor(wave=w0/10., t=temperature, p=pressure_pa,
+                          rh=humidity, co2=co2)
+    n1 = ref_index.ciddor(wave=w1/10., t=temperature, p=pressure_pa,
+                          rh=humidity, co2=co2)
+
+    return 206265.0 * (n0 - n1) * math.tan(z)
 
 
 class CorrectDar(BasePrimitive):
@@ -113,7 +145,7 @@ class CorrectDar(BasePrimitive):
             self.action.args.ccddata.mask
 
         # Perform correction
-        print(img_out.shape)
+        self.logger.info(img_out.shape)
         for j, wl in enumerate(waves):
             dcor = atm_disper(wref, wl, air)
             xsh = dcor * math.sin(projang) / xscl

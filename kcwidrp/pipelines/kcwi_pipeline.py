@@ -204,8 +204,6 @@ class Kcwi_pipeline(BasePipeline):
         Constructor
         """
         BasePipeline.__init__(self, context)
-        print(context.config.instrument)
-        # self.logger = self.context.pipeline_logger
         self.cnt = 0
 
     def action_planner(self, action, context):

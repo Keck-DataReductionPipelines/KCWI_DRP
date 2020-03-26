@@ -1,6 +1,8 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from keckdrpframework.models.arguments import Arguments
 
+from astropy.nddata import VarianceUncertainty
+
 
 class CreateUncertaintyImage(BasePrimitive):
     """Generate a variance image based on Poisson noise plus readnoise"""

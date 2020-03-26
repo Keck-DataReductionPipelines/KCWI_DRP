@@ -1,8 +1,11 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from keckdrpframework.models.arguments import Arguments
+from kcwidrp.primitives.kcwi_file_primitives import read_table
 
 from skimage import transform as tf
 import numpy as np
+import os
+
 
 class ExtractArcs(BasePrimitive):
     """Use derived traces to extract arc spectra along bars"""

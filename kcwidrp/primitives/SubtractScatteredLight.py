@@ -1,5 +1,9 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from keckdrpframework.models.arguments import Arguments
+from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer
+
+import numpy as np
+import scipy as sp
 
 
 class SubtractScatteredLight(BasePrimitive):

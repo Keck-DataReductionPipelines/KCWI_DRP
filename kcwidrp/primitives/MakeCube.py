@@ -1,5 +1,14 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from keckdrpframework.models.arguments import Arguments
+from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer
+
+import os
+import math
+import pickle
+import numpy as np
+from skimage import transform as tf
+from astropy.coordinates import SkyCoord
+from astropy import units as u
 
 
 class MakeCube(BasePrimitive):

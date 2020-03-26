@@ -43,7 +43,6 @@ class TrimOverscan(BasePrimitive):
             sec += "%d," % xo1
             sec += "%d:" % (yo0+1)
             sec += "%d]" % yo1
-            self.logger.info("ADDING ATSEC%d" % (ia + 1))
             self.action.args.ccddata.header['ATSEC%d' % (ia+1)] = sec
             # remove obsolete sections
             self.action.args.ccddata.header.pop('ASEC%d' % (ia + 1))

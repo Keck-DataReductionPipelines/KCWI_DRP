@@ -1,5 +1,14 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from keckdrpframework.models.arguments import Arguments
+from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer
+
+import numpy as np
+
+try:
+    import _lacosmicx
+except ImportError:
+    print("Please install lacosmicx from github.com/cmccully/lacosmicx.")
+    quit()
 
 
 class RemoveCosmicRays(BasePrimitive):

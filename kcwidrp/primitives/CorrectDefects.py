@@ -1,6 +1,11 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from keckdrpframework.models.arguments import Arguments
 
+import numpy as np
+import pkg_resources
+import os
+import pandas as pd
+
 
 class CorrectDefects(BasePrimitive):
     """Remove known bad columns"""

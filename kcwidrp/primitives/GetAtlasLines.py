@@ -1,6 +1,170 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from keckdrpframework.models.arguments import Arguments
 
+import numpy as np
+import scipy as sp
+from scipy.interpolate import interpolate
+from scipy.signal.windows import boxcar
+from scipy.optimize import curve_fit
+from scipy.stats import sigmaclip
+
+
+def gaus(x, a, mu, sigma):
+    """Gaussian fitting function"""
+    return a * np.exp(-(x - mu) ** 2 / (2. * sigma ** 2))
+
+
+def get_line_window(y, c, thresh=0., verbose=False):
+    """Find a window that includes the fwhm of the line"""
+    nx = len(y)
+    # check edges
+    if c < 2 or c > nx - 2:
+        if verbose:
+            print("input center too close to edge")
+        return None, None, 0
+    # get initial values
+    x0 = c - 2
+    x1 = c + 2
+    mx = np.nanmax(y[x0:x1+1])
+    count = 5
+    # check low side
+    if x0 - 1 < 0:
+        if verbose:
+            print("max check: low edge hit")
+        return None, None, 0
+    while y[x0-1] > mx:
+        x0 -= 1
+        count += 1
+        if x0 - 1 < 0:
+            if verbose:
+                print("Max check: low edge hit")
+            return None, None, 0
+
+    # check high side
+    if x1 + 1 > nx:
+        if verbose:
+            print("max check: high edge hit")
+        return None, None, 0
+    while y[x1+1] > mx:
+        x1 += 1
+        count += 1
+        if x1 + 1 > nx:
+            if verbose:
+                print("Max check: high edge hit")
+            return None, None, 0
+    # adjust starting window to center on max
+    cmx = x0 + y[x0:x1+1].argmax()
+    x0 = cmx - 2
+    x1 = cmx + 2
+    mx = np.nanmax(y[x0:x1 + 1])
+    # make sure max is high enough
+    if mx < thresh:
+        return None, None, 0
+    #
+    # expand until we get to half max
+    hmx = mx * 0.5
+    #
+    # Low index side
+    prev = mx
+    while y[x0] > hmx:
+        if y[x0] > mx or x0 <= 0 or y[x0] > prev:
+            if verbose:
+                if y[x0] > mx:
+                    print("hafmax check: low index err - missed max")
+                if x0 <= 0:
+                    print("hafmax check: low index err - at edge")
+                if y[x0] > prev:
+                    print("hafmax check: low index err - wiggly")
+            return None, None, 0
+        prev = y[x0]
+        x0 -= 1
+        count += 1
+    # High index side
+    prev = mx
+    while y[x1] > hmx:
+        if y[x1] > mx or x1 >= nx or y[x1] > prev:
+            if verbose:
+                if y[x1] > mx:
+                    print("hafmax check: high index err - missed max")
+                if x1 >= nx:
+                    print("hafmax check: high index err - at edge")
+                if y[x1] > prev:
+                    print("hafmax check: high index err - wiggly")
+            return None, None, 0
+        prev = y[x1]
+        x1 += 1
+        count += 1
+    # where did we end up?
+    if c < x0 or x1 < c:
+        if verbose:
+            print("initial position outside final window")
+        return None, None, 0
+
+    return x0, x1, count
+    # END: get_line_window()
+
+
+
+def findpeaks(x, y, wid, sth, ath, pkg=None, verbose=False):
+    """Find peaks in spectrum"""
+    # derivative
+    grad = np.gradient(y)
+    # smooth derivative
+    win = boxcar(wid)
+    d = sp.signal.convolve(grad, win, mode='same') / sum(win)
+    # size
+    nx = len(x)
+    # set up windowing
+    if not pkg:
+        pkg = wid
+    hgrp = int(pkg/2)
+    hgt = []
+    pks = []
+    sgs = []
+    # loop over spectrum
+    # limits to avoid edges given pkg
+    for i in np.arange(pkg, (nx - pkg)):
+        # find zero crossings
+        if np.sign(d[i]) > np.sign(d[i+1]):
+            # pass slope threshhold?
+            if (d[i] - d[i+1]) > sth * y[i]:
+                # pass amplitude threshhold?
+                if y[i] > ath or y[i+1] > ath:
+                    # get subvectors around peak in window
+                    xx = x[(i-hgrp):(i+hgrp+1)]
+                    yy = y[(i-hgrp):(i+hgrp+1)]
+                    if len(yy) > 3:
+                        try:
+                            res, _ = curve_fit(gaus, xx, yy,
+                                               p0=[100., x[i], 1.])
+                            r = abs(x - res[1])
+                            t = r.argmin()
+                            if abs(i - t) > pkg:
+                                if verbose:
+                                    print(i, t, x[i], res[1], x[t])
+                            else:
+                                hgt.append(res[0])
+                                pks.append(res[1])
+                                sgs.append(abs(res[2]))
+                        except RuntimeError:
+                            continue
+    # clean by sigmas
+    cvals = []
+    cpks = []
+    sgmd = None
+    if len(pks) > 0:
+        cln_sgs, low, upp = sigmaclip(sgs, low=3., high=3.)
+        for i in range(len(pks)):
+            if low < sgs[i] < upp:
+                cpks.append(pks[i])
+                cvals.append(hgt[i])
+        # sgmn = cln_sgs.mean()
+        sgmd = float(np.nanmedian(cln_sgs))
+    else:
+        print("No peaks found!")
+    return cpks, sgmd, cvals
+    # END: findpeaks()
+
 
 class GetAtlasLines(BasePrimitive):
     """Get relevant atlas line positions and wavelengths"""
@@ -169,27 +333,28 @@ class GetAtlasLines(BasePrimitive):
         self.action.args.at_flux = refas
         # plot results
         norm_fac = np.nanmax(atspec)
-        p = figure(title=self.action.args.plotlabel +
-                   "ATLAS LINES Ngood = %d, Nrej = %d" % (len(refws), nrej),
-                   x_axis_label="Wavelength (A)",
-                   y_axis_label="Normalized Flux",
-                   plot_width=self.config.instrument.plot_width,
-                   plot_height=self.config.instrument.plot_height)
-        p.line(subwvals, subyvals / np.nanmax(subyvals), legend='RefArc',
+        if self.config.instrument.plot_level >= 1:
+            p = figure(title=self.action.args.plotlabel +
+                             "ATLAS LINES Ngood = %d, Nrej = %d" % (len(refws), nrej),
+                       x_axis_label="Wavelength (A)",
+                       y_axis_label="Normalized Flux",
+                       plot_width=self.config.instrument.plot_width,
+                       plot_height=self.config.instrument.plot_height)
+            p.line(subwvals, subyvals / np.nanmax(subyvals), legend='RefArc',
                color='lightgray')
-        p.line(atwave, atspec / norm_fac, legend='Atlas', color='blue')
-        # Rejected: nearby neighbor
-        p.diamond(rej_neigh_w, rej_neigh_y / norm_fac, legend='NeighRej',
+            p.line(atwave, atspec / norm_fac, legend='Atlas', color='blue')
+            # Rejected: nearby neighbor
+            p.diamond(rej_neigh_w, rej_neigh_y / norm_fac, legend='NeighRej',
                   color='cyan', size=8)
-        # Rejected: fit failure
-        p.diamond(rej_fit_w, rej_fit_y / norm_fac, legend='FitRej',
+            # Rejected: fit failure
+            p.diamond(rej_fit_w, rej_fit_y / norm_fac, legend='FitRej',
                   color='red', size=8)
-        # Rejected: line parameter outside range
-        p.diamond(rej_par_w, rej_par_a / norm_fac, legend='ParRej',
+            # Rejected: line parameter outside range
+            p.diamond(rej_par_w, rej_par_a / norm_fac, legend='ParRej',
                   color='orange', size=8)
-        p.diamond(refws, refas / norm_fac, legend='Kept', color='green',
+            p.diamond(refws, refas / norm_fac, legend='Kept', color='green',
                   size=10)
-        p.x_range = Range1d(min(subwvals), max(subwvals))
+            p.x_range = Range1d(min(subwvals), max(subwvals))
         if self.config.instrument.plot_level >= 1:
             bokeh_plot(p)
             if self.config.instrument.plot_level >= 2:
