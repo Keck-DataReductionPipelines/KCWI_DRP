@@ -1,5 +1,11 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from keckdrpframework.models.arguments import Arguments
+from keckdrpframework.primitives.base_img import BaseImg
+from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_reader, kcwi_fits_writer, parse_imsec
+
+import ccdproc
+import numpy as np
+from scipy.stats import sigmaclip
 
 
 class MakeMasterBias(BaseImg):

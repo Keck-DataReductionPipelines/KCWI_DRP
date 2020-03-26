@@ -2,6 +2,7 @@ from keckdrpframework.primitives.base_primitive import BasePrimitive
 from keckdrpframework.models.arguments import Arguments
 
 import numpy as np
+from scipy.signal.windows import boxcar
 
 
 class SolveArcs(BasePrimitive):

@@ -1,5 +1,6 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from keckdrpframework.models.arguments import Arguments
+from keckdrpframework.primitives.base_img import BaseImg
 
 
 class MakeMasterDark(BaseImg):
