@@ -94,6 +94,7 @@ def main():
         kcwi_config_fullpath = os.path.abspath(args.kcwi_config_file)
         kcwi_config = ConfigClass(args.kcwi_config_file, default_section='KCWI')
 
+
     # END HANDLING OF CONFIGURATION FILES ##########
 
     try:

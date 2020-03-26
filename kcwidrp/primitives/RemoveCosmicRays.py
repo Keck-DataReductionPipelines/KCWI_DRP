@@ -1,0 +1,104 @@
+from keckdrpframework.primitives.base_primitive import BasePrimitive
+from keckdrpframework.models.arguments import Arguments
+
+
+class RemoveCosmicRays(BasePrimitive):
+    """Remove cosmic rays and generate a flag image recording their location"""
+
+    def __init__(self, action, context):
+        BasePrimitive.__init__(self, action, context)
+        self.logger = context.pipeline_logger
+
+    def _perform(self):
+        # TODO: implement parameter options from kcwi_stage1.pro
+        self.logger.info("Finding and masking cosmic rays")
+
+        # Header keyword to update
+        key = 'CRCLEAN'
+        keycom = 'cosmic rays cleaned?'
+
+        header = self.action.args.ccddata.header
+
+        if header['TTIME'] >= self.config.instrument.CRR_MINEXPTIME:
+
+            namps = header['NVIDINP']
+            read_noise = 0.
+            for ia in range(namps):
+                if 'BIASRN%d' % (ia + 1) in header:
+                    read_noise += header['BIASRN%d' % (ia + 1)]
+                elif 'OSCNRN%d' % (ia + 1) in header:
+                    read_noise += header['OSCNRN%d' % (ia + 1)]
+                else:
+                    read_noise += 3.
+            read_noise /= float(namps)
+
+            # Set sigclip according to image parameters
+            sigclip = self.config.instrument.CRR_SIGCLIP
+            if 'FLATLAMP' in self.action.args.ccddata.header['IMTYPE']:
+                if self.action.args.nasmask:
+                    sigclip = 10.
+                else:
+                    sigclip = 7.
+            if 'OBJECT' in self.action.args.ccddata.header['IMTYPE']:
+                if self.action.args.ccddata.header['TTIME'] < 300.:
+                    sigclip = 10.
+
+            mask, clean = _lacosmicx.lacosmicx(
+                self.action.args.ccddata.data, gain=1.0, readnoise=read_noise,
+                psffwhm=self.config.instrument.CRR_PSFFWHM,
+                sigclip=sigclip,
+                sigfrac=self.config.instrument.CRR_SIGFRAC,
+                objlim=self.config.instrument.CRR_OBJLIM,
+                fsmode=self.config.instrument.CRR_FSMODE,
+                psfmodel=self.config.instrument.CRR_PSFMODEL,
+                verbose=self.config.instrument.CRR_VERBOSE,
+                sepmed=self.config.instrument.CRR_SEPMED,
+                cleantype=self.config.instrument.CRR_CLEANTYPE)
+
+            self.logger.info("LA CosmicX: cleaned cosmic rays")
+            header['history'] = "LA CosmicX: cleaned cosmic rays"
+            header['history'] = \
+                "LA CosmicX params: sigclip=%5.2f sigfrac=%5.2f " \
+                "objlim=%5.2f" % (
+                self.config.instrument.CRR_SIGCLIP,
+                self.config.instrument.CRR_SIGFRAC,
+                self.config.instrument.CRR_OBJLIM)
+            header['history'] = \
+                "LA CosmicX params: fsmode=%s psfmodel=%s psffwhm=%5.2f" % (
+                self.config.instrument.CRR_FSMODE,
+                self.config.instrument.CRR_PSFMODEL,
+                self.config.instrument.CRR_PSFFWHM)
+            header['history'] = "LA CosmicX params: sepmed=%s minexptime=%f" % (
+                self.config.instrument.CRR_SEPMED,
+                self.config.instrument.CRR_MINEXPTIME)
+            # header['history'] = "LA CosmicX run on %s" % time.strftime("%c")
+
+            mask = np.cast["bool"](mask)
+            n_crs = mask.sum()
+            header[key] = (True, keycom)
+            header['NCRCLEAN'] = (n_crs, "number of cosmic ray pixels")
+            self.action.args.ccddata.mask += mask
+            self.action.args.ccddata.data = clean
+        else:
+            self.logger.info("LA CosmicX: exptime < minexptime=%.1f" %
+                             self.config.instrument.CRR_MINEXPTIME)
+            header['history'] = \
+                "LA CosmicX: exptime < minexptime=%.1f" % \
+                self.config.instrument.CRR_MINEXPTIME
+            header[key] = (False, keycom)
+            header['NCRCLEAN'] = (0, "number of cosmic ray pixels")
+
+        logstr = RemoveCosmicRays.__module__ + \
+            "." + RemoveCosmicRays.__qualname__
+        self.action.args.ccddata.header['HISTORY'] = logstr
+        self.logger.info(logstr)
+
+        if self.config.instrument.saveintims:
+            kcwi_fits_writer(self.action.args.ccddata,
+                             table=self.action.args.table,
+                             output_file=self.action.args.name, suffix="crr")
+
+        return self.action.args
+    # END: class RemoveCosmicRays()
+
+
