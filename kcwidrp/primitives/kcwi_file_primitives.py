@@ -527,7 +527,7 @@ def kcwi_fits_reader(file):
     if ccddata:
         if 'BUNIT' in ccddata.header:
             ccddata.unit = ccddata.header['BUNIT']
-            print("setting image units to " + ccddata.header['BUNIT'])
+            #print("setting image units to " + ccddata.header['BUNIT'])
 
     return ccddata, table
 

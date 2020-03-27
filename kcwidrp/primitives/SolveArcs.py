@@ -3,6 +3,112 @@ from keckdrpframework.models.arguments import Arguments
 
 import numpy as np
 from scipy.signal.windows import boxcar
+import scipy as sp
+from scipy.optimize import curve_fit
+from scipy.interpolate import interpolate
+from scipy.stats import sigmaclip
+from bokeh.io import export_png
+from bokeh.plotting import figure, show
+from bokeh.models import Range1d, LinearAxis
+from bokeh.layouts import gridplot
+from bokeh.models.markers import X
+from bokeh.io import export_png
+from bokeh.util.logconfig import basicConfig, bokeh_logger as bl
+
+
+def gaus(x, a, mu, sigma):
+    """Gaussian fitting function"""
+    return a * np.exp(-(x - mu) ** 2 / (2. * sigma ** 2))
+
+
+def get_line_window(y, c, thresh=0., verbose=False):
+    """Find a window that includes the fwhm of the line"""
+    nx = len(y)
+    # check edges
+    if c < 2 or c > nx - 2:
+        if verbose:
+            print("input center too close to edge")
+        return None, None, 0
+    # get initial values
+    x0 = c - 2
+    x1 = c + 2
+    mx = np.nanmax(y[x0:x1+1])
+    count = 5
+    # check low side
+    if x0 - 1 < 0:
+        if verbose:
+            print("max check: low edge hit")
+        return None, None, 0
+    while y[x0-1] > mx:
+        x0 -= 1
+        count += 1
+        if x0 - 1 < 0:
+            if verbose:
+                print("Max check: low edge hit")
+            return None, None, 0
+
+    # check high side
+    if x1 + 1 > nx:
+        if verbose:
+            print("max check: high edge hit")
+        return None, None, 0
+    while y[x1+1] > mx:
+        x1 += 1
+        count += 1
+        if x1 + 1 > nx:
+            if verbose:
+                print("Max check: high edge hit")
+            return None, None, 0
+    # adjust starting window to center on max
+    cmx = x0 + y[x0:x1+1].argmax()
+    x0 = cmx - 2
+    x1 = cmx + 2
+    mx = np.nanmax(y[x0:x1 + 1])
+    # make sure max is high enough
+    if mx < thresh:
+        return None, None, 0
+    #
+    # expand until we get to half max
+    hmx = mx * 0.5
+    #
+    # Low index side
+    prev = mx
+    while y[x0] > hmx:
+        if y[x0] > mx or x0 <= 0 or y[x0] > prev:
+            if verbose:
+                if y[x0] > mx:
+                    print("hafmax check: low index err - missed max")
+                if x0 <= 0:
+                    print("hafmax check: low index err - at edge")
+                if y[x0] > prev:
+                    print("hafmax check: low index err - wiggly")
+            return None, None, 0
+        prev = y[x0]
+        x0 -= 1
+        count += 1
+    # High index side
+    prev = mx
+    while y[x1] > hmx:
+        if y[x1] > mx or x1 >= nx or y[x1] > prev:
+            if verbose:
+                if y[x1] > mx:
+                    print("hafmax check: high index err - missed max")
+                if x1 >= nx:
+                    print("hafmax check: high index err - at edge")
+                if y[x1] > prev:
+                    print("hafmax check: high index err - wiggly")
+            return None, None, 0
+        prev = y[x1]
+        x1 += 1
+        count += 1
+    # where did we end up?
+    if c < x0 or x1 < c:
+        if verbose:
+            print("initial position outside final window")
+        return None, None, 0
+
+    return x0, x1, count
+    # END: get_line_window()
 
 
 class SolveArcs(BasePrimitive):
@@ -314,6 +420,11 @@ class SolveArcs(BasePrimitive):
         # Plot fit sigmas
         self.action.args.av_bar_sig = float(np.nanmean(bar_sig))
         self.action.args.st_bar_sig = float(np.nanstd(bar_sig))
+        self.logger.info("<STD>     = %.3f +- %.3f (A)" %
+                         (self.action.args.av_bar_sig,
+                          self.action.args.st_bar_sig))
+
+
         ptitle = self.action.args.plotlabel + \
             "FIT STATS <RMS> = %.3f +- %.3f" % (self.action.args.av_bar_sig,
                                                 self.action.args.st_bar_sig)
@@ -324,24 +435,21 @@ class SolveArcs(BasePrimitive):
         xlim = [-1, 120]
         ylim = [np.nanmin(bar_sig), np.nanmax(bar_sig)]
 
-        self.logger.info("<STD>     = %.3f +- %.3f (A)" %
-                         (self.action.args.av_bar_sig,
-                          self.action.args.st_bar_sig))
         p.line(xlim, [self.action.args.av_bar_sig,
                       self.action.args.av_bar_sig], color='black')
         p.line(xlim, [(self.action.args.av_bar_sig -
                        self.action.args.st_bar_sig),
                       (self.action.args.av_bar_sig -
                        self.action.args.st_bar_sig)], color='black',
-               line_dash='dotted')
+                    line_dash='dotted')
         p.line(xlim, [(self.action.args.av_bar_sig +
                        self.action.args.st_bar_sig),
                       (self.action.args.av_bar_sig +
                        self.action.args.st_bar_sig)], color='black',
                line_dash='dotted')
         for ix in range(1, 24):
-            sx = ix * 5 - 0.5
-            p.line([sx, sx], ylim, color='black', line_dash='dashdot')
+                sx = ix * 5 - 0.5
+                p.line([sx, sx], ylim, color='black', line_dash='dashdot')
         if self.config.instrument.plot_level >= 1:
             bokeh_plot(p)
             if self.config.instrument.plot_level >= 2:

@@ -1,5 +1,8 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from keckdrpframework.models.arguments import Arguments
+from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_reader
+
+import os
 
 
 class SubtractBias(BasePrimitive):
@@ -25,7 +28,7 @@ class SubtractBias(BasePrimitive):
         if len(tab) > 0:
             mbname = tab['OFNAME'][0].split('.')[0] + '_' + \
                      target_type.lower() + ".fits"
-            print("*************** READING IMAGE: %s" % mbname)
+            self.logger.info("Reading image: %s" % mbname)
             mbias = kcwi_fits_reader(
                 os.path.join(os.path.dirname(self.action.args.name), 'redux',
                              mbname))[0]

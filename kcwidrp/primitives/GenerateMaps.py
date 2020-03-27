@@ -1,5 +1,10 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from keckdrpframework.models.arguments import Arguments
+from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer
+
+import os
+import numpy as np
+import pickle
 
 
 class GenerateMaps(BasePrimitive):

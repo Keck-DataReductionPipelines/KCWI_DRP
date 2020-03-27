@@ -1,10 +1,13 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from keckdrpframework.models.arguments import Arguments
 from keckdrpframework.primitives.base_img import BaseImg
+from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_reader, kcwi_fits_writer
 
+import os
+import ccdproc
 
-class MakeMasterDark(BaseImg):
-    """Stack dark frames into master dark"""
+class MakeMasterFlat(BaseImg):
+    """Stack flat images and make master flat image"""
 
     def __init__(self, action, context):
         BaseImg.__init__(self, action, context)
@@ -15,10 +18,10 @@ class MakeMasterDark(BaseImg):
         Checks if we can build a stacked frame based on the processing table
         :return:
         """
-        # get list of dark frames
-        self.logger.info("Checking precondition for stack_darks")
+        # get list of input flats
+        self.logger.info("Checking precondition for StackFlats")
         self.combine_list = self.context.proctab.n_proctab(
-            frame=self.action.args.ccddata, target_type='DARK',
+            frame=self.action.args.ccddata, target_type='FLATLAMP',
             target_group=self.action.args.groupid)
         self.logger.info(f"pre condition got {len(self.combine_list)},"
                          f" expecting {self.action.args.min_files}")
@@ -37,36 +40,43 @@ class MakeMasterDark(BaseImg):
         suffix = args.new_type.lower()
 
         combine_list = list(self.combine_list['OFNAME'])
-        # get master dark output name
-        mdname = combine_list[0].split('.fits')[0] + '_' + suffix + '.fits'
+        # get flat stack output name
+        stname = combine_list[0].split('.fits')[0] + '_sflat.fits'
         stack = []
         stackf = []
-        for dark in combine_list:
+        for flat in combine_list:
             # get dark intensity (int) image file name in redux directory
-            stackf.append(dark.split('.fits')[0] + '_int.fits')
-            darkfn = os.path.join(args.in_directory, stackf[-1])
+            stackf.append(flat.split('.fits')[0] + '_intd.fits')
+            flatfn = os.path.join(args.in_directory, stackf[-1])
             # using [0] gets just the image data
-            stack.append(kcwi_fits_reader(darkfn)[0])
+            stack.append(kcwi_fits_reader(flatfn)[0])
 
         stacked = ccdproc.combine(stack, method=method, sigma_clip=True,
                                   sigma_clip_low_thresh=None,
                                   sigma_clip_high_thresh=2.0)
-        stacked.unit = stack[0].unit
-        stacked.header.IMTYPE = args.new_type
+        # stacked.header.IMTYPE = args.new_type
         stacked.header['NSTACK'] = (len(combine_list),
                                     'number of images stacked')
         stacked.header['STCKMETH'] = (method, 'method used for stacking')
         for ii, fname in enumerate(stackf):
             stacked.header['STACKF%d' % (ii + 1)] = (fname, "stack input file")
 
-        logstr = MakeMasterDark.__module__ + "." + MakeMasterDark.__qualname__
+        logstr = MakeMasterFlat.__module__ + "." + MakeMasterFlat.__qualname__
         stacked.header['HISTORY'] = logstr
-        self.logger.info(logstr)
 
-        kcwi_fits_writer(stacked, output_file=mdname)
+        # output stacked flat
+        kcwi_fits_writer(stacked, output_file=stname)
+
+        # get master flat output name
+        mfname = combine_list[0].split('.fits')[0] + '_' + suffix + '.fits'
+
+        # output master flat
+        kcwi_fits_writer(stacked, output_file=mfname)
         self.context.proctab.update_proctab(frame=stacked, suffix=suffix,
                                             newtype=args.new_type)
         self.context.proctab.write_proctab()
-        return Arguments(name=mdname)
-    # END: class StackDarks()
 
+        self.logger.info(logstr)
+        return Arguments(name=mfname)
+
+    # END: class MakeMasterFlat()
