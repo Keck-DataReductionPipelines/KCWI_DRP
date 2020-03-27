@@ -1,8 +1,12 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from keckdrpframework.models.arguments import Arguments
+from kcwidrp.core.bokeh_plotting import bokeh_plot
 
+from bokeh.plotting import figure, show
+from bokeh.models import Range1d, LinearAxis
 import numpy as np
 import math
+import time
 
 class SubtractOverscan(BasePrimitive):
     """Fit overscan region and subtract result from image"""

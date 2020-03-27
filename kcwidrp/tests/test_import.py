@@ -2,7 +2,7 @@ import pytest
 
 
 def test_import_ApplyFlat():
-   import kcwidrp.primitives.ApplyFlat
+    import kcwidrp.primitives.ApplyFlat
 
 
 def test_import_ArcOffsets():
@@ -14,150 +14,147 @@ def test_import_CalcPrelimDisp():
 
 
 def test_import_CorrectDar():
-   import kcwidrp.primitives.CorrectDar
+     import kcwidrp.primitives.CorrectDar
 
 
 def test_import_CorrectDefects():
-   import kcwidrp.primitives.CorrectDefects
+     import kcwidrp.primitives.CorrectDefects
 
 
 def test_import_CorrectGain():
-   import kcwidrp.primitives.CorrectGain
+     import kcwidrp.primitives.CorrectGain
 
 
 def test_import_CreateUncertaintyImage():
-   import kcwidrp.primitives.CreateUncertaintyImage
+     import kcwidrp.primitives.CreateUncertaintyImage
 
 
 def test_import_ExtractArcs():
-   import kcwidrp.primitives.ExtractArcs
+     import kcwidrp.primitives.ExtractArcs
 
 
 def test_import_FindBars():
-   import kcwidrp.primitives.FindBars
+     import kcwidrp.primitives.FindBars
 
 
 def test_import_FitCenter():
-   import kcwidrp.primitives.FitCenter
+     import kcwidrp.primitives.FitCenter
 
 
 def test_import_FluxCalibrate():
-   import kcwidrp.primitives.FluxCalibrate
+     import kcwidrp.primitives.FluxCalibrate
 
 
 def test_import_GenerateMaps():
-   import kcwidrp.primitives.GenerateMaps
+     import kcwidrp.primitives.GenerateMaps
 
 
 def test_import_GetAtlasLines():
-   import kcwidrp.primitives.GetAtlasLines
+    import kcwidrp.primitives.GetAtlasLines
 
 
 def test_import_MakeCube():
-   import kcwidrp.primitives.MakeCube
+    import kcwidrp.primitives.MakeCube
 
 
 def test_import_MakeInvsens():
-   import kcwidrp.primitives.MakeInvsens
+    import kcwidrp.primitives.MakeInvsens
 
 
 def test_import_MakeMasterBias():
-   import kcwidrp.primitives.MakeMasterBias
+    import kcwidrp.primitives.MakeMasterBias
 
 
 def test_import_MakeMasterDark():
-   import kcwidrp.primitives.MakeMasterDark
+    import kcwidrp.primitives.MakeMasterDark
 
 
 def test_import_MakeMasterFlat():
-   import kcwidrp.primitives.MakeMasterFlat
+    import kcwidrp.primitives.MakeMasterFlat
 
 
 def test_import_ProcessArc():
-   import kcwidrp.primitives.ProcessArc
+    import kcwidrp.primitives.ProcessArc
 
 
 def test_import_ProcessBias():
-   import kcwidrp.primitives.ProcessBias
+    import kcwidrp.primitives.ProcessBias
 
 
 def test_import_ProcessContbars():
-   import kcwidrp.primitives.ProcessContbars
+    import kcwidrp.primitives.ProcessContbars
 
 
 def test_import_ProcessDark():
-   import kcwidrp.primitives.ProcessDark
+    import kcwidrp.primitives.ProcessDark
 
 
 def test_import_ProcessFlat():
-   import kcwidrp.primitives.ProcessFlat
+    import kcwidrp.primitives.ProcessFlat
 
 
 def test_import_ProcessObject():
-   import kcwidrp.primitives.ProcessObject
+    import kcwidrp.primitives.ProcessObject
 
 
 def test_import_ReadAtlas():
-   import kcwidrp.primitives.ReadAtlas
+    import kcwidrp.primitives.ReadAtlas
 
 
 def test_import_RectifyImage():
-   import kcwidrp.primitives.RectifyImage
+    import kcwidrp.primitives.RectifyImage
 
 
 def test_import_RemoveCosmicRays():
-   import kcwidrp.primitives.RemoveCosmicRays
+    import kcwidrp.primitives.RemoveCosmicRays
 
 
 def test_import_SolveArcs():
-   import kcwidrp.primitives.SolveArcs
+    import kcwidrp.primitives.SolveArcs
 
 
 def test_import_SolveGeom():
-   import kcwidrp.primitives.SolveGeom
+    import kcwidrp.primitives.SolveGeom
 
 
 def test_import_SubtractBias():
-   import kcwidrp.primitives.SubtractBias
+    import kcwidrp.primitives.SubtractBias
 
 
 def test_import_SubtractDark():
-   import kcwidrp.primitives.SubtractDark
+    import kcwidrp.primitives.SubtractDark
 
 
 def test_import_SubtractOverscan():
-   import kcwidrp.primitives.SubtractOverscan
+    import kcwidrp.primitives.SubtractOverscan
 
 
 def test_import_SubtractScatteredLight():
-   import kcwidrp.primitives.SubtractScatteredLight
+    import kcwidrp.primitives.SubtractScatteredLight
 
 
 def test_import_SubtractSky():
-   import kcwidrp.primitives.SubtractSky
+    import kcwidrp.primitives.SubtractSky
 
 
 def test_import_Template():
-   import kcwidrp.primitives.Template
+    import kcwidrp.primitives.Template
 
 
 def test_import_TraceBars():
-   import kcwidrp.primitives.TraceBars
+    import kcwidrp.primitives.TraceBars
 
 
 def test_import_TrimOverscan():
-   import kcwidrp.primitives.TrimOverscan
-
-
-def test_import_kcwi_bokeh():
-   import kcwidrp.primitives.kcwi_bokeh
+    import kcwidrp.primitives.TrimOverscan
 
 
 def test_import_kcwi_file_primitives():
-   import kcwidrp.primitives.kcwi_file_primitives
+    import kcwidrp.primitives.kcwi_file_primitives
 
 
-def test_import_kcwi_primitives():
-   import kcwidrp.primitives.kcwi_primitives
+def test_import_StartBokeh():
+    import kcwidrp.primitives.StartBokeh
+
 
 

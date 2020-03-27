@@ -1,10 +1,13 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from keckdrpframework.models.arguments import Arguments
+from kcwidrp.core.bokeh_plotting import bokeh_plot
 
 import numpy as np
 import logging
 from bokeh.util.logconfig import basicConfig, bokeh_logger as bl
+from bokeh.plotting import figure, show
 from scipy.signal import find_peaks
+import time
 
 
 class FindBars(BasePrimitive):

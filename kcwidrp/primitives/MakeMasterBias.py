@@ -2,10 +2,14 @@ from keckdrpframework.primitives.base_primitive import BasePrimitive
 from keckdrpframework.models.arguments import Arguments
 from keckdrpframework.primitives.base_img import BaseImg
 from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_reader, kcwi_fits_writer, parse_imsec
+from kcwidrp.core.bokeh_plotting import bokeh_plot
 
+from bokeh.plotting import figure, show
+from bokeh.models import Range1d, LinearAxis
 import ccdproc
 import numpy as np
 from scipy.stats import sigmaclip
+import time
 
 
 class MakeMasterBias(BaseImg):
@@ -110,6 +114,7 @@ class MakeMasterBias(BaseImg):
                        legend="Sigma")
                 p.line([bias_rn, bias_rn], [0, np.max(hist)], color='red')
                 p.y_range.start = 0
+                print(p)
                 bokeh_plot(p)
                 if self.config.instrument.plot_level >= 2:
                     input("Next? <cr>: ")

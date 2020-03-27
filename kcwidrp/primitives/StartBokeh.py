@@ -7,14 +7,14 @@ from bokeh.layouts import column
 
 
 
-class start_bokeh(BasePrimitive):
+class StartBokeh(BasePrimitive):
 
     def __init__(self, action, context):
         '''
         Constructor
         '''
         BasePrimitive.__init__(self, action, context)
-
+        self.logger = context.pipeline_logger
 
     def _perform(self):
 

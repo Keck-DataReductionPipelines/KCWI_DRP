@@ -1,8 +1,9 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from keckdrpframework.models.arguments import Arguments
+from kcwidrp.core.bokeh_plotting import bokeh_plot
 
 import numpy as np
-
+from bokeh.plotting import figure, show
 
 class ArcOffsets(BasePrimitive):
     """Derive offset of each bar relative to reference bar"""

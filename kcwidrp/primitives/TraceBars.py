@@ -1,9 +1,14 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from keckdrpframework.models.arguments import Arguments
 from kcwidrp.primitives.kcwi_file_primitives import write_table
+from kcwidrp.core.bokeh_plotting import bokeh_plot
 
+from bokeh.plotting import figure, show
+from bokeh.models import Range1d, LinearAxis
 import numpy as np
 import os
+import time
+
 
 class TraceBars(BasePrimitive):
     """Derive bar traces"""
@@ -16,7 +21,6 @@ class TraceBars(BasePrimitive):
         self.logger.info("Tracing continuum bars")
         if self.config.instrument.plot_level >= 1:
             do_plot = True
-            pl.ion()
         else:
             do_plot = False
         if len(self.action.args.midcntr) < 1:

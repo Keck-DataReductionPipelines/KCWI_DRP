@@ -6,10 +6,10 @@ KCWI
 
 from keckdrpframework.pipelines.base_pipeline import BasePipeline
 from keckdrpframework.models.processing_context import ProcessingContext
-from ..primitives.kcwi_primitives import *
-from ..primitives.kcwi_file_primitives import *
-from ..primitives.kcwi_bokeh import *
-from ..core.kcwi_proctab import Proctab
+#from kcwidrp.primitives.kcwi_primitives import *
+from kcwidrp.primitives.kcwi_file_primitives import *
+#from kcwidrp.primitives.StartBokeh import *
+from kcwidrp.core.kcwi_proctab import Proctab
 
 
 class Kcwi_pipeline(BasePipeline):
@@ -20,7 +20,7 @@ class Kcwi_pipeline(BasePipeline):
     name = 'KCWI-DRP'
 
     event_table = {
-        "start_bokeh":               ("start_bokeh", None, None),
+        "start_bokeh":               ("StartBokeh", None, None),
         # For every file do this
         "next_file":                 ("ingest_file",
                                       "ingest_file_started",
