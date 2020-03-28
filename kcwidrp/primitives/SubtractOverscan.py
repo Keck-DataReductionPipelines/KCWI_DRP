@@ -72,9 +72,9 @@ class SubtractOverscan(BasePrimitive):
                                y_axis_label='counts',
                                plot_width=self.config.instrument.plot_width,
                                plot_height=self.config.instrument.plot_height)
-                    p.circle(x, osvec, legend="Data")
+                    p.circle(x, osvec, legend_label="Data")
                     p.line(x, osfit, line_color='red', line_width=3,
-                           legend="Fit")
+                           legend_label="Fit")
                     bokeh_plot(p, self.context.bokeh_session)
                     # plts.append(p)
                     if self.config.instrument.plot_level >= 2:

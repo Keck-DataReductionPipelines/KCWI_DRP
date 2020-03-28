@@ -345,19 +345,19 @@ class GetAtlasLines(BasePrimitive):
                        y_axis_label="Normalized Flux",
                        plot_width=self.config.instrument.plot_width,
                        plot_height=self.config.instrument.plot_height)
-            p.line(subwvals, subyvals / np.nanmax(subyvals), legend='RefArc',
+            p.line(subwvals, subyvals / np.nanmax(subyvals), legend_label='RefArc',
                color='lightgray')
-            p.line(atwave, atspec / norm_fac, legend='Atlas', color='blue')
+            p.line(atwave, atspec / norm_fac, legend_label='Atlas', color='blue')
             # Rejected: nearby neighbor
-            p.diamond(rej_neigh_w, rej_neigh_y / norm_fac, legend='NeighRej',
+            p.diamond(rej_neigh_w, rej_neigh_y / norm_fac, legend_label='NeighRej',
                   color='cyan', size=8)
             # Rejected: fit failure
-            p.diamond(rej_fit_w, rej_fit_y / norm_fac, legend='FitRej',
+            p.diamond(rej_fit_w, rej_fit_y / norm_fac, legend_label='FitRej',
                   color='red', size=8)
             # Rejected: line parameter outside range
-            p.diamond(rej_par_w, rej_par_a / norm_fac, legend='ParRej',
+            p.diamond(rej_par_w, rej_par_a / norm_fac, legend_label='ParRej',
                   color='orange', size=8)
-            p.diamond(refws, refas / norm_fac, legend='Kept', color='green',
+            p.diamond(refws, refas / norm_fac, legend_label='Kept', color='green',
                   size=10)
             p.x_range = Range1d(min(subwvals), max(subwvals))
         if self.config.instrument.plot_level >= 1:

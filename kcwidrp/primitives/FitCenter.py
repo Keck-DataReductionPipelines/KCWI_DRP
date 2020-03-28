@@ -276,13 +276,13 @@ class FitCenter(BasePrimitive):
                            plot_height=self.config.instrument.plot_height,
                            x_axis_label="Central dispersion (Ang/px)",
                            y_axis_label="X-Corr Peak Value")
-                p.scatter(disps, maxima, color='red', legend="Data")
-                p.line(disps, maxima, color='blue', legend="Data")
+                p.scatter(disps, maxima, color='red', legend_label="Data")
+                p.line(disps, maxima, color='blue', legend_label="Data")
                 ylim = [min(maxima), max(maxima)]
                 p.line([_centdisp, _centdisp], ylim, color='green',
-                       legend="Fit Disp")
+                       legend_label="Fit Disp")
                 p.line([self.context.prelim_disp, self.context.prelim_disp],
-                       ylim, color='red', legend="Calc Disp")
+                       ylim, color='red', legend_label="Calc Disp")
                 bokeh_plot(p, self.context.bokeh_session)
                 q = input("Next? <cr>, q to quit: ")
                 if 'Q' in q.upper():
@@ -298,9 +298,9 @@ class FitCenter(BasePrimitive):
                        plot_width=self.config.instrument.plot_width,
                        plot_height=self.config.instrument.plot_height)
             x = range(len(centwave))
-            p.scatter(x, centwave, marker='x', legend='bar wave')
+            p.scatter(x, centwave, marker='x', legend_label='bar wave')
             p.line([0, 120], [self.action.args.cwave, self.action.args.cwave],
-                   color='red', legend='CWAVE')
+                   color='red', legend_label='CWAVE')
             ylim = [min(centwave), max(centwave)]
             for ix in range(1, 24):
                 sx = ix*5 - 0.5
@@ -319,10 +319,10 @@ class FitCenter(BasePrimitive):
                        plot_width=self.config.instrument.plot_width,
                        plot_height=self.config.instrument.plot_height)
             x = range(len(centdisp))
-            p.scatter(x, centdisp, marker='x', legend='bar disp')
+            p.scatter(x, centdisp, marker='x', legend_label='bar disp')
             p.line([0, 120], [self.context.prelim_disp,
                               self.context.prelim_disp], color='red',
-                   legend='Calc Disp')
+                   legend_label='Calc Disp')
             ylim = [min(centdisp), max(centdisp)]
             for ix in range(1, 24):
                 sx = ix * 5 - 0.5

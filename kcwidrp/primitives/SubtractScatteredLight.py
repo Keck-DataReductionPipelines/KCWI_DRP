@@ -59,9 +59,9 @@ class SubtractScatteredLight(BasePrimitive):
                            x_axis_label='y pixel', y_axis_label='e-',
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height)
-                p.circle(xvals, yvals, legend="Scat")
+                p.circle(xvals, yvals, legend_label="Scat")
                 xx = np.linspace(0, max(xvals), len(yvals) * 5)
-                p.line(xx, bspl(xx), color='red', line_width=3, legend="fit")
+                p.line(xx, bspl(xx), color='red', line_width=3, legend_label="fit")
                 bokeh_plot(p, self.context.bokeh_session)
                 if self.config.instrument.plot_level >= 2:
                     input("Next? <cr>: ")

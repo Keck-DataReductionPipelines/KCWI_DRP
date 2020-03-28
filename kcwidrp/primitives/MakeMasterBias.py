@@ -109,9 +109,9 @@ class MakeMasterBias(BaseImg):
                 p.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:],
                        fill_color="navy", line_color="white", alpha=0.5)
                 p.line(x, pdf, line_color="#ff8888", line_width=4, alpha=0.7,
-                       legend="PDF")
+                       legend_label="PDF")
                 p.line([-bias_rn, -bias_rn], [0, np.max(hist)], color='red',
-                       legend="Sigma")
+                       legend_label="Sigma")
                 p.line([bias_rn, bias_rn], [0, np.max(hist)], color='red')
                 p.y_range.start = 0
                 print(p)

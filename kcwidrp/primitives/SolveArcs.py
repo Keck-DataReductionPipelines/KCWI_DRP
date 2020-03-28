@@ -269,27 +269,27 @@ class SolveArcs(BasePrimitive):
                             plot_height=self.config.instrument.plot_height)
                         ylim = [0, np.nanmax(yvec)]
                         p.line(atwave[atx0:atx1], atspec[atx0:atx1] * atnorm,
-                               color='blue', legend='Atlas')
+                               color='blue', legend_label='Atlas')
                         p.circle(atwave[atx0:atx1], atspec[atx0:atx1] * atnorm,
-                                 color='green', legend='Atlas')
-                        p.line([aw, aw], ylim, color='red', legend='AtCntr')
+                                 color='green', legend_label='Atlas')
+                        p.line([aw, aw], ylim, color='red', legend_label='AtCntr')
                         p.x_range = Range1d(start=min(wvec), end=max(wvec))
                         p.extra_x_ranges = {"pix": Range1d(start=min(xvec),
                                                            end=max(xvec))}
                         p.add_layout(LinearAxis(x_range_name="pix",
                                                 axis_label="CCD Y pix"),
                                      'above')
-                        p.line(xplot, plt_line, color='black', legend='Arc',
+                        p.line(xplot, plt_line, color='black', legend_label='Arc',
                                x_range_name="pix")
-                        p.circle(xvec, yvec, legend='Arc', color='red',
+                        p.circle(xvec, yvec, legend_label='Arc', color='red',
                                  x_range_name="pix")
                         ylim = [0, np.nanmax(plt_line)]
-                        p.line([cent, cent], ylim, color='green', legend='Cntr',
+                        p.line([cent, cent], ylim, color='green', legend_label='Cntr',
                                line_dash='dashed', x_range_name="pix")
                         p.line([sp_pk_x, sp_pk_x], ylim, color='magenta',
-                               legend='Gpeak', line_dash='dashdot',
+                               legend_label='Gpeak', line_dash='dashdot',
                                x_range_name="pix")
-                        p.line([peak, peak], ylim, color='black', legend='Peak',
+                        p.line([peak, peak], ylim, color='black', legend_label='Peak',
                                line_dash='dashdot', x_range_name="pix")
                         p.y_range.start = 0
                         bokeh_plot(p, self.context.bokeh_session)
@@ -378,10 +378,10 @@ class SolveArcs(BasePrimitive):
                            y_axis_label="Fit - Inp (A)",
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height)
-                p.diamond(at_wave_dat, resid, legend='Rsd', size=8)
+                p.diamond(at_wave_dat, resid, legend_label='Rsd', size=8)
                 if rej_rsd_wave:
                     p.diamond(rej_rsd_wave, rej_rsd, color='orange',
-                              legend='Rej', size=8)
+                              legend_label='Rej', size=8)
                 xlim = [self.action.args.atminwave, self.action.args.atmaxwave]
                 ylim = [np.nanmin(list(resid)+list(rej_rsd)),
                         np.nanmax(list(resid)+list(rej_rsd))]
@@ -389,7 +389,7 @@ class SolveArcs(BasePrimitive):
                 p.line(xlim, [wsig, wsig], color='gray', line_dash='dashdot')
                 p.line(xlim, [-wsig, -wsig], color='gray', line_dash='dashdot')
                 p.line([self.action.args.cwave, self.action.args.cwave],
-                       ylim, legend='CWAV', color='magenta',
+                       ylim, legend_label='CWAV', color='magenta',
                        line_dash='dashdot')
                 bokeh_plot(p, self.context.bokeh_session)
                 input("Next? <cr>: ")
@@ -402,20 +402,20 @@ class SolveArcs(BasePrimitive):
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height)
                 bwav = pwfit(self.action.args.xsvals)
-                p.line(bwav, b, color='darkgrey', legend='Arc')
+                p.line(bwav, b, color='darkgrey', legend_label='Arc')
                 ylim = [np.nanmin(b), np.nanmax(b)]
                 atnorm = np.nanmax(b) / np.nanmax(atspec)
-                p.line(atwave, atspec * atnorm, color='blue', legend='Atlas')
+                p.line(atwave, atspec * atnorm, color='blue', legend_label='Atlas')
                 p.line([self.action.args.cwave, self.action.args.cwave],
                        ylim, color='magenta', line_dash='dashdot',
-                       legend='CWAV')
-                p.diamond(at_wave, at_flux * atnorm, legend='Kept',
+                       legend_label='CWAV')
+                p.diamond(at_wave, at_flux * atnorm, legend_label='Kept',
                           color='green', size=8)
                 if rej_rsd_wave:
                     p.diamond(rej_rsd_wave, [rj*atnorm for rj in rej_rsd_flux],
-                              color='orange', legend='RejRsd', size=6)
+                              color='orange', legend_label='RejRsd', size=6)
                 p.diamond(rej_wave, [rj*atnorm for rj in rej_flux],
-                          color='red', legend='RejFit', size=6)
+                          color='red', legend_label='RejFit', size=6)
                 bokeh_plot(p, self.context.bokeh_session)
                 q = input("Next? <cr>, q - quit: ")
                 if 'Q' in q.upper():

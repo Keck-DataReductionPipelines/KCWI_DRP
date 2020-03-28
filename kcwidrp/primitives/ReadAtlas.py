@@ -105,11 +105,11 @@ class ReadAtlas(BasePrimitive):
                        plot_width=self.config.instrument.plot_width,
                        plot_height=self.config.instrument.plot_height)
 
-            p.line(offar_central, xcorr_central, legend='Data')
+            p.line(offar_central, xcorr_central, legend_label='Data')
             ylim_min = min(xcorr_central)
             ylim_max = max(xcorr_central)
             p.line([offset_pix, offset_pix], [ylim_min, ylim_max],
-                   color='red', legend='Peak')
+                   color='red', legend_label='Peak')
             bokeh_plot(p, self.context.bokeh_session)
             if self.config.instrument.plot_level >= 2:
                 input("Next? <cr>: ")
@@ -129,11 +129,11 @@ class ReadAtlas(BasePrimitive):
                            plot_height=self.config.instrument.plot_height)
                 p.line(obswav[minow:maxow] - offset_wav,
                        obsarc[minow:maxow]/np.nanmax(obsarc[minow:maxow]),
-                       legend="ref bar (%d)" %
+                       legend_label="ref bar (%d)" %
                               self.config.instrument.REFBAR)
                 p.line(refwav[minrw:maxrw],
                        reflux[minrw:maxrw]/np.nanmax(reflux[minrw:maxrw]),
-                       color="red", legend="Atlas")
+                       color="red", legend_label="Atlas")
                 p.x_range = Range1d(np.nanmin(obswav[minow:maxow]),
                                     np.nanmax(obswav[minow:maxow]))
                 ylim_min = min(
@@ -141,7 +141,7 @@ class ReadAtlas(BasePrimitive):
                 ylim_max = max(
                     obsarc[minow:maxow]/np.nanmax(obsarc[minow:maxow]))
                 p.line([cwave, cwave], [ylim_min, ylim_max], color="magenta",
-                       legend="CWAVE", line_dash="dashdot")
+                       legend_label="CWAVE", line_dash="dashdot")
                 bokeh_plot(p, self.context.bokeh_session)
 
                 if self.config.instrument.plot_level >= 2:

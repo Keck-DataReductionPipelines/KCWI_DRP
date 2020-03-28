@@ -47,10 +47,10 @@ class ArcOffsets(BasePrimitive):
                                plot_width=self.config.instrument.plot_width,
                                plot_height=self.config.instrument.plot_height)
                     x = range(len(refarc))
-                    p.line(x, refarc, color='green', legend='ref bar (%d)' %
+                    p.line(x, refarc, color='green', legend_label='ref bar (%d)' %
                            self.config.instrument.REFBAR)
                     p.line(x, np.roll(arc, offset), color='red',
-                           legend='bar %d' % na)
+                           legend_label='bar %d' % na)
                     bokeh_plot(p, self.context.bokeh_session)
                     q = input("Next? <cr>, q to quit: ")
                     if 'Q' in q.upper():

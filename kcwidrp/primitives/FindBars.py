@@ -54,9 +54,9 @@ class FindBars(BasePrimitive):
                     x_axis_label='CCD X (px)', y_axis_label='e-',
                     plot_width=self.config.instrument.plot_width,
                     plot_height=self.config.instrument.plot_height)
-                p.line(x, midvec, color='blue', legend="MidTrace")
+                p.line(x, midvec, color='blue', legend_label="MidTrace")
                 p.scatter(midpeaks, midvec[midpeaks], marker='x', color='red',
-                          legend="FoundBar")
+                          legend_label="FoundBar")
                 p.line([0, nx], [midavg, midavg], color='grey',
                        line_dash='dashed')
                 p.legend.location = "bottom_center"
@@ -84,10 +84,10 @@ class FindBars(BasePrimitive):
                         x_axis_label='CCD X (px)', y_axis_label='e-',
                         plot_width=self.config.instrument.plot_width,
                         plot_height=self.config.instrument.plot_height)
-                    p.line(xs, ys, color='blue', legend='Bar Trace')
-                    p.circle(xs, ys, color='red', legend='Bar Trace')
+                    p.line(xs, ys, color='blue', legend_label='Bar Trace')
+                    p.circle(xs, ys, color='red', legend_label='Bar Trace')
                     p.line([xc, xc], [midavg, midvec[peak]], color='green',
-                           legend='Cntrd')
+                           legend_label='Cntrd')
                     bokeh_plot(p, self.context.bokeh_session)
                     if do_inter:
                         q = input("Next? <cr>, q - quit: ")
