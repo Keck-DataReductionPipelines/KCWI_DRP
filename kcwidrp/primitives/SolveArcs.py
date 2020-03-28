@@ -500,7 +500,7 @@ class SolveArcs(BasePrimitive):
             if self.config.instrument.plot_level >= 2:
                 input("Next? <cr>: ")
             else:
-                pl.pause(self.config.instrument.plot_pause)
+                time.sleep(self.config.instrument.plot_pause)
         export_png(p, filename="arc_%05d_nlines_%s_%s_%s.png" %
                    (self.action.args.ccddata.header['FRAMENO'],
                     self.action.args.illum,
@@ -526,7 +526,7 @@ class SolveArcs(BasePrimitive):
                 if self.config.instrument.plot_level >= 2:
                     input("Next? <cr>: ")
                 else:
-                    pl.pause(self.config.instrument.plot_pause)
+                    time.sleep(self.config.instrument.plot_pause)
                 export_png(p, filename="arc_%05d_coef%d_%s_%s_%s.png" %
                            (self.action.args.ccddata.header['FRAMENO'], ic,
                             self.action.args.illum,
