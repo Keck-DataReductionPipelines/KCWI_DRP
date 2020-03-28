@@ -10,6 +10,7 @@ from scipy.interpolate import interpolate
 from multiprocessing import Pool
 from scipy import signal
 from scipy.stats import sigmaclip
+import time
 
 
 def pascal_shift(coef=None, x0=None):
@@ -282,7 +283,7 @@ class FitCenter(BasePrimitive):
                        legend="Fit Disp")
                 p.line([self.context.prelim_disp, self.context.prelim_disp],
                        ylim, color='red', legend="Calc Disp")
-                bokeh_plot(p)
+                bokeh_plot(p, self.context.bokeh_session)
                 q = input("Next? <cr>, q to quit: ")
                 if 'Q' in q.upper():
                     do_inter = False
@@ -306,7 +307,7 @@ class FitCenter(BasePrimitive):
                 p.line([sx, sx], ylim, color='black')
             p.x_range = Range1d(-1, 120)
             p.legend.location = "top_center"
-            bokeh_plot(p)
+            bokeh_plot(p, self.context.bokeh_session)
             if self.config.instrument.plot_level >= 2:
                 input("Next? <cr>: ")
             else:
@@ -328,7 +329,7 @@ class FitCenter(BasePrimitive):
                 p.line([sx, sx], ylim,  color='black')
             p.x_range = Range1d(-1, 120)
             p.legend.location = "bottom_center"
-            bokeh_plot(p)
+            bokeh_plot(p, self.context.bokeh_session)
             if self.config.instrument.plot_level >= 2:
                 input("Next? <cr>: ")
             else:

@@ -5,6 +5,7 @@ from kcwidrp.primitives.kcwi_file_primitives import read_table
 #from skimage import transform as tf
 import numpy as np
 import os
+from skimage import transform as tf
 
 
 class ExtractArcs(BasePrimitive):

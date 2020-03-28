@@ -106,7 +106,7 @@ class TraceBars(BasePrimitive):
                 p.scatter(xi, yi, marker='x', size=2, color='blue')
                 p.scatter(self.action.args.midcntr,
                           [self.action.args.midrow]*120, color='red')
-                bokeh_plot(p)
+                bokeh_plot(p, self.context.bokeh_session)
                 if self.config.instrument.plot_level >= 2:
                     input("Next? <cr>: ")
                 else:

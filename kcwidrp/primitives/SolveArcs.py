@@ -1,6 +1,9 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from keckdrpframework.models.arguments import Arguments
+from kcwidrp.core.bokeh_plotting import bokeh_plot
 
+from bokeh.plotting import figure, show
+from bokeh.models import Range1d, LinearAxis
 import numpy as np
 from scipy.signal.windows import boxcar
 import scipy as sp
@@ -14,6 +17,7 @@ from bokeh.layouts import gridplot
 from bokeh.models.markers import X
 from bokeh.io import export_png
 from bokeh.util.logconfig import basicConfig, bokeh_logger as bl
+import time
 
 
 def gaus(x, a, mu, sigma):
@@ -288,7 +292,7 @@ class SolveArcs(BasePrimitive):
                         p.line([peak, peak], ylim, color='black', legend='Peak',
                                line_dash='dashdot', x_range_name="pix")
                         p.y_range.start = 0
-                        bokeh_plot(p)
+                        bokeh_plot(p, self.context.bokeh_session)
 
                         q = input(ptitle + " - Next? <cr>, q to quit: ")
                         if 'Q' in q.upper():
@@ -387,7 +391,7 @@ class SolveArcs(BasePrimitive):
                 p.line([self.action.args.cwave, self.action.args.cwave],
                        ylim, legend='CWAV', color='magenta',
                        line_dash='dashdot')
-                bokeh_plot(p)
+                bokeh_plot(p, self.context.bokeh_session)
                 input("Next? <cr>: ")
 
                 # overplot atlas and bar using fit wavelengths
@@ -412,7 +416,7 @@ class SolveArcs(BasePrimitive):
                               color='orange', legend='RejRsd', size=6)
                 p.diamond(rej_wave, [rj*atnorm for rj in rej_flux],
                           color='red', legend='RejFit', size=6)
-                bokeh_plot(p)
+                bokeh_plot(p, self.context.bokeh_session)
                 q = input("Next? <cr>, q - quit: ")
                 if 'Q' in q.upper():
                     master_inter = False
@@ -451,7 +455,7 @@ class SolveArcs(BasePrimitive):
                 sx = ix * 5 - 0.5
                 p.line([sx, sx], ylim, color='black', line_dash='dashdot')
         if self.config.instrument.plot_level >= 1:
-            bokeh_plot(p)
+            bokeh_plot(p, self.context.bokeh_session)
             if self.config.instrument.plot_level >= 2:
                 input("Next? <cr>: ")
             else:
@@ -492,7 +496,7 @@ class SolveArcs(BasePrimitive):
             p.line([sx, sx], ylim, color='black', line_dash='dashdot')
 
         if self.config.instrument.plot_level >= 1:
-            bokeh_plot(p)
+            bokeh_plot(p, self.context.bokeh_session)
             if self.config.instrument.plot_level >= 2:
                 input("Next? <cr>: ")
             else:
@@ -518,7 +522,7 @@ class SolveArcs(BasePrimitive):
                 for ix in range(1, 24):
                     sx = ix * 5 - 0.5
                     p.line([sx, sx], ylim, color='black', line_dash='dashdot')
-                bokeh_plot(p)
+                bokeh_plot(p, self.context.bokeh_session)
                 if self.config.instrument.plot_level >= 2:
                     input("Next? <cr>: ")
                 else:

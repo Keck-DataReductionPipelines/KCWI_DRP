@@ -4,6 +4,7 @@ from kcwidrp.core.bokeh_plotting import bokeh_plot
 
 import numpy as np
 from bokeh.plotting import figure, show
+import time
 
 class ArcOffsets(BasePrimitive):
     """Derive offset of each bar relative to reference bar"""
@@ -50,7 +51,7 @@ class ArcOffsets(BasePrimitive):
                            self.config.instrument.REFBAR)
                     p.line(x, np.roll(arc, offset), color='red',
                            legend='bar %d' % na)
-                    bokeh_plot(p)
+                    bokeh_plot(p, self.context.bokeh_session)
                     q = input("Next? <cr>, q to quit: ")
                     if 'Q' in q.upper():
                         do_plot = False

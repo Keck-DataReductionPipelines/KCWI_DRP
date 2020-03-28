@@ -1,12 +1,17 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from keckdrpframework.models.arguments import Arguments
+from kcwidrp.core.bokeh_plotting import bokeh_plot
 
+from bokeh.plotting import figure, show
+from bokeh.models import Range1d, LinearAxis
+from bokeh.io import export_png
 import numpy as np
 import scipy as sp
 from scipy.interpolate import interpolate
 from scipy.signal.windows import boxcar
 from scipy.optimize import curve_fit
 from scipy.stats import sigmaclip
+import time
 
 
 def gaus(x, a, mu, sigma):
@@ -356,12 +361,12 @@ class GetAtlasLines(BasePrimitive):
                   size=10)
             p.x_range = Range1d(min(subwvals), max(subwvals))
         if self.config.instrument.plot_level >= 1:
-            bokeh_plot(p)
+            bokeh_plot(p, self.context.bokeh_session)
             if self.config.instrument.plot_level >= 2:
                 input("Next? <cr>: ")
             else:
-                pl.pause(self.config.instrument.plot_pause)
-            export_png(p, "atlas_lines_%s_%s_%s_%05d.png" %
+                time.sleep(self.config.instrument.plot_pause)
+            export_png(p, filename="atlas_lines_%s_%s_%s_%05d.png" %
                        (self.action.args.illum, self.action.args.grating,
                         self.action.args.ifuname,
                         self.action.args.ccddata.header['FRAMENO']))

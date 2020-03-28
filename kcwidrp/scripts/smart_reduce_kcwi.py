@@ -10,6 +10,7 @@ from keckdrpframework.core.framework import Framework
 from keckdrpframework.config.framework_config import ConfigClass
 from keckdrpframework.models.arguments import Arguments
 from keckdrpframework.utils.drpf_logger import getLogger
+from kcwidrp.core.bokeh_plotting import check_bokeh_server
 
 import subprocess
 import time
@@ -76,19 +77,16 @@ def main():
     check_logs_dir()
 
     framework_config_file = "configs/framework.cfg"
-    framework_config_fullpath = pkg_resources.resource_filename(
-        pkg, framework_config_file)
+    framework_config_fullpath = pkg_resources.resource_filename(pkg, framework_config_file)
 
     framework_logcfg_file = 'configs/logger.cfg'
-    framework_logcfg_fullpath = pkg_resources.resource_filename(
-        pkg, framework_logcfg_file)
+    framework_logcfg_fullpath = pkg_resources.resource_filename(pkg, framework_logcfg_file)
 
     # add kcwi specific config files # make changes here to allow this file
     # to be loaded from the command line
     if args.kcwi_config_file is None:
         kcwi_config_file = 'configs/kcwi.cfg'
-        kcwi_config_fullpath = pkg_resources.resource_filename(
-            pkg, kcwi_config_file)
+        kcwi_config_fullpath = pkg_resources.resource_filename(pkg, kcwi_config_file)
         kcwi_config = ConfigClass(kcwi_config_fullpath, default_section='KCWI')
     else:
         kcwi_config_fullpath = os.path.abspath(args.kcwi_config_file)
@@ -112,8 +110,10 @@ def main():
     check_redux_dir(framework.config.instrument.output_directory)
 
     if framework.config.instrument.enable_bokeh is True:
-        subprocess.Popen('bokeh serve', shell=True)
-        time.sleep(5)
+        if check_bokeh_server() is False:
+            subprocess.Popen('bokeh serve --session-ids=unsigned', shell=True)
+            time.sleep(5)
+        subprocess.Popen('open http://localhost:5006?bokeh-session-id=kcwi', shell=True)
 
     # initialize the proctab and read it
     framework.context.proctab = Proctab(framework.logger)
@@ -149,7 +149,7 @@ def main():
     data_set.data_table.drop(ccdclear_frames, inplace=True)
 
     # processing
-    imtypes = ['BIAS', 'CONTBARS'] #, 'ARCLAMP', 'FLATLAMP', 'OBJECT']
+    imtypes = ['BIAS', 'CONTBARS', 'ARCLAMP', 'FLATLAMP', 'OBJECT']
 
     for imtype in imtypes:
         subset = data_set.data_table[framework.context.data_set.data_table.IMTYPE == imtype]
