@@ -459,7 +459,7 @@ class SolveArcs(BasePrimitive):
             if self.config.instrument.plot_level >= 2:
                 input("Next? <cr>: ")
             else:
-                pl.pause(self.config.instrument.plot_pause)
+                time.sleep(self.config.instrument.plot_pause)
         export_png(p, "arc_%05d_resid_%s_%s_%s.png" %
                    (self.action.args.ccddata.header['FRAMENO'],
                     self.action.args.illum,
