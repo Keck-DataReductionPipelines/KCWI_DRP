@@ -1,9 +1,13 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from keckdrpframework.models.arguments import Arguments
 from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer
+from kcwidrp.core.bokeh_plotting import bokeh_plot
 
+from bokeh.plotting import figure, show
+from bokeh.models import Range1d, LinearAxis
 import numpy as np
 import scipy as sp
+import time
 
 
 class SubtractScatteredLight(BasePrimitive):
