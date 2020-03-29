@@ -2,7 +2,7 @@ from keckdrpframework.primitives.base_primitive import BasePrimitive
 from keckdrpframework.models.arguments import Arguments
 from keckdrpframework.primitives.base_img import BaseImg
 from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_reader, kcwi_fits_writer, parse_imsec
-from kcwidrp.core.bokeh_plotting import bokeh_plot
+from kcwidrp.core.bokeh_plotting import bokeh_plot, bokeh_save
 
 from bokeh.plotting import figure, show
 from bokeh.models import Range1d, LinearAxis
@@ -115,7 +115,8 @@ class MakeMasterBias(BaseImg):
                 p.line([bias_rn, bias_rn], [0, np.max(hist)], color='red')
                 p.y_range.start = 0
                 print(p)
-                bokeh_plot(p, self.context.bokeh_session)
+                #bokeh_save(p)
+                bokeh_save(p)
                 if self.config.instrument.plot_level >= 2:
                     input("Next? <cr>: ")
                 else:

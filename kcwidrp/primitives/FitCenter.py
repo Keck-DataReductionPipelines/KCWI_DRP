@@ -1,6 +1,6 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from keckdrpframework.models.arguments import Arguments
-from kcwidrp.core.bokeh_plotting import bokeh_plot
+from kcwidrp.core.bokeh_plotting import bokeh_plot, bokeh_save
 
 from bokeh.plotting import figure, show
 from bokeh.models import Range1d, LinearAxis
@@ -283,7 +283,7 @@ class FitCenter(BasePrimitive):
                        legend_label="Fit Disp")
                 p.line([self.context.prelim_disp, self.context.prelim_disp],
                        ylim, color='red', legend_label="Calc Disp")
-                bokeh_plot(p, self.context.bokeh_session)
+                bokeh_save(p)
                 q = input("Next? <cr>, q to quit: ")
                 if 'Q' in q.upper():
                     do_inter = False
@@ -307,7 +307,7 @@ class FitCenter(BasePrimitive):
                 p.line([sx, sx], ylim, color='black')
             p.x_range = Range1d(-1, 120)
             p.legend.location = "top_center"
-            bokeh_plot(p, self.context.bokeh_session)
+            bokeh_save(p)
             if self.config.instrument.plot_level >= 2:
                 input("Next? <cr>: ")
             else:
@@ -329,7 +329,7 @@ class FitCenter(BasePrimitive):
                 p.line([sx, sx], ylim,  color='black')
             p.x_range = Range1d(-1, 120)
             p.legend.location = "bottom_center"
-            bokeh_plot(p, self.context.bokeh_session)
+            bokeh_save(p)
             if self.config.instrument.plot_level >= 2:
                 input("Next? <cr>: ")
             else:

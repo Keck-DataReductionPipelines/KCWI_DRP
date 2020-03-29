@@ -1,7 +1,7 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from keckdrpframework.models.arguments import Arguments
 from kcwidrp.primitives.kcwi_file_primitives import write_table
-from kcwidrp.core.bokeh_plotting import bokeh_plot
+from kcwidrp.core.bokeh_plotting import bokeh_plot, bokeh_save
 
 from bokeh.plotting import figure, show
 from bokeh.models import Range1d, LinearAxis
@@ -106,7 +106,7 @@ class TraceBars(BasePrimitive):
                 p.scatter(xi, yi, marker='x', size=2, color='blue')
                 p.scatter(self.action.args.midcntr,
                           [self.action.args.midrow]*120, color='red')
-                bokeh_plot(p, self.context.bokeh_session)
+                bokeh_save(p)
                 if self.config.instrument.plot_level >= 2:
                     input("Next? <cr>: ")
                 else:

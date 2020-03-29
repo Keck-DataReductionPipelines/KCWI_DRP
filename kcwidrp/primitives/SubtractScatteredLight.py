@@ -1,7 +1,7 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from keckdrpframework.models.arguments import Arguments
 from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer
-from kcwidrp.core.bokeh_plotting import bokeh_plot
+from kcwidrp.core.bokeh_plotting import bokeh_plot, bokeh_save
 
 from bokeh.plotting import figure, show
 from bokeh.models import Range1d, LinearAxis
@@ -62,7 +62,7 @@ class SubtractScatteredLight(BasePrimitive):
                 p.circle(xvals, yvals, legend_label="Scat")
                 xx = np.linspace(0, max(xvals), len(yvals) * 5)
                 p.line(xx, bspl(xx), color='red', line_width=3, legend_label="fit")
-                bokeh_plot(p, self.context.bokeh_session)
+                bokeh_save(p)
                 if self.config.instrument.plot_level >= 2:
                     input("Next? <cr>: ")
                 else:

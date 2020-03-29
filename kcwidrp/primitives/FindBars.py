@@ -1,6 +1,6 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from keckdrpframework.models.arguments import Arguments
-from kcwidrp.core.bokeh_plotting import bokeh_plot
+from kcwidrp.core.bokeh_plotting import bokeh_plot, bokeh_save
 
 import numpy as np
 import logging
@@ -60,7 +60,7 @@ class FindBars(BasePrimitive):
                 p.line([0, nx], [midavg, midavg], color='grey',
                        line_dash='dashed')
                 p.legend.location = "bottom_center"
-                bokeh_plot(p, self.context.bokeh_session)
+                bokeh_save(p)
                 if self.config.instrument.plot_level >= 2:
                     input("Next? <cr>: ")
                 else:
@@ -88,7 +88,7 @@ class FindBars(BasePrimitive):
                     p.circle(xs, ys, color='red', legend_label='Bar Trace')
                     p.line([xc, xc], [midavg, midvec[peak]], color='green',
                            legend_label='Cntrd')
-                    bokeh_plot(p, self.context.bokeh_session)
+                    bokeh_save(p)
                     if do_inter:
                         q = input("Next? <cr>, q - quit: ")
                         if 'Q' in q.upper():

@@ -1,6 +1,6 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from keckdrpframework.models.arguments import Arguments
-from kcwidrp.core.bokeh_plotting import bokeh_plot
+from kcwidrp.core.bokeh_plotting import bokeh_plot, bokeh_save
 
 from bokeh.plotting import figure, show
 from bokeh.models import Range1d, LinearAxis
@@ -75,7 +75,7 @@ class SubtractOverscan(BasePrimitive):
                     p.circle(x, osvec, legend_label="Data")
                     p.line(x, osfit, line_color='red', line_width=3,
                            legend_label="Fit")
-                    bokeh_plot(p, self.context.bokeh_session)
+                    bokeh_save(p)
                     # plts.append(p)
                     if self.config.instrument.plot_level >= 2:
                         input("Next? <cr>: ")

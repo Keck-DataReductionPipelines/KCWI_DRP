@@ -48,18 +48,10 @@ def _parse_arguments(in_args: list) -> argparse.Namespace:
     return out_args
 
 
-def check_redux_dir(output_directory):
-    if not os.path.isdir(output_directory):
-        os.makedirs(output_directory)
-        print("Output directory created: %s" %
-              output_directory)
-
-
-def check_logs_dir():
-    if not os.path.isdir('logs'):
-        os.makedirs('logs')
-        print("Logs directory created")
-
+def check_directory(directory):
+    if not os.path.isdir(directory):
+        os.makedirs(directory)
+        print("Directory %s has been created" % directory)
 
 def main():
 
@@ -74,7 +66,9 @@ def main():
     pkg = 'kcwidrp'
 
     # check for the logs diretory
-    check_logs_dir()
+    check_directory("logs")
+    # check for the plots directory
+    check_directory("plots")
 
     framework_config_file = "configs/framework.cfg"
     framework_config_fullpath = pkg_resources.resource_filename(pkg, framework_config_file)
@@ -107,22 +101,14 @@ def main():
     framework.context.pipeline_logger = getLogger(framework_logcfg_fullpath, name="KCWI")
 
     # check for the REDUX directory
-    check_redux_dir(framework.config.instrument.output_directory)
+    check_directory(framework.config.instrument.output_directory)
 
-    if framework.config.instrument.enable_bokeh is True:
-        if check_bokeh_server() is False:
-            subprocess.Popen('bokeh serve --session-ids=unsigned --session-token-expiration=86400', shell=True)
-            time.sleep(5)
-        subprocess.Popen('open http://localhost:5006?bokeh-session-id=kcwi', shell=True)
 
     # initialize the proctab and read it
     framework.context.proctab = Proctab(framework.logger)
     framework.context.proctab.read_proctab(tfil=args.proctab)
 
     framework.logger.info("Framework initialized")
-
-    if framework.config.instrument.enable_bokeh:
-        framework.append_event('start_bokeh', None)
 
     # set the default ingestion event to None
     framework.config.default_ingestion_event = "no_event"

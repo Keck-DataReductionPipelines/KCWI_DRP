@@ -3,7 +3,7 @@ from keckdrpframework.primitives.base_primitive import BasePrimitive
 from keckdrpframework.models.arguments import Arguments
 from keckdrpframework.primitives.base_img import BaseImg
 from .kcwi_file_primitives import *
-from keckdrpframework.core.bokeh_plotting import bokeh_plot
+from keckdrpframework.core.bokeh_plotting import bokeh_plot, bokeh_save
 import ccdproc
 from astropy.io import fits as pf
 from astropy.nddata import VarianceUncertainty

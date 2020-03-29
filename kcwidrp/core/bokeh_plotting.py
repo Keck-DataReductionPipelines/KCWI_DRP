@@ -5,9 +5,14 @@ Created on Aug 8, 2019
 """
 
 from bokeh.io import curdoc
+from bokeh.plotting import output_file, save
 from bokeh.plotting.figure import Figure
 from bokeh.models import Column
 import psutil
+import subprocess
+import os
+import time
+
 
 
 def bokeh_plot(plot, session):
@@ -44,3 +49,18 @@ def check_bokeh_server():
         except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
             pass
     return False;
+
+
+def bokeh_save(plot):
+    cwd = os.getcwd()
+    filename = os.path.join(cwd, 'plots', 'plot.html')
+    #try:
+    #    os.remove(filename)
+    #except OSError:
+    #    pass
+    output_file(filename)
+    save(plot)
+
+
+    #time.sleep(1)
+    subprocess.Popen("open %s" % filename, shell=True)
