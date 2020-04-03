@@ -62,5 +62,6 @@ def bokeh_save(plot):
     save(plot)
 
 
+
     #time.sleep(1)
-    subprocess.Popen("open %s" % filename, shell=True)
+    #subprocess.Popen("open %s" % filename, shell=True)

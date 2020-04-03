@@ -103,12 +103,23 @@ def main():
     # check for the REDUX directory
     check_directory(framework.config.instrument.output_directory)
 
+    # start the bokeh server is requested by the configuration parameters
+    if framework.config.instrument.enable_bokeh is True:
+        if check_bokeh_server() is False:
+            subprocess.Popen('bokeh serve --session-ids=unsigned --session-token-expiration=86400', shell=True)
+            time.sleep(5)
+        subprocess.Popen('open http://localhost:5006?bokeh-session-id=kcwi', shell=True)
+
 
     # initialize the proctab and read it
     framework.context.proctab = Proctab(framework.logger)
     framework.context.proctab.read_proctab(tfil=args.proctab)
 
     framework.logger.info("Framework initialized")
+
+    # add a start_bokeh event to the processing queue, if requested by the configuration parameters
+    if framework.config.instrument.enable_bokeh:
+        framework.append_event('start_bokeh', None)
 
     # set the default ingestion event to None
     framework.config.default_ingestion_event = "no_event"

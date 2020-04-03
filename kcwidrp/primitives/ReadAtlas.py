@@ -110,7 +110,7 @@ class ReadAtlas(BasePrimitive):
             ylim_max = max(xcorr_central)
             p.line([offset_pix, offset_pix], [ylim_min, ylim_max],
                    color='red', legend_label='Peak')
-            bokeh_save(p)
+            bokeh_plot(p, self.context.bokeh_session)
             if self.config.instrument.plot_level >= 2:
                 input("Next? <cr>: ")
             else:
@@ -142,7 +142,7 @@ class ReadAtlas(BasePrimitive):
                     obsarc[minow:maxow]/np.nanmax(obsarc[minow:maxow]))
                 p.line([cwave, cwave], [ylim_min, ylim_max], color="magenta",
                        legend_label="CWAVE", line_dash="dashdot")
-                bokeh_save(p)
+                bokeh_plot(p, self.context.bokeh_session)
 
                 if self.config.instrument.plot_level >= 2:
                     q = input("Enter: <cr> - next, new offset (int px): ")

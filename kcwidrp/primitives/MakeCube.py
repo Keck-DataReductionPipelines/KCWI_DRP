@@ -109,7 +109,7 @@ class MakeCube(BasePrimitive):
                             palette="Spectral11", level="image")
                     # vmin=(wmed - wstd * 2.), vmax=(wmed + wstd * 2.))
                     # pl.ylim(0, ysize)
-                    bokeh_save(p)
+                    bokeh_plot(p, self.context.bokeh_session)
                     if do_inter:
                         q = input("Next? <cr>, q to quit: ")
                         if 'Q' in q.upper():

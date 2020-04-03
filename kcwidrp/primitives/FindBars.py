@@ -60,7 +60,7 @@ class FindBars(BasePrimitive):
                 p.line([0, nx], [midavg, midavg], color='grey',
                        line_dash='dashed')
                 p.legend.location = "bottom_center"
-                bokeh_save(p)
+                bokeh_plot(p, self.context.bokeh_session)
                 if self.config.instrument.plot_level >= 2:
                     input("Next? <cr>: ")
                 else:
@@ -88,7 +88,7 @@ class FindBars(BasePrimitive):
                     p.circle(xs, ys, color='red', legend_label='Bar Trace')
                     p.line([xc, xc], [midavg, midvec[peak]], color='green',
                            legend_label='Cntrd')
-                    bokeh_save(p)
+                    bokeh_plot(p, self.context.bokeh_session)
                     if do_inter:
                         q = input("Next? <cr>, q - quit: ")
                         if 'Q' in q.upper():

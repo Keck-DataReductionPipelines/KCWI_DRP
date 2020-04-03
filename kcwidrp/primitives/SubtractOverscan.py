@@ -75,7 +75,7 @@ class SubtractOverscan(BasePrimitive):
                     p.circle(x, osvec, legend_label="Data")
                     p.line(x, osfit, line_color='red', line_width=3,
                            legend_label="Fit")
-                    bokeh_save(p)
+                    bokeh_plot(p, self.context.bokeh_session)
                     # plts.append(p)
                     if self.config.instrument.plot_level >= 2:
                         input("Next? <cr>: ")

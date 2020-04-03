@@ -361,7 +361,7 @@ class GetAtlasLines(BasePrimitive):
                   size=10)
             p.x_range = Range1d(min(subwvals), max(subwvals))
         if self.config.instrument.plot_level >= 1:
-            bokeh_save(p)
+            bokeh_plot(p, self.context.bokeh_session)
             if self.config.instrument.plot_level >= 2:
                 input("Next? <cr>: ")
             else:
