@@ -292,6 +292,24 @@ class ingest_file(BasePrimitive):
             illum = 'Test'
         return illum
 
+    def calibration_lamp(self):
+        if self.get_keyword('IMTYPE') != 'ARCLAMP':
+            return None
+        else:
+            lamps_dictionary = {
+                0: "FeAr",
+                1: "ThAr",
+                2: "Aux",
+                3: "Continuum A"
+            }
+            for key in lamps_dictionary.keys():
+                status = self.get_keyword('LMP%dSTAT' % key)
+                shutter = self.get_keyword('LMP%dSHST' % key)
+                if status == 1 and shutter == 1:
+                    return lamps_dictionary[key]
+                    break
+
+
     def map_ccd(self):
         """Return CCD section variables useful for processing
 
@@ -389,7 +407,7 @@ class ingest_file(BasePrimitive):
         #    self.context.data_set = DataSet(None, self.logger, self.config,
         #    self.context.event_queue)
         # self.context.data_set.append_item(self.action.args.name)
-        self.logger.info("Ingesting file %s" % self.action.args.name)
+        self.logger.info("------------------- Ingesting file %s -------------------" % self.action.args.name)
         self.name = self.action.args.name
         out_args = Arguments()
 
@@ -450,6 +468,8 @@ class ingest_file(BasePrimitive):
         out_args.illum = self.illum()
         # MAPCCD
         out_args.map_ccd = self.map_ccd()
+        # CALIBRATION LAMP
+        out_args.calibration_lamp = self.calibration_lamp()
         # Are we already in proctab?
         out_args.in_proctab = self.context.proctab.in_proctab(
             frame=out_args.ccddata)
