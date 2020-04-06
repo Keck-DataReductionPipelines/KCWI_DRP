@@ -4,6 +4,7 @@ from keckdrpframework.models.arguments import Arguments
 import os
 import numpy as np
 from skimage import transform as tf
+import pickle
 
 
 class SolveGeom(BasePrimitive):
