@@ -86,10 +86,10 @@ class SolveGeom(BasePrimitive):
         max_srcw = 0
         min_srcw = 4096 / self.action.args.ybinsize
         # Loop over source control points
-        for ixy, xy in enumerate(self.action.args.src):
+        for ixy, xy in enumerate(self.action.args.source_control_points):
             # Calculate y wavelength
             yw = float(np.polyval(
-                self.action.args.fincoeff[self.action.args.barid[ixy]], xy[1]))
+                self.action.args.fincoeff[self.action.args.bar_id[ixy]], xy[1]))
             # Convert to output pixels
             yw = (yw - self.action.args.wave0out) / dwout
             # Calculate extreme values
@@ -118,15 +118,15 @@ class SolveGeom(BasePrimitive):
             # Loop over all control points
             for ixy, xy in enumerate(srcw):
                 # Only use the ones for this slice
-                if self.action.args.slid[ixy] == isl:
+                if self.action.args.slice_id[ixy] == isl:
                     # Index in to reference output x array
-                    ib = self.action.args.barid[ixy] % 5
+                    ib = self.action.args.bar_id[ixy] % 5
                     # Geometrically corrected control points
                     xw.append(self.refoutx[ib])
                     yw.append(xy[1])
                     # Input control points
-                    xi.append(self.action.args.dst[ixy][0])
-                    yi.append(self.action.args.dst[ixy][1])
+                    xi.append(self.action.args.destination_control_points[ixy][0])
+                    yi.append(self.action.args.destination_control_points[ixy][1])
             # get image limits
             xl0 = int(min(xi) - self.action.args.refdelx)
             if xl0 < 0:
@@ -172,10 +172,10 @@ class SolveGeom(BasePrimitive):
                 "geom_file": self.action.args.geom_file,
                 "xsize": xsize, "ysize": ysize,
                 "pxscl": pxscl, "slscl": slscl,
-                "cbarsno": self.action.args.cbarsno,
-                "cbarsfl": self.action.args.cbarsfl,
-                "arcno": self.action.args.arcno,
-                "arcfl": self.action.args.arcfl,
+                "cbarsno": self.action.args.contbar_image_number,
+                "cbarsfl": self.action.args.contbar_image,
+                "arcno": self.action.args.arc_number,
+                "arcfl": self.action.args.arc_image,
                 "barsep": self.action.args.refdelx,
                 "bar0": self.action.args.x0out,
                 "waveall0": self.action.args.waveall0,

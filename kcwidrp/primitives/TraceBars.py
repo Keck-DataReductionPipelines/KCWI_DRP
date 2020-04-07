@@ -119,13 +119,13 @@ class TraceBars(BasePrimitive):
                 'MIDROW': self.action.args.midrow,
                 'WINDOW': self.action.args.win,
                 'REFDELX': self.action.args.refdelx,
-                'CBARSNO': self.action.args.cbarsno,
-                'CBARSFL': self.action.args.cbarsfl}
+                'CBARSNO': self.action.args.contbar_image_number,
+                'CBARSFL': self.action.args.contbar_image}
 
             # in this line we pass the trace information to an argument
             # instead of writing it to a table
             self.context.trace = trace
-            ofname = self.action.args.cbarsfl.split('.')[0] + "_trace.fits"
+            ofname = self.action.args.contbar_image.split('.')[0] + "_trace.fits"
             write_table(table=[src, dst, barid, slid],
                         names=('src', 'dst', 'barid', 'slid'),
                         output_dir=os.path.dirname(self.action.args.name),
@@ -139,9 +139,9 @@ class TraceBars(BasePrimitive):
                                              "Window for bar"),
                                   'REFDELX': (self.action.args.refdelx,
                                               "Reference bar sep in px"),
-                                  'CBARSNO': (self.action.args.cbarsno,
+                                  'CBARSNO': (self.action.args.contbar_image_number,
                                               "Cont. bars image number"),
-                                  'CBARSFL': (self.action.args.cbarsfl,
+                                  'CBARSFL': (self.action.args.contbar_image,
                                               "Cont. bars image")})
 
             if self.config.instrument.saveintims:

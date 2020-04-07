@@ -14,59 +14,59 @@ class ExtractArcs(BasePrimitive):
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
         self.logger = context.pipeline_logger
-        self.action.args.refdelx = None
-        self.action.args.cbarsno = None
-        self.action.args.cbarsfl = None
-        self.action.args.arcno = None
-        self.action.args.arcfl = None
-        self.action.args.src = None
-        self.action.args.dst = None
-        self.action.args.barid = None
-        self.action.args.slid = None
+        self.action.args.reference_bar_separation = None
+        self.action.args.contbar_image_number = None
+        self.action.args.contbar_image = None
+        self.action.args.arc_number = None
+        self.action.args.arc_image = None
+        self.action.args.source_control_points = None
+        self.action.args.destination_control_points = None
+        self.action.args.bar_id = None
+        self.action.args.slice_id = None
 
     def _perform(self):
         self.logger.info("Extracting arc spectra")
-        tab = self.context.proctab.n_proctab(frame=self.action.args.ccddata,
+        contbars_in_proctable = self.context.proctab.n_proctab(frame=self.action.args.ccddata,
                                              target_type='CONTBARS',
                                              nearest=True)
-        self.logger.info("%d continuum bars frames found" % len(tab))
+        self.logger.info("%d continuum bars frames found" % len(contbars_in_proctable))
         # ofname = tab['OFNAME'][0]
-        ofname = tab['OFNAME'][0].split('.')[0] + "_trace.fits"
-        print("*************** READING TABLE: %s" % ofname)
+        original_filename = contbars_in_proctable['OFNAME'][0].split('.')[0] + "_trace.fits"
+        self.logger.info("Reading Trace Table: %s" % original_filename)
         # trace = read_table(tab=tab, indir='redux', suffix='trace')
         # Find  and read control points from continuum bars
         if hasattr(self.context, 'trace'):
             trace = self.context.trace
         else:
             trace = read_table(input_dir=os.path.dirname(self.action.args.name),
-                               file_name=ofname)
+                               file_name=original_filename)
             self.context.trace = {}
             for key in trace.meta.keys():
                 self.context.trace[key] = trace.meta[key]
-        midrow = self.context.trace['MIDROW']
-        win = self.context.trace['WINDOW']
-        self.action.args.refdelx = self.context.trace['REFDELX']
-        self.action.args.cbarsno = self.context.trace['CBARSNO']
-        self.action.args.cbarsfl = self.context.trace['CBARSFL']
-        self.action.args.arcno = self.action.args.ccddata.header['FRAMENO']
-        self.action.args.arcfl = self.action.args.ccddata.header['OFNAME']
+        middle_row = self.context.trace['MIDROW']
+        window = self.context.trace['WINDOW']
+        self.action.args.reference_bar_separation = self.context.trace['REFDELX']
+        self.action.args.contbar_image_number = self.context.trace['CBARSNO']
+        self.action.args.contbar_image = self.context.trace['CBARSFL']
+        self.action.args.arc_number = self.action.args.ccddata.header['FRAMENO']
+        self.action.args.arc_image = self.action.args.ccddata.header['OFNAME']
 
-        self.action.args.src = trace['src']  # source control points
-        self.action.args.dst = trace['dst']  # destination control points
-        self.action.args.barid = trace['barid']
-        self.action.args.slid = trace['slid']
+        self.action.args.source_control_points = trace['src']  # source control points
+        self.action.args.destination_control_points = trace['dst']  # destination control points
+        self.action.args.bar_id = trace['barid']
+        self.action.args.slice_id = trace['slid']
 
         self.logger.info("Fitting spatial control points")
-        tform = tf.estimate_transform('polynomial',
-                                      self.action.args.src,
-                                      self.action.args.dst, order=3)
+        transformation = tf.estimate_transform('polynomial',
+                                      self.action.args.source_control_points,
+                                      self.action.args.destination_control_points, order=3)
 
         self.logger.info("Transforming arc image")
-        warped = tf.warp(self.action.args.ccddata.data, tform)
+        warped_image = tf.warp(self.action.args.ccddata.data, transformation)
         # Write warped arcs if requested
         if self.config.instrument.saveintims:
             # write out warped image
-            self.action.args.ccddata.data = warped
+            self.action.args.ccddata.data = warped_image
             kcwi_fits_writer(self.action.args.ccddata,
                              table=self.action.args.table,
                              output_file=self.action.args.name,
@@ -75,11 +75,11 @@ class ExtractArcs(BasePrimitive):
         # extract arcs
         self.logger.info("Extracting arcs")
         arcs = []
-        for xyi, xy in enumerate(self.action.args.src):
-            if xy[1] == midrow:
+        for xyi, xy in enumerate(self.action.args.source_control_points):
+            if xy[1] == middle_row:
                 xi = int(xy[0]+0.5)
                 arc = np.median(
-                    warped[:, (xi - win):(xi + win + 1)], axis=1)
+                    warped_image[:, (xi - window):(xi + window + 1)], axis=1)
                 arc = arc - np.nanmin(arc[100:-100])    # avoid ends
                 arcs.append(arc)
         # Did we get the correct number of arcs?
@@ -90,9 +90,9 @@ class ExtractArcs(BasePrimitive):
             self.logger.error("Did not extract %d arcs, extracted %d" %
                               (self.config.instrument.NBARS, len(arcs)))
 
-        logstr = ExtractArcs.__module__ + "." + ExtractArcs.__qualname__
-        self.action.args.ccddata.header['HISTORY'] = logstr
-        self.logger.info(logstr)
+        log_string = ExtractArcs.__module__ + "." + ExtractArcs.__qualname__
+        self.action.args.ccddata.header['HISTORY'] = log_string
+        self.logger.info(log_string)
 
         return self.action.args
 # END: class ExtractArcs()
