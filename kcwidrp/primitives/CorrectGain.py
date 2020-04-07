@@ -15,27 +15,27 @@ class CorrectGain(BasePrimitive):
         key = 'GAINCOR'
         keycom = 'Gain corrected?'
         # print(self.action.args.ccddata.header)
-        namps = self.action.args.namps
-        for ia in range(namps):
+        number_of_amplifiers = self.action.args.namps
+        for amplifier in range(number_of_amplifiers):
             # get amp section
-            section = self.action.args.ccddata.header['ATSEC%d' % (ia + 1)]
-            sec, rfor = parse_imsec(section)
+            section = self.action.args.ccddata.header['ATSEC%d' % (amplifier + 1)]
+            parsed_section, read_forward = parse_imsec(section)
             # get gain for this amp
             gain = self.context.data_set.get_info_column(
-                self.action.args.name, 'GAIN%d' % (ia + 1))
+                self.action.args.name, 'GAIN%d' % (amplifier + 1))
             self.logger.info(
                 "Applying gain correction of %.3f in section %s" %
-                (gain, self.action.args.ccddata.header['ATSEC%d' % (ia + 1)]))
-            self.action.args.ccddata.data[sec[0]:(sec[1]+1),
-                                          sec[2]:(sec[3]+1)] *= gain
+                (gain, self.action.args.ccddata.header['ATSEC%d' % (amplifier + 1)]))
+            self.action.args.ccddata.data[parsed_section[0]:(parsed_section[1]+1),
+                                          parsed_section[2]:(parsed_section[3]+1)] *= gain
 
         self.action.args.ccddata.header[key] = (True, keycom)
         self.action.args.ccddata.header['BUNIT'] = ('electron', 'Pixel units')
         self.action.args.ccddata.unit = 'electron'
 
-        logstr = CorrectGain.__module__ + "." + CorrectGain.__qualname__
-        self.action.args.ccddata.header['HISTORY'] = logstr
-        self.logger.info(logstr)
+        log_string = CorrectGain.__module__ + "." + CorrectGain.__qualname__
+        self.action.args.ccddata.header['HISTORY'] = log_string
+        self.logger.info(log_string)
 
         if self.config.instrument.saveintims:
             kcwi_fits_writer(self.action.args.ccddata,
