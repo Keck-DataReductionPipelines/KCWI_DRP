@@ -8,8 +8,10 @@ from keckdrpframework.primitives.base_primitive import BasePrimitive
 from keckdrpframework.models.data_set import DataSet
 import os
 import math
-from ..core.kcwi_proctab import Proctab
+from kcwidrp.core.kcwi_proctab import Proctab
+import logging
 
+logger = logging.getLogger('KCWI')
 
 def parse_imsec(section=None):
 
@@ -539,7 +541,7 @@ def kcwi_fits_reader(file):
         ccddata.uncertainty = hdul['UNCERT'].data
         table = Table(hdul[3])
     else:
-        print("Wrong number of HDUnits in %s: should be 1-4, but is %d"
+        logger.warn("Wrong number of HDUnits in %s: should be 1-4, but is %d"
               % (file, len(hdul)))
         ccddata = None
         table = None
@@ -594,7 +596,7 @@ def write_table(output_dir=None, table=None, names=None, comment=None,
     try:
         t.write(output_file, format='fits')
     except:
-        print("Table already exists")
+        logger.warn("Table already exists")
     print("output file: %s" % output_file)
 
 
@@ -604,11 +606,11 @@ def read_table(input_dir=None, file_name=None):
     # Construct table file name
     # if suffix is not None:
     #    input_file = input_file.split('.')[0] + "_" + suffix + ".fits"
-    print("Trying to read table: %s" % input_file)
+    logger.info("Trying to read table: %s" % input_file)
     try:
         retab = Table.read(input_file, format='fits')
     except:
-        print("No table to read")
+        logger.warn("No table to read")
         retab = None
     return retab
 
@@ -622,5 +624,5 @@ def kcwi_fits_writer(ccddata, table=None, output_file=None, suffix=None):
     # if table is not None:
     #    hdus_to_save.append(table)
     # hdus_to_save.info()
-    print("Saving to %s" % output_file)
+    logger.info(">>> Saving to %s" % output_file)
     hdus_to_save.writeto(output_file, overwrite=True)
