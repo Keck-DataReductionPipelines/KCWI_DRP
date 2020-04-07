@@ -28,14 +28,14 @@ class CorrectDefects(BasePrimitive):
         path = "data/defect_%s_%dx%d.dat" % (self.action.args.ampmode.strip(),
                                              self.action.args.xbinsize,
                                              self.action.args.ybinsize)
-        pkg = __name__.split('.')[0]
-        defpath = pkg_resources.resource_filename(pkg, path)
-        nbpix = 0   # count of defective pixels cleaned
-        if os.path.exists(defpath):
-            self.logger.info("Reading defect list in: %s" % defpath)
-            deftab = pd.read_csv(defpath, sep=r'\s+')
-            bcdel = 5   # range of pixels for calculating good value
-            for indx, row in deftab.iterrows():
+        package = __name__.split('.')[0]
+        full_path = pkg_resources.resource_filename(package, path)
+        number_of_bad_pixels = 0   # count of defective pixels cleaned
+        if os.path.exists(full_path):
+            self.logger.info("Reading defect list in: %s" % full_path)
+            defect_table = pd.read_csv(full_path, sep=r'\s+')
+            pixel_range_for_good_value = 5   # range of pixels for calculating good value
+            for index, row in defect_table.iterrows():
                 # Get coords and adjust for python zero bias
                 x0 = row['X0'] - 1
                 x1 = row['X1']
@@ -44,31 +44,31 @@ class CorrectDefects(BasePrimitive):
                 # Loop over y range
                 for by in range(y0, y1):
                     # sample on low side of bad area
-                    vals = list(self.action.args.ccddata.data[by,
-                                x0-bcdel:x0])
+                    values = list(self.action.args.ccddata.data[by,
+                                x0-pixel_range_for_good_value:x0])
                     # sample on high side
-                    vals.extend(self.action.args.ccddata.data[by,
-                                x1+1:x1+bcdel+1])
+                    values.extend(self.action.args.ccddata.data[by,
+                                x1+1:x1+pixel_range_for_good_value+1])
                     # get replacement value
-                    gval = np.nanmedian(np.asarray(vals))
+                    good_values = np.nanmedian(np.asarray(values))
                     # Replace baddies with gval
                     for bx in range(x0, x1):
-                        self.action.args.ccddata.data[by, bx] = gval
+                        self.action.args.ccddata.data[by, bx] = good_values
                         flags[by, bx] += 2
-                        nbpix += 1
+                        number_of_bad_pixels += 1
             self.action.args.ccddata.header[key] = (True, keycom)
             self.action.args.ccddata.header['BPFILE'] = (path, 'defect list')
         else:
-            self.logger.error("Defect list not found for %s" % defpath)
+            self.logger.error("Defect list not found for %s" % full_path)
             self.action.args.ccddata.header[key] = (False, keycom)
 
-        self.logger.info("Cleaned %d bad pixels" % nbpix)
+        self.logger.info("Cleaned %d bad pixels" % number_of_bad_pixels)
         self.action.args.ccddata.header['NBPCLEAN'] = \
-            (nbpix, 'number of bad pixels cleaned')
+            (number_of_bad_pixels, 'number of bad pixels cleaned')
 
-        logstr = CorrectDefects.__module__ + "." + CorrectDefects.__qualname__
-        self.action.args.ccddata.header['HISTORY'] = logstr
-        self.logger.info(logstr)
+        log_string = CorrectDefects.__module__ + "." + CorrectDefects.__qualname__
+        self.action.args.ccddata.header['HISTORY'] = log_string
+        self.logger.info(log_string)
 
         # add flags array
         self.action.args.ccddata.mask = flags
