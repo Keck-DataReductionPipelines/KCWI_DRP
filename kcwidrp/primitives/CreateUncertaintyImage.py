@@ -25,23 +25,23 @@ class CreateUncertaintyImage(BasePrimitive):
             self.action.args.ccddata.data, unit='electron^2', copy=True)
         # add readnoise, if known
         if 'BIASRN1' in self.action.args.ccddata.header:
-            namps = self.action.args.ccddata.header['NVIDINP']
-            for ia in range(namps):
+            number_of_amplifiers = self.action.args.ccddata.header['NVIDINP']
+            for amplifier in range(number_of_amplifiers):
                 # get amp parameters
-                biasrn = self.action.args.ccddata.header['BIASRN%d' % (ia + 1)]
-                section = self.action.args.ccddata.header['ATSEC%d' % (ia + 1)]
-                sec, rfor = parse_imsec(section)
+                bias_readnoise = self.action.args.ccddata.header['BIASRN%d' % (amplifier + 1)]
+                section = self.action.args.ccddata.header['ATSEC%d' % (amplifier + 1)]
+                parsed_section, read_forward = parse_imsec(section)
                 self.action.args.ccddata.uncertainty.array[
-                    sec[0]:(sec[1]+1), sec[2]:(sec[3]+1)] += biasrn
+                    parsed_section[0]:(parsed_section[1]+1), parsed_section[2]:(parsed_section[3]+1)] += bias_readnoise
         else:
             self.logger.warn("Readnoise undefined, uncertainty Poisson only")
         # document variance image creation
         self.action.args.ccddata.header[key] = (True, keycom)
 
-        logstr = CreateUncertaintyImage.__module__ + \
+        log_string = CreateUncertaintyImage.__module__ + \
             "." + CreateUncertaintyImage.__qualname__
-        self.action.args.ccddata.header['HISTORY'] = logstr
-        self.logger.info(logstr)
+        self.action.args.ccddata.header['HISTORY'] = log_string
+        self.logger.info(log_string)
 
         return self.action.args
     # END: class CreateUncertaintyImage()
