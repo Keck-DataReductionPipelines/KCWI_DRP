@@ -78,8 +78,8 @@ class SolveGeom(BasePrimitive):
                          (self.action.args.waveall0, self.action.args.waveall1))
         self.logger.info("WAVE   MID: %.2f" % self.action.args.wavemid)
         # Start setting up slice transforms
-        self.action.args.x0out = int(self.action.args.refdelx / 2.) + 1
-        self.refoutx = np.arange(0, 5) * self.action.args.refdelx + \
+        self.action.args.x0out = int(self.action.args.reference_bar_separation / 2.) + 1
+        self.refoutx = np.arange(0, 5) * self.action.args.reference_bar_separation + \
             self.action.args.x0out
         # Variables for output control points
         srcw = []
@@ -100,7 +100,7 @@ class SolveGeom(BasePrimitive):
             srcw.append([xy[0], yw])
         # Use extremes to define output size
         ysize = int(max_srcw + min_srcw + 20 / self.action.args.ybinsize)
-        xsize = int(5. * self.action.args.refdelx) + 1
+        xsize = int(5. * self.action.args.reference_bar_separation) + 1
         self.logger.info("Output slices will be %d x %d px" % (xsize, ysize))
         # Now loop over slices and get relevant control points for each slice
         # Output variables
@@ -128,10 +128,10 @@ class SolveGeom(BasePrimitive):
                     xi.append(self.action.args.destination_control_points[ixy][0])
                     yi.append(self.action.args.destination_control_points[ixy][1])
             # get image limits
-            xl0 = int(min(xi) - self.action.args.refdelx)
+            xl0 = int(min(xi) - self.action.args.reference_bar_separation)
             if xl0 < 0:
                 xl0 = 0
-            xl1 = int(max(xi) + self.action.args.refdelx)
+            xl1 = int(max(xi) + self.action.args.reference_bar_separation)
             if xl1 > (self.action.args.ccddata.data.shape[0] - 1):
                 xl1 = self.action.args.ccddata.data.shape[0] - 1
             # Store for output
@@ -176,7 +176,7 @@ class SolveGeom(BasePrimitive):
                 "cbarsfl": self.action.args.contbar_image,
                 "arcno": self.action.args.arc_number,
                 "arcfl": self.action.args.arc_image,
-                "barsep": self.action.args.refdelx,
+                "barsep": self.action.args.reference_bar_separation,
                 "bar0": self.action.args.x0out,
                 "waveall0": self.action.args.waveall0,
                 "waveall1": self.action.args.waveall1,
