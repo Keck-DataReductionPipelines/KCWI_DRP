@@ -44,7 +44,7 @@ class CorrectDar(BasePrimitive):
     def _perform(self):
         self.logger.info("Correcting for DAR")
 
-        logstr = CorrectDar.__module__ + "." + CorrectDar.__qualname__
+        log_string = CorrectDar.__module__ + "." + CorrectDar.__qualname__
 
         # Check image
         if 'GEOMCOR' not in self.action.args.ccddata.header:
@@ -63,12 +63,12 @@ class CorrectDar(BasePrimitive):
                 return self.action.args
 
         # image size
-        sz = self.action.args.ccddata.data.shape
+        image_size = self.action.args.ccddata.data.shape
 
         # get wavelengths
         w0 = self.action.args.ccddata.header['CRVAL3']
         dw = self.action.args.ccddata.header['CD3_3']
-        waves = w0 + np.arange(sz[0]) * dw
+        waves = w0 + np.arange(image_size[0]) * dw
         wgoo0 = self.action.args.ccddata.header['WAVGOOD0']
         wgoo1 = self.action.args.ccddata.header['WAVGOOD1']
         wref = self.action.args.ccddata.header['WAVMID']
@@ -76,97 +76,97 @@ class CorrectDar(BasePrimitive):
                          (wref, wgoo0, wgoo1))
 
         # spatial scales in arcsec/item
-        yscl = self.action.args.ccddata.header['PXSCL'] * 3600.
-        xscl = self.action.args.ccddata.header['SLSCL'] * 3600.
+        y_scale = self.action.args.ccddata.header['PXSCL'] * 3600.
+        x_scale = self.action.args.ccddata.header['SLSCL'] * 3600.
 
         # padding depends on grating
         if 'H' in self.action.args.grating:
-            pad_as = 2.0
+            padding_as = 2.0
         elif 'M' in self.action.args.grating:
-            pad_as = 3.0
+            padding_as = 3.0
         else:
-            pad_as = 4.0
+            padding_as = 4.0
 
-        pad_x = int(pad_as / xscl)
-        pad_y = int(pad_as / yscl)
+        padding_x = int(padding_as / x_scale)
+        padding_y = int(padding_as / y_scale)
 
         # update WCS
         crpix1 = self.action.args.ccddata.header['CRPIX1']
         crpix2 = self.action.args.ccddata.header['CRPIX2']
-        self.action.args.ccddata.header['CRPIX1'] = crpix1 + float(pad_x)
-        self.action.args.ccddata.header['CRPIX2'] = crpix2 + float(pad_y)
+        self.action.args.ccddata.header['CRPIX1'] = crpix1 + float(padding_x)
+        self.action.args.ccddata.header['CRPIX2'] = crpix2 + float(padding_y)
 
         # airmass
-        air = self.action.args.ccddata.header['AIRMASS']
-        self.logger.info("Airmass: %.3f" % air)
+        airmass = self.action.args.ccddata.header['AIRMASS']
+        self.logger.info("Airmass: %.3f" % airmass)
 
         # IFU orientation
-        ifupa = self.action.args.ccddata.header['IFUPA']
+        ifu_pa = self.action.args.ccddata.header['IFUPA']
 
         # Parallactic angle
-        parang = self.action.args.ccddata.header['PARANG']
+        parallactic_angle = self.action.args.ccddata.header['PARANG']
 
         # Projection angle in radians
-        projang_deg = ifupa - parang
-        projang = math.radians(projang_deg)
+        projection_angle_deg = ifu_pa - parallactic_angle
+        projection_angle = math.radians(projection_angle_deg)
         self.logger.info("DAR Angles: ifu_pa, parang, projang (deg): "
-                         "%.2f, %.2f, %.2f" % (ifupa, parang, projang_deg))
+                         "%.2f, %.2f, %.2f" % (ifu_pa, parallactic_angle, projection_angle_deg))
 
         # dispersion over goo wl range in arcsec
-        dmax_as = atm_disper(wgoo1, wgoo0, air)
+        dispersion_max_as = atm_disper(wgoo1, wgoo0, airmass)
 
         # projected onto IFU
-        xdmax_as = dmax_as * math.sin(projang)
-        ydmax_as = dmax_as * math.cos(projang)
+        xdmax_as = dispersion_max_as * math.sin(projection_angle)
+        ydmax_as = dispersion_max_as * math.cos(projection_angle)
         self.logger.info("DAR over GOOD WL range: total, x, y (asec): "
-                         "%.2f, %.2f, %.2f" % (dmax_as, xdmax_as, ydmax_as))
+                         "%.2f, %.2f, %.2f" % (dispersion_max_as, xdmax_as, ydmax_as))
 
         # now in pixels
-        xdmax_px = xdmax_as / xscl
-        ydmax_px = ydmax_as / yscl
+        xdmax_px = xdmax_as / x_scale
+        ydmax_px = ydmax_as / y_scale
         dmax_px = math.sqrt(xdmax_px**2 + ydmax_px**2)
         self.logger.info("DAR over GOOD WL range: total, x, y (pix): "
                          "%.2f, %.2f, %.2f" % (dmax_px, xdmax_px, ydmax_px))
 
         # prepare output cubes
-        img_out = np.zeros((sz[0], sz[1]+2*pad_y, sz[2]+2*pad_x),
+        output_image = np.zeros((image_size[0], image_size[1]+2*padding_y, image_size[2]+2*padding_x),
                            dtype=np.float64)
-        var_out = img_out.copy()
-        msk_out = np.zeros((sz[0], sz[1]+2*pad_y, sz[2]+2*pad_x),
+        output_variance = output_image.copy()
+        output_mask = np.zeros((image_size[0], image_size[1]+2*padding_y, image_size[2]+2*padding_x),
                            dtype=np.uint8)
 
-        img_out[:, pad_y:(pad_y+sz[1]), pad_x:(pad_x+sz[2])] = \
+        output_image[:, padding_y:(padding_y+image_size[1]), padding_x:(padding_x+image_size[2])] = \
             self.action.args.ccddata.data
 
-        var_out[:, pad_y:(pad_y+sz[1]), pad_x:(pad_x+sz[2])] = \
+        output_variance[:, padding_y:(padding_y+image_size[1]), padding_x:(padding_x+image_size[2])] = \
             self.action.args.ccddata.uncertainty.array
 
-        msk_out[:, pad_y:(pad_y+sz[1]), pad_x:(pad_x+sz[2])] = \
+        output_mask[:, padding_y:(padding_y+image_size[1]), padding_x:(padding_x+image_size[2])] = \
             self.action.args.ccddata.mask
 
         # Perform correction
-        self.logger.info(img_out.shape)
+        self.logger.info(output_image.shape)
         for j, wl in enumerate(waves):
-            dcor = atm_disper(wref, wl, air)
-            xsh = dcor * math.sin(projang) / xscl
-            ysh = dcor * math.cos(projang) / yscl
-            img_out[j, :, :] = sp.ndimage.shift(img_out[j, :, :], (ysh, xsh))
-            var_out[j, :, :] = sp.ndimage.shift(var_out[j, :, :], (ysh, xsh))
-            msk_out[j, :, :] = sp.ndimage.shift(msk_out[j, :, :], (ysh, xsh))
+            dispersion_correction = atm_disper(wref, wl, airmass)
+            x_shift = dispersion_correction * math.sin(projection_angle) / x_scale
+            y_shift = dispersion_correction * math.cos(projection_angle) / y_scale
+            output_image[j, :, :] = sp.ndimage.shift(output_image[j, :, :], (y_shift, x_shift))
+            output_variance[j, :, :] = sp.ndimage.shift(output_variance[j, :, :], (y_shift, x_shift))
+            output_mask[j, :, :] = sp.ndimage.shift(output_mask[j, :, :], (y_shift, x_shift))
 
-        self.action.args.ccddata.data = img_out
-        self.action.args.ccddata.uncertainty.array = var_out
-        self.action.args.ccddata.mask = msk_out
+        self.action.args.ccddata.data = output_image
+        self.action.args.ccddata.uncertainty.array = output_variance
+        self.action.args.ccddata.mask = output_mask
 
         # update header
-        self.action.args.ccddata.header['HISTORY'] = logstr
+        self.action.args.ccddata.header['HISTORY'] = log_string
         self.action.args.ccddata.header['DARCOR'] = (True, 'DAR corrected?')
-        self.action.args.ccddata.header['DARANG'] = (projang_deg,
+        self.action.args.ccddata.header['DARANG'] = (projection_angle_deg,
                                                      'DAR projection angle '
                                                      '(deg)')
-        self.action.args.ccddata.header['DARPADX'] = (pad_x, 'DAR X padding '
+        self.action.args.ccddata.header['DARPADX'] = (padding_x, 'DAR X padding '
                                                              '(pix)')
-        self.action.args.ccddata.header['DARPADY'] = (pad_y, 'DAR Y padding '
+        self.action.args.ccddata.header['DARPADY'] = (padding_y, 'DAR Y padding '
                                                              '(pix)')
         self.action.args.ccddata.header['DAREFWL'] = (wref, 'DAR reference wl '
                                                             '(Ang)')
@@ -178,7 +178,7 @@ class CorrectDar(BasePrimitive):
                                             suffix="icubed")
         self.context.proctab.write_proctab()
 
-        self.logger.info(logstr)
+        self.logger.info(log_string)
 
         return self.action.args
     # END: class CorrectDar()
