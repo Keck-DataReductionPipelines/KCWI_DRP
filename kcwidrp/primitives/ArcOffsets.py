@@ -23,45 +23,45 @@ class ArcOffsets(BasePrimitive):
             else:
                 do_plot = False
             # Compare with reference arc
-            refarc = arcs[self.config.instrument.REFBAR][:]
+            reference_arc = arcs[self.config.instrument.REFBAR][:]
             # number of cross-correlation samples (avoiding ends)
-            nsamp = len(refarc[10:-10])
+            number_of_samples = len(reference_arc[10:-10])
             # possible offsets
-            offar = np.arange(1-nsamp, nsamp)
+            offsets_array = np.arange(1-number_of_samples, number_of_samples)
             # Collect offsets
             offsets = []
-            for na, arc in enumerate(arcs):
+            for arc_number, arc in enumerate(arcs):
                 # Cross-correlate, avoiding junk on the ends
-                xcorr = np.correlate(refarc[10:-10], arc[10:-10], mode='full')
+                cross_correlation = np.correlate(reference_arc[10:-10], arc[10:-10], mode='full')
                 # Calculate offset
-                offset = offar[xcorr.argmax()]
+                offset = offsets_array[cross_correlation.argmax()]
                 offsets.append(offset)
                 self.logger.info("Arc %d Slice %d XCorr shift = %d" %
-                                 (na, int(na/5), offset))
+                                 (arc_number, int(arc_number/5), offset))
                 # display if requested
                 if do_plot:
                     p = figure(title=self.action.args.plotlabel +
                                "BAR OFFSET for Arc: %d Slice: %d = %d" %
-                               (na, int(na/5), offset),
+                               (arc_number, int(arc_number/5), offset),
                                x_axis_label="CCD y (px)", y_axis_label="e-",
                                plot_width=self.config.instrument.plot_width,
                                plot_height=self.config.instrument.plot_height)
-                    x = range(len(refarc))
-                    p.line(x, refarc, color='green', legend_label='ref bar (%d)' %
+                    x = range(len(reference_arc))
+                    p.line(x, reference_arc, color='green', legend_label='ref bar (%d)' %
                            self.config.instrument.REFBAR)
                     p.line(x, np.roll(arc, offset), color='red',
-                           legend_label='bar %d' % na)
+                           legend_label='bar %d' % arc_number)
                     bokeh_plot(p, self.context.bokeh_session)
                     q = input("Next? <cr>, q to quit: ")
                     if 'Q' in q.upper():
                         do_plot = False
-            self.context.baroffs = offsets
+            self.context.bar_offsets = offsets
         else:
             self.logger.error("No extracted arcs found")
 
-        logstr = ArcOffsets.__module__ + "." + ArcOffsets.__qualname__
-        self.action.args.ccddata.header['HISTORY'] = logstr
-        self.logger.info(logstr)
+        log_string = ArcOffsets.__module__ + "." + ArcOffsets.__qualname__
+        self.action.args.ccddata.header['HISTORY'] = log_string
+        self.logger.info(log_string)
 
         return self.action.args
     # END: class ArcOffsets()
