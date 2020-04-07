@@ -201,7 +201,7 @@ class FitCenter(BasePrimitive):
         # y binning
         ybin = self.action.args.ybinsize
         # let's populate the 0 points vector
-        p0 = self.action.args.cwave + np.array(self.context.baroffs) * \
+        p0 = self.action.args.cwave + np.array(self.context.bar_offsets) * \
              self.context.prelim_disp - self.action.args.offset_wave
         # next we are going to brute-force scan around the preliminary
         # dispersion for a better solution. We will wander 5% away from it.
