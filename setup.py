@@ -29,8 +29,8 @@ scripts = []
 # Define entry points for command-line scripts
 entry_points = {
     'console_scripts': [
-        "reduce_kcwi = kcwidrp.scripts.reduce_kcwi:main",
-        "smart_reduce_kcwi = kcwidrp.scripts.smart_reduce_kcwi:main"
+        "reduce_kcwi = kcwidrp.scripts.reduce_kcwi:main"
+        #"smart_reduce_kcwi = kcwidrp.scripts.smart_reduce_kcwi:main"
     ]}
 
 

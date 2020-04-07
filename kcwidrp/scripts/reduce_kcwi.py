@@ -10,6 +10,7 @@ from keckdrpframework.core.framework import Framework
 from keckdrpframework.config.framework_config import ConfigClass
 from keckdrpframework.models.arguments import Arguments
 from keckdrpframework.utils.drpf_logger import getLogger
+from kcwidrp.core.bokeh_plotting import check_bokeh_server
 
 import subprocess
 import time
@@ -38,6 +39,9 @@ def _parse_arguments(in_args: list) -> argparse.Namespace:
     parser.add_argument('-l', '--list', dest='file_list',
                         help='File containing a list of files to be processed',
                         default=None)
+    parser.add_argument('-g', '--groups', dest='group_mode',
+                        help='Use group mode: separate files by image type and reduce in the correct order',
+                        default=False, action='store_true')
 
     # in this case, we are loading an entire directory,
     # and ingesting all the files in that directory
@@ -73,34 +77,34 @@ def _parse_arguments(in_args: list) -> argparse.Namespace:
     return out_args
 
 
-def check_redux_dir(output_directory):
-    if not os.path.isdir(output_directory):
-        os.makedirs(output_directory)
-        print("Output directory created: %s" % output_directory)
-
-
-def check_logs_dir():
-    if not os.path.isdir('logs'):
-        os.makedirs('logs')
-        print("Logs directory created")
+def check_directory(directory):
+    if not os.path.isdir(directory):
+        os.makedirs(directory)
+        print("Directory %s has been created" % directory)
 
 
 def main():
+
+    def process(subset):
+        for frame in subset.index:
+            arguments = Arguments(name=frame)
+            framework.append_event('next_file', arguments)
+
     args = _parse_arguments(sys.argv)
 
     # START HANDLING OF CONFIGURATION FILES ##########
     pkg = 'kcwidrp'
 
     # check for the logs diretory
-    check_logs_dir()
+    check_directory("logs")
+    # check for the plots directory
+    check_directory("plots")
 
     framework_config_file = "configs/framework.cfg"
-    framework_config_fullpath = pkg_resources.resource_filename(
-        pkg, framework_config_file)
+    framework_config_fullpath = pkg_resources.resource_filename(pkg, framework_config_file)
 
     framework_logcfg_file = 'configs/logger.cfg'
-    framework_logcfg_fullpath = pkg_resources.resource_filename(
-        pkg, framework_logcfg_file)
+    framework_logcfg_fullpath = pkg_resources.resource_filename(pkg, framework_logcfg_file)
 
     # add kcwi specific config files # make changes here to allow this file
     # to be loaded from the command line
@@ -126,12 +130,13 @@ def main():
         sys.exit(1)
     framework.context.pipeline_logger = getLogger(framework_logcfg_fullpath, name="KCWI")
 
-    # check for the REDUX directory
-    check_redux_dir(framework.config.instrument.output_directory)
-
+    # start the bokeh server is requested by the configuration parameters
     if framework.config.instrument.enable_bokeh is True:
-        subprocess.Popen('bokeh serve', shell=True)
-        time.sleep(5)
+        if check_bokeh_server() is False:
+            subprocess.Popen('bokeh serve --session-ids=unsigned --session-token-expiration=86400', shell=True)
+            time.sleep(5)
+        subprocess.Popen('open http://localhost:5006?bokeh-session-id=kcwi', shell=True)
+
 
     # initialize the proctab and read it
     framework.context.proctab = Proctab(framework.logger)
@@ -139,14 +144,27 @@ def main():
 
     framework.logger.info("Framework initialized")
 
+    # add a start_bokeh event to the processing queue, if requested by the configuration parameters
     if framework.config.instrument.enable_bokeh:
         framework.append_event('start_bokeh', None)
+
+    # important: to be able to use the grouping mode, we need to reset the default ingestion action to no-event,
+    # otherwise the system will automatically trigger the next_file event which initiates the processing
+    if args.group_mode is True:
+        # set the default ingestion event to None
+        framework.config.default_ingestion_event = "no_event"
 
     # start queue manager only (useful for RPC)
     if args.queue_manager_only:
         # The queue manager runs for ever.
         framework.logger.info("Starting queue manager only, no processing")
         framework.start_queue_manager()
+
+    # in the next two ingest_data command, if we are using standard mode, the first event
+    # generated is next_file.
+    # if we are in groups mode (aka smart mode), then the first event generated is no_event
+    # then, manually, a next_file event is generated for each group specified in the variable
+    # imtypes
 
     # single frame processing
     elif args.frames:
@@ -166,6 +184,25 @@ def main():
     elif args.dirname is not None:
 
         framework.ingest_data(args.dirname, None, args.monitor)
+
+    # implement the group mode
+    if args.group_mode is True:
+        data_set = framework.context.data_set
+
+        # remove focus images and ccd clearing images from the dataset
+        focus_frames = data_set.data_table[data_set.data_table.OBJECT == "focus"].index
+        ccdclear_frames = data_set.data_table[data_set.data_table.OBJECT == "Clearing ccd"].index
+        data_set.data_table.drop(focus_frames, inplace=True)
+        data_set.data_table.drop(ccdclear_frames, inplace=True)
+
+        # processing
+        imtypes = ['BIAS', 'CONTBARS', 'ARCLAMP', 'FLATLAMP', 'OBJECT']
+
+        for imtype in imtypes:
+            subset = data_set.data_table[framework.context.data_set.data_table.IMTYPE == imtype]
+            process(subset)
+
+
 
     framework.start(args.queue_manager_only, args.ingest_data_only,
                     args.wait_for_event, args.continuous)
