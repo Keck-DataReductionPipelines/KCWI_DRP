@@ -99,10 +99,10 @@ class SubtractOverscan(BasePrimitive):
 
         self.action.args.ccddata.header[key] = (performed, keycom)
 
-        logstr = SubtractOverscan.__module__ + "." + \
+        log_string = SubtractOverscan.__module__ + "." + \
             SubtractOverscan.__qualname__
-        self.action.args.ccddata.header['HISTORY'] = logstr
-        self.logger.info(logstr)
+        self.action.args.ccddata.header['HISTORY'] = log_string
+        self.logger.info(log_string)
 
         return self.action.args
     # END: class SubtractOverscan()

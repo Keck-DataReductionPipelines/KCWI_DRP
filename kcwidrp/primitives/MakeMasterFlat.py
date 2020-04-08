@@ -61,8 +61,8 @@ class MakeMasterFlat(BaseImg):
         for ii, fname in enumerate(stackf):
             stacked.header['STACKF%d' % (ii + 1)] = (fname, "stack input file")
 
-        logstr = MakeMasterFlat.__module__ + "." + MakeMasterFlat.__qualname__
-        stacked.header['HISTORY'] = logstr
+        log_string = MakeMasterFlat.__module__ + "." + MakeMasterFlat.__qualname__
+        stacked.header['HISTORY'] = log_string
 
         # output stacked flat
         kcwi_fits_writer(stacked, output_file=stname)
@@ -76,7 +76,7 @@ class MakeMasterFlat(BaseImg):
                                             newtype=args.new_type)
         self.context.proctab.write_proctab()
 
-        self.logger.info(logstr)
+        self.logger.info(log_string)
         return Arguments(name=mfname)
 
     # END: class MakeMasterFlat()

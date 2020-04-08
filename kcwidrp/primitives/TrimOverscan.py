@@ -55,9 +55,9 @@ class TrimOverscan(BasePrimitive):
         self.action.args.ccddata.header['NAXIS2'] = max_sec[1] + 1
         self.action.args.ccddata.header[key] = (True, keycom)
 
-        logstr = TrimOverscan.__module__ + "." + TrimOverscan.__qualname__
-        self.action.args.ccddata.header['HISTORY'] = logstr
-        self.logger.info(logstr)
+        log_string = TrimOverscan.__module__ + "." + TrimOverscan.__qualname__
+        self.action.args.ccddata.header['HISTORY'] = log_string
+        self.logger.info(log_string)
 
         if self.config.instrument.saveintims:
             kcwi_fits_writer(self.action.args.ccddata,

@@ -173,9 +173,9 @@ class ReadAtlas(BasePrimitive):
         self.action.args.xvals = xvals
         self.action.args.x0 = int(len(obsarc)/2)
 
-        logstr = ReadAtlas.__module__ + "." + ReadAtlas.__qualname__
-        self.action.args.ccddata.header['HISTORY'] = logstr
-        self.logger.info(logstr)
+        log_string = ReadAtlas.__module__ + "." + ReadAtlas.__qualname__
+        self.action.args.ccddata.header['HISTORY'] = log_string
+        self.logger.info(log_string)
 
         return self.action.args
     # END: class ReadAtlas()

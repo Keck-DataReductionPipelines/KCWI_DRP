@@ -533,9 +533,9 @@ class SolveArcs(BasePrimitive):
                             self.action.args.grating,
                             self.action.args.ifuname))
 
-        logstr = SolveArcs.__module__ + "." + SolveArcs.__qualname__
-        self.action.args.ccddata.header['HISTORY'] = logstr
-        self.logger.info(logstr)
+        log_string = SolveArcs.__module__ + "." + SolveArcs.__qualname__
+        self.action.args.ccddata.header['HISTORY'] = log_string
+        self.logger.info(log_string)
 
         return self.action.args
     # END: class SolveArcs()

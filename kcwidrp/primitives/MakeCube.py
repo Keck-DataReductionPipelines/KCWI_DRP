@@ -21,7 +21,7 @@ class MakeCube(BasePrimitive):
     def _perform(self):
         self.logger.info("Creating data cube")
 
-        logstr = MakeCube.__module__ + "." + MakeCube.__qualname__
+        log_string = MakeCube.__module__ + "." + MakeCube.__qualname__
 
         # Are we interactive?
         if self.config.instrument.plot_level >= 3:
@@ -37,7 +37,7 @@ class MakeCube(BasePrimitive):
             self.logger.error("No reference geometry, cannot make cube!")
             self.action.args.ccddata.header['GEOMCOR'] = (False,
                                                           'Geometry corrected?')
-            self.logger.info(logstr)
+            self.logger.info(log_string)
             return self.action.args
 
         self.logger.info("%d arc frames found" % len(tab))
@@ -272,7 +272,7 @@ class MakeCube(BasePrimitive):
             self.action.args.ccddata.header['LATPOLE'] = (
                 0.0, 'Native latitude of Celestial pole')
             # write out cube
-            self.action.args.ccddata.header['HISTORY'] = logstr
+            self.action.args.ccddata.header['HISTORY'] = log_string
             self.action.args.ccddata.data = out_cube
             self.action.args.ccddata.uncertainty.array = out_vube
             self.action.args.ccddata.mask = out_mube
@@ -287,7 +287,7 @@ class MakeCube(BasePrimitive):
         else:
             self.logger.error("Geometry file not found: %s" % geom_file)
 
-        self.logger.info(logstr)
+        self.logger.info(log_string)
 
         return self.action.args
     # END: class MakeCube()

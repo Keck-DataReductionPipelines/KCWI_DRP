@@ -11,9 +11,9 @@ class SubtractSky(BasePrimitive):
     def _perform(self):
         self.logger.info("Subtracting sky background (not yet implemented)")
 
-        logstr = SubtractSky.__module__ + "." + SubtractSky.__qualname__
-        self.action.args.ccddata.header['HISTORY'] = logstr
-        self.logger.info(logstr)
+        log_string = SubtractSky.__module__ + "." + SubtractSky.__qualname__
+        self.action.args.ccddata.header['HISTORY'] = log_string
+        self.logger.info(log_string)
 
         return self.action.args
     # END: class SubtractSky()

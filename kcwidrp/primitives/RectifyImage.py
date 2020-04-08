@@ -57,9 +57,9 @@ class RectifyImage(BasePrimitive):
 
         self.action.args.ccddata.header[key] = (True, keycom)
 
-        logstr = RectifyImage.__module__ + "." + RectifyImage.__qualname__
-        self.action.args.ccddata.header['HISTORY'] = logstr
-        self.logger.info(logstr)
+        log_string = RectifyImage.__module__ + "." + RectifyImage.__qualname__
+        self.action.args.ccddata.header['HISTORY'] = log_string
+        self.logger.info(log_string)
 
         # write out int image
         kcwi_fits_writer(self.action.args.ccddata,

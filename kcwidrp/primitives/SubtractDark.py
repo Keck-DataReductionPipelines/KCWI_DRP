@@ -51,9 +51,9 @@ class SubtractDark(BasePrimitive):
             self.logger.info("No master dark frame available, skipping")
             self.action.args.ccddata.header[key] = (False, keycom)
 
-        logstr = SubtractDark.__module__ + "." + SubtractDark.__qualname__
-        self.action.args.ccddata.header['HISTORY'] = logstr
-        self.logger.info(logstr)
+        log_string = SubtractDark.__module__ + "." + SubtractDark.__qualname__
+        self.action.args.ccddata.header['HISTORY'] = log_string
+        self.logger.info(log_string)
 
         return self.action.args
     # END: class SubtractDark()

@@ -122,9 +122,9 @@ class MakeMasterBias(BaseImg):
                 else:
                     time.sleep(self.config.instrument.plot_pause)
 
-        logstr = MakeMasterBias.__module__ + "." + MakeMasterBias.__qualname__
-        stacked.header['HISTORY'] = logstr
-        self.logger.info(logstr)
+        log_string = MakeMasterBias.__module__ + "." + MakeMasterBias.__qualname__
+        stacked.header['HISTORY'] = log_string
+        self.logger.info(log_string)
 
         kcwi_fits_writer(stacked, output_file=mbname)
         self.context.proctab.update_proctab(frame=stacked, suffix=suffix,

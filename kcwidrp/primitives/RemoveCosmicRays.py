@@ -97,10 +97,10 @@ class RemoveCosmicRays(BasePrimitive):
             header[key] = (False, keycom)
             header['NCRCLEAN'] = (0, "number of cosmic ray pixels")
 
-        logstr = RemoveCosmicRays.__module__ + \
+        log_string = RemoveCosmicRays.__module__ + \
             "." + RemoveCosmicRays.__qualname__
-        self.action.args.ccddata.header['HISTORY'] = logstr
-        self.logger.info(logstr)
+        self.action.args.ccddata.header['HISTORY'] = log_string
+        self.logger.info(log_string)
 
         if self.config.instrument.saveintims:
             kcwi_fits_writer(self.action.args.ccddata,

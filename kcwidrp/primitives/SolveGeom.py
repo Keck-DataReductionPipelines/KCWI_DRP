@@ -196,9 +196,9 @@ class SolveGeom(BasePrimitive):
             self.logger.info("Geometry written to: %s" %
                              self.action.args.geom_file)
 
-        logstr = SolveGeom.__module__ + "." + SolveGeom.__qualname__
-        self.action.args.ccddata.header['HISTORY'] = logstr
-        self.logger.info(logstr)
+        log_string = SolveGeom.__module__ + "." + SolveGeom.__qualname__
+        self.action.args.ccddata.header['HISTORY'] = log_string
+        self.logger.info(log_string)
 
         return self.action.args
     # END: class SolveGeom()

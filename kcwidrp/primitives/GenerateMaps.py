@@ -17,7 +17,7 @@ class GenerateMaps(BasePrimitive):
     def _perform(self):
         self.logger.info("Generating geometry maps")
 
-        logstr = GenerateMaps.__module__ + "." + GenerateMaps.__qualname__
+        log_string = GenerateMaps.__module__ + "." + GenerateMaps.__qualname__
 
         if self.action.args.geom_file is not None and \
                 os.path.exists(self.action.args.geom_file):
@@ -54,7 +54,7 @@ class GenerateMaps(BasePrimitive):
                             xpos_map_img[iy, ix] = ncoo[iy, 0]
                             wave_map_img[iy, ix] = ncoo[iy, 1] * dw + wave0
 
-            self.action.args.ccddata.header['HISTORY'] = logstr
+            self.action.args.ccddata.header['HISTORY'] = log_string
 
             # output maps
             self.action.args.ccddata.data = wave_map_img
@@ -77,7 +77,7 @@ class GenerateMaps(BasePrimitive):
         else:
             self.logger.error("Geom file not accessible")
 
-        self.logger.info(logstr)
+        self.logger.info(log_string)
 
         return self.action.args
     # END: class GenerateMaps()

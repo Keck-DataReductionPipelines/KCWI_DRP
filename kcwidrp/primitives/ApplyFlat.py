@@ -11,9 +11,9 @@ class ApplyFlat(BasePrimitive):
     def _perform(self):
         self.logger.info("Applying flat field (not yet implemented)")
 
-        logstr = ApplyFlat.__module__ + "." + ApplyFlat.__qualname__
-        self.action.args.ccddata.header['HISTORY'] = logstr
-        self.logger.info(logstr)
+        log_string = ApplyFlat.__module__ + "." + ApplyFlat.__qualname__
+        self.action.args.ccddata.header['HISTORY'] = log_string
+        self.logger.info(log_string)
 
         return self.action.args
     # END: class ApplyFlat()

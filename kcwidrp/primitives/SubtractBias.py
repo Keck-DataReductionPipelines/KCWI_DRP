@@ -49,9 +49,9 @@ class SubtractBias(BasePrimitive):
 
             self.action.args.ccddata.header[key] = (False, keycom)
 
-        logstr = SubtractBias.__module__ + "." + SubtractBias.__qualname__
-        self.action.args.ccddata.header['HISTORY'] = logstr
-        self.logger.info(logstr)
+        log_string = SubtractBias.__module__ + "." + SubtractBias.__qualname__
+        self.action.args.ccddata.header['HISTORY'] = log_string
+        self.logger.info(log_string)
 
         return self.action.args
     # END: class SubtractBias()

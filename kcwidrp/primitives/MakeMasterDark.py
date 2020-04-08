@@ -59,9 +59,9 @@ class MakeMasterDark(BaseImg):
         for ii, fname in enumerate(stackf):
             stacked.header['STACKF%d' % (ii + 1)] = (fname, "stack input file")
 
-        logstr = MakeMasterDark.__module__ + "." + MakeMasterDark.__qualname__
-        stacked.header['HISTORY'] = logstr
-        self.logger.info(logstr)
+        log_string = MakeMasterDark.__module__ + "." + MakeMasterDark.__qualname__
+        stacked.header['HISTORY'] = log_string
+        self.logger.info(log_string)
 
         kcwi_fits_writer(stacked, output_file=mdname)
         self.context.proctab.update_proctab(frame=stacked, suffix=suffix,
