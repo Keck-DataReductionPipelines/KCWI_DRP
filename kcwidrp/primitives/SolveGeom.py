@@ -12,7 +12,7 @@ class SolveGeom(BasePrimitive):
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
-        self.action.args.geom_file = None
+        self.action.args.geometry_file = None
         self.action.args.x0out = None
         self.action.args.wave0out = None
         self.action.args.wave1out = None
@@ -161,15 +161,15 @@ class SolveGeom(BasePrimitive):
             slscl = self.config.instrument.SLICESCALE
         # Package geometry data
         ofname = self.action.args.ccddata.header['OFNAME']
-        self.action.args.geom_file = os.path.join(
+        self.action.args.geometry_file = os.path.join(
             self.config.instrument.output_directory,
             ofname.split('.')[0] + '_geom.pkl')
-        if os.path.exists(self.action.args.geom_file):
+        if os.path.exists(self.action.args.geometry_file):
             self.logger.error("Geometry file already exists: %s" %
-                              self.action.args.geom_file)
+                              self.action.args.geometry_file)
         else:
             geom = {
-                "geom_file": self.action.args.geom_file,
+                "geom_file": self.action.args.geometry_file,
                 "xsize": xsize, "ysize": ysize,
                 "pxscl": pxscl, "slscl": slscl,
                 "cbarsno": self.action.args.contbar_image_number,
@@ -191,10 +191,10 @@ class SolveGeom(BasePrimitive):
                 "xl0": xl0_out, "xl1": xl1_out,
                 "tform": tform_list, "invtf": invtf_list
             }
-            with open(self.action.args.geom_file, 'wb') as ofile:
+            with open(self.action.args.geometry_file, 'wb') as ofile:
                 pickle.dump(geom, ofile)
             self.logger.info("Geometry written to: %s" %
-                             self.action.args.geom_file)
+                             self.action.args.geometry_file)
 
         log_string = SolveGeom.__module__ + "." + SolveGeom.__qualname__
         self.action.args.ccddata.header['HISTORY'] = log_string

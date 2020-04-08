@@ -19,17 +19,17 @@ class GenerateMaps(BasePrimitive):
 
         log_string = GenerateMaps.__module__ + "." + GenerateMaps.__qualname__
 
-        if self.action.args.geom_file is not None and \
-                os.path.exists(self.action.args.geom_file):
-            with open(self.action.args.geom_file, 'rb') as ifile:
-                geom = pickle.load(ifile)
+        if self.action.args.geometry_file is not None and \
+                os.path.exists(self.action.args.geometry_file):
+            with open(self.action.args.geometry_file, 'rb') as ifile:
+                geometry = pickle.load(ifile)
             # get geometry params
-            xl0s = geom['xl0']
-            xl1s = geom['xl1']
-            invtf_list = geom['invtf']
-            wave0 = geom['wave0out']
-            dw = geom['dwout']
-            xsize = geom['xsize']
+            xl0s = geometry['xl0']
+            xl1s = geometry['xl1']
+            invtf_list = geometry['invtf']
+            wave0 = geometry['wave0out']
+            dw = geometry['dwout']
+            xsize = geometry['xsize']
             # Store original data
             data_img = self.action.args.ccddata.data
             ny = data_img.shape[0]
