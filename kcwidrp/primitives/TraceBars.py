@@ -23,30 +23,30 @@ class TraceBars(BasePrimitive):
             do_plot = True
         else:
             do_plot = False
-        if len(self.action.args.midcntr) < 1:
+        if len(self.action.args.middle_centers) < 1:
             self.logger.error("No bars found")
         else:
             # initialize
             samp = int(80 / self.action.args.ybinsize)
-            win = self.action.args.win
+            win = self.action.args.window
             xi = []     # x input
             xo = []     # x output
             yi = []     # y input (and output)
             barid = []  # bar id number
             slid = []   # slice id number
             # loop over bars
-            for barn, barx in enumerate(self.action.args.midcntr):
+            for barn, barx in enumerate(self.action.args.middle_centers):
                 # nearest pixel to bar center
                 barxi = int(barx + 0.5)
                 self.logger.info("bar number %d is at %.3f" % (barn, barx))
                 # middle row data
                 xi.append(barx)
                 xo.append(barx)
-                yi.append(self.action.args.midrow)
+                yi.append(self.action.args.middle_row)
                 barid.append(barn)
                 slid.append(int(barn/5))
                 # trace up
-                samy = self.action.args.midrow + samp
+                samy = self.action.args.middle_row + samp
                 done = False
                 while samy < (self.action.args.ccddata.data.shape[0] - win) \
                         and not done:
@@ -69,7 +69,7 @@ class TraceBars(BasePrimitive):
                         done = True
                     samy += samp
                 # trace down
-                samy = self.action.args.midrow - samp
+                samy = self.action.args.middle_row - samp
                 done = False
                 while samy >= win and not done:
                     ys = np.median(
@@ -104,8 +104,8 @@ class TraceBars(BasePrimitive):
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height)
                 p.scatter(xi, yi, marker='x', size=2, color='blue')
-                p.scatter(self.action.args.midcntr,
-                          [self.action.args.midrow]*120, color='red')
+                p.scatter(self.action.args.middle_centers,
+                          [self.action.args.middle_row]*120, color='red')
                 bokeh_plot(p, self.context.bokeh_session)
                 if self.config.instrument.plot_level >= 2:
                     input("Next? <cr>: ")
@@ -116,9 +116,9 @@ class TraceBars(BasePrimitive):
                 'dst': dst,
                 'barid': barid,
                 'slid': slid,
-                'MIDROW': self.action.args.midrow,
-                'WINDOW': self.action.args.win,
-                'REFDELX': self.action.args.refdelx,
+                'MIDROW': self.action.args.middle_row,
+                'WINDOW': self.action.args.window,
+                'REFDELX': self.action.args.reference_delta_x,
                 'CBARSNO': self.action.args.contbar_image_number,
                 'CBARSFL': self.action.args.contbar_image}
 
@@ -133,11 +133,11 @@ class TraceBars(BasePrimitive):
                         comment=['Source and destination fiducial points',
                                  'Derived from KCWI continuum bars images',
                                  'For defining spatial transformation'],
-                        keywords={'MIDROW': (self.action.args.midrow,
+                        keywords={'MIDROW': (self.action.args.middle_row,
                                              "Middle Row of image"),
-                                  'WINDOW': (self.action.args.win,
+                                  'WINDOW': (self.action.args.window,
                                              "Window for bar"),
-                                  'REFDELX': (self.action.args.refdelx,
+                                  'REFDELX': (self.action.args.reference_delta_x,
                                               "Reference bar sep in px"),
                                   'CBARSNO': (self.action.args.contbar_image_number,
                                               "Cont. bars image number"),
