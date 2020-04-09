@@ -8,8 +8,10 @@ from keckdrpframework.primitives.base_primitive import BasePrimitive
 from keckdrpframework.models.data_set import DataSet
 import os
 import math
-from ..core.kcwi_proctab import Proctab
+from kcwidrp.core.kcwi_proctab import Proctab
+import logging
 
+logger = logging.getLogger('KCWI')
 
 def parse_imsec(section=None):
 
@@ -292,6 +294,24 @@ class ingest_file(BasePrimitive):
             illum = 'Test'
         return illum
 
+    def calibration_lamp(self):
+        if self.get_keyword('IMTYPE') != 'ARCLAMP':
+            return None
+        else:
+            lamps_dictionary = {
+                0: "FeAr",
+                1: "ThAr",
+                2: "Aux",
+                3: "Continuum A"
+            }
+            for key in lamps_dictionary.keys():
+                status = self.get_keyword('LMP%dSTAT' % key)
+                shutter = self.get_keyword('LMP%dSHST' % key)
+                if status == 1 and shutter == 1:
+                    return lamps_dictionary[key]
+                    break
+
+
     def map_ccd(self):
         """Return CCD section variables useful for processing
 
@@ -389,7 +409,7 @@ class ingest_file(BasePrimitive):
         #    self.context.data_set = DataSet(None, self.logger, self.config,
         #    self.context.event_queue)
         # self.context.data_set.append_item(self.action.args.name)
-        self.logger.info("Ingesting file %s" % self.action.args.name)
+        self.logger.info("------------------- Ingesting file %s -------------------" % self.action.args.name)
         self.name = self.action.args.name
         out_args = Arguments()
 
@@ -450,6 +470,8 @@ class ingest_file(BasePrimitive):
         out_args.illum = self.illum()
         # MAPCCD
         out_args.map_ccd = self.map_ccd()
+        # CALIBRATION LAMP
+        out_args.calibration_lamp = self.calibration_lamp()
         # Are we already in proctab?
         out_args.in_proctab = self.context.proctab.in_proctab(
             frame=out_args.ccddata)
@@ -519,7 +541,7 @@ def kcwi_fits_reader(file):
         ccddata.uncertainty = hdul['UNCERT'].data
         table = Table(hdul[3])
     else:
-        print("Wrong number of HDUnits in %s: should be 1-4, but is %d"
+        logger.warn("Wrong number of HDUnits in %s: should be 1-4, but is %d"
               % (file, len(hdul)))
         ccddata = None
         table = None
@@ -527,7 +549,7 @@ def kcwi_fits_reader(file):
     if ccddata:
         if 'BUNIT' in ccddata.header:
             ccddata.unit = ccddata.header['BUNIT']
-            print("setting image units to " + ccddata.header['BUNIT'])
+            #print("setting image units to " + ccddata.header['BUNIT'])
 
     return ccddata, table
 
@@ -574,7 +596,7 @@ def write_table(output_dir=None, table=None, names=None, comment=None,
     try:
         t.write(output_file, format='fits')
     except:
-        print("Table already exists")
+        logger.warn("Table already exists")
     print("output file: %s" % output_file)
 
 
@@ -584,11 +606,11 @@ def read_table(input_dir=None, file_name=None):
     # Construct table file name
     # if suffix is not None:
     #    input_file = input_file.split('.')[0] + "_" + suffix + ".fits"
-    print("Trying to read table: %s" % input_file)
+    logger.info("Trying to read table: %s" % input_file)
     try:
         retab = Table.read(input_file, format='fits')
     except:
-        print("No table to read")
+        logger.warn("No table to read")
         retab = None
     return retab
 
@@ -602,5 +624,5 @@ def kcwi_fits_writer(ccddata, table=None, output_file=None, suffix=None):
     # if table is not None:
     #    hdus_to_save.append(table)
     # hdus_to_save.info()
-    print("Saving to %s" % output_file)
+    logger.info(">>> Saving to %s" % output_file)
     hdus_to_save.writeto(output_file, overwrite=True)
