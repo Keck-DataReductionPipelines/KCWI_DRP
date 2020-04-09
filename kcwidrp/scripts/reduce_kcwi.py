@@ -119,6 +119,9 @@ def main():
 
     # END HANDLING OF CONFIGURATION FILES ##########
 
+    # check for the output directory
+    check_directory(kcwi_config.output_directory)
+
     try:
         framework = Framework(Kcwi_pipeline, framework_config_fullpath)
         # add this line ONLY if you are using a local logging config file
