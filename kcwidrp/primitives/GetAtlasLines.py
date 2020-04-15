@@ -46,14 +46,14 @@ def get_line_window(y, c, thresh=0., verbose=False):
             return None, None, 0
 
     # check high side
-    if x1 + 1 > nx:
+    if x1 + 1 >= nx:
         if verbose:
             print("max check: high edge hit")
         return None, None, 0
     while y[x1+1] > mx:
         x1 += 1
         count += 1
-        if x1 + 1 > nx:
+        if x1 + 1 >= nx:
             if verbose:
                 print("Max check: high edge hit")
             return None, None, 0

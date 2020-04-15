@@ -60,9 +60,13 @@ class Proctab:
     def update_proctab(self, frame, suffix='raw', newtype=None):
         if frame is not None and self.proctab is not None:
             stages = {'RAW': 0,
+                      'mbias': 1,
                       'int': 1,
                       'intd': 2,
+                      'mflat': 4,
+                      'sflat': 4,
                       'intf': 4,
+                      'sky': 5,
                       'intk': 5,
                       'icube': 6,
                       'icubed': 7,

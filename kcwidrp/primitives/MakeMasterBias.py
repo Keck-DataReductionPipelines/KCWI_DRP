@@ -1,7 +1,8 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from keckdrpframework.models.arguments import Arguments
 from keckdrpframework.primitives.base_img import BaseImg
-from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_reader, kcwi_fits_writer, parse_imsec
+from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_reader, \
+    kcwi_fits_writer, parse_imsec
 from kcwidrp.core.bokeh_plotting import bokeh_plot, bokeh_save
 
 from bokeh.plotting import figure, show

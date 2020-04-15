@@ -143,10 +143,13 @@ class Kcwi_pipeline(BasePipeline):
                                       "rectification_started",
                                       "flat_subtract_dark"),
         "flat_subtract_dark":        ("SubtractDark",
-                                      "subtract_dark started",
+                                      "subtract_dark_started",
                                       "flat_subtract_scat"),
         "flat_subtract_scat":        ("SubtractScatteredLight",
                                       "scat_subtract_started",
+                                      "flat_make_stack"),
+        "flat_make_stack":           ("StackFlats",
+                                      "stack_flats_started",
                                       "flat_make_master"),
         "flat_make_master":          ("MakeMasterFlat",
                                       "master_flat_started",
@@ -209,7 +212,7 @@ class Kcwi_pipeline(BasePipeline):
     def action_planner(self, action, context):
         try:
             self.logger.info("******* FILE TYPE DETERMINED AS %s" %
-                         action.args.imtype)
+                             action.args.imtype)
         except:
             return
 
