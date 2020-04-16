@@ -42,6 +42,41 @@ class MakeMasterFlat(BaseImg):
 
         stack_list = list(self.stack_list['OFNAME'])
 
+        if len(stack_list) <= 0:
+            self.logger.warning("No flats found!")
+            return self.action.args
+
+        # get root for maps
+        tab = self.context.proctab.n_proctab(
+            frame=self.action.args.ccddata, target_type='ARCLAMP',
+            target_group=self.action.args.groupid)
+        if len(tab) <= 0:
+            self.logger.error("Geometry not solved!")
+            return self.action.args
+
+        mroot = tab['OFNAME'][0].split('.fits')[0]
+
+        # Wavelength map image
+        wmf = mroot + '_wavemap.fits'
+        self.logger.info("Reading image: %s" % wmf)
+        wavemap = kcwi_fits_reader(
+            os.path.join(os.path.dirname(self.action.args.name), 'redux',
+                         wmf))[0]
+
+        # Slice map image
+        slf = mroot + '_slicemap.fits'
+        self.logger.info("Reading image: %s" % slf)
+        slicemap = kcwi_fits_reader(
+            os.path.join(os.path.dirname(self.action.args.name), 'redux',
+                         slf))[0]
+
+        # Position map image
+        pof = mroot + '_posmap.fits'
+        self.logger.info("Reading image: %s" % pof)
+        posmap = kcwi_fits_reader(
+            os.path.join(os.path.dirname(self.action.args.name), 'redux',
+                         pof))[0]
+
         stname = stack_list[0].split('.')[0] + "_sflat.fits"
 
         self.logger.info("Reading image: %s" % stname)
@@ -49,12 +84,30 @@ class MakeMasterFlat(BaseImg):
             os.path.join(os.path.dirname(self.action.args.name), 'redux',
                          stname))[0]
 
+        # get type of flat
+        internal = ('FLATLAMP' in self.action.args.ccddata.header['IMTYPE'])
+        twiflat = ('TWIFLAT' in self.action.args.ccddata.header['IMTYPE'])
+        domeflat = ('DOMEFLAT' in self.action.args.ccddata.header['IMTYPE'])
+
+        if internal:
+            self.logger.info("Internal Flat")
+        elif twiflat:
+            self.logger.info("Twilight Flat")
+        elif domeflat:
+            self.logger.info("Dome Flat")
+        else:
+            self.logger.error("Flat of Unknown Type!")
+            return self.action.args
+
         # get master flat output name
         mfname = stack_list[0].split('.fits')[0] + '_' + suffix + '.fits'
 
         log_string = MakeMasterFlat.__module__ + "." + \
                      MakeMasterFlat.__qualname__
         stacked.header['HISTORY'] = log_string
+        stacked.header['WAVMAPF'] = wmf
+        stacked.header['SLIMAPF'] = slf
+        stacked.header['POSMAPF'] = pof
 
         # output master flat
         kcwi_fits_writer(stacked, output_file=mfname)
