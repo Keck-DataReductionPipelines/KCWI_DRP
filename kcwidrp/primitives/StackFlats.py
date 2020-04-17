@@ -1,5 +1,3 @@
-from keckdrpframework.primitives.base_primitive import BasePrimitive
-from keckdrpframework.models.arguments import Arguments
 from keckdrpframework.primitives.base_img import BaseImg
 from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_reader, \
     kcwi_fits_writer
@@ -23,7 +21,8 @@ class StackFlats(BaseImg):
         # get list of input flats
         self.logger.info("Checking precondition for StackFlats")
         self.combine_list = self.context.proctab.n_proctab(
-            frame=self.action.args.ccddata, target_type='FLATLAMP',
+            frame=self.action.args.ccddata,
+            target_type=self.action.args.want_type,
             target_group=self.action.args.groupid)
         self.logger.info(f"pre condition got {len(self.combine_list)},"
                          f" expecting {self.action.args.min_files}")
@@ -37,9 +36,8 @@ class StackFlats(BaseImg):
         """
         Returns an Argument() with the parameters that depends on this operation
         """
-        args = self.action.args
         method = 'average'
-        suffix = 'sflat'
+        suffix = self.action.args.stack_type.lower()
 
         combine_list = list(self.combine_list['OFNAME'])
         # get flat stack output name
@@ -49,14 +47,14 @@ class StackFlats(BaseImg):
         for flat in combine_list:
             # get flat intensity (int) image file name in redux directory
             stackf.append(flat.split('.fits')[0] + '_intd.fits')
-            flatfn = os.path.join(args.in_directory, stackf[-1])
+            flatfn = os.path.join(self.action.args.in_directory, stackf[-1])
             # using [0] gets just the image data
             stack.append(kcwi_fits_reader(flatfn)[0])
 
         stacked = ccdproc.combine(stack, method=method, sigma_clip=True,
                                   sigma_clip_low_thresh=None,
                                   sigma_clip_high_thresh=2.0)
-        # stacked.header.IMTYPE = args.new_type
+        stacked.header['IMTYPE'] = self.action.args.stack_type
         stacked.header['NSTACK'] = (len(combine_list),
                                     'number of images stacked')
         stacked.header['STCKMETH'] = (method, 'method used for stacking')
@@ -70,7 +68,7 @@ class StackFlats(BaseImg):
         kcwi_fits_writer(stacked, output_file=stname)
 
         self.context.proctab.update_proctab(frame=stacked, suffix=suffix,
-                                            newtype='SFLAT')
+                                            newtype=self.action.args.stack_type)
         self.context.proctab.write_proctab()
 
         self.logger.info(log_string)

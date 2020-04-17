@@ -3,10 +3,6 @@
 #
 # Licensed under a 3-clause BSD license.
 
-import sys
-import os
-import glob
-
 from setuptools import setup
 
 # Get some values from the setup.cfg
@@ -23,8 +19,8 @@ NAME = 'kcwidrp'
 VERSION = '0.11.1dev'
 RELEASE = 'dev' not in VERSION
 
-scripts = [fname for fname in glob.glob(os.path.join('scripts', '*'))
-           if os.path.basename(fname) != 'README.rst']
+# scripts = [fname for fname in glob.glob(os.path.join('scripts', '*'))
+#            if os.path.basename(fname) != 'README.rst']
 scripts = []
 # Define entry points for command-line scripts
 entry_points = {
@@ -32,7 +28,6 @@ entry_points = {
         "reduce_kcwi = kcwidrp.scripts.reduce_kcwi:main"
         # "smart_reduce_kcwi = kcwidrp.scripts.smart_reduce_kcwi:main"
     ]}
-
 
 setup(name=NAME,
       provides=NAME,
@@ -45,9 +40,5 @@ setup(name=NAME,
       packages=['kcwidrp', ],
       scripts=scripts,
       entry_points=entry_points, install_requires=['ccdproc', 'bokeh', 'numpy',
-                                                   'scipy']
+                                                   'scipy', 'astropy']
       )
-
-
-
-

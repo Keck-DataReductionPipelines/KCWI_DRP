@@ -246,8 +246,29 @@ class Kcwi_pipeline(BasePipeline):
             flat_args = action.args
             flat_args.groupid = groupid
             flat_args.want_type = "FLATLAMP"
+            flat_args.stack_type = "SFLAT"
             flat_args.new_type = "MFLAT"
             flat_args.min_files = context.config.instrument.flat_min_nframes
+            flat_args.new_file_name = "master_flat_%s.fits" % groupid
+            flat_args.in_directory = "redux"
+            context.push_event("process_flat", flat_args)
+        elif "DOMEFLAT" in action.args.imtype:
+            flat_args = action.args
+            flat_args.groupid = groupid
+            flat_args.want_type = "DOMEFLAT"
+            flat_args.stack_type = "SDOME"
+            flat_args.new_type = "MDOME"
+            flat_args.min_files = context.config.instrument.dome_min_nframes
+            flat_args.new_file_name = "master_flat_%s.fits" % groupid
+            flat_args.in_directory = "redux"
+            context.push_event("process_flat", flat_args)
+        elif "TWIFLAT" in action.args.imtype:
+            flat_args = action.args
+            flat_args.groupid = groupid
+            flat_args.want_type = "TWIFLAT"
+            flat_args.stack_type = "STWIF"
+            flat_args.new_type = "MTWIF"
+            flat_args.min_files = context.config.instrument.twiflat_min_nframes
             flat_args.new_file_name = "master_flat_%s.fits" % groupid
             flat_args.in_directory = "redux"
             context.push_event("process_flat", flat_args)

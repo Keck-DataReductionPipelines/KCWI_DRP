@@ -5,6 +5,7 @@ from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_reader, \
     kcwi_fits_writer
 
 import os
+import numpy as np
 import ccdproc
 
 
@@ -23,7 +24,8 @@ class MakeMasterFlat(BaseImg):
         # get list of master flats
         self.logger.info("Checking precondition for MakeMasterFlat")
         self.stack_list = self.context.proctab.n_proctab(
-            frame=self.action.args.ccddata, target_type='SFLAT',
+            frame=self.action.args.ccddata,
+            target_type=self.action.args.stack_type,
             target_group=self.action.args.groupid)
         self.logger.info(f"pre condition got {len(self.stack_list)},"
                          f" expecting 1")
@@ -37,8 +39,8 @@ class MakeMasterFlat(BaseImg):
         """
         Returns an Argument() with the parameters that depends on this operation
         """
-        args = self.action.args
-        suffix = args.new_type.lower()
+        suffix = self.action.args.new_type.lower()
+        insuff = self.action.args.stack_type.lower()
 
         stack_list = list(self.stack_list['OFNAME'])
 
@@ -77,7 +79,8 @@ class MakeMasterFlat(BaseImg):
             os.path.join(os.path.dirname(self.action.args.name), 'redux',
                          pof))[0]
 
-        stname = stack_list[0].split('.')[0] + "_sflat.fits"
+        # Read in stacked flat image
+        stname = stack_list[0].split('.')[0] + '_' + insuff + '.fits'
 
         self.logger.info("Reading image: %s" % stname)
         stacked = kcwi_fits_reader(
@@ -85,9 +88,9 @@ class MakeMasterFlat(BaseImg):
                          stname))[0]
 
         # get type of flat
-        internal = ('FLATLAMP' in self.action.args.ccddata.header['IMTYPE'])
-        twiflat = ('TWIFLAT' in self.action.args.ccddata.header['IMTYPE'])
-        domeflat = ('DOMEFLAT' in self.action.args.ccddata.header['IMTYPE'])
+        internal = ('SFLAT' in stacked.header['IMTYPE'])
+        twiflat = ('STWIF' in stacked.header['IMTYPE'])
+        domeflat = ('SDOME' in stacked.header['IMTYPE'])
 
         if internal:
             self.logger.info("Internal Flat")
@@ -99,11 +102,54 @@ class MakeMasterFlat(BaseImg):
             self.logger.error("Flat of Unknown Type!")
             return self.action.args
 
+        # get image size
+        nx = stacked.header['NAXIS1']
+        ny = stacked.header['NAXIS2']
+
+        # get binning
+        xbin = self.action.args.xbinsize
+        ybin = self.action.args.ybinsize
+
+        # Parameters for fitting
+
+        # vignetted slice position range
+        fitl = int(4/xbin)
+        fitr = int(24/xbin)
+
+        # un-vignetted slice position range
+        flatl = int(34/xbin)
+        flatr = int(72/xbin)
+
+        # flat fitting slice position range
+        ffleft = int(10/xbin)
+        ffright = int(70/xbin)
+
+        buffer = 5.0/float(xbin)
+
+        # reference slice
+        refslice = 9
+        fflice = refslice
+        ffslice2 = refslice
+        sm = 25
+        allidx = np.arange(int(140/xbin))
+
+        # correct vignetting if we are using internal flats
+        if internal:
+            # get good region for fitting
+            waves = wavemap.data.compress((wavemap.data > 0.).flat)
+            waves = [waves.min(), waves.max()]
+            dw = (waves[1] - waves[0]) / 30.0
+            wavemin = (waves[0]+waves[1]) / 2.0 - dw
+            wavemax = (waves[0]+waves[1]) / 2.0 + dw
+
+            # get reference slice data
+
         # get master flat output name
         mfname = stack_list[0].split('.fits')[0] + '_' + suffix + '.fits'
 
         log_string = MakeMasterFlat.__module__ + "." + \
                      MakeMasterFlat.__qualname__
+        stacked.header['IMTYPE'] = self.action.args.new_type
         stacked.header['HISTORY'] = log_string
         stacked.header['WAVMAPF'] = wmf
         stacked.header['SLIMAPF'] = slf
@@ -112,7 +158,7 @@ class MakeMasterFlat(BaseImg):
         # output master flat
         kcwi_fits_writer(stacked, output_file=mfname)
         self.context.proctab.update_proctab(frame=stacked, suffix=suffix,
-                                            newtype=args.new_type)
+                                            newtype=self.action.args.new_type)
         self.context.proctab.write_proctab()
 
         self.logger.info(log_string)

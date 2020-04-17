@@ -13,6 +13,7 @@ import logging
 
 logger = logging.getLogger('KCWI')
 
+
 def parse_imsec(section=None):
 
     xfor = True
@@ -311,7 +312,6 @@ class ingest_file(BasePrimitive):
                     return lamps_dictionary[key]
                     break
 
-
     def map_ccd(self):
         """Return CCD section variables useful for processing
 
@@ -409,7 +409,9 @@ class ingest_file(BasePrimitive):
         #    self.context.data_set = DataSet(None, self.logger, self.config,
         #    self.context.event_queue)
         # self.context.data_set.append_item(self.action.args.name)
-        self.logger.info("------------------- Ingesting file %s -------------------" % self.action.args.name)
+        self.logger.info(
+            "------------------- Ingesting file %s -------------------" %
+            self.action.args.name)
         self.name = self.action.args.name
         out_args = Arguments()
 
@@ -541,15 +543,15 @@ def kcwi_fits_reader(file):
         ccddata.uncertainty = hdul['UNCERT'].data
         table = Table(hdul[3])
     else:
-        logger.warn("Wrong number of HDUnits in %s: should be 1-4, but is %d"
-              % (file, len(hdul)))
+        logger.warning("Wrong number of HDUnits in %s: should be 1-4, but is %d"
+                       % (file, len(hdul)))
         ccddata = None
         table = None
 
     if ccddata:
         if 'BUNIT' in ccddata.header:
             ccddata.unit = ccddata.header['BUNIT']
-            #print("setting image units to " + ccddata.header['BUNIT'])
+            # print("setting image units to " + ccddata.header['BUNIT'])
 
     return ccddata, table
 
