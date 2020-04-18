@@ -10,7 +10,7 @@ from keckdrpframework.models.processing_context import ProcessingContext
 from kcwidrp.primitives.kcwi_file_primitives import *
 #from kcwidrp.primitives.StartBokeh import *
 from kcwidrp.core.kcwi_proctab import Proctab
-
+import time
 
 class Kcwi_pipeline(BasePipeline):
     """
@@ -20,6 +20,11 @@ class Kcwi_pipeline(BasePipeline):
     name = 'KCWI-DRP'
 
     event_table = {
+        # this method is used with the "group" option, to ingest the data without
+        # triggering any processing.
+        # it is defined lower in this file
+        "add_only":                  ("add_to_dataframe_only", None, None),
+        #
         "start_bokeh":               ("StartBokeh", None, None),
         # For every file do this
         "next_file":                 ("ingest_file",
@@ -205,6 +210,9 @@ class Kcwi_pipeline(BasePipeline):
         """
         BasePipeline.__init__(self, context)
         self.cnt = 0
+
+    def add_to_dataframe_only(selfs, action, context):
+        return action.args
 
     def action_planner(self, action, context):
         try:
