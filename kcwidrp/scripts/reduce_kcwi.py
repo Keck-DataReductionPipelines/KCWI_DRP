@@ -163,7 +163,7 @@ def main():
     # which initiates the processing
     if args.group_mode is True:
         # set the default ingestion event to None
-        framework.config.default_ingestion_event = "no_event"
+        framework.config.default_ingestion_event = "add_only"
 
     # start queue manager only (useful for RPC)
     if args.queue_manager_only:
