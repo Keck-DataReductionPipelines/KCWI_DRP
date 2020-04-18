@@ -1,11 +1,10 @@
-from keckdrpframework.primitives.base_primitive import BasePrimitive
 from keckdrpframework.models.arguments import Arguments
 from keckdrpframework.primitives.base_img import BaseImg
-from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_reader, kcwi_fits_writer, parse_imsec
-from kcwidrp.core.bokeh_plotting import bokeh_plot, bokeh_save
+from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_reader, \
+    kcwi_fits_writer, parse_imsec
+from kcwidrp.core.bokeh_plotting import bokeh_plot
 
-from bokeh.plotting import figure, show
-from bokeh.models import Range1d, LinearAxis
+from bokeh.plotting import figure
 import ccdproc
 import numpy as np
 from scipy.stats import sigmaclip
@@ -45,9 +44,8 @@ class MakeMasterBias(BaseImg):
         """
         Returns an Argument() with the parameters that depends on this operation
         """
-        args = self.action.args
         method = 'average'
-        suffix = args.new_type.lower()
+        suffix = self.action.args.new_type.lower()
 
         combine_list = list(self.combine_list['OFNAME'])
         # get master bias output name
@@ -62,7 +60,7 @@ class MakeMasterBias(BaseImg):
         stacked = ccdproc.combine(stack, method=method, sigma_clip=True,
                                   sigma_clip_low_thresh=None,
                                   sigma_clip_high_thresh=2.0)
-        stacked.header.IMTYPE = args.new_type
+        stacked.header['IMTYPE'] = self.action.args.new_type
         stacked.header['NSTACK'] = (len(combine_list),
                                     'number of images stacked')
         stacked.header['STCKMETH'] = (method, 'method used for stacking')
@@ -115,7 +113,6 @@ class MakeMasterBias(BaseImg):
                 p.line([bias_rn, bias_rn], [0, np.max(hist)], color='red')
                 p.y_range.start = 0
                 print(p)
-                #bokeh_plot(p, self.context.bokeh_session)
                 bokeh_plot(p, self.context.bokeh_session)
                 if self.config.instrument.plot_level >= 2:
                     input("Next? <cr>: ")
@@ -128,7 +125,7 @@ class MakeMasterBias(BaseImg):
 
         kcwi_fits_writer(stacked, output_file=mbname)
         self.context.proctab.update_proctab(frame=stacked, suffix=suffix,
-                                            newtype=args.new_type)
+                                            newtype=self.action.args.new_type)
         self.context.proctab.write_proctab()
         return Arguments(name=mbname)
     # END: class ProcessBias()

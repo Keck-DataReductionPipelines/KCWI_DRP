@@ -6,7 +6,7 @@ from kcwidrp.core.bokeh_plotting import bokeh_plot, bokeh_save
 from bokeh.plotting import figure, show
 from bokeh.models import Range1d, LinearAxis
 import numpy as np
-import scipy as sp
+import scipy.interpolate as spint
 import time
 
 
@@ -51,7 +51,7 @@ class SubtractScatteredLight(BasePrimitive):
             nbkpt = int(siz[1] / 40.)
             bkpt = xvals[nbkpt:-nbkpt:nbkpt]
             # B-spline fit
-            bspl = sp.interpolate.LSQUnivariateSpline(xvals, yvals, bkpt)
+            bspl = spint.LSQUnivariateSpline(xvals, yvals, bkpt)
             if self.config.instrument.plot_level >= 1:
                 # plot
                 p = figure(title=self.action.args.plotlabel +
@@ -61,7 +61,8 @@ class SubtractScatteredLight(BasePrimitive):
                            plot_height=self.config.instrument.plot_height)
                 p.circle(xvals, yvals, legend_label="Scat")
                 xx = np.linspace(0, max(xvals), len(yvals) * 5)
-                p.line(xx, bspl(xx), color='red', line_width=3, legend_label="fit")
+                p.line(xx, bspl(xx), color='red', line_width=3,
+                       legend_label="fit")
                 bokeh_plot(p, self.context.bokeh_session)
                 if self.config.instrument.plot_level >= 2:
                     input("Next? <cr>: ")
@@ -91,4 +92,3 @@ class SubtractScatteredLight(BasePrimitive):
 
         return self.action.args
     # END: SubtractScatteredLight()
-

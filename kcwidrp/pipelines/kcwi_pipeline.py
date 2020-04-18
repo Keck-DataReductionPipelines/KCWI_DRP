@@ -148,10 +148,13 @@ class Kcwi_pipeline(BasePipeline):
                                       "rectification_started",
                                       "flat_subtract_dark"),
         "flat_subtract_dark":        ("SubtractDark",
-                                      "subtract_dark started",
+                                      "subtract_dark_started",
                                       "flat_subtract_scat"),
         "flat_subtract_scat":        ("SubtractScatteredLight",
                                       "scat_subtract_started",
+                                      "flat_make_stack"),
+        "flat_make_stack":           ("StackFlats",
+                                      "stack_flats_started",
                                       "flat_make_master"),
         "flat_make_master":          ("MakeMasterFlat",
                                       "master_flat_started",
@@ -217,7 +220,7 @@ class Kcwi_pipeline(BasePipeline):
     def action_planner(self, action, context):
         try:
             self.logger.info("******* FILE TYPE DETERMINED AS %s" %
-                         action.args.imtype)
+                             action.args.imtype)
         except:
             return
 
@@ -251,8 +254,29 @@ class Kcwi_pipeline(BasePipeline):
             flat_args = action.args
             flat_args.groupid = groupid
             flat_args.want_type = "FLATLAMP"
+            flat_args.stack_type = "SFLAT"
             flat_args.new_type = "MFLAT"
             flat_args.min_files = context.config.instrument.flat_min_nframes
+            flat_args.new_file_name = "master_flat_%s.fits" % groupid
+            flat_args.in_directory = "redux"
+            context.push_event("process_flat", flat_args)
+        elif "DOMEFLAT" in action.args.imtype:
+            flat_args = action.args
+            flat_args.groupid = groupid
+            flat_args.want_type = "DOMEFLAT"
+            flat_args.stack_type = "SDOME"
+            flat_args.new_type = "MDOME"
+            flat_args.min_files = context.config.instrument.dome_min_nframes
+            flat_args.new_file_name = "master_flat_%s.fits" % groupid
+            flat_args.in_directory = "redux"
+            context.push_event("process_flat", flat_args)
+        elif "TWIFLAT" in action.args.imtype:
+            flat_args = action.args
+            flat_args.groupid = groupid
+            flat_args.want_type = "TWIFLAT"
+            flat_args.stack_type = "STWIF"
+            flat_args.new_type = "MTWIF"
+            flat_args.min_files = context.config.instrument.twiflat_min_nframes
             flat_args.new_file_name = "master_flat_%s.fits" % groupid
             flat_args.in_directory = "redux"
             context.push_event("process_flat", flat_args)
