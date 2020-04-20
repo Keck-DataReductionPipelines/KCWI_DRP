@@ -1,12 +1,12 @@
-from keckdrpframework.primitives.base_primitive import BasePrimitive
-from keckdrpframework.models.arguments import Arguments
 from keckdrpframework.primitives.base_img import BaseImg
 from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_reader, \
     kcwi_fits_writer
-
+from kcwidrp.core.bokeh_plotting import bokeh_plot
+from bokeh.plotting import figure
 import os
+import time
 import numpy as np
-import ccdproc
+from scipy.interpolate import CubicSpline
 
 
 class MakeMasterFlat(BaseImg):
@@ -132,6 +132,7 @@ class MakeMasterFlat(BaseImg):
         ffslice2 = refslice
         sm = 25
         allidx = np.arange(int(140/xbin))
+        newflat = stacked.data.copy()
 
         # correct vignetting if we are using internal flats
         if internal:
@@ -141,9 +142,114 @@ class MakeMasterFlat(BaseImg):
             dw = (waves[1] - waves[0]) / 30.0
             wavemin = (waves[0]+waves[1]) / 2.0 - dw
             wavemax = (waves[0]+waves[1]) / 2.0 + dw
+            print(wavemin, wavemax)
 
             # get reference slice data
+            q = [i for i, v in enumerate(slicemap.data.flat) if v == refslice]
+            xflat = []
+            yflat = []
+            wflat = []
+            qq = []
+            for i in q:
+                if wavemin < wavemap.data.flat[i] < wavemax:
+                    xflat.append(posmap.data.flat[i])
+                    yflat.append(stacked.data.flat[i])
+                    wflat.append(wavemap.data.flat[i])
+                    qq.append(i)
 
+            qflat = [i for i, v in enumerate(xflat) if flatl <= v <= flatr]
+            xflat = [xflat[i] for i in qflat]
+            yflat = [yflat[i] for i in qflat]
+            wflat = [wflat[i] for i in qflat]
+            print(np.min(xflat), np.max(xflat))
+            sw = np.argsort(wflat)
+            ywflat = [yflat[i] for i in sw]
+            wwflat = [wflat[i] for i in sw]
+            wavelinfit = np.polyfit(wwflat, ywflat, 2)
+            print(wavelinfit)
+            yfit = np.polyval(wavelinfit, wflat)
+
+            if self.config.instrument.plot_level >= 1:
+                p = figure(title=self.action.args.plotlabel + ' WAVE SLOPE FIT',
+                           x_axis_label='wave px',
+                           y_axis_label='counts',
+                           plot_width=self.config.instrument.plot_width,
+                           plot_height=self.config.instrument.plot_height)
+                p.circle(wwflat, ywflat, legend_label="Data")
+                p.line(wflat, yfit, line_color='red', line_width=3,
+                       legend_label="Fit")
+                bokeh_plot(p, self.context.bokeh_session)
+                if self.config.instrument.plot_level >= 2:
+                    input("Next? <cr>: ")
+                else:
+                    time.sleep(self.config.instrument.plot_pause)
+
+            yflat = yflat / np.polyval(wavelinfit, wflat)
+            ss = np.argsort(xflat)
+            xflat = [xflat[i] for i in ss]
+            yflat = [yflat[i] for i in ss]
+            wflat = [wflat[i] for i in ss]
+            resflat = np.polyfit(xflat, yflat, 1)
+
+            # select the point we will fit for the vignetting
+            xfit = [posmap.data.flat[i] for i in qq]
+            yfit = [stacked.data.flat[i] for i in qq]
+            wflat = [wavemap.data.flat[i] for i in qq]
+            yfit = yfit / np.polyval(wavelinfit, wflat)
+
+            # fit the vignetted region
+            qfit = [i for i, v in enumerate(xfit) if fitl <= v <= fitr]
+            xfit = [xfit[i] for i in qfit]
+            yfit = [yfit[i] for i in qfit]
+            s = np.argsort(xfit)
+            xfit = [xfit[i] for i in s]
+            yfit = [yfit[i] for i in s]
+            resfit = np.polyfit(xfit, yfit, 1)
+
+            if self.config.instrument.plot_level >= 1:
+                p = figure(title=self.action.args.plotlabel + ' Vignetting',
+                           x_axis_label='Slice Pos (px)',
+                           y_axis_label='Ratio',
+                           plot_width=self.config.instrument.plot_width,
+                           plot_height=self.config.instrument.plot_height)
+                p.circle(posmap.data.flat[qq],
+                         stacked.data.flat[qq] / np.polyval(
+                             wavelinfit, wavemap.data.flat[qq]))
+                p.line(allidx, resfit[1] + resfit[0]*allidx, line_color='purple')
+                p.line(allidx, resflat[1] + resflat[0]*allidx, line_color='red')
+                p.line([fitl, fitl], [0.5, 1.5], line_color='blue')
+                p.line([fitr, fitr], [0.5, 1.5], line_color='blue')
+                p.line([flatl, flatl], [0.5, 1.5], line_color='green')
+                p.line([flatr, flatr], [0.5, 1.5], line_color='green')
+                bokeh_plot(p, self.context.bokeh_session)
+                if self.config.instrument.plot_level >= 2:
+                    input("Next? <cr>: ")
+                else:
+                    time.sleep(self.config.instrument.plot_pause)
+            # compute the intersection
+            xinter = -(resflat[1]-resfit[1])/(resflat[0]-resfit[0])
+            # figure out where the correction applies
+            qinter = [i for i, v in enumerate(posmap.data.flat)
+                      if 0 <= v <= (xinter-buffer)]
+            # apply the correction!
+            for i in qinter:
+                newflat.flat[i] = (resflat[1]+resflat[0]*posmap.data.flat[i]) \
+                                / (resfit[1]+resfit[0]*posmap.data.flat[i]) * \
+                                stacked.data.flat[i]
+            # now deal with the intermediate (buffer) region
+            qspline = [i for i, v in enumerate(posmap.data.flat)
+                       if (xinter-buffer) <= v <= (xinter+buffer)]
+            xspline = [posmap.data.flat[i] for i in qspline]
+            posmin = np.min(xspline)
+            posmax = np.max(xspline)
+            valuemin = (resflat[1]+resflat[0]*posmin) / \
+                       (resfit[1]+resfit[0]*posmin)
+            valuemax = 1
+            cs = CubicSpline([posmin, posmax], [valuemin, valuemax])
+            for i in qspline:
+                newflat.flat[i] = cs(posmap.data.flat[i]) * newflat.flat[i]
+
+        stacked.data = newflat
         # get master flat output name
         mfname = stack_list[0].split('.fits')[0] + '_' + suffix + '.fits'
 
