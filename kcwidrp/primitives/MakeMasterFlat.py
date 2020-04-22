@@ -6,7 +6,11 @@ from bokeh.plotting import figure
 import os
 import time
 import numpy as np
-from scipy.interpolate import CubicSpline
+
+
+def bm_ledge_position(cwave):
+    fit = [0.240742, 4044.56]
+    return fit[1] + fit[0] * cwave
 
 
 class MakeMasterFlat(BaseImg):
@@ -134,6 +138,9 @@ class MakeMasterFlat(BaseImg):
         allidx = np.arange(int(140/xbin))
         newflat = stacked.data.copy()
 
+        # get reference slice data
+        q = [i for i, v in enumerate(slicemap.data.flat) if v == refslice]
+
         # correct vignetting if we are using internal flats
         if internal:
             self.logger.info("Internal flats require vignetting correction")
@@ -146,8 +153,6 @@ class MakeMasterFlat(BaseImg):
             self.logger.info("Using %.1f - %.1f A of slice %d" % (wavemin,
                                                                   wavemax,
                                                                   refslice))
-            # get reference slice data
-            q = [i for i, v in enumerate(slicemap.data.flat) if v == refslice]
             xflat = []
             yflat = []
             wflat = []
@@ -291,7 +296,24 @@ class MakeMasterFlat(BaseImg):
                     np.polyval(buffit, posmap.data.flat[i]) * newflat.flat[i]
             self.logger.info("Vignetting correction complete.")
 
+        # update stack
         stacked.data = newflat
+        # now fit master flat
+        # get reference slice points
+        qref = [i for i in q if ffleft <= posmap.data.flat[i] <= ffright]
+        xfr = [wavemap.data.flat[i] for i in qref]
+        yfr = [newflat.flat[i] for i in qref]
+        s = np.argsort(xfr)
+        xfr = [xfr[i] for i in s]
+        yfr = [yfr[i] for i in s]
+
+        # correction for BM where we see a ledge
+        if 'BM' in self.action.args.grating:
+            ledge_wave = bm_ledge_position(self.action.args.cwave)
+            self.logger.info("BM grating requires correction")
+            self.logger.info("BM ledge calculated wavelength "
+                             "for ref slice = %f.2 (A)" % ledge_wave)
+
         # get master flat output name
         mfname = stack_list[0].split('.fits')[0] + '_' + suffix + '.fits'
 
