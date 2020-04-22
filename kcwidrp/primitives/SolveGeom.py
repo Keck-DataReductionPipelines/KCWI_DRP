@@ -1,5 +1,4 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
-from keckdrpframework.models.arguments import Arguments
 
 import os
 import numpy as np
@@ -78,9 +77,10 @@ class SolveGeom(BasePrimitive):
                          (self.action.args.waveall0, self.action.args.waveall1))
         self.logger.info("WAVE   MID: %.2f" % self.action.args.wavemid)
         # Start setting up slice transforms
-        self.action.args.x0out = int(self.action.args.reference_bar_separation / 2.) + 1
-        self.refoutx = np.arange(0, 5) * self.action.args.reference_bar_separation + \
-            self.action.args.x0out
+        self.action.args.x0out = \
+            int(self.action.args.reference_bar_separation / 2.) + 1
+        self.refoutx = np.arange(0, 5) * \
+            self.action.args.reference_bar_separation + self.action.args.x0out
         # Variables for output control points
         srcw = []
         max_srcw = 0
@@ -125,8 +125,10 @@ class SolveGeom(BasePrimitive):
                     xw.append(self.refoutx[ib])
                     yw.append(xy[1])
                     # Input control points
-                    xi.append(self.action.args.destination_control_points[ixy][0])
-                    yi.append(self.action.args.destination_control_points[ixy][1])
+                    xi.append(self.action.args.destination_control_points[
+                                  ixy][0])
+                    yi.append(self.action.args.destination_control_points[
+                                  ixy][1])
             # get image limits
             xl0 = int(min(xi) - self.action.args.reference_bar_separation)
             if xl0 < 0:
@@ -202,5 +204,3 @@ class SolveGeom(BasePrimitive):
 
         return self.action.args
     # END: class SolveGeom()
-
-

@@ -1,11 +1,10 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
-from keckdrpframework.models.arguments import Arguments
-from kcwidrp.core.bokeh_plotting import bokeh_plot, bokeh_save
+from kcwidrp.core.bokeh_plotting import bokeh_plot
 
 import numpy as np
 import logging
-from bokeh.util.logconfig import basicConfig, bokeh_logger as bl
-from bokeh.plotting import figure, show
+from bokeh.util.logconfig import basicConfig
+from bokeh.plotting import figure
 from scipy.signal import find_peaks
 import time
 
@@ -32,16 +31,19 @@ class FindBars(BasePrimitive):
         # select from center rows of image
         middle_y_row = int(y_size / 2)
         middle_vector = np.median(
-            self.action.args.ccddata.data[(middle_y_row-window):(middle_y_row+window+1), :], axis=0)
+            self.action.args.ccddata.data[
+                (middle_y_row-window):(middle_y_row+window+1), :], axis=0)
         # set threshold for peak finding
         average_value_midddle_vector = np.average(middle_vector)
         self.logger.info("peak threshold = %f" % average_value_midddle_vector)
         # find peaks above threshold
-        peaks_in_middle_vector, _ = find_peaks(middle_vector, height=average_value_midddle_vector)
+        peaks_in_middle_vector, _ = find_peaks(
+            middle_vector, height=average_value_midddle_vector)
         # do we have the requisite number?
         if len(peaks_in_middle_vector) != self.config.instrument.NBARS:
             self.logger.error("Did not find %d peaks: n peaks = %d" %
-                              (self.config.instrument.NBARS, len(peaks_in_middle_vector)))
+                              (self.config.instrument.NBARS,
+                               len(peaks_in_middle_vector)))
         else:
             self.logger.info("found %d bars" % len(peaks_in_middle_vector))
 
@@ -50,15 +52,18 @@ class FindBars(BasePrimitive):
                 x = np.arange(len(middle_vector))
                 p = figure(
                     title=self.action.args.plotlabel +
-                    "BARS MID TRACE Thresh = %.2f" % average_value_midddle_vector,
+                    "BARS MID TRACE Thresh = %.2f" %
+                    average_value_midddle_vector,
                     x_axis_label='CCD X (px)', y_axis_label='e-',
                     plot_width=self.config.instrument.plot_width,
                     plot_height=self.config.instrument.plot_height)
                 p.line(x, middle_vector, color='blue', legend_label="MidTrace")
-                p.scatter(peaks_in_middle_vector, middle_vector[peaks_in_middle_vector], marker='x', color='red',
-                          legend_label="FoundBar")
-                p.line([0, x_size], [average_value_midddle_vector, average_value_midddle_vector], color='grey',
-                       line_dash='dashed')
+                p.scatter(peaks_in_middle_vector,
+                          middle_vector[peaks_in_middle_vector], marker='x',
+                          color='red', legend_label="FoundBar")
+                p.line([0, x_size], [average_value_midddle_vector,
+                                     average_value_midddle_vector],
+                       color='grey', line_dash='dashed')
                 p.legend.location = "bottom_center"
                 bokeh_plot(p, self.context.bokeh_session)
                 if self.config.instrument.plot_level >= 2:
@@ -86,7 +91,8 @@ class FindBars(BasePrimitive):
                         plot_height=self.config.instrument.plot_height)
                     p.line(xs, ys, color='blue', legend_label='Bar Trace')
                     p.circle(xs, ys, color='red', legend_label='Bar Trace')
-                    p.line([xc, xc], [average_value_midddle_vector, middle_vector[peak]], color='green',
+                    p.line([xc, xc], [average_value_midddle_vector,
+                                      middle_vector[peak]], color='green',
                            legend_label='Cntrd')
                     bokeh_plot(p, self.context.bokeh_session)
                     if do_inter:
@@ -104,11 +110,14 @@ class FindBars(BasePrimitive):
         # calculate reference delta x based on refbar
         self.action.args.reference_delta_x = 0.
         for ib in range(reference_bar-1, reference_bar+3):
-            self.action.args.reference_delta_x += (middle_centers[ib] - middle_centers[ib-1])
+            self.action.args.reference_delta_x += \
+                (middle_centers[ib] - middle_centers[ib-1])
         self.action.args.reference_delta_x /= 4.
         # store image info
-        self.action.args.contbar_image_number = self.action.args.ccddata.header['FRAMENO']
-        self.action.args.contbar_image = self.action.args.ccddata.header['OFNAME']
+        self.action.args.contbar_image_number = \
+            self.action.args.ccddata.header['FRAMENO']
+        self.action.args.contbar_image = \
+            self.action.args.ccddata.header['OFNAME']
 
         log_string = FindBars.__module__ + "." + FindBars.__qualname__
         self.action.args.ccddata.header['HISTORY'] = log_string
@@ -116,4 +125,3 @@ class FindBars(BasePrimitive):
 
         return self.action.args
     # END: class FindBars()
-

@@ -1,5 +1,4 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
-from keckdrpframework.models.arguments import Arguments
 from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer
 
 import os
@@ -22,14 +21,14 @@ class GenerateMaps(BasePrimitive):
         if self.action.args.geometry_file is not None and \
                 os.path.exists(self.action.args.geometry_file):
             with open(self.action.args.geometry_file, 'rb') as ifile:
-                geometry = pickle.load(ifile)
-            # get geometry params
-            xl0s = geometry['xl0']
-            xl1s = geometry['xl1']
-            invtf_list = geometry['invtf']
-            wave0 = geometry['wave0out']
-            dw = geometry['dwout']
-            xsize = geometry['xsize']
+                geom = pickle.load(ifile)
+            # get geom params
+            xl0s = geom['xl0']
+            xl1s = geom['xl1']
+            invtf_list = geom['invtf']
+            wave0 = geom['wave0out']
+            dw = geom['dwout']
+            xsize = geom['xsize']
             # Store original data
             data_img = self.action.args.ccddata.data
             ny = data_img.shape[0]
@@ -54,7 +53,45 @@ class GenerateMaps(BasePrimitive):
                             xpos_map_img[iy, ix] = ncoo[iy, 0]
                             wave_map_img[iy, ix] = ncoo[iy, 1] * dw + wave0
 
+            # update header
             self.action.args.ccddata.header['HISTORY'] = log_string
+            # Spatial geometry
+            self.action.args.ccddata.header['BARSEP'] = (
+                geom['barsep'], 'separation of bars (binned pix)')
+            self.action.args.ccddata.header['BAR0'] = (
+                geom['bar0'], 'first bar pixel position')
+            # Wavelength ranges
+            self.action.args.ccddata.header['WAVALL0'] = (
+                geom['waveall0'], 'Low inclusive wavelength')
+            self.action.args.ccddata.header['WAVALL1'] = (
+                geom['waveall1'], 'High inclusive wavelength')
+            self.action.args.ccddata.header['WAVGOOD0'] = (
+                geom['wavegood0'], 'Low good wavelength')
+            self.action.args.ccddata.header['WAVGOOD1'] = (
+                geom['wavegood1'], 'High good wavelength')
+            self.action.args.ccddata.header['WAVMID'] = (
+                geom['wavemid'], 'middle wavelength')
+            # Wavelength fit statistics
+            self.action.args.ccddata.header['AVWVSIG'] = (
+                geom['avwvsig'], 'Avg. bar wave sigma (Ang)')
+            self.action.args.ccddata.header['SDWVSIG'] = (
+                geom['sdwvsig'], 'Stdev. var wave sigma (Ang)')
+            # Pixel scales
+            self.action.args.ccddata.header['PXSCL'] = (
+                geom['pxscl'], 'Pixel scale along slice (deg)')
+            self.action.args.ccddata.header['SLSCL'] = (
+                geom['slscl'], 'Pixel scale perp. to slices (deg)')
+            # Geometry origins
+            self.action.args.ccddata.header['CBARSNO'] = (
+                geom['cbarsno'], 'Continuum bars image number')
+            self.action.args.ccddata.header['CBARSFL'] = (
+                geom['cbarsfl'], 'Continuum bars image filename')
+            self.action.args.ccddata.header['ARCNO'] = (
+                geom['arcno'], 'Arc image number')
+            self.action.args.ccddata.header['ARCFL'] = (
+                geom['arcfl'], 'Arc image filename')
+            self.action.args.ccddata.header['GEOMFL'] = (
+                self.action.args.geometry_file.split('/')[-1], 'Geometry file')
 
             # output maps
             self.action.args.ccddata.data = wave_map_img
@@ -81,5 +118,3 @@ class GenerateMaps(BasePrimitive):
 
         return self.action.args
     # END: class GenerateMaps()
-
-

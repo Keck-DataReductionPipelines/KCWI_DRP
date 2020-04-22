@@ -1,7 +1,7 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
-from keckdrpframework.models.arguments import Arguments
 from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer
 
+import time
 import os
 import math
 import pickle
@@ -9,6 +9,8 @@ import numpy as np
 from skimage import transform as tf
 from astropy.coordinates import SkyCoord
 from astropy import units as u
+from kcwidrp.core.bokeh_plotting import bokeh_plot
+from bokeh.plotting import figure
 
 
 class MakeCube(BasePrimitive):
@@ -211,9 +213,9 @@ class MakeCube(BasePrimitive):
                 geom['sdwvsig'], 'Stdev. var wave sigma (Ang)')
             # Pixel scales
             self.action.args.ccddata.header['PXSCL'] = (
-                geom['pxscl'], 'Pixel scale along slice')
+                geom['pxscl'], 'Pixel scale along slice (deg)')
             self.action.args.ccddata.header['SLSCL'] = (
-                geom['slscl'], 'Pixel scale perpendicular to slices')
+                geom['slscl'], 'Pixel scale perp. to slices (deg)')
             # Geometry origins
             self.action.args.ccddata.header['CBARSNO'] = (
                 geom['cbarsno'], 'Continuum bars image number')
@@ -291,5 +293,3 @@ class MakeCube(BasePrimitive):
 
         return self.action.args
     # END: class MakeCube()
-
-
