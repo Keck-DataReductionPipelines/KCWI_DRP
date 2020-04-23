@@ -1,9 +1,8 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
-from keckdrpframework.models.arguments import Arguments
-from kcwidrp.core.bokeh_plotting import bokeh_plot, bokeh_save
+from kcwidrp.core.bokeh_plotting import bokeh_plot
 
-from bokeh.plotting import figure, show
-from bokeh.models import Range1d, LinearAxis
+from bokeh.plotting import figure
+from bokeh.models import Range1d
 from bokeh.io import export_png
 import numpy as np
 import scipy as sp
@@ -107,7 +106,6 @@ def get_line_window(y, c, thresh=0., verbose=False):
 
     return x0, x1, count
     # END: get_line_window()
-
 
 
 def findpeaks(x, y, wid, sth, ath, pkg=None, verbose=False):
@@ -340,27 +338,27 @@ class GetAtlasLines(BasePrimitive):
         norm_fac = np.nanmax(atspec)
         if self.config.instrument.plot_level >= 1:
             p = figure(title=self.action.args.plotlabel +
-                             "ATLAS LINES Ngood = %d, Nrej = %d" % (len(refws), nrej),
+                       "ATLAS LINES Ngood = %d, Nrej = %d" % (len(refws), nrej),
                        x_axis_label="Wavelength (A)",
                        y_axis_label="Normalized Flux",
                        plot_width=self.config.instrument.plot_width,
                        plot_height=self.config.instrument.plot_height)
-            p.line(subwvals, subyvals / np.nanmax(subyvals), legend_label='RefArc',
-               color='lightgray')
-            p.line(atwave, atspec / norm_fac, legend_label='Atlas', color='blue')
+            p.line(subwvals, subyvals / np.nanmax(subyvals),
+                   legend_label='RefArc', color='lightgray')
+            p.line(atwave, atspec / norm_fac, legend_label='Atlas',
+                   color='blue')
             # Rejected: nearby neighbor
-            p.diamond(rej_neigh_w, rej_neigh_y / norm_fac, legend_label='NeighRej',
-                  color='cyan', size=8)
+            p.diamond(rej_neigh_w, rej_neigh_y / norm_fac,
+                      legend_label='NeighRej', color='cyan', size=8)
             # Rejected: fit failure
             p.diamond(rej_fit_w, rej_fit_y / norm_fac, legend_label='FitRej',
-                  color='red', size=8)
+                      color='red', size=8)
             # Rejected: line parameter outside range
             p.diamond(rej_par_w, rej_par_a / norm_fac, legend_label='ParRej',
-                  color='orange', size=8)
-            p.diamond(refws, refas / norm_fac, legend_label='Kept', color='green',
-                  size=10)
+                      color='orange', size=8)
+            p.diamond(refws, refas / norm_fac, legend_label='Kept',
+                      color='green', size=10)
             p.x_range = Range1d(min(subwvals), max(subwvals))
-        if self.config.instrument.plot_level >= 1:
             bokeh_plot(p, self.context.bokeh_session)
             if self.config.instrument.plot_level >= 2:
                 input("Next? <cr>: ")
@@ -378,5 +376,3 @@ class GetAtlasLines(BasePrimitive):
 
         return self.action.args
     # END: class GetAtlasLines()
-
-
