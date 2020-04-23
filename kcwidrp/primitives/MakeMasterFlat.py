@@ -6,6 +6,9 @@ from bokeh.plotting import figure
 import os
 import time
 import numpy as np
+from scipy.signal.windows import boxcar
+import scipy as sp
+from pydl.pydlutils import bspline
 
 
 def bm_ledge_position(cwave):
@@ -267,9 +270,9 @@ class MakeMasterFlat(BaseImg):
                                                        wavemap.data.flat[i])
                      for i in qbff]
             # sort on slice position
-            sp = np.argsort(xbuff)
-            xbuff = [xbuff[i] for i in sp]
-            ybuff = [ybuff[i] for i in sp]
+            ssp = np.argsort(xbuff)
+            xbuff = [xbuff[i] for i in ssp]
+            ybuff = [ybuff[i] for i in ssp]
             # fit buffer with low-order poly
             buffit = np.polyfit(xbuff, ybuff, 3)
             # plot buffer fit
@@ -307,12 +310,52 @@ class MakeMasterFlat(BaseImg):
         xfr = [xfr[i] for i in s]
         yfr = [yfr[i] for i in s]
 
+        wavegood0 = wavemap.header['WAVGOOD0']
+        wavegood1 = wavemap.header['WAVGOOD1']
+
         # correction for BM where we see a ledge
         if 'BM' in self.action.args.grating:
             ledge_wave = bm_ledge_position(self.action.args.cwave)
-            self.logger.info("BM grating requires correction")
+
             self.logger.info("BM ledge calculated wavelength "
-                             "for ref slice = %f.2 (A)" % ledge_wave)
+                             "for ref slice = %.2f (A)" % ledge_wave)
+            if wavegood0 <= ledge_wave <= wavegood1:
+                self.logger.info("BM grating requires correction")
+                qledge = [i for i, v in enumerate(xfr)
+                          if ledge_wave-25 <= v <= ledge_wave+25]
+                xledge = [xfr[i] for i in qledge]
+                yledge = [yfr[i] for i in qledge]
+                s = np.argsort(xledge)
+                xledge = [xledge[i] for i in s]
+                yledge = [yledge[i] for i in s]
+                # ledgefit = np.polyfit(xledge-np.min(xledge), yledge, deg=11)
+                # print(ledgefit)
+                win = boxcar(150)
+                smyledge = sp.signal.convolve(yledge,
+                                              win, mode='same') / sum(win)
+                fpoints = np.arange(0, 100) / 100. * 50 + (ledge_wave-25)
+                ledgefit, ledgemsk = bspline.iterfit(np.asarray(xledge),
+                                                     smyledge, fullbkpt=fpoints,
+                                                     upper=1, lower=1)
+                # t, c, k = interpolate.splrep(xledge, smyledge)  # , t=fpoints)
+                # ledgefit = interpolate.BSpline(t, c, k)
+                if self.config.instrument.plot_level >= 1:
+                    p = figure(
+                        title=self.action.args.plotlabel + ' BM Ledge Region',
+                        x_axis_label='Wave (A)',
+                        y_axis_label='Value',
+                        plot_width=self.config.instrument.plot_width,
+                        plot_height=self.config.instrument.plot_height)
+                    p.circle(xledge, yledge, legend_label='Data')
+                    p.circle(xledge, smyledge, line_color='orange',
+                             legend_label='Smooth')
+                    yfit, msk = ledgefit.value(np.asarray(xledge))
+                    p.line(xledge, yfit, line_color='red', legend_label='Fit')
+                    bokeh_plot(p, self.context.bokeh_session)
+                    if self.config.instrument.plot_level >= 1:
+                        input("Next? <cr>: ")
+                    else:
+                        time.sleep(self.config.instrument.plot_pause)
 
         # get master flat output name
         mfname = stack_list[0].split('.fits')[0] + '_' + suffix + '.fits'
