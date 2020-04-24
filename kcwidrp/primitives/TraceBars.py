@@ -1,10 +1,8 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
-from keckdrpframework.models.arguments import Arguments
 from kcwidrp.primitives.kcwi_file_primitives import write_table
-from kcwidrp.core.bokeh_plotting import bokeh_plot, bokeh_save
+from kcwidrp.core.bokeh_plotting import bokeh_plot
 
-from bokeh.plotting import figure, show
-from bokeh.models import Range1d, LinearAxis
+from bokeh.plotting import figure
 import numpy as np
 import os
 import time
@@ -125,7 +123,8 @@ class TraceBars(BasePrimitive):
             # in this line we pass the trace information to an argument
             # instead of writing it to a table
             self.context.trace = trace
-            ofname = self.action.args.contbar_image.split('.')[0] + "_trace.fits"
+            ofname = self.action.args.contbar_image.split('.')[0] + \
+                "_trace.fits"
             write_table(table=[src, dst, barid, slid],
                         names=('src', 'dst', 'barid', 'slid'),
                         output_dir=os.path.dirname(self.action.args.name),
@@ -137,14 +136,19 @@ class TraceBars(BasePrimitive):
                                              "Middle Row of image"),
                                   'WINDOW': (self.action.args.window,
                                              "Window for bar"),
-                                  'REFDELX': (self.action.args.reference_delta_x,
-                                              "Reference bar sep in px"),
-                                  'CBARSNO': (self.action.args.contbar_image_number,
-                                              "Cont. bars image number"),
+                                  'REFDELX': (
+                                      self.action.args.reference_delta_x,
+                                      "Reference bar sep in px"),
+                                  'CBARSNO': (
+                                      self.action.args.contbar_image_number,
+                                      "Cont. bars image number"),
                                   'CBARSFL': (self.action.args.contbar_image,
                                               "Cont. bars image")})
 
             if self.config.instrument.saveintims:
+                from kcwidrp.primitives.kcwi_file_primitives import \
+                    kcwi_fits_writer
+                from skimage import transform as tf
                 # fit transform
                 self.logger.info("Fitting spatial control points")
                 tform = tf.estimate_transform('polynomial', src, dst, order=3)
@@ -164,5 +168,3 @@ class TraceBars(BasePrimitive):
 
             return self.action.args
     # END: class TraceBars()
-
-

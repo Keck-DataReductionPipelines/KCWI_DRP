@@ -3,11 +3,14 @@ from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_reader, \
     kcwi_fits_writer
 from kcwidrp.core.bokeh_plotting import bokeh_plot
 from bokeh.plotting import figure
+from bokeh.models import Range1d
+
 import os
 import time
 import numpy as np
 from scipy.signal.windows import boxcar
 import scipy as sp
+from scipy.signal import find_peaks
 from pydl.pydlutils import bspline
 
 
@@ -109,6 +112,9 @@ class MakeMasterFlat(BaseImg):
             self.logger.error("Flat of Unknown Type!")
             return self.action.args
 
+        # knots per pixel
+        knotspp = self.config.instrument.KNOTSPP
+
         # get image size
         nx = stacked.header['NAXIS1']
         ny = stacked.header['NAXIS2']
@@ -135,21 +141,22 @@ class MakeMasterFlat(BaseImg):
 
         # reference slice
         refslice = 9
-        fflice = refslice
-        ffslice2 = refslice
         sm = 25
         allidx = np.arange(int(140/xbin))
         newflat = stacked.data.copy()
 
         # get reference slice data
         q = [i for i, v in enumerate(slicemap.data.flat) if v == refslice]
+        # get wavelength limits
+        waves = wavemap.data.compress((wavemap.data > 0.).flat)
+        waves = [waves.min(), waves.max()]
+        self.logger.info("Wavelength limits: %.1f - %1.f" % (waves[0],
+                                                             waves[1]))
 
         # correct vignetting if we are using internal flats
         if internal:
             self.logger.info("Internal flats require vignetting correction")
             # get good region for fitting
-            waves = wavemap.data.compress((wavemap.data > 0.).flat)
-            waves = [waves.min(), waves.max()]
             dw = (waves[1] - waves[0]) / 30.0
             wavemin = (waves[0]+waves[1]) / 2.0 - dw
             wavemax = (waves[0]+waves[1]) / 2.0 + dw
@@ -220,6 +227,11 @@ class MakeMasterFlat(BaseImg):
             yfit = [yfit[i] for i in s]
             # fit vignetted slope
             resfit = np.polyfit(xfit, yfit, 1)
+            # corrected data
+            ycdata = stacked.data.flat[qq] / np.polyval(wavelinfit,
+                                                        wavemap.data.flat[qq])
+            ycmin = 0.5     # np.min(ycdata)
+            ycmax = 1.25    # np.max(ycdata)
             # compute the intersection
             xinter = -(resflat[1] - resfit[1]) / (resflat[0] - resfit[0])
             # plot slice profile and fits
@@ -229,21 +241,21 @@ class MakeMasterFlat(BaseImg):
                            y_axis_label='Ratio',
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height)
-                p.circle(posmap.data.flat[qq],
-                         stacked.data.flat[qq] / np.polyval(
-                             wavelinfit, wavemap.data.flat[qq]))
+                p.circle(posmap.data.flat[qq], ycdata, legend_label='Data')
                 p.line(allidx, resfit[1] + resfit[0]*allidx,
-                       line_color='purple')
-                p.line(allidx, resflat[1] + resflat[0]*allidx, line_color='red')
-                p.line([fitl, fitl], [0.5, 1.5], line_color='blue')
-                p.line([fitr, fitr], [0.5, 1.5], line_color='blue')
-                p.line([flatl, flatl], [0.5, 1.5], line_color='green')
-                p.line([flatr, flatr], [0.5, 1.5], line_color='green')
-                p.line([xinter-buffer, xinter-buffer], [0.5, 1.5],
+                       line_color='purple', legend_label='Vign.')
+                p.line(allidx, resflat[1] + resflat[0]*allidx, line_color='red',
+                       legend_label='UnVign.')
+                p.line([fitl, fitl], [ycmin, ycmax], line_color='blue')
+                p.line([fitr, fitr], [ycmin, ycmax], line_color='blue')
+                p.line([flatl, flatl], [ycmin, ycmax], line_color='green')
+                p.line([flatr, flatr], [ycmin, ycmax], line_color='green')
+                p.line([xinter-buffer, xinter-buffer], [ycmin, ycmax],
                        line_color='black')
-                p.line([xinter + buffer, xinter + buffer], [0.5, 1.5],
+                p.line([xinter + buffer, xinter + buffer], [ycmin, ycmax],
                        line_color='black')
-                p.line([xinter, xinter], [0.5, 1.5], line_color='red')
+                p.line([xinter, xinter], [ycmin, ycmax], line_color='red')
+                p.y_range = Range1d(ycmin, ycmax)
                 bokeh_plot(p, self.context.bokeh_session)
                 if self.config.instrument.plot_level >= 2:
                     input("Next? <cr>: ")
@@ -304,11 +316,16 @@ class MakeMasterFlat(BaseImg):
         # now fit master flat
         # get reference slice points
         qref = [i for i in q if ffleft <= posmap.data.flat[i] <= ffright]
-        xfr = [wavemap.data.flat[i] for i in qref]
-        yfr = [newflat.flat[i] for i in qref]
+        xfr = wavemap.data.flat[qref]
+        yfr = newflat.flat[qref]
+        # xfr = [wavemap.data.flat[i] for i in qref]
+        # yfr = [newflat.flat[i] for i in qref]
+        # sort on wavelength
         s = np.argsort(xfr)
-        xfr = [xfr[i] for i in s]
-        yfr = [yfr[i] for i in s]
+        xfr = xfr[s]
+        yfr = yfr[s]
+        # xfr = [xfr[i] for i in s]
+        # yfr = [yfr[i] for i in s]
 
         wavegood0 = wavemap.header['WAVGOOD0']
         wavegood1 = wavemap.header['WAVGOOD1']
@@ -328,17 +345,59 @@ class MakeMasterFlat(BaseImg):
                 s = np.argsort(xledge)
                 xledge = [xledge[i] for i in s]
                 yledge = [yledge[i] for i in s]
-                # ledgefit = np.polyfit(xledge-np.min(xledge), yledge, deg=11)
-                # print(ledgefit)
                 win = boxcar(150)
                 smyledge = sp.signal.convolve(yledge,
                                               win, mode='same') / sum(win)
+                ylmax = np.max(yledge)
+                ylmin = np.min(yledge)
                 fpoints = np.arange(0, 100) / 100. * 50 + (ledge_wave-25)
                 ledgefit, ledgemsk = bspline.iterfit(np.asarray(xledge),
                                                      smyledge, fullbkpt=fpoints,
                                                      upper=1, lower=1)
-                # t, c, k = interpolate.splrep(xledge, smyledge)  # , t=fpoints)
-                # ledgefit = interpolate.BSpline(t, c, k)
+                ylfit, _ = ledgefit.value(np.asarray(fpoints))
+                deriv = -(np.roll(ylfit, 1) - np.roll(ylfit, -1)) / 2.0
+                deriv = deriv[4:-4]
+                xvals = fpoints[4:-4]
+                peaks, _ = find_peaks(deriv, height=100)
+                if len(peaks) != 1:
+                    raise ValueError
+                ipk = peaks[0]
+                apk = xvals[ipk]
+                if self.config.instrument.plot_level >= 3:
+                    p = figure(
+                        title=self.action.args.plotlabel + ' Peak of ledge',
+                        x_axis_label='Wave (A)',
+                        y_axis_label='Value',
+                        plot_width=self.config.instrument.plot_width,
+                        plot_height=self.config.instrument.plot_height)
+                    p.circle(xvals, deriv, legend_label='Data')
+                    p.line([apk, apk], [-50, 200], line_color='red',
+                           legend_label='Pk')
+                    bokeh_plot(p, self.context.bokeh_session)
+                    if self.config.instrument.plot_level >= 2:
+                        input("Next? <cr>: ")
+                    else:
+                        time.sleep(self.config.instrument.plot_pause)
+                xlow = apk - 3 - 5
+                xhi = apk - 3
+                zlow = apk + 3
+                zhi = apk + 3 + 5
+                qlow = [i for i, v in enumerate(fpoints) if xlow <= v <= xhi]
+                xlf = np.asarray([fpoints[i] for i in qlow])
+                ylf = np.asarray([ylfit[i] for i in qlow])
+                lowfit = np.polyfit(xlf, ylf, 1)
+                qhi = [i for i, v in enumerate(fpoints) if zlow <= v <= zhi]
+                xlf = np.asarray([fpoints[i] for i in qhi])
+                ylf = np.asarray([ylfit[i] for i in qhi])
+                hifit = np.polyfit(xlf, ylf, 1)
+                ratio = (hifit[1] + hifit[0] * apk) / \
+                        (lowfit[1] + lowfit[0] * apk)
+                self.logger.info("BM ledge ratio: %.3f" % ratio)
+                # correct flat data
+                qcorr = [i for i, v in enumerate(xfr) if v >= apk]
+                for i in qcorr:
+                    yfr[i] /= ratio
+                # plot BM ledge
                 if self.config.instrument.plot_level >= 1:
                     p = figure(
                         title=self.action.args.plotlabel + ' BM Ledge Region',
@@ -346,16 +405,208 @@ class MakeMasterFlat(BaseImg):
                         y_axis_label='Value',
                         plot_width=self.config.instrument.plot_width,
                         plot_height=self.config.instrument.plot_height)
-                    p.circle(xledge, yledge, legend_label='Data')
-                    p.circle(xledge, smyledge, line_color='orange',
-                             legend_label='Smooth')
-                    yfit, msk = ledgefit.value(np.asarray(xledge))
-                    p.line(xledge, yfit, line_color='red', legend_label='Fit')
+                    # Input data
+                    p.circle(xledge, yledge, fill_color='blue',
+                             legend_label='Data')
+                    # correct input data
+                    qcorrect = [i for i, v in enumerate(xledge) if v >= apk]
+                    xplt = []
+                    yplt = []
+                    for i in qcorrect:
+                        xplt.append(xledge[i])
+                        yplt.append(yledge[i] / ratio)
+                    p.circle(xplt, yplt, fill_color='orange',
+                             legend_label='Corrected')
+                    p.line(fpoints, ylfit, line_color='red', legend_label='Fit')
+                    p.line([xlow, xlow], [ylmin, ylmax], line_color='blue')
+                    p.line([xhi, xhi], [ylmin, ylmax], line_color='blue')
+                    p.line([zlow, zlow], [ylmin, ylmax], line_color='black')
+                    p.line([zhi, zhi], [ylmin, ylmax], line_color='black')
+                    p.line(fpoints, lowfit[1] + lowfit[0] * fpoints,
+                           line_color='purple')
+                    p.line(fpoints, hifit[1] + hifit[0] * fpoints,
+                           line_color='green')
+                    p.line([apk, apk], [ylmin, ylmax], line_color='green',
+                           legend_label='Pk')
+                    p.y_range = Range1d(ylmin, ylmax)
+                    p.legend.location = 'top_left'
                     bokeh_plot(p, self.context.bokeh_session)
-                    if self.config.instrument.plot_level >= 1:
+                    if self.config.instrument.plot_level >= 2:
                         input("Next? <cr>: ")
                     else:
                         time.sleep(self.config.instrument.plot_pause)
+        # END: handling BM grating ledge
+
+        # if we are fitting a twilight flat, treat it like a sky image with a
+        # larger number of knots
+        if twiflat:
+            knots = int(ny * knotspp)
+        else:
+            knots = 100
+        bkpt = np.min(xfr) + np.arange(knots+1) * \
+            (np.max(xfr) - np.min(xfr)) / knots
+        sftr, _ = bspline.iterfit(xfr, yfr, fullbkpt=bkpt)
+        yfitr, _ = sftr.value(xfr)
+
+        # generate a blue slice spectrum bspline fit
+        blueslice = 12
+        blueleft = 60 / xbin
+        blueright = 80 / xbin
+        qb = [i for i, v in enumerate(slicemap.data.flat) if v == blueslice]
+        qblue = [i for i in qb if blueleft <= posmap.data.flat[i] <= blueright]
+        xfb = wavemap.data.flat[qblue]
+        yfb = newflat.flat[qblue]
+        s = np.argsort(xfb)
+        xfb = xfb[s]
+        yfb = yfb[s]
+        bkpt = np.min(xfb) + np.arange(knots+1) * \
+            (np.max(xfb) - np.min(xfb)) / knots
+        sftb, _ = bspline.iterfit(xfb, yfb, fullbkpt=bkpt)
+        yfitb, _ = sftb.value(xfb)
+
+        # generate a red slice spectrum bspline fit
+        redslice = 23
+        redleft = 60 / xbin
+        redright = 80 / xbin
+        qr = [i for i, v in enumerate(slicemap.data.flat) if v == redslice]
+        qred = [i for i in qr if redleft <= posmap.data.flat[i] <= redright]
+        xfd = wavemap.data.flat[qred]
+        yfd = newflat.flat[qred]
+        s = np.argsort(xfd)
+        xfd = xfd[s]
+        yfd = yfd[s]
+        bkpt = np.min(xfd) + np.arange(knots + 1) * \
+            (np.max(xfd) - np.min(xfd)) / knots
+        sftd, _ = bspline.iterfit(xfd, yfd, fullbkpt=bkpt)
+        yfitd, _ = sftd.value(xfd)
+
+        # waves
+        minwave = np.min(xfb)
+        maxwave = np.max(xfd)
+        # are we a twilight flat?
+        if twiflat:
+            nwaves = int(ny * knotspp)
+        else:
+            nwaves = 1000
+        waves = minwave + (maxwave - minwave) * np.arange(nwaves+1) / nwaves
+        if self.config.instrument.plot_level >= 1:
+            p = figure(
+                title=self.action.args.plotlabel + ' Blue/Red fits',
+                x_axis_label='Wave (A)',
+                y_axis_label='Flux (e-)',
+                plot_width=self.config.instrument.plot_width,
+                plot_height=self.config.instrument.plot_height)
+            p.line(xfr, yfitr, line_color='black', legend_label='Ref')
+            p.line(xfb, yfitb, line_color='blue', legend_label='Blue')
+            p.line(xfd, yfitd, line_color='red', legend_label='Red')
+            bokeh_plot(p, self.context.bokeh_session)
+            if self.config.instrument.plot_level >= 1:
+                input("Next? <cr>: ")
+            else:
+                time.sleep(self.config.instrument.plot_pause)
+
+        wavebuffer = 0.1
+        minrwave = np.min(xfr)
+        maxrwave = np.max(xfr)
+        wavebuffer2 = 0.05
+        wlb0 = minrwave+(maxrwave-minrwave)*wavebuffer2
+        wlb1 = minrwave+(maxrwave-minrwave)*wavebuffer
+        wlr0 = minrwave+(maxrwave-minrwave)*(1.-wavebuffer)
+        wlr1 = minrwave+(maxrwave-minrwave)*(1.-wavebuffer2)
+        qbluefit = [i for i, v in enumerate(waves) if wlb0 < v < wlb1]
+        qredfit = [i for i, v in enumerate(waves) if wlr0 < v < wlr1]
+
+        nqb = len(qbluefit)
+        nqr = len(qredfit)
+        self.logger.info("Wavelength regions: blue = %.1f - %.1f, "
+                         "red = %.1f - %.1f" % (wlb0, wlb1, wlr0, wlr1))
+        self.logger.info("Fit points: blue = %d, red = %d" % (nqb, nqr))
+
+        if nqb > 0:
+            bluefit, _ = sftb.value(waves[qbluefit])
+            refbluefit, _ = sftr.value(waves[qbluefit])
+            bluelinfit = np.polyfit(waves[qbluefit], refbluefit/bluefit, 1)
+        else:
+            bluefit = None
+            refbluefit = None
+            bluelinfit = None
+        if nqr > 0:
+            redfit, _ = sftb.value(waves[qredfit])
+            refredfit, _ = sftr.value(waves[qredfit])
+            redlinfit = np.polyfit(waves[qredfit], refredfit/redfit, 1)
+        else:
+            redfit = None
+            refredfit = None
+            redlinfit = None
+        if self.config.instrument.plot_level >= 1:
+            if nqb > 1:
+                # plot blue fits
+                p = figure(
+                    title=self.action.args.plotlabel + ' Blue fits',
+                    x_axis_label='Wave (A)',
+                    y_axis_label='Flux (e-)',
+                    plot_width=self.config.instrument.plot_width,
+                    plot_height=self.config.instrument.plot_height)
+                p.line(waves[qbluefit], refbluefit, line_color='black',
+                       legend_label='Ref')
+                p.line(waves[qbluefit], bluefit, line_color='blue',
+                       legend_label='Blue')
+                bokeh_plot(p, self.context.bokeh_session)
+                if self.config.instrument.plot_level >= 1:
+                    input("Next? <cr>: ")
+                else:
+                    time.sleep(self.config.instrument.plot_pause)
+                # plot blue ratios
+                p = figure(
+                    title=self.action.args.plotlabel + ' Blue ratios',
+                    x_axis_label='Wave (A)',
+                    y_axis_label='Ratio',
+                    plot_width=self.config.instrument.plot_width,
+                    plot_height=self.config.instrument.plot_height)
+                p.line(waves[qbluefit], refbluefit/bluefit, line_color='black',
+                       legend_label='Ref')
+                p.line(waves[qbluefit],
+                       bluelinfit[1]+bluelinfit[0]*waves[qbluefit],
+                       line_color='blue', legend_label='Blue')
+                bokeh_plot(p, self.context.bokeh_session)
+                if self.config.instrument.plot_level >= 1:
+                    input("Next? <cr>: ")
+                else:
+                    time.sleep(self.config.instrument.plot_pause)
+            if nqr > 1:
+                # plot red fits
+                p = figure(
+                    title=self.action.args.plotlabel + ' Red fits',
+                    x_axis_label='Wave (A)',
+                    y_axis_label='Flux (e-)',
+                    plot_width=self.config.instrument.plot_width,
+                    plot_height=self.config.instrument.plot_height)
+                p.line(waves[qredfit], refredfit, line_color='black',
+                       legend_label='Ref')
+                p.line(waves[qredfit], redfit, line_color='red',
+                       legend_label='Red')
+                bokeh_plot(p, self.context.bokeh_session)
+                if self.config.instrument.plot_level >= 1:
+                    input("Next? <cr>: ")
+                else:
+                    time.sleep(self.config.instrument.plot_pause)
+                # plot red ratios
+                p = figure(
+                    title=self.action.args.plotlabel + ' Red ratios',
+                    x_axis_label='Wave (A)',
+                    y_axis_label='Ratio',
+                    plot_width=self.config.instrument.plot_width,
+                    plot_height=self.config.instrument.plot_height)
+                p.line(waves[qredfit], refredfit/redfit, line_color='black',
+                       legend_label='Ref')
+                p.line(waves[qredfit],
+                       redlinfit[1]+redlinfit[0]*waves[qredfit],
+                       line_color='red', legend_label='Red')
+                bokeh_plot(p, self.context.bokeh_session)
+                if self.config.instrument.plot_level >= 1:
+                    input("Next? <cr>: ")
+                else:
+                    time.sleep(self.config.instrument.plot_pause)
 
         # get master flat output name
         mfname = stack_list[0].split('.fits')[0] + '_' + suffix + '.fits'

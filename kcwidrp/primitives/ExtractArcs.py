@@ -1,8 +1,6 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
-from keckdrpframework.models.arguments import Arguments
 from kcwidrp.primitives.kcwi_file_primitives import read_table
 
-#from skimage import transform as tf
 import numpy as np
 import os
 from skimage import transform as tf
@@ -26,12 +24,14 @@ class ExtractArcs(BasePrimitive):
 
     def _perform(self):
         self.logger.info("Extracting arc spectra")
-        contbars_in_proctable = self.context.proctab.n_proctab(frame=self.action.args.ccddata,
-                                             target_type='CONTBARS',
-                                             nearest=True)
-        self.logger.info("%d continuum bars frames found" % len(contbars_in_proctable))
+        contbars_in_proctable = self.context.proctab.n_proctab(
+            frame=self.action.args.ccddata, target_type='CONTBARS',
+            nearest=True)
+        self.logger.info("%d continuum bars frames found" %
+                         len(contbars_in_proctable))
         # ofname = tab['OFNAME'][0]
-        original_filename = contbars_in_proctable['OFNAME'][0].split('.')[0] + "_trace.fits"
+        original_filename = contbars_in_proctable['OFNAME'][0].split('.')[0] + \
+            "_trace.fits"
         self.logger.info("Reading Trace Table: %s" % original_filename)
         # trace = read_table(tab=tab, indir='redux', suffix='trace')
         # Find  and read control points from continuum bars
@@ -45,26 +45,28 @@ class ExtractArcs(BasePrimitive):
                 self.context.trace[key] = trace.meta[key]
         middle_row = self.context.trace['MIDROW']
         window = self.context.trace['WINDOW']
-        self.action.args.reference_bar_separation = self.context.trace['REFDELX']
+        self.action.args.reference_bar_separation = self.context.trace[
+            'REFDELX']
         self.action.args.contbar_image_number = self.context.trace['CBARSNO']
         self.action.args.contbar_image = self.context.trace['CBARSFL']
         self.action.args.arc_number = self.action.args.ccddata.header['FRAMENO']
         self.action.args.arc_image = self.action.args.ccddata.header['OFNAME']
 
-        self.action.args.source_control_points = trace['src']  # source control points
-        self.action.args.destination_control_points = trace['dst']  # destination control points
+        self.action.args.source_control_points = trace['src']
+        self.action.args.destination_control_points = trace['dst']
         self.action.args.bar_id = trace['barid']
         self.action.args.slice_id = trace['slid']
 
         self.logger.info("Fitting spatial control points")
-        transformation = tf.estimate_transform('polynomial',
-                                      self.action.args.source_control_points,
-                                      self.action.args.destination_control_points, order=3)
+        transformation = tf.estimate_transform(
+            'polynomial', self.action.args.source_control_points,
+            self.action.args.destination_control_points, order=3)
 
         self.logger.info("Transforming arc image")
         warped_image = tf.warp(self.action.args.ccddata.data, transformation)
         # Write warped arcs if requested
         if self.config.instrument.saveintims:
+            from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer
             # write out warped image
             self.action.args.ccddata.data = warped_image
             kcwi_fits_writer(self.action.args.ccddata,
