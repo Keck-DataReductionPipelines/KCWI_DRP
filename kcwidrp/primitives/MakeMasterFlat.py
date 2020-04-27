@@ -33,17 +33,26 @@ class MakeMasterFlat(BaseImg):
         """
         # get list of master flats
         self.logger.info("Checking precondition for MakeMasterFlat")
-        self.stack_list = self.context.proctab.n_proctab(
-            frame=self.action.args.ccddata,
-            target_type=self.action.args.stack_type,
-            target_group=self.action.args.groupid)
-        self.logger.info(f"pre condition got {len(self.stack_list)},"
-                         f" expecting 1")
-        # do we meet the criterion?
-        if len(self.stack_list) >= 1:
-            return True
-        else:
+        target_type = 'MFLAT'
+        tab = self.context.proctab.n_proctab(frame=self.action.args.ccddata,
+                                             target_type=target_type,
+                                             nearest=True)
+        if len(tab) > 0:
+            self.logger.info(f"already have {len(tab)} master flats, "
+                             f" expecting 0")
             return False
+        else:
+            self.stack_list = self.context.proctab.n_proctab(
+                frame=self.action.args.ccddata,
+                target_type=self.action.args.stack_type,
+                target_group=self.action.args.groupid)
+            self.logger.info(f"pre condition got {len(self.stack_list)},"
+                             f" expecting 1")
+            # do we meet the criterion?
+            if len(self.stack_list) >= 1:
+                return True
+            else:
+                return False
 
     def _perform(self):
         """
@@ -116,12 +125,10 @@ class MakeMasterFlat(BaseImg):
         knotspp = self.config.instrument.KNOTSPP
 
         # get image size
-        nx = stacked.header['NAXIS1']
         ny = stacked.header['NAXIS2']
 
         # get binning
         xbin = self.action.args.xbinsize
-        ybin = self.action.args.ybinsize
 
         # Parameters for fitting
 
@@ -141,7 +148,6 @@ class MakeMasterFlat(BaseImg):
 
         # reference slice
         refslice = 9
-        sm = 25
         allidx = np.arange(int(140/xbin))
         newflat = stacked.data.copy()
 
@@ -230,7 +236,7 @@ class MakeMasterFlat(BaseImg):
             resfit = np.polyfit(xfit, yfit, 1)
             # corrected data
             ycdata = stacked.data.flat[qq] / \
-                     np.polyval(wavelinfit, wavemap.data.flat[qq]-ww0)
+                np.polyval(wavelinfit, wavemap.data.flat[qq]-ww0)
             ycmin = 0.5     # np.min(ycdata)
             ycmax = 1.25    # np.max(ycdata)
             # compute the intersection
@@ -312,21 +318,15 @@ class MakeMasterFlat(BaseImg):
                     np.polyval(buffit, posmap.data.flat[i]) * newflat.flat[i]
             self.logger.info("Vignetting correction complete.")
 
-        # update stack
-        stacked.data = newflat
         # now fit master flat
         # get reference slice points
         qref = [i for i in q if ffleft <= posmap.data.flat[i] <= ffright]
         xfr = wavemap.data.flat[qref]
         yfr = newflat.flat[qref]
-        # xfr = [wavemap.data.flat[i] for i in qref]
-        # yfr = [newflat.flat[i] for i in qref]
         # sort on wavelength
         s = np.argsort(xfr)
         xfr = xfr[s]
         yfr = yfr[s]
-        # xfr = [xfr[i] for i in s]
-        # yfr = [yfr[i] for i in s]
 
         wavegood0 = wavemap.header['WAVGOOD0']
         wavegood1 = wavemap.header['WAVGOOD1']
@@ -671,7 +671,7 @@ class MakeMasterFlat(BaseImg):
         comflat.flat[qz] = comvals
         ratio = np.zeros(newflat.shape, dtype=float)
         qzer = [i for i, v in enumerate(newflat.flat) if v != 0]
-        ratio.flat[qzer] = comflat.flat[qzer] / newflat.flat[qzer]
+        ratio.flat[qzer] = comflat.flat[qzer] / stacked.data.flat[qzer]
 
         # trim negative points
         qq = [i for i, v in enumerate(ratio.flat) if v < 0]

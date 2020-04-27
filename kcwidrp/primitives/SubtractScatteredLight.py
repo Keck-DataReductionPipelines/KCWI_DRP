@@ -1,10 +1,8 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
-from keckdrpframework.models.arguments import Arguments
 from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer
-from kcwidrp.core.bokeh_plotting import bokeh_plot, bokeh_save
+from kcwidrp.core.bokeh_plotting import bokeh_plot
 
-from bokeh.plotting import figure, show
-from bokeh.models import Range1d, LinearAxis
+from bokeh.plotting import figure
 import numpy as np
 import scipy.interpolate as spint
 import time

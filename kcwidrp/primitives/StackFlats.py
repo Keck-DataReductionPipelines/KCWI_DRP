@@ -20,17 +20,26 @@ class StackFlats(BaseImg):
         """
         # get list of input flats
         self.logger.info("Checking precondition for StackFlats")
-        self.combine_list = self.context.proctab.n_proctab(
+        self.stacked_list = self.context.proctab.n_proctab(
             frame=self.action.args.ccddata,
-            target_type=self.action.args.want_type,
+            target_type=self.action.args.stack_type,
             target_group=self.action.args.groupid)
-        self.logger.info(f"pre condition got {len(self.combine_list)},"
-                         f" expecting {self.action.args.min_files}")
-        # do we meet the criterion?
-        if len(self.combine_list) >= self.action.args.min_files:
-            return True
-        else:
+        if len(self.stacked_list) > 0:
+            self.logger.info(f"already have {len(self.stacked_list)},"
+                             f" stacked flats, expecting 0")
             return False
+        else:
+            self.combine_list = self.context.proctab.n_proctab(
+                frame=self.action.args.ccddata,
+                target_type=self.action.args.want_type,
+                target_group=self.action.args.groupid)
+            self.logger.info(f"pre condition got {len(self.combine_list)},"
+                             f" expecting {self.action.args.min_files}")
+            # do we meet the criterion?
+            if len(self.combine_list) >= self.action.args.min_files:
+                return True
+            else:
+                return False
 
     def _perform(self):
         """

@@ -5,10 +5,7 @@ from astropy.table import Table
 import numpy as np
 
 from keckdrpframework.primitives.base_primitive import BasePrimitive
-from keckdrpframework.models.data_set import DataSet
 import os
-import math
-from kcwidrp.core.kcwi_proctab import Proctab
 import logging
 
 logger = logging.getLogger('KCWI')
@@ -310,7 +307,6 @@ class ingest_file(BasePrimitive):
                 shutter = self.get_keyword('LMP%dSHST' % key)
                 if status == 1 and shutter == 1:
                     return lamps_dictionary[key]
-                    break
 
     def map_ccd(self):
         """Return CCD section variables useful for processing

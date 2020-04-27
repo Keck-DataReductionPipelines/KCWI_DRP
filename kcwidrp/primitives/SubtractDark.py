@@ -1,5 +1,6 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
-from keckdrpframework.models.arguments import Arguments
+from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_reader
+import os
 
 
 class SubtractDark(BasePrimitive):
@@ -57,4 +58,3 @@ class SubtractDark(BasePrimitive):
 
         return self.action.args
     # END: class SubtractDark()
-

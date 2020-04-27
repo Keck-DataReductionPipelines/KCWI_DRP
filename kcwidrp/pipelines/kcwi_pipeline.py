@@ -6,11 +6,10 @@ KCWI
 
 from keckdrpframework.pipelines.base_pipeline import BasePipeline
 from keckdrpframework.models.processing_context import ProcessingContext
-#from kcwidrp.primitives.kcwi_primitives import *
 from kcwidrp.primitives.kcwi_file_primitives import *
 #from kcwidrp.primitives.StartBokeh import *
 from kcwidrp.core.kcwi_proctab import Proctab
-import time
+
 
 class Kcwi_pipeline(BasePipeline):
     """
@@ -20,8 +19,8 @@ class Kcwi_pipeline(BasePipeline):
     name = 'KCWI-DRP'
 
     event_table = {
-        # this method is used with the "group" option, to ingest the data without
-        # triggering any processing.
+        # this method is used with the "group" option,
+        # to ingest the data without triggering any processing.
         # it is defined lower in this file
         "add_only":                  ("add_to_dataframe_only", None, None),
         #
@@ -158,6 +157,9 @@ class Kcwi_pipeline(BasePipeline):
                                       "flat_make_master"),
         "flat_make_master":          ("MakeMasterFlat",
                                       "master_flat_started",
+                                      "flat_correct_illumination"),
+        "flat_correct_illumination": ("CorrectIllumination",
+                                      "illumination_correction_started",
                                       None),
         # OBJECT PROCESSING
         "process_object":            ("ProcessObject",
@@ -192,7 +194,10 @@ class Kcwi_pipeline(BasePipeline):
                                       "object_subtract_scat"),
         "object_subtract_scat":      ("SubtractScatteredLight",
                                       "scat_subtract_started",
-                                      "object_make_cube"),
+                                      "object_correct_illumination"),
+        "object_correct_illumination": ("CorrectIllumination",
+                                        "illumination_correction_started",
+                                        "object_make_cube"),
         "object_make_cube":          ("MakeCube",
                                       "making_cube_started",
                                       "object_correct_dar"),
@@ -214,7 +219,7 @@ class Kcwi_pipeline(BasePipeline):
         BasePipeline.__init__(self, context)
         self.cnt = 0
 
-    def add_to_dataframe_only(selfs, action, context):
+    def add_to_dataframe_only(self, action, context):
         return action.args
 
     def action_planner(self, action, context):
