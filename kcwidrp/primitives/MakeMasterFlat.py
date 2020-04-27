@@ -182,9 +182,10 @@ class MakeMasterFlat(BaseImg):
             sw = np.argsort(wflat)
             ywflat = [yflat[i] for i in sw]
             wwflat = [wflat[i] for i in sw]
+            ww0 = np.min(wwflat)
             # fit wavelength slope
-            wavelinfit = np.polyfit(wwflat, ywflat, 2)
-            wslfit = np.polyval(wavelinfit, wflat)
+            wavelinfit = np.polyfit(wwflat-ww0, ywflat, 2)
+            wslfit = np.polyval(wavelinfit, wflat-ww0)
             # plot slope fit
             if self.config.instrument.plot_level >= 1:
                 p = figure(title=self.action.args.plotlabel + ' WAVE SLOPE FIT',
@@ -215,7 +216,7 @@ class MakeMasterFlat(BaseImg):
             yfit = [stacked.data.flat[i] for i in qq]
             wflat = [wavemap.data.flat[i] for i in qq]
             # take out wavelength slope
-            yfit = yfit / np.polyval(wavelinfit, wflat)
+            yfit = yfit / np.polyval(wavelinfit, wflat-ww0)
 
             # select the vignetted region
             qfit = [i for i, v in enumerate(xfit) if fitl <= v <= fitr]
@@ -228,8 +229,8 @@ class MakeMasterFlat(BaseImg):
             # fit vignetted slope
             resfit = np.polyfit(xfit, yfit, 1)
             # corrected data
-            ycdata = stacked.data.flat[qq] / np.polyval(wavelinfit,
-                                                        wavemap.data.flat[qq])
+            ycdata = stacked.data.flat[qq] / \
+                     np.polyval(wavelinfit, wavemap.data.flat[qq]-ww0)
             ycmin = 0.5     # np.min(ycdata)
             ycmax = 1.25    # np.max(ycdata)
             # compute the intersection
@@ -279,7 +280,7 @@ class MakeMasterFlat(BaseImg):
             # get slice pos and data for buffer fitting
             xbuff = [posmap.data.flat[i] for i in qbff]
             ybuff = [stacked.data.flat[i] / np.polyval(wavelinfit,
-                                                       wavemap.data.flat[i])
+                                                       wavemap.data.flat[i]-ww0)
                      for i in qbff]
             # sort on slice position
             ssp = np.argsort(xbuff)
@@ -500,7 +501,7 @@ class MakeMasterFlat(BaseImg):
             p.line(xfb, yfitb, line_color='blue', legend_label='Blue')
             p.line(xfd, yfitd, line_color='red', legend_label='Red')
             bokeh_plot(p, self.context.bokeh_session)
-            if self.config.instrument.plot_level >= 1:
+            if self.config.instrument.plot_level >= 2:
                 input("Next? <cr>: ")
             else:
                 time.sleep(self.config.instrument.plot_pause)
@@ -531,7 +532,7 @@ class MakeMasterFlat(BaseImg):
             refbluefit = None
             bluelinfit = None
         if nqr > 0:
-            redfit, _ = sftb.value(waves[qredfit])
+            redfit, _ = sftd.value(waves[qredfit])
             refredfit, _ = sftr.value(waves[qredfit])
             redlinfit = np.polyfit(waves[qredfit], refredfit/redfit, 1)
         else:
@@ -552,7 +553,7 @@ class MakeMasterFlat(BaseImg):
                 p.line(waves[qbluefit], bluefit, line_color='blue',
                        legend_label='Blue')
                 bokeh_plot(p, self.context.bokeh_session)
-                if self.config.instrument.plot_level >= 1:
+                if self.config.instrument.plot_level >= 2:
                     input("Next? <cr>: ")
                 else:
                     time.sleep(self.config.instrument.plot_pause)
@@ -569,7 +570,7 @@ class MakeMasterFlat(BaseImg):
                        bluelinfit[1]+bluelinfit[0]*waves[qbluefit],
                        line_color='blue', legend_label='Blue')
                 bokeh_plot(p, self.context.bokeh_session)
-                if self.config.instrument.plot_level >= 1:
+                if self.config.instrument.plot_level >= 2:
                     input("Next? <cr>: ")
                 else:
                     time.sleep(self.config.instrument.plot_pause)
@@ -586,7 +587,7 @@ class MakeMasterFlat(BaseImg):
                 p.line(waves[qredfit], redfit, line_color='red',
                        legend_label='Red')
                 bokeh_plot(p, self.context.bokeh_session)
-                if self.config.instrument.plot_level >= 1:
+                if self.config.instrument.plot_level >= 2:
                     input("Next? <cr>: ")
                 else:
                     time.sleep(self.config.instrument.plot_pause)
@@ -603,10 +604,91 @@ class MakeMasterFlat(BaseImg):
                        redlinfit[1]+redlinfit[0]*waves[qredfit],
                        line_color='red', legend_label='Red')
                 bokeh_plot(p, self.context.bokeh_session)
-                if self.config.instrument.plot_level >= 1:
+                if self.config.instrument.plot_level >= 2:
                     input("Next? <cr>: ")
                 else:
                     time.sleep(self.config.instrument.plot_pause)
+
+        # at this point we are going to try to merge the points
+        qselred = [i for i, v in enumerate(xfd) if v >= maxrwave]
+        qselblue = [i for i, v in enumerate(xfb) if v <= minrwave]
+        nqsr = len(qselred)
+        nqsb = len(qselblue)
+
+        if nqsr > 0:
+            redfluxes = [yfd[i] * (redlinfit[1]+redlinfit[0]*xfd[i])
+                         for i in qselred]
+        else:
+            redfluxes = None
+        if nqsb > 0:
+            bluefluxes = [yfb[i] * (bluelinfit[1]+bluelinfit[0]*xfb[i])
+                          for i in qselblue]
+        else:
+            bluefluxes = None
+        allx = xfr
+        ally = yfr
+        if nqsb > 0:
+            allx = np.append(xfb[qselblue], allx)
+            ally = np.append(bluefluxes, ally)
+        if nqsr > 0:
+            allx = np.append(allx, xfd[qselred])
+            ally = np.append(ally, redfluxes)
+        s = np.argsort(allx)
+        allx = allx[s]
+        ally = ally[s]
+
+        bkpt = np.min(allx) + np.arange(knots+1) * \
+            (np.max(allx) - np.min(allx)) / knots
+        sftall, _ = bspline.iterfit(allx, ally, fullbkpt=bkpt)
+        yfitall, _ = sftall.value(allx)
+
+        if self.config.instrument.plot_level >= 1:
+            p = figure(
+                title=self.action.args.plotlabel + ' Master Illumination',
+                x_axis_label='Wave (A)',
+                y_axis_label='Flux (e-)',
+                plot_width=self.config.instrument.plot_width,
+                plot_height=self.config.instrument.plot_height)
+            p.circle(allx, ally, size=1, line_alpha=0., fill_color='purple',
+                     legend_label='Data')
+            p.line(allx, yfitall, line_color='red', legend_label='Fit')
+            p.circle(xfr, yfr, size=1, line_alpha=0., fill_color='black',
+                     legend_label='Ref Data')
+            p.line(xfr, yfitr, line_color='green', legend_label='Ref Fit')
+            bokeh_plot(p, self.context.bokeh_session)
+            if self.config.instrument.plot_level >= 2:
+                input("Next? <cr>: ")
+            else:
+                time.sleep(self.config.instrument.plot_pause)
+
+        # OK, Now we have extended to the full range... so... we are going to
+        # make a ratio flat!
+        comflat = np.zeros(newflat.shape, dtype=float)
+        qz = [i for i, v in enumerate(wavemap.data.flat) if v >= 0]
+
+        comvals = sftall.value(wavemap.data.flat[qz])
+
+        comflat.flat[qz] = comvals
+        ratio = np.zeros(newflat.shape, dtype=float)
+        qzer = [i for i, v in enumerate(newflat.flat) if v != 0]
+        ratio.flat[qzer] = comflat.flat[qzer] / newflat.flat[qzer]
+
+        # trim negative points
+        qq = [i for i, v in enumerate(ratio.flat) if v < 0]
+        if len(qq) > 0:
+            ratio.flat[qq] = 0.0
+
+        # trim the high points near edges of slice
+        qq = [i for i, v in enumerate(ratio.flat) if v >= 3. and
+              (posmap.data.flat[i] <= 4/xbin or
+               posmap.data.flat[i] >= 136/xbin)]
+        if len(qq) > 0:
+            ratio.flat[qq] = 0.0
+
+        # don't correct low signal points
+        qq = [i for i, v in enumerate(newflat.flat) if v < 30.]
+        if len(qq) > 0:
+            ratio.flat[qq] = 1.0
 
         # get master flat output name
         mfname = stack_list[0].split('.fits')[0] + '_' + suffix + '.fits'
@@ -615,9 +697,12 @@ class MakeMasterFlat(BaseImg):
             MakeMasterFlat.__qualname__
         stacked.header['IMTYPE'] = self.action.args.new_type
         stacked.header['HISTORY'] = log_string
+        stacked.header['MASTFLAT'] = (True, 'master flat image?')
         stacked.header['WAVMAPF'] = wmf
         stacked.header['SLIMAPF'] = slf
         stacked.header['POSMAPF'] = pof
+
+        stacked.data = ratio
 
         # output master flat
         kcwi_fits_writer(stacked, output_file=mfname)
