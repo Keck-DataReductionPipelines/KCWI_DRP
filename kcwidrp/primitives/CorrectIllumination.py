@@ -62,9 +62,8 @@ class CorrectIllumination(BasePrimitive):
             self.action.args.ccddata.header[key] = (False, keycom)
 
         log_string = CorrectIllumination.__module__ + "." + \
-                     CorrectIllumination.__qualname__
+            CorrectIllumination.__qualname__
         self.action.args.ccddata.header['HISTORY'] = log_string
-        self.logger.info(log_string)
 
         # write out int image
         kcwi_fits_writer(self.action.args.ccddata,
@@ -73,6 +72,8 @@ class CorrectIllumination(BasePrimitive):
         self.context.proctab.update_proctab(frame=self.action.args.ccddata,
                                             suffix="intf")
         self.context.proctab.write_proctab()
+
+        self.logger.info(log_string)
 
         return self.action.args
     # END: class CorrectIllumination()

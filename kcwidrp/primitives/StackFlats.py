@@ -48,6 +48,8 @@ class StackFlats(BaseImg):
         method = 'average'
         suffix = self.action.args.stack_type.lower()
 
+        self.logger.info("Stacking flats using method %s" % method)
+
         combine_list = list(self.combine_list['OFNAME'])
         # get flat stack output name
         stname = combine_list[0].split('.fits')[0] + '_' + suffix + '.fits'

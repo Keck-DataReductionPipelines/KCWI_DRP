@@ -58,6 +58,8 @@ class MakeMasterFlat(BaseImg):
         """
         Returns an Argument() with the parameters that depends on this operation
         """
+        self.logger.info("Creating master illumination correction")
+
         suffix = self.action.args.new_type.lower()
         insuff = self.action.args.stack_type.lower()
 
@@ -318,6 +320,7 @@ class MakeMasterFlat(BaseImg):
                     np.polyval(buffit, posmap.data.flat[i]) * newflat.flat[i]
             self.logger.info("Vignetting correction complete.")
 
+        self.logger.info("Fitting master illumination")
         # now fit master flat
         # get reference slice points
         qref = [i for i in q if ffleft <= posmap.data.flat[i] <= ffright]
@@ -444,6 +447,7 @@ class MakeMasterFlat(BaseImg):
             knots = int(ny * knotspp)
         else:
             knots = 100
+        self.logger.info("Using %d knots for bspline fit" % knots)
         bkpt = np.min(xfr) + np.arange(knots+1) * \
             (np.max(xfr) - np.min(xfr)) / knots
         sftr, _ = bspline.iterfit(xfr, yfr, fullbkpt=bkpt)
