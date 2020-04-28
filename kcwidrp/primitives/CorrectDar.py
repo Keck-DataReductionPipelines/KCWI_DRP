@@ -1,9 +1,8 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
-from keckdrpframework.models.arguments import Arguments
 from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer
 
 import numpy as np
-import scipy as sp
+from scipy.ndimage import shift
 import math
 import ref_index
 
@@ -110,7 +109,8 @@ class CorrectDar(BasePrimitive):
         projection_angle_deg = ifu_pa - parallactic_angle
         projection_angle = math.radians(projection_angle_deg)
         self.logger.info("DAR Angles: ifu_pa, parang, projang (deg): "
-                         "%.2f, %.2f, %.2f" % (ifu_pa, parallactic_angle, projection_angle_deg))
+                         "%.2f, %.2f, %.2f" % (ifu_pa, parallactic_angle,
+                                               projection_angle_deg))
 
         # dispersion over goo wl range in arcsec
         dispersion_max_as = atm_disper(wgoo1, wgoo0, airmass)
@@ -119,7 +119,8 @@ class CorrectDar(BasePrimitive):
         xdmax_as = dispersion_max_as * math.sin(projection_angle)
         ydmax_as = dispersion_max_as * math.cos(projection_angle)
         self.logger.info("DAR over GOOD WL range: total, x, y (asec): "
-                         "%.2f, %.2f, %.2f" % (dispersion_max_as, xdmax_as, ydmax_as))
+                         "%.2f, %.2f, %.2f" % (dispersion_max_as, xdmax_as,
+                                               ydmax_as))
 
         # now in pixels
         xdmax_px = xdmax_as / x_scale
@@ -129,30 +130,38 @@ class CorrectDar(BasePrimitive):
                          "%.2f, %.2f, %.2f" % (dmax_px, xdmax_px, ydmax_px))
 
         # prepare output cubes
-        output_image = np.zeros((image_size[0], image_size[1]+2*padding_y, image_size[2]+2*padding_x),
-                           dtype=np.float64)
+        output_image = np.zeros((image_size[0], image_size[1]+2*padding_y,
+                                 image_size[2]+2*padding_x), dtype=np.float64)
         output_variance = output_image.copy()
-        output_mask = np.zeros((image_size[0], image_size[1]+2*padding_y, image_size[2]+2*padding_x),
-                           dtype=np.uint8)
+        output_mask = np.zeros((image_size[0], image_size[1]+2*padding_y,
+                                image_size[2]+2*padding_x), dtype=np.uint8)
 
-        output_image[:, padding_y:(padding_y+image_size[1]), padding_x:(padding_x+image_size[2])] = \
+        output_image[:, padding_y:(padding_y+image_size[1]),
+                     padding_x:(padding_x+image_size[2])] = \
             self.action.args.ccddata.data
 
-        output_variance[:, padding_y:(padding_y+image_size[1]), padding_x:(padding_x+image_size[2])] = \
+        output_variance[:, padding_y:(padding_y+image_size[1]),
+                        padding_x:(padding_x+image_size[2])] = \
             self.action.args.ccddata.uncertainty.array
 
-        output_mask[:, padding_y:(padding_y+image_size[1]), padding_x:(padding_x+image_size[2])] = \
+        output_mask[:, padding_y:(padding_y+image_size[1]),
+                    padding_x:(padding_x+image_size[2])] = \
             self.action.args.ccddata.mask
 
         # Perform correction
         self.logger.info(output_image.shape)
         for j, wl in enumerate(waves):
             dispersion_correction = atm_disper(wref, wl, airmass)
-            x_shift = dispersion_correction * math.sin(projection_angle) / x_scale
-            y_shift = dispersion_correction * math.cos(projection_angle) / y_scale
-            output_image[j, :, :] = sp.ndimage.shift(output_image[j, :, :], (y_shift, x_shift))
-            output_variance[j, :, :] = sp.ndimage.shift(output_variance[j, :, :], (y_shift, x_shift))
-            output_mask[j, :, :] = sp.ndimage.shift(output_mask[j, :, :], (y_shift, x_shift))
+            x_shift = dispersion_correction * \
+                math.sin(projection_angle) / x_scale
+            y_shift = dispersion_correction * \
+                math.cos(projection_angle) / y_scale
+            output_image[j, :, :] = shift(output_image[j, :, :], (y_shift,
+                                                                  x_shift))
+            output_variance[j, :, :] = shift(output_variance[j, :, :],
+                                             (y_shift, x_shift))
+            output_mask[j, :, :] = shift(output_mask[j, :, :], (y_shift,
+                                                                x_shift))
 
         self.action.args.ccddata.data = output_image
         self.action.args.ccddata.uncertainty.array = output_variance
@@ -164,12 +173,12 @@ class CorrectDar(BasePrimitive):
         self.action.args.ccddata.header['DARANG'] = (projection_angle_deg,
                                                      'DAR projection angle '
                                                      '(deg)')
-        self.action.args.ccddata.header['DARPADX'] = (padding_x, 'DAR X padding '
-                                                             '(pix)')
-        self.action.args.ccddata.header['DARPADY'] = (padding_y, 'DAR Y padding '
-                                                             '(pix)')
-        self.action.args.ccddata.header['DAREFWL'] = (wref, 'DAR reference wl '
-                                                            '(Ang)')
+        self.action.args.ccddata.header['DARPADX'] = (padding_x,
+                                                      'DAR X padding (pix)')
+        self.action.args.ccddata.header['DARPADY'] = (padding_y,
+                                                      'DAR Y padding (pix)')
+        self.action.args.ccddata.header['DAREFWL'] = (wref,
+                                                      'DAR reference wl (Ang)')
         # write out corrected image
         kcwi_fits_writer(self.action.args.ccddata,
                          table=self.action.args.table,
@@ -182,5 +191,3 @@ class CorrectDar(BasePrimitive):
 
         return self.action.args
     # END: class CorrectDar()
-
-

@@ -671,7 +671,7 @@ class MakeMasterFlat(BaseImg):
         comflat.flat[qz] = comvals
         ratio = np.zeros(newflat.shape, dtype=float)
         qzer = [i for i, v in enumerate(newflat.flat) if v != 0]
-        ratio.flat[qzer] = comflat.flat[qzer] / stacked.data.flat[qzer]
+        ratio.flat[qzer] = comflat.flat[qzer] / newflat.flat[qzer]
 
         # trim negative points
         qq = [i for i, v in enumerate(ratio.flat) if v < 0]
