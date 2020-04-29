@@ -197,7 +197,13 @@ class Kcwi_pipeline(BasePipeline):
                                       "object_correct_illumination"),
         "object_correct_illumination": ("CorrectIllumination",
                                         "illumination_correction_started",
-                                        "object_make_cube"),
+                                        "object_make_sky"),
+        "object_make_sky":           ("MakeMasterSky",
+                                      "making_master_sky_started",
+                                      "object_subtract_sky"),
+        "object_subtract_sky":       ("SubtractSky",
+                                      "subtracting_sky_started",
+                                      "object_make_cube"),
         "object_make_cube":          ("MakeCube",
                                       "making_cube_started",
                                       "object_correct_dar"),
@@ -288,6 +294,8 @@ class Kcwi_pipeline(BasePipeline):
         elif "ARCLAMP" in action.args.imtype:
             context.push_event("process_arc", action.args)
         elif "OBJECT" in action.args.imtype:
+            object_args = action.args
+            object_args.new_type = "SKY"
             context.push_event("process_object", action.args)
 
 
