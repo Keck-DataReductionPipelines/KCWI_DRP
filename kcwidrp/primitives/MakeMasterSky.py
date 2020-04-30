@@ -2,13 +2,13 @@ from keckdrpframework.primitives.base_img import BaseImg
 from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_reader, \
     kcwi_fits_writer
 from kcwidrp.core.bokeh_plotting import bokeh_plot
+from kcwidrp.core.bspline import Bspline
 from bokeh.plotting import figure
 from bokeh.models import Range1d
 
 import os
 import time
 import numpy as np
-from pydl.pydlutils import bspline
 
 
 class MakeMasterSky(BaseImg):
@@ -128,7 +128,7 @@ class MakeMasterSky(BaseImg):
                          (n, np.min(bkpt), np.max(bkpt)))
 
         # do bspline fit
-        sft0, gmask = bspline.iterfit(waves, fluxes, fullbkpt=bkpt,
+        sft0, gmask = Bspline.iterfit(waves, fluxes, fullbkpt=bkpt,
                                       upper=1, lower=1)
         gp = [i for i, v in enumerate(gmask) if v]
         yfit1, _ = sft0.value(waves)
@@ -149,7 +149,7 @@ class MakeMasterSky(BaseImg):
                 self.logger.info("Nknots = %d, min = %.2f, max = %.2f (A)" %
                                  (n, np.min(bkpt), np.max(bkpt)))
                 # do bspline fit
-                sft0, gmask = bspline.iterfit(waves, fluxes, fullbkpt=bkpt,
+                sft0, gmask = Bspline.iterfit(waves, fluxes, fullbkpt=bkpt,
                                               upper=1, lower=1)
                 yfit1, _ = sft0.value(waves)
             if np.max(yfit1) <= 0:

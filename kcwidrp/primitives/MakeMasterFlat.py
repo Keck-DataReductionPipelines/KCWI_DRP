@@ -2,6 +2,7 @@ from keckdrpframework.primitives.base_img import BaseImg
 from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_reader, \
     kcwi_fits_writer
 from kcwidrp.core.bokeh_plotting import bokeh_plot
+from kcwidrp.core.bspline import Bspline
 from bokeh.plotting import figure
 from bokeh.models import Range1d
 
@@ -11,7 +12,6 @@ import numpy as np
 from scipy.signal.windows import boxcar
 import scipy as sp
 from scipy.signal import find_peaks
-from pydl.pydlutils import bspline
 
 
 def bm_ledge_position(cwave):
@@ -355,7 +355,7 @@ class MakeMasterFlat(BaseImg):
                 ylmax = np.max(yledge)
                 ylmin = np.min(yledge)
                 fpoints = np.arange(0, 100) / 100. * 50 + (ledge_wave-25)
-                ledgefit, ledgemsk = bspline.iterfit(np.asarray(xledge),
+                ledgefit, ledgemsk = Bspline.iterfit(np.asarray(xledge),
                                                      smyledge, fullbkpt=fpoints,
                                                      upper=1, lower=1)
                 ylfit, _ = ledgefit.value(np.asarray(fpoints))
@@ -450,7 +450,7 @@ class MakeMasterFlat(BaseImg):
         self.logger.info("Using %d knots for bspline fit" % knots)
         bkpt = np.min(xfr) + np.arange(knots+1) * \
             (np.max(xfr) - np.min(xfr)) / knots
-        sftr, _ = bspline.iterfit(xfr, yfr, fullbkpt=bkpt)
+        sftr, _ = Bspline.iterfit(xfr, yfr, fullbkpt=bkpt)
         yfitr, _ = sftr.value(xfr)
 
         # generate a blue slice spectrum bspline fit
@@ -466,7 +466,7 @@ class MakeMasterFlat(BaseImg):
         yfb = yfb[s]
         bkpt = np.min(xfb) + np.arange(knots+1) * \
             (np.max(xfb) - np.min(xfb)) / knots
-        sftb, _ = bspline.iterfit(xfb, yfb, fullbkpt=bkpt)
+        sftb, _ = Bspline.iterfit(xfb, yfb, fullbkpt=bkpt)
         yfitb, _ = sftb.value(xfb)
 
         # generate a red slice spectrum bspline fit
@@ -482,7 +482,7 @@ class MakeMasterFlat(BaseImg):
         yfd = yfd[s]
         bkpt = np.min(xfd) + np.arange(knots + 1) * \
             (np.max(xfd) - np.min(xfd)) / knots
-        sftd, _ = bspline.iterfit(xfd, yfd, fullbkpt=bkpt)
+        sftd, _ = Bspline.iterfit(xfd, yfd, fullbkpt=bkpt)
         yfitd, _ = sftd.value(xfd)
 
         # waves
@@ -643,7 +643,7 @@ class MakeMasterFlat(BaseImg):
 
         bkpt = np.min(allx) + np.arange(knots+1) * \
             (np.max(allx) - np.min(allx)) / knots
-        sftall, _ = bspline.iterfit(allx, ally, fullbkpt=bkpt)
+        sftall, _ = Bspline.iterfit(allx, ally, fullbkpt=bkpt)
         yfitall, _ = sftall.value(allx)
 
         if self.config.instrument.plot_level >= 1:
