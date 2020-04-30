@@ -39,6 +39,7 @@ class StackFlats(BaseImg):
             if len(self.combine_list) >= self.action.args.min_files:
                 return True
             else:
+                self.action.new_event = None
                 return False
 
     def _perform(self):
