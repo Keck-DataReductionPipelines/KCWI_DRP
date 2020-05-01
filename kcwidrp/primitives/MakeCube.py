@@ -11,6 +11,43 @@ from astropy.coordinates import SkyCoord
 from astropy import units as u
 from kcwidrp.core.bokeh_plotting import bokeh_plot
 from bokeh.plotting import figure
+from multiprocessing import Pool
+
+
+def make_cube_helper(argument):
+    logger = argument['logger']
+    logger.info("Transforming image slice %d" % (argument['slice_number']+1))
+    slice_number = argument['slice_number']
+    #print(argument['geom']['xl0'])
+    #print(argument['geom']['xl1'])
+    tform = argument['geom']['tform'][slice_number]
+    xl0 = argument['geom']['xl0'][slice_number]
+    xl1 = argument['geom']['xl1'][slice_number]
+
+    slice_img = argument['img'][:, xl0:xl1]
+    slice_var = argument['var'][:, xl0:xl1]
+    slice_msk = argument['msk'][:, xl0:xl1]
+    xsize = argument['xsize']
+    ysize = argument['ysize']
+    #print("Now working on slice %d [%d:%d] with sizes: %d %d" % (argument['slice_number'], xl0, xl1, ysize, xsize))
+
+    warped = tf.warp(slice_img, tform, order=3,
+                     output_shape=(ysize, xsize))
+    varped = tf.warp(slice_var, tform, order=3,
+                     output_shape=(ysize, xsize))
+    marped = tf.warp(slice_msk, tform, order=3,
+                     output_shape=(ysize, xsize))
+
+    #out_cube_local = np.zeros((ysize, xsize), dtype=np.float64)
+    #out_vube_local = np.zeros((ysize, xsize), dtype=np.float64)
+    #out_mube_local = np.zeros((ysize, xsize), dtype=np.uint8)
+    #for iy in range(ysize):
+    #    for ix in range(xsize):
+    #        out_cube_local[iy, ix] = warped[iy, ix]
+    #        out_vube_local[iy, ix] = varped[iy, ix]
+    #        out_mube_local[iy, ix] = int(marped[iy, ix])
+    return argument['slice_number'], warped, varped, marped
+    #return argument['slice_number'], out_cube_local, out_vube_local, out_mube_local
 
 
 class MakeCube(BasePrimitive):
@@ -61,63 +98,56 @@ class MakeCube(BasePrimitive):
             data_var = self.action.args.ccddata.uncertainty.array
             data_msk = self.action.args.ccddata.mask
             # Loop over 24 slices
-            for isl in range(0, 24):
-                tform = geom['tform'][isl]
-                xl0 = geom['xl0'][isl]
-                xl1 = geom['xl1'][isl]
-                self.logger.info("Transforming image slice %d" % isl)
-                slice_img = data_img[:, xl0:xl1]
-                slice_var = data_var[:, xl0:xl1]
-                slice_msk = data_msk[:, xl0:xl1]
-                # wmed = np.nanmedian(slice_img)
-                # wstd = np.nanstd(slice_img)
-                # pl.clf()
-                # pl.imshow(slice_img, vmin=(wmed - wstd * 2.),
-                #          vmax=(wmed + wstd * 2.))
-                # pl.ylim(0, 2056)
-                # pl.title('raw slice %d' % isl)
-                # if do_inter:
-                #    q = input("Next? <cr>, q to quit: ")
-                #    if 'Q' in q.upper():
-                #        do_inter = False
-                #        pl.ioff()
-                # else:
-                #    pl.pause(self.action.args.ccddata.plotpause())
-                warped = tf.warp(slice_img, tform, order=3,
-                                 output_shape=(ysize, xsize))
-                varped = tf.warp(slice_var, tform, order=3,
-                                 output_shape=(ysize, xsize))
-                marped = tf.warp(slice_msk, tform, order=3,
-                                 output_shape=(ysize, xsize))
-                for iy in range(ysize):
-                    for ix in range(xsize):
-                        out_cube[iy, ix, isl] = warped[iy, ix]
-                        out_vube[iy, ix, isl] = varped[iy, ix]
-                        out_mube[iy, ix, isl] = int(marped[iy, ix])
-                wmed = np.nanmedian(warped)
-                wstd = np.nanstd(warped)
-                if self.config.instrument.plot_level >= 2:
-                    print(wmed, wstd)
+
+            my_arguments = []
+            for slice in range(0,24):
+                arguments = {
+                    'slice_number': slice,
+                    'geom': geom,
+                    'img': data_img,
+                    'var': data_var,
+                    'msk': data_msk,
+                    'xsize': xsize,
+                    'ysize': ysize,
+                    'logger': self.logger
+                }
+                my_arguments.append(arguments)
+
+            p = Pool()
+            results = p.map(make_cube_helper, list(my_arguments))
+            p.close()
+
+            self.logger.info("Building cube")
+            for partial_cube in results:
+                slice_number = partial_cube[0]
+                out_cube[:, :, slice_number] = partial_cube[1]
+                out_vube[:, :, slice_number] = partial_cube[2]
+                out_mube[:, :, slice_number] = partial_cube[3]
+
+
+            if self.config.instrument.plot_level >= 2:
+                for slice in range(0,24):
+                    warped = out_cube[:, :, slice]
                     ptitle = self.action.args.plotlabel + "WARPED Slice %d" \
-                        % isl
+                         % isl
                     p = figure(tooltips=[("x", "$x"), ("y", "$y"),
-                                         ("value", "@image")],
-                               title=ptitle,
-                               x_axis_label="X (px)", y_axis_label="Y (px)",
-                               plot_width=self.config.instrument.plot_width,
-                               plot_height=self.config.instrument.plot_height)
+                                     ("value", "@image")],
+                           title=ptitle,
+                           x_axis_label="X (px)", y_axis_label="Y (px)",
+                           plot_width=self.config.instrument.plot_width,
+                           plot_height=self.config.instrument.plot_height)
                     p.x_range.range_padding = p.y_range.range_padding = 0
                     p.image([warped], x=0, y=0, dw=xsize, dh=ysize,
-                            palette="Spectral11", level="image")
-                    # vmin=(wmed - wstd * 2.), vmax=(wmed + wstd * 2.))
-                    # pl.ylim(0, ysize)
-                    bokeh_plot(p, self.context.bokeh_session)
+                        palette="Spectral11", level="image")
+                    bokeh_plot(p)
                     if do_inter:
                         q = input("Next? <cr>, q to quit: ")
                         if 'Q' in q.upper():
                             do_inter = False
                     else:
                         time.sleep(self.config.instrument.plot_pause)
+
+
             # Calculate some WCS parameters
             # Get object pointing
             try:
