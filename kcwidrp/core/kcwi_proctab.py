@@ -1,11 +1,12 @@
 from astropy.table import Table, unique
 import os
+import logging
 
 
 class Proctab:
 
     def __init__(self, logger):
-        self.log = logger
+        self.log = logging.getLogger('KCWI')
         self.proctab = None
 
     def new_proctab(self):
