@@ -140,11 +140,9 @@ def main():
     # start the bokeh server is requested by the configuration parameters
     if framework.config.instrument.enable_bokeh is True:
         if check_bokeh_server() is False:
-            subprocess.Popen('bokeh serve --session-ids=unsigned '
-                             '--session-token-expiration=86400', shell=True)
+            subprocess.Popen('bokeh serve', shell=True) # --session-ids=unsigned --session-token-expiration=86400', shell=True)
             time.sleep(5)
-        subprocess.Popen('open http://localhost:5006?bokeh-session-id=kcwi',
-                         shell=True)
+        #subprocess.Popen('open http://localhost:5006?bokeh-session-id=kcwi', shell=True)
 
     # initialize the proctab and read it
     framework.context.proctab = Proctab(framework.logger)

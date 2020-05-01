@@ -17,11 +17,13 @@ class StartBokeh(BasePrimitive):
 
     def _perform(self):
 
-        session = pull_session(session_id='kcwi', url='http://localhost:5006')
+        #session = pull_session(session_id='kcwi', url='http://localhost:5006')
+        session = pull_session()
         self.logger.info("Enabling BOKEH plots")
         p = figure()
         c = column(children=[p])
         session.document.clear()
         session.document.add_root(c)
         self.context.bokeh_session = session
+        session.show(c)
 
