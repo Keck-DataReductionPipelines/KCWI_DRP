@@ -1,10 +1,10 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer
 from kcwidrp.core.bokeh_plotting import bokeh_plot
+from kcwidrp.core.bspline import Bspline
 
 from bokeh.plotting import figure
 import numpy as np
-import scipy.interpolate as spint
 import time
 
 
@@ -29,6 +29,8 @@ class SubtractScatteredLight(BasePrimitive):
             self.logger.info("Skipping scattered light subtraction by request")
             self.action.args.ccddata.header[key] = (False, keycom)
         else:
+            # Binning
+            ybin = self.action.args.ybinsize
             # Get size of image
             siz = self.action.args.ccddata.data.shape
             # Get x range for scattered light
@@ -46,10 +48,13 @@ class SubtractScatteredLight(BasePrimitive):
             # X data values
             xvals = np.arange(len(yvals), dtype=np.float)
             # Break points
-            nbkpt = int(siz[1] / 40.)
-            bkpt = xvals[nbkpt:-nbkpt:nbkpt]
+            nbpts = 20 / ybin
+            bkpt = np.min(xvals) + np.arange(nbpts) * \
+                (np.max(xvals) - np.min(xvals)) / nbpts
             # B-spline fit
-            bspl = spint.LSQUnivariateSpline(xvals, yvals, bkpt)
+            fscat, _ = Bspline.iterfit(xvals, yvals, fullbkpt=bkpt)
+            # Scattered light vector
+            scat, _ = fscat.value(xvals)
             if self.config.instrument.plot_level >= 1:
                 # plot
                 p = figure(title=self.action.args.plotlabel +
@@ -58,16 +63,13 @@ class SubtractScatteredLight(BasePrimitive):
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height)
                 p.circle(xvals, yvals, legend_label="Scat")
-                xx = np.linspace(0, max(xvals), len(yvals) * 5)
-                p.line(xx, bspl(xx), color='red', line_width=3,
+                p.line(xvals, scat, color='red', line_width=3,
                        legend_label="fit")
                 bokeh_plot(p, self.context.bokeh_session)
                 if self.config.instrument.plot_level >= 2:
                     input("Next? <cr>: ")
                 else:
                     time.sleep(self.config.instrument.plot_pause)
-            # Scattered light vector
-            scat = bspl(xvals)
             # Subtract scattered light
             self.logger.info("Starting scattered light subtraction")
             for ix in range(0, siz[1]):

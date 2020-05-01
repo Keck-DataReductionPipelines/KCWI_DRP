@@ -161,9 +161,12 @@ class MakeMasterSky(BaseImg):
         # for plotting
         gwaves = waves[gp]
         gfluxes = fluxes[gp]
-        xplt = gwaves[::200]
-        yplt = gfluxes[::200]
+        npts = len(gwaves)
+        stride = int(npts / 5000.)
+        xplt = gwaves[::stride]
+        yplt = gfluxes[::stride]
         fplt, _ = sft0.value(xplt)
+        self.logger.info("Stride = %d" % stride)
 
         # plot, if requested
         if self.config.instrument.plot_level >= 2:
