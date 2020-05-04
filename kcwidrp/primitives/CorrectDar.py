@@ -149,7 +149,6 @@ class CorrectDar(BasePrimitive):
             self.action.args.ccddata.mask
 
         # Perform correction
-        self.logger.info(output_image.shape)
         for j, wl in enumerate(waves):
             dispersion_correction = atm_disper(wref, wl, airmass)
             x_shift = dispersion_correction * \
