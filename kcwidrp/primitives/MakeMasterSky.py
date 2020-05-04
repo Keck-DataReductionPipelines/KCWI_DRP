@@ -9,6 +9,7 @@ from bokeh.models import Range1d
 import os
 import time
 import numpy as np
+from astropy.io import fits
 
 
 class MakeMasterSky(BaseImg):
@@ -23,7 +24,50 @@ class MakeMasterSky(BaseImg):
         Checks if we can create a master sky
         :return:
         """
-        return True
+        self.logger.info("Checking precondition for MakeMasterSky")
+
+        suffix = self.action.args.new_type.lower()
+        ofn = self.action.args.ccddata.header['OFNAME']
+        rdir = self.config.instrument.output_directory
+
+        skyfile = None
+        skymask = None
+        # check if kcwi.sky exists
+        if os.path.exists('kcwi.sky'):
+            self.logger.info("Reading kcwi.sky")
+            f = open('kcwi.sky')
+            skyproc = f.readlines()
+            f.close()
+            # is our file in the list?
+            for row in skyproc:
+                if ofn in row.split()[0]:
+                    skyfile = row.split()[1]
+                    self.logger.info("Found sky entry for %s: %s" % (ofn,
+                                                                     skyfile))
+                    if len(row.split()) > 2:
+                        skymask = row.split()[2]
+                        self.logger.info("Found sky mask entry for %s: %s"
+                                         % (ofn, skymask))
+            if skymask:
+                if os.path.exists(skymask):
+                    self.logger.info("Using sky mask file: %s" % skymask)
+                else:
+                    self.logger.warning("Sky mask file not found: %s" % skymask)
+                    skymask = None
+        self.action.args.skyfile = skyfile
+        self.action.args.skymask = skymask
+        if skyfile:
+            msname = ofn.split('.fits')[0] + '_' + suffix + '.fits'
+            mskyf = os.path.join(rdir, msname)
+            if os.path.exists(mskyf):
+                self.logger.info("Master sky already exists: %s" % mskyf)
+                return False
+            else:
+                self.logger.info("No alternate master sky found.")
+                return True
+        else:
+            self.logger.info("No alternate master sky requested.")
+            return True
 
     def _perform(self):
         """
@@ -41,24 +85,24 @@ class MakeMasterSky(BaseImg):
             self.logger.error("Geometry not solved!")
             return self.action.args
 
-        mroot = tab['OFNAME'][0].split('.fits')[0]
+        groot = tab['OFNAME'][0].split('.fits')[0]
 
         # Wavelength map image
-        wmf = mroot + '_wavemap.fits'
+        wmf = groot + '_wavemap.fits'
         self.logger.info("Reading image: %s" % wmf)
         wavemap = kcwi_fits_reader(
             os.path.join(os.path.dirname(self.action.args.name), 'redux',
                          wmf))[0]
 
         # Slice map image
-        slf = mroot + '_slicemap.fits'
+        slf = groot + '_slicemap.fits'
         self.logger.info("Reading image: %s" % slf)
         slicemap = kcwi_fits_reader(
             os.path.join(os.path.dirname(self.action.args.name), 'redux',
                          slf))[0]
 
         # Position map image
-        pof = mroot + '_posmap.fits'
+        pof = groot + '_posmap.fits'
         self.logger.info("Reading image: %s" % pof)
         posmap = kcwi_fits_reader(
             os.path.join(os.path.dirname(self.action.args.name), 'redux',
@@ -74,15 +118,28 @@ class MakeMasterSky(BaseImg):
         sm_sz = self.action.args.ccddata.data.shape
 
         # sky masking
-        # default is no masking (True = good, False = Mask)
-        binary_mask = np.ones(sm_sz, dtype=bool)
+        # default is no masking (True = mask, False = don't mask)
+        binary_mask = np.zeros(sm_sz, dtype=bool)
 
         # was sky masking requested?
-        if self.config.instrument.skymask:
-            binary_mask[0, 0] = False
+        if self.action.args.skymask:
+            if os.path.exists(self.action.args.skymask):
+                self.logger.info("Reading sky mask file: %s"
+                                 % self.action.args.skymask)
+                hdul = fits.open(self.action.args.skymask)
+                binary_mask = hdul[0].data
+                # verify size match
+                bm_sz = binary_mask.shape
+                if bm_sz[0] != sm_sz[0] or bm_sz[1] != sm_sz[1]:
+                    self.logger.warning("Sky mask size mis-match: "
+                                        "masking disabled")
+                    binary_mask = np.zeros(sm_sz, dtype=bool)
+            else:
+                self.logger.warning("Sky mask image not found: %s"
+                                    % self.action.args.skymask)
 
         # count masked pixels
-        tmsk = len(np.nonzero(np.where(binary_mask.flat, False, True))[0])
+        tmsk = len(np.nonzero(np.where(binary_mask.flat, True, False))[0])
         self.logger.info("Number of pixels masked = %d" % tmsk)
 
         finiteflux = np.isfinite(self.action.args.ccddata.data.flat)
@@ -91,7 +148,7 @@ class MakeMasterSky(BaseImg):
         q = [i for i, v in enumerate(slicemap.data.flat)
              if 0 <= v <= 23 and posmap.data.flat[i] >= 0 and
              waveall0 <= wavemap.data.flat[i] <= waveall1 and
-             finiteflux[i] and binary_mask.flat[i]]
+             finiteflux[i] and not binary_mask.flat[i]]
 
         # get all points mapped to exposed regions on the CCD (for output)
         qo = [i for i, v in enumerate(slicemap.data.flat)
@@ -162,10 +219,11 @@ class MakeMasterSky(BaseImg):
         gwaves = waves[gp]
         gfluxes = fluxes[gp]
         npts = len(gwaves)
-        stride = int(npts / 5000.)
+        stride = int(npts / 8000.)
         xplt = gwaves[::stride]
         yplt = gfluxes[::stride]
         fplt, _ = sft0.value(xplt)
+        yrng = [np.min(yplt), np.max(yplt)]
         self.logger.info("Stride = %d" % stride)
 
         # plot, if requested
@@ -179,6 +237,10 @@ class MakeMasterSky(BaseImg):
             p.circle(xplt, yplt, size=1, line_alpha=0., fill_color='purple',
                      legend_label='Data')
             p.line(xplt, fplt, line_color='red', legend_label='Fit')
+            p.line([wavegood0, wavegood0], yrng, line_color='green')
+            p.line([wavegood1, wavegood1], yrng, line_color='green')
+            p.y_range.start = yrng[0]
+            p.y_range.end = yrng[1]
             bokeh_plot(p, self.context.bokeh_session)
             if self.config.instrument.plot_level >= 2:
                 input("Next? <cr>: ")
