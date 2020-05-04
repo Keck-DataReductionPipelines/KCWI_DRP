@@ -1,22 +1,15 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
-from keckdrpframework.models.arguments import Arguments
-from kcwidrp.core.bokeh_plotting import bokeh_plot, bokeh_save
+from kcwidrp.core.bokeh_plotting import bokeh_plot
 
-from bokeh.plotting import figure, show
-from bokeh.models import Range1d, LinearAxis
 import numpy as np
 from scipy.signal.windows import boxcar
 import scipy as sp
 from scipy.optimize import curve_fit
 from scipy.interpolate import interpolate
 from scipy.stats import sigmaclip
-from bokeh.io import export_png
-from bokeh.plotting import figure, show
+from bokeh.plotting import figure
 from bokeh.models import Range1d, LinearAxis
-from bokeh.layouts import gridplot
-from bokeh.models.markers import X
 from bokeh.io import export_png
-from bokeh.util.logconfig import basicConfig, bokeh_logger as bl
 import time
 
 
@@ -213,7 +206,6 @@ class SolveArcs(BasePrimitive):
                     yvec = bspec[minow:maxow + 1]
                     xvec = self.action.args.xsvals[minow:maxow + 1]
                     wvec = bw[minow:maxow + 1]
-                    max_value = yvec[yvec.argmax()]
                     # Gaussian fit
                     try:
                         fit, _ = curve_fit(gaus, xvec, yvec,
@@ -272,25 +264,28 @@ class SolveArcs(BasePrimitive):
                                color='blue', legend_label='Atlas')
                         p.circle(atwave[atx0:atx1], atspec[atx0:atx1] * atnorm,
                                  color='green', legend_label='Atlas')
-                        p.line([aw, aw], ylim, color='red', legend_label='AtCntr')
+                        p.line([aw, aw], ylim, color='red',
+                               legend_label='AtCntr')
                         p.x_range = Range1d(start=min(wvec), end=max(wvec))
                         p.extra_x_ranges = {"pix": Range1d(start=min(xvec),
                                                            end=max(xvec))}
                         p.add_layout(LinearAxis(x_range_name="pix",
                                                 axis_label="CCD Y pix"),
                                      'above')
-                        p.line(xplot, plt_line, color='black', legend_label='Arc',
-                               x_range_name="pix")
+                        p.line(xplot, plt_line, color='black',
+                               legend_label='Arc', x_range_name="pix")
                         p.circle(xvec, yvec, legend_label='Arc', color='red',
                                  x_range_name="pix")
                         ylim = [0, np.nanmax(plt_line)]
-                        p.line([cent, cent], ylim, color='green', legend_label='Cntr',
-                               line_dash='dashed', x_range_name="pix")
+                        p.line([cent, cent], ylim, color='green',
+                               legend_label='Cntr', line_dash='dashed',
+                               x_range_name="pix")
                         p.line([sp_pk_x, sp_pk_x], ylim, color='magenta',
                                legend_label='Gpeak', line_dash='dashdot',
                                x_range_name="pix")
-                        p.line([peak, peak], ylim, color='black', legend_label='Peak',
-                               line_dash='dashdot', x_range_name="pix")
+                        p.line([peak, peak], ylim, color='black',
+                               legend_label='Peak', line_dash='dashdot',
+                               x_range_name="pix")
                         p.y_range.start = 0
                         bokeh_plot(p, self.context.bokeh_session)
 
@@ -405,7 +400,8 @@ class SolveArcs(BasePrimitive):
                 p.line(bwav, b, color='darkgrey', legend_label='Arc')
                 ylim = [np.nanmin(b), np.nanmax(b)]
                 atnorm = np.nanmax(b) / np.nanmax(atspec)
-                p.line(atwave, atspec * atnorm, color='blue', legend_label='Atlas')
+                p.line(atwave, atspec * atnorm, color='blue',
+                       legend_label='Atlas')
                 p.line([self.action.args.cwave, self.action.args.cwave],
                        ylim, color='magenta', line_dash='dashdot',
                        legend_label='CWAV')
@@ -428,7 +424,6 @@ class SolveArcs(BasePrimitive):
                          (self.action.args.av_bar_sig,
                           self.action.args.st_bar_sig))
 
-
         ptitle = self.action.args.plotlabel + \
             "FIT STATS <RMS> = %.3f +- %.3f" % (self.action.args.av_bar_sig,
                                                 self.action.args.st_bar_sig)
@@ -445,15 +440,15 @@ class SolveArcs(BasePrimitive):
                        self.action.args.st_bar_sig),
                       (self.action.args.av_bar_sig -
                        self.action.args.st_bar_sig)], color='black',
-                    line_dash='dotted')
+               line_dash='dotted')
         p.line(xlim, [(self.action.args.av_bar_sig +
                        self.action.args.st_bar_sig),
                       (self.action.args.av_bar_sig +
                        self.action.args.st_bar_sig)], color='black',
                line_dash='dotted')
         for ix in range(1, 24):
-                sx = ix * 5 - 0.5
-                p.line([sx, sx], ylim, color='black', line_dash='dashdot')
+            sx = ix * 5 - 0.5
+            p.line([sx, sx], ylim, color='black', line_dash='dashdot')
         if self.config.instrument.plot_level >= 1:
             bokeh_plot(p, self.context.bokeh_session)
             if self.config.instrument.plot_level >= 2:
@@ -539,5 +534,3 @@ class SolveArcs(BasePrimitive):
 
         return self.action.args
     # END: class SolveArcs()
-
-

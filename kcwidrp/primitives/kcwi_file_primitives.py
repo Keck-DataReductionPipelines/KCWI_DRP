@@ -594,7 +594,7 @@ def write_table(output_dir=None, table=None, names=None, comment=None,
     try:
         t.write(output_file, format='fits')
     except:
-        logger.warn("Table already exists")
+        logger.warning("Table already exists")
     print("output file: %s" % output_file)
 
 
