@@ -61,8 +61,7 @@ class CorrectIllumination(BasePrimitive):
 
             self.action.args.ccddata.header[key] = (False, keycom)
 
-        log_string = CorrectIllumination.__module__ + "." + \
-            CorrectIllumination.__qualname__
+        log_string = CorrectIllumination.__module__
         self.action.args.ccddata.header['HISTORY'] = log_string
 
         # write out int image

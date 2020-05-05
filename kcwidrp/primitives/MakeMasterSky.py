@@ -4,7 +4,6 @@ from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_reader, \
 from kcwidrp.core.bokeh_plotting import bokeh_plot
 from kcwidrp.core.bspline import Bspline
 from bokeh.plotting import figure
-from bokeh.models import Range1d
 
 import os
 import time

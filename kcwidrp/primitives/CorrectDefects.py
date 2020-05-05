@@ -1,5 +1,5 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
-from keckdrpframework.models.arguments import Arguments
+from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer
 
 import numpy as np
 import pkg_resources
@@ -34,7 +34,8 @@ class CorrectDefects(BasePrimitive):
         if os.path.exists(full_path):
             self.logger.info("Reading defect list in: %s" % full_path)
             defect_table = pd.read_csv(full_path, sep=r'\s+')
-            pixel_range_for_good_value = 5   # range of pixels for calculating good value
+            # range of pixels for calculating good value
+            pixel_range_for_good_value = 5
             for index, row in defect_table.iterrows():
                 # Get coords and adjust for python zero bias
                 x0 = row['X0'] - 1
@@ -45,10 +46,10 @@ class CorrectDefects(BasePrimitive):
                 for by in range(y0, y1):
                     # sample on low side of bad area
                     values = list(self.action.args.ccddata.data[by,
-                                x0-pixel_range_for_good_value:x0])
+                                  x0-pixel_range_for_good_value:x0])
                     # sample on high side
                     values.extend(self.action.args.ccddata.data[by,
-                                x1+1:x1+pixel_range_for_good_value+1])
+                                  x1+1:x1+pixel_range_for_good_value+1])
                     # get replacement value
                     good_values = np.nanmedian(np.asarray(values))
                     # Replace baddies with gval
@@ -66,7 +67,7 @@ class CorrectDefects(BasePrimitive):
         self.action.args.ccddata.header['NBPCLEAN'] = \
             (number_of_bad_pixels, 'number of bad pixels cleaned')
 
-        log_string = CorrectDefects.__module__ + "." + CorrectDefects.__qualname__
+        log_string = CorrectDefects.__module__
         self.action.args.ccddata.header['HISTORY'] = log_string
         self.logger.info(log_string)
 
@@ -81,4 +82,3 @@ class CorrectDefects(BasePrimitive):
 
         return self.action.args
     # END: class CorrectDefects()
-
