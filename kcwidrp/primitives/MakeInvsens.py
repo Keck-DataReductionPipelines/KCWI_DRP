@@ -1,6 +1,6 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from kcwidrp.core.bokeh_plotting import bokeh_plot
-from kcwidrp.core.bspline import Bspline
+from kcwidrp.core.kcwi_correct_extin import kcwi_correct_extin
 from bokeh.plotting import figure
 from scipy.signal import find_peaks
 
@@ -115,20 +115,45 @@ class MakeInvsens(BasePrimitive):
         sl1 = (mxsl + 3) if (mxsl + 3) <= sz[2]-1 else sz[2]-1
         # get y position of std
         cy, _ = find_peaks(tot[:, mxsl], height=np.nanmean(tot[:, mxsl]))
-        cy = cy[0] + gy0
+        cy = int(cy[0]) + gy0
         # log results
         self.logger.info("Std lices: max, sl0, sl1, spatial cntrd: "
                          "%d, %d, %d, %.2f" % (mxsl, sl0, sl1, cy))
+        # get dwave spectrum
+        dwspec = np.zeros(sz[0]) + dw
+        # copy of input cube
+        scub = self.action.args.ccddata.data.copy()
+        # sky window width in pixels
+        skywin = int(self.config.instrument.psfwid / self.action.args.xbinsize)
+        # do sky subtraction, if needed
+        if not skycor:
+            self.logger.warning("Sky should have been subtraced already")
+        # apply extinction correction
+        ucub = scub.copy()  # uncorrected cube
+        kcwi_correct_extin(scub, self.action.args.ccddata.header,
+                           logger=self.logger)
+
+        # get slice spectra y limits
+        sy0 = (cy - skywin) if (cy - skywin) > 0 else 0
+        sy1 = (cy + skywin) if (cy + skywin) < (sz[1]-1) else (sz[1]-1)
+        # sum over y range
+        slspec = np.sum(scub[:, sy0:sy1, :], 1)
+        ulspec = np.sum(ucub[:, sy0:sy1, :], 1)
+        # sum over slices
+        obsspec = np.sum(slspec[:, sl0:sl1], 1)
+        ubsspec = np.sum(ulspec[:, sl0:sl1], 1)
+        # convert to e-/second
+        obsspec /= expt
+        ubsspec /= expt
+
         p = figure(
-            title=self.action.args.plotlabel + ' Slice %d, Std %.2f' %
-                  (mxsl, mxsg),
-            x_axis_label='X (px)',
-            y_axis_label='Flux (e-)',
+            title=self.action.args.plotlabel + ' Sum',
+            x_axis_label='Wave (A)',
+            y_axis_label='Flux (e-/s)',
             plot_width=self.config.instrument.plot_width,
             plot_height=self.config.instrument.plot_height)
-        p.circle(yy, tot[:, mxsl], line_alpha=0., legend_label='Data')
-        mxy = np.nanmax(tot[:, mxsl])
-        p.line([cy, cy], [0, mxy], line_color='red')
+        p.line(w, ubsspec, line_color='red', legend_label='Raw')
+        p.line(w, obsspec, line_color='green', legend_label='ExtCor')
         bokeh_plot(p, self.context.bokeh_session)
         input("Next? <cr>: ")
 
