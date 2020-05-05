@@ -35,7 +35,7 @@ def main():
 
     # should be three (including routine name)
     if narg != 3:
-        print("Usage: python kcwi_masksky_ds9.py <imagename> <regionname>")
+        print("Usage: kcwi_masksky_ds9 <imagename> <regionname>")
         print("imagename : used for array dimensions and filename purposes, ")
         print("            must be an _intf image.")
         print("regionname: name of region file containing ds9 mask regions")
