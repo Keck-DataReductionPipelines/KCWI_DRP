@@ -71,6 +71,7 @@ class Proctab:
                       'intk': 5,
                       'icube': 6,
                       'icubed': 7,
+                      'invsens': 8,
                       'icubes': 8}
             if suffix in stages:
                 stage = stages[suffix]
