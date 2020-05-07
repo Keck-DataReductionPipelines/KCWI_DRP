@@ -52,7 +52,7 @@ class FluxCalibrate(BasePrimitive):
             self.logger.info("Reading invsens: %s" % msname)
             hdul = pf.open(os.path.join(os.path.dirname(self.action.args.name),
                                         'redux', msname))
-            mcal = hdul[0].data
+            mcal = hdul[0].data[1, :]
             mchdr = hdul[0].header
             hdul.close()
             # get dimensions
@@ -119,4 +119,3 @@ class FluxCalibrate(BasePrimitive):
 
         return self.action.args
     # END: class FluxCalibrate()
-
