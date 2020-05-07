@@ -38,8 +38,19 @@ class MakeInvsens(BasePrimitive):
             self.logger.warning("Not object type: %s" %
                                 self.action.args.imtype)
         self.action.args.stdfile = stdfile
+        # check pre condition
         if self.action.args.stdfile is not None:
-            return True
+            # does file already exist?
+            ofn = self.action.args.ccddata.header['OFNAME']
+            msname = ofn.split('.fits')[0] + '_invsens.fits'
+            rdir = self.config.instrument.output_directory
+            invsensf = os.path.join(rdir, msname)
+            if os.path.exists(invsensf):
+                self.logger.info("Master cal already exists: %s" % invsensf)
+                return False
+            else:
+                self.logger.info("Master cal will be generated.")
+                return True
         else:
             return False
 
@@ -50,7 +61,6 @@ class MakeInvsens(BasePrimitive):
 
         # get size
         sz = self.action.args.ccddata.data.shape
-        print(sz)
         # default pixel ranges
         z = np.arange(sz[0])
         z0 = 175
@@ -218,6 +228,7 @@ class MakeInvsens(BasePrimitive):
             return self.action.args
         # set up fitting vectors, flux, waves, measure errors
         sf = invsen[t]
+        af = earea[t]
         wf = w[t]
         mw = np.ones(sf.shape, dtype=float)
         use = np.ones(nt)
@@ -232,20 +243,40 @@ class MakeInvsens(BasePrimitive):
                                  % (bl, bwid))
         # ignore bad points by setting large errors
         mf = []
+        ef = []
         ww = []
-
         for i in range(len(use)):
             if use[i] != 1:
                 mw[i] = 1.e-9
                 mf.append(sf[i])
+                ef.append(af[i])
                 ww.append(wf[i])
         # initial polynomial fit of inverse sensitivity
         wf0 = np.min(wf)
         res = np.polyfit(wf-wf0, sf, deg=ford, w=mw)
         finvsen = np.polyval(res, w-wf0)
         calspec = obsspec * finvsen
-
         # TODO: put in interactive tweaking of invsens fitting
+        # initial polynomial fit of effective area
+        res = np.polyfit(wf-wf0, af, ford, w=mw)
+        fearea = np.polyval(res, w-wf0)
+
+        yran = [np.min(af), np.max(af)]
+        p = figure(
+            title=self.action.args.plotlabel + ' Eff. Area',
+            x_axis_label='Wave (A)',
+            y_axis_label='Effective Area (cm^2/A)',
+            plot_width=self.config.instrument.plot_width,
+            plot_height=self.config.instrument.plot_height)
+        p.line(wf, af, line_color='black', legend_label='Data')
+        p.line(w, fearea, line_color='green', legend_label='Fit')
+        p.scatter(ww, ef, marker='x')
+        p.line([wgoo0, wgoo0], yran, line_color='orange')
+        p.line([wgoo1, wgoo1], yran, line_color='orange')
+        p.y_range.start = yran[0]
+        p.y_range.end = yran[1]
+        bokeh_plot(p, self.context.bokeh_session)
+        input("Next? <cr>: ")
 
         yran = [np.min(sf), np.max(sf)]
         p = figure(
@@ -344,19 +375,24 @@ class MakeInvsens(BasePrimitive):
 
         ofn = self.action.args.ccddata.header['OFNAME']
         invsname = ofn.split('.fits')[0] + '_' + suffix + '.fits'
+        eaname = ofn.split('.fits')[0] + '_ea.fits'
 
         st_hdr = self.action.args.ccddata.header.copy()
         st_img = self.action.args.ccddata.data
 
         self.action.args.ccddata.header = hdr
-        self.action.args.ccddata.data = finvsen
+        self.action.args.ccddata.data = np.asarray([invsen, finvsen, obsspec])
 
-        # output invsense
+        # output inverse sensitivity
         kcwi_fits_writer(self.action.args.ccddata, output_file=invsname)
         self.context.proctab.update_proctab(frame=self.action.args.ccddata,
-                                            suffix=suffix,
-                                            newtype='INVSENS')
-        self.context.proctab.write_proctab()
+                                            suffix=suffix, newtype='INVSENS')
+
+        # output effective area
+        self.action.args.ccddata.data = np.asarray([earea, fearea])
+        kcwi_fits_writer(self.action.args.ccddata, output_file=eaname)
+        self.context.proctab.update_proctab(frame=self.action.args.ccddata,
+                                            suffix='ea', newtype='EAREA')
 
         # restore original image
         self.action.args.ccddata.data = st_img

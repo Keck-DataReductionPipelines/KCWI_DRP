@@ -226,7 +226,7 @@ class MakeMasterSky(BaseImg):
         self.logger.info("Stride = %d" % stride)
 
         # plot, if requested
-        if self.config.instrument.plot_level >= 2:
+        if self.config.instrument.plot_level >= 1:
             p = figure(
                 title=self.action.args.plotlabel + ' Master Sky',
                 x_axis_label='Wave (A)',
