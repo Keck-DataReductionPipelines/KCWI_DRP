@@ -4,7 +4,7 @@ from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer
 import os
 import numpy as np
 import pickle
-
+from astropy.nddata import CCDData
 
 class GenerateMaps(BasePrimitive):
     """Generate map images"""
@@ -94,22 +94,21 @@ class GenerateMaps(BasePrimitive):
                 self.action.args.geometry_file.split('/')[-1], 'Geometry file')
 
             # output maps
-            self.action.args.ccddata.data = wave_map_img
-            kcwi_fits_writer(self.action.args.ccddata,
+            header = self.action.args.ccddata.header
+            unit = self.action.args.ccddata.unit
+
+            kcwi_fits_writer(CCDData(wave_map_img, meta=header, unit=unit),
                              table=self.action.args.table,
                              output_file=self.action.args.name,
                              suffix="wavemap")
-            self.action.args.ccddata.data = xpos_map_img
-            kcwi_fits_writer(self.action.args.ccddata,
+            kcwi_fits_writer(CCDData(xpos_map_img, meta=header, unit=unit),
                              table=self.action.args.table,
                              output_file=self.action.args.name,
                              suffix="posmap")
-            self.action.args.ccddata.data = slice_map_img
-            kcwi_fits_writer(self.action.args.ccddata,
+            kcwi_fits_writer(CCDData(slice_map_img, meta=header, unit=unit),
                              table=self.action.args.table,
                              output_file=self.action.args.name,
                              suffix="slicemap")
-            self.action.args.ccddata.data = data_img
 
         else:
             self.logger.error("Geom file not accessible")
