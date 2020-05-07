@@ -2,6 +2,7 @@ from keckdrpframework.primitives.base_primitive import BasePrimitive
 from kcwidrp.core.bokeh_plotting import bokeh_plot
 
 from bokeh.plotting import figure
+# from bokeh.layouts import gridplot
 import numpy as np
 import math
 import time
@@ -90,7 +91,8 @@ class SubtractOverscan(BasePrimitive):
         # if self.config.instrument.plot_level >= 1 and len(plts) > 0:
         #    bokeh_plot(gridplot(plts, ncols=(2 if namps > 2 else 1),
         #                        plot_width=500, plot_height=300,
-        #                        toolbar_location=None))
+        #                        toolbar_location=None),
+        #                        self.context.bokeh_session)
         #    if self.config.instrument.plot_level >= 2:
         #        input("Next? <cr>: ")
         #    else:
@@ -98,8 +100,7 @@ class SubtractOverscan(BasePrimitive):
 
         self.action.args.ccddata.header[key] = (performed, keycom)
 
-        log_string = SubtractOverscan.__module__ + "." + \
-            SubtractOverscan.__qualname__
+        log_string = SubtractOverscan.__module__
         self.action.args.ccddata.header['HISTORY'] = log_string
         self.logger.info(log_string)
 
