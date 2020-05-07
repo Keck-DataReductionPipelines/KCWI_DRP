@@ -64,7 +64,7 @@ class CorrectIllumination(BasePrimitive):
         log_string = CorrectIllumination.__module__
         self.action.args.ccddata.header['HISTORY'] = log_string
 
-        # write out int image
+        # write out intf image
         kcwi_fits_writer(self.action.args.ccddata,
                          table=self.action.args.table,
                          output_file=self.action.args.name, suffix="intf")
