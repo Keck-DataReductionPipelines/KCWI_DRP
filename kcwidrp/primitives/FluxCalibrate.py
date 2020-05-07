@@ -7,6 +7,7 @@ import numpy as np
 from scipy.interpolate import interp1d
 
 from astropy.io import fits as pf
+from astropy import units as u
 
 
 class FluxCalibrate(BasePrimitive):
@@ -94,6 +95,10 @@ class FluxCalibrate(BasePrimitive):
                     self.action.args.ccddata.uncertainty.array[:, ix, isl] *= \
                         mscal ** 2
 
+            # units
+            flam16_u = 1.e16 * u.erg / (u.angstrom * u.cm ** 2 * u.s)
+            self.action.args.ccddata.unit = flam16_u
+            self.action.args.ccddata.uncertainty.unit = flam16_u ** 2
             # update header keywords
             self.action.args.ccddata.header[key] = (True, keycom)
             self.action.args.ccddata.header['MSFILE'] = (msname,
