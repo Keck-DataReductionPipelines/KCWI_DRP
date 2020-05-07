@@ -5,6 +5,8 @@ import os
 import numpy as np
 import pickle
 from astropy.nddata import CCDData
+from astropy import units as u
+
 
 class GenerateMaps(BasePrimitive):
     """Generate map images"""
@@ -95,17 +97,19 @@ class GenerateMaps(BasePrimitive):
 
             # output maps
             header = self.action.args.ccddata.header
-            unit = self.action.args.ccddata.unit
 
-            kcwi_fits_writer(CCDData(wave_map_img, meta=header, unit=unit),
+            kcwi_fits_writer(CCDData(wave_map_img, meta=header,
+                                     unit=u.angstrom),
                              table=self.action.args.table,
                              output_file=self.action.args.name,
                              suffix="wavemap")
-            kcwi_fits_writer(CCDData(xpos_map_img, meta=header, unit=unit),
+            kcwi_fits_writer(CCDData(xpos_map_img, meta=header,
+                                     unit=u.pix),
                              table=self.action.args.table,
                              output_file=self.action.args.name,
                              suffix="posmap")
-            kcwi_fits_writer(CCDData(slice_map_img, meta=header, unit=unit),
+            kcwi_fits_writer(CCDData(slice_map_img, meta=header,
+                                     unit=u.pix),
                              table=self.action.args.table,
                              output_file=self.action.args.name,
                              suffix="slicemap")

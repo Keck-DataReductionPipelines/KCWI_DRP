@@ -7,6 +7,8 @@ from bokeh.plotting import figure
 from scipy.signal import find_peaks
 from scipy.interpolate import interp1d
 from astropy.io import fits as pf
+from astropy.nddata import CCDData
+from astropy import units as u
 
 import os
 import pkg_resources
@@ -377,26 +379,20 @@ class MakeInvsens(BasePrimitive):
         invsname = ofn.split('.fits')[0] + '_' + suffix + '.fits'
         eaname = ofn.split('.fits')[0] + '_ea.fits'
 
-        st_hdr = self.action.args.ccddata.header.copy()
-        st_img = self.action.args.ccddata.data
-
-        self.action.args.ccddata.header = hdr
-        self.action.args.ccddata.data = np.asarray([invsen, finvsen, obsspec])
-
+        # set units
+        invsens_u = u.erg / (u.angstrom * u.cm ** 2 * u.s * u.electron)
         # output inverse sensitivity
-        kcwi_fits_writer(self.action.args.ccddata, output_file=invsname)
-        self.context.proctab.update_proctab(frame=self.action.args.ccddata,
-                                            suffix=suffix, newtype='INVSENS')
-
+        out_invsens = CCDData(np.asarray([invsen, finvsen, obsspec]),
+                              meta=hdr, unit=invsens_u)
+        kcwi_fits_writer(out_invsens, output_file=invsname)
+        self.context.proctab.update_proctab(frame=out_invsens, suffix=suffix,
+                                            newtype='INVSENS')
         # output effective area
-        self.action.args.ccddata.data = np.asarray([earea, fearea])
-        kcwi_fits_writer(self.action.args.ccddata, output_file=eaname)
-        self.context.proctab.update_proctab(frame=self.action.args.ccddata,
-                                            suffix='ea', newtype='EAREA')
-
-        # restore original image
-        self.action.args.ccddata.data = st_img
-        self.action.args.ccddata.header = st_hdr
+        ea_u = u.cm ** 2 / u.angstrom
+        out_ea = CCDData(np.asarray([earea, fearea]), meta=hdr, unit=ea_u)
+        kcwi_fits_writer(out_ea, output_file=eaname)
+        self.context.proctab.update_proctab(frame=out_ea, suffix='ea',
+                                            newtype='EAREA')
 
         return self.action.args
     # END: class MakeInvsens()
