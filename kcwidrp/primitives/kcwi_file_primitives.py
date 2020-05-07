@@ -608,7 +608,7 @@ def read_table(input_dir=None, file_name=None):
     try:
         retab = Table.read(input_file, format='fits')
     except:
-        logger.warn("No table to read")
+        logger.warning("No table to read")
         retab = None
     return retab
 
