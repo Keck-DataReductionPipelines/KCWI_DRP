@@ -60,7 +60,7 @@ class ArcOffsets(BasePrimitive):
         else:
             self.logger.error("No extracted arcs found")
 
-        log_string = ArcOffsets.__module__ + "." + ArcOffsets.__qualname__
+        log_string = ArcOffsets.__module__
         self.action.args.ccddata.header['HISTORY'] = log_string
         self.logger.info(log_string)
 

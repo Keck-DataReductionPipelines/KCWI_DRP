@@ -43,8 +43,6 @@ class CorrectDar(BasePrimitive):
     def _perform(self):
         self.logger.info("Correcting for DAR")
 
-        log_string = CorrectDar.__module__
-
         # Check image
         if 'GEOMCOR' not in self.action.args.ccddata.header:
             self.logger.error("Can only correct DAR on geometrically corrected "
@@ -165,6 +163,8 @@ class CorrectDar(BasePrimitive):
         self.action.args.ccddata.data = output_image
         self.action.args.ccddata.uncertainty.array = output_variance
         self.action.args.ccddata.mask = output_mask
+
+        log_string = CorrectDar.__module__
 
         # update header
         self.action.args.ccddata.header['HISTORY'] = log_string

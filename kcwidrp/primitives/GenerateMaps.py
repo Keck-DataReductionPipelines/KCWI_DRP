@@ -18,8 +18,6 @@ class GenerateMaps(BasePrimitive):
     def _perform(self):
         self.logger.info("Generating geometry maps")
 
-        log_string = GenerateMaps.__module__ + "." + GenerateMaps.__qualname__
-
         if self.action.args.geometry_file is not None and \
                 os.path.exists(self.action.args.geometry_file):
             with open(self.action.args.geometry_file, 'rb') as ifile:
@@ -54,6 +52,8 @@ class GenerateMaps(BasePrimitive):
                             slice_map_img[iy, ix] = isl
                             xpos_map_img[iy, ix] = ncoo[iy, 0]
                             wave_map_img[iy, ix] = ncoo[iy, 1] * dw + wave0
+
+            log_string = GenerateMaps.__module__
 
             # update header
             self.action.args.ccddata.header['HISTORY'] = log_string
