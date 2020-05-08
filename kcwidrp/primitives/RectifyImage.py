@@ -1,5 +1,4 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
-from keckdrpframework.models.arguments import Arguments
 from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer
 
 import numpy as np
@@ -57,7 +56,7 @@ class RectifyImage(BasePrimitive):
 
         self.action.args.ccddata.header[key] = (True, keycom)
 
-        log_string = RectifyImage.__module__ + "." + RectifyImage.__qualname__
+        log_string = RectifyImage.__module__
         self.action.args.ccddata.header['HISTORY'] = log_string
         self.logger.info(log_string)
 
@@ -70,5 +69,3 @@ class RectifyImage(BasePrimitive):
         self.context.proctab.write_proctab()
         return self.action.args
     # END: class RectifyImage()
-
-

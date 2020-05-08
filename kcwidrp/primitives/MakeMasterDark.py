@@ -1,6 +1,9 @@
-from keckdrpframework.primitives.base_primitive import BasePrimitive
-from keckdrpframework.models.arguments import Arguments
 from keckdrpframework.primitives.base_img import BaseImg
+from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_reader, \
+    kcwi_fits_writer
+
+import os
+import ccdproc
 
 
 class MakeMasterDark(BaseImg):
@@ -59,7 +62,7 @@ class MakeMasterDark(BaseImg):
         for ii, fname in enumerate(stackf):
             stacked.header['STACKF%d' % (ii + 1)] = (fname, "stack input file")
 
-        log_string = MakeMasterDark.__module__ + "." + MakeMasterDark.__qualname__
+        log_string = MakeMasterDark.__module__
         stacked.header['HISTORY'] = log_string
         self.logger.info(log_string)
 
@@ -67,7 +70,5 @@ class MakeMasterDark(BaseImg):
         self.context.proctab.update_proctab(frame=stacked, suffix=suffix,
                                             newtype=args.new_type)
         self.context.proctab.write_proctab()
-        return Arguments(name=mdname)
+        return self.action.args
     # END: class StackDarks()
-
-

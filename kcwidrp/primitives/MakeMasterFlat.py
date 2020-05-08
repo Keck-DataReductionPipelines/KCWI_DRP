@@ -697,8 +697,7 @@ class MakeMasterFlat(BaseImg):
         # get master flat output name
         mfname = stack_list[0].split('.fits')[0] + '_' + suffix + '.fits'
 
-        log_string = MakeMasterFlat.__module__ + "." + \
-            MakeMasterFlat.__qualname__
+        log_string = MakeMasterFlat.__module__
         stacked.header['IMTYPE'] = self.action.args.new_type
         stacked.header['HISTORY'] = log_string
         stacked.header['MASTFLAT'] = (True, 'master flat image?')

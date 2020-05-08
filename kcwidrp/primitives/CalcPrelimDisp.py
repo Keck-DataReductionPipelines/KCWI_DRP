@@ -1,5 +1,4 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
-from keckdrpframework.models.arguments import Arguments
 
 import math
 
@@ -15,7 +14,8 @@ class CalcPrelimDisp(BasePrimitive):
         # get binning
         y_binning = self.action.args.ybinsize
         # 0 - compute alpha
-        preliminary_alpha = self.action.args.grangle - 13.0 - self.action.args.adjang
+        preliminary_alpha = self.action.args.grangle - 13.0 - \
+            self.action.args.adjang
         # 1 - compute preliminary angle of diffraction
         preliminary_beta = self.action.args.camangle - preliminary_alpha
         # 2 - compute preliminary dispersion
@@ -30,11 +30,9 @@ class CalcPrelimDisp(BasePrimitive):
                          preliminary_dispersion)
         self.context.prelim_disp = preliminary_dispersion
 
-        log_string = CalcPrelimDisp.__module__ + "." + CalcPrelimDisp.__qualname__
+        log_string = CalcPrelimDisp.__module__
         self.action.args.ccddata.header['HISTORY'] = log_string
         self.logger.info(log_string)
 
         return self.action.args
     # END: class CalcPrelimDisp()
-
-

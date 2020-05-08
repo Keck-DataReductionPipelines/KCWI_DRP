@@ -119,7 +119,7 @@ class FindBars(BasePrimitive):
         self.action.args.contbar_image = \
             self.action.args.ccddata.header['OFNAME']
 
-        log_string = FindBars.__module__ + "." + FindBars.__qualname__
+        log_string = FindBars.__module__
         self.action.args.ccddata.header['HISTORY'] = log_string
         self.logger.info(log_string)
 

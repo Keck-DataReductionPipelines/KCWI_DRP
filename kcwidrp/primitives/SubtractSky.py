@@ -107,7 +107,7 @@ class SubtractSky(BasePrimitive):
             # update header keywords
             self.action.args.ccddata.header[key] = (False, keycom)
 
-        log_string = SubtractSky.__module__ + "." + SubtractSky.__qualname__
+        log_string = SubtractSky.__module__
         self.action.args.ccddata.header['HISTORY'] = log_string
 
         # write out int image

@@ -198,7 +198,7 @@ class SolveGeom(BasePrimitive):
             self.logger.info("Geometry written to: %s" %
                              self.action.args.geometry_file)
 
-        log_string = SolveGeom.__module__ + "." + SolveGeom.__qualname__
+        log_string = SolveGeom.__module__
         self.action.args.ccddata.header['HISTORY'] = log_string
         self.logger.info(log_string)
 

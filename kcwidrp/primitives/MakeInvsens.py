@@ -332,8 +332,6 @@ class MakeInvsens(BasePrimitive):
         hdr['INVSL0'] = (sl0, 'lowest std star slice summed')
         hdr['INVSL1'] = (sl1, 'highest std star slice summed')
         hdr['INVSLY'] = (cy, 'spatial pixel position of std within slice')
-        # this apparently doesn't work (ends up being electron)'
-        hdr['BUNIT'] = ('erg/cm^2/A/e-', 'brightness units')
         hdr['EXPTIME'] = (1., 'effective exposure time (seconds)')
         hdr['XPOSURE'] = (1., 'effective exposure time (seconds)')
 

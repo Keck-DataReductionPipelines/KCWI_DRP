@@ -259,8 +259,7 @@ class MakeMasterSky(BaseImg):
         ofn = self.action.args.ccddata.header['OFNAME']
         msname = ofn.split('.fits')[0] + '_' + suffix + '.fits'
 
-        log_string = MakeMasterSky.__module__ + "." + \
-            MakeMasterSky.__qualname__
+        log_string = MakeMasterSky.__module__
         self.action.args.ccddata.header['IMTYPE'] = self.action.args.new_type
         self.action.args.ccddata.header['HISTORY'] = log_string
         self.action.args.ccddata.header['SKYMODEL'] = (True, 'sky model image?')

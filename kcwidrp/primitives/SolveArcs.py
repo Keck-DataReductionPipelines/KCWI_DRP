@@ -528,7 +528,7 @@ class SolveArcs(BasePrimitive):
                             self.action.args.grating,
                             self.action.args.ifuname))
 
-        log_string = SolveArcs.__module__ + "." + SolveArcs.__qualname__
+        log_string = SolveArcs.__module__
         self.action.args.ccddata.header['HISTORY'] = log_string
         self.logger.info(log_string)
 

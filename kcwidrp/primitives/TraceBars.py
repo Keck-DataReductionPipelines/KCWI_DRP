@@ -162,7 +162,7 @@ class TraceBars(BasePrimitive):
                                  suffix='warped')
                 self.logger.info("Transformed bars produced")
 
-            log_string = TraceBars.__module__ + "." + TraceBars.__qualname__
+            log_string = TraceBars.__module__
             self.action.args.ccddata.header['HISTORY'] = log_string
             self.logger.info(log_string)
 

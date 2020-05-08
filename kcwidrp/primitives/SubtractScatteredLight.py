@@ -77,8 +77,7 @@ class SubtractScatteredLight(BasePrimitive):
                     self.action.args.ccddata.data[y0:y3, ix] - scat
             self.action.args.ccddata.header[key] = (True, keycom)
 
-        log_string = SubtractScatteredLight.__module__ + \
-            "." + SubtractScatteredLight.__qualname__
+        log_string = SubtractScatteredLight.__module__
         self.action.args.ccddata.header['HISTORY'] = log_string
         self.logger.info(log_string)
 

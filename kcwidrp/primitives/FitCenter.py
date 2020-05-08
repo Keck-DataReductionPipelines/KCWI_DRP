@@ -1,15 +1,13 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
-from keckdrpframework.models.arguments import Arguments
-from kcwidrp.core.bokeh_plotting import bokeh_plot, bokeh_save
+from kcwidrp.core.bokeh_plotting import bokeh_plot
 
-from bokeh.plotting import figure, show
-from bokeh.models import Range1d, LinearAxis
+from bokeh.plotting import figure
+from bokeh.models import Range1d
 import numpy as np
 import math
 from scipy.interpolate import interpolate
 from multiprocessing import Pool
 from scipy import signal
-from scipy.stats import sigmaclip
 import time
 
 
@@ -46,22 +44,22 @@ def pascal_shift(coefficients=None, x0=None):
     x06 = x0 ** 6
     # use Pascal's Triangle to shift coefficients
     fincoeff[0] = usecoeff[0] - usecoeff[1] * x01 + usecoeff[2] * x02 \
-                  - usecoeff[3] * x03 + usecoeff[4] * x04 - usecoeff[5] * x05 \
-                  + usecoeff[6] * x06
+        - usecoeff[3] * x03 + usecoeff[4] * x04 - usecoeff[5] * x05 \
+        + usecoeff[6] * x06
 
     fincoeff[1] = usecoeff[1] - 2.0 * usecoeff[2] * x01 \
-                  + 3.0 * usecoeff[3] * x02 - 4.0 * usecoeff[4] * x03 \
-                  + 5.0 * usecoeff[5] * x04 - 6.0 * usecoeff[6] * x05
+        + 3.0 * usecoeff[3] * x02 - 4.0 * usecoeff[4] * x03 \
+        + 5.0 * usecoeff[5] * x04 - 6.0 * usecoeff[6] * x05
 
     fincoeff[2] = usecoeff[2] - 3.0 * usecoeff[3] * x01 \
-                  + 6.0 * usecoeff[4] * x02 - 10.0 * usecoeff[5] * x03 \
-                  + 15.0 * usecoeff[6] * x04
+        + 6.0 * usecoeff[4] * x02 - 10.0 * usecoeff[5] * x03 \
+        + 15.0 * usecoeff[6] * x04
 
     fincoeff[3] = usecoeff[3] - 4.0 * usecoeff[4] * x01 \
-                  + 10.0 * usecoeff[5] * x02 - 20.0 * usecoeff[6] * x03
+        + 10.0 * usecoeff[5] * x02 - 20.0 * usecoeff[6] * x03
 
     fincoeff[4] = usecoeff[4] - 5.0 * usecoeff[5] * x01 \
-                  + 15.0 * usecoeff[6] * x02
+        + 15.0 * usecoeff[6] * x02
 
     fincoeff[5] = usecoeff[5] - 6.0 * usecoeff[6] * x01
 
@@ -92,19 +90,19 @@ def bar_fit_helper(argument):
         coefficients[4] = argument['p0'][b]
         coefficients[3] = dispersion
         cosbeta = dispersion / (argument['PIX'] * argument['ybin']) * \
-                  argument['rho'] * argument['FCAM'] * 1.e-4
+            argument['rho'] * argument['FCAM'] * 1.e-4
         if cosbeta > 1.:
             cosbeta = 1.
         beta = math.acos(cosbeta)
         coefficients[2] = -(argument['PIX'] * argument['ybin'] /
-                     argument['FCAM']) ** 2 * math.sin(beta) / 2. / \
-                   argument['rho'] * 1.e4
+                            argument['FCAM']) ** 2 * math.sin(beta) / 2. / \
+            argument['rho'] * 1.e4
         coefficients[1] = -(argument['PIX'] * argument['ybin'] /
-                     argument['FCAM']) ** 3 * math.cos(beta) / 6. / \
-                   argument['rho'] * 1.e4
+                            argument['FCAM']) ** 3 * math.cos(beta) / 6. / \
+            argument['rho'] * 1.e4
         coefficients[0] = (argument['PIX'] * argument['ybin'] /
-                    argument['FCAM']) ** 4 * math.sin(beta) / 24. / \
-                   argument['rho'] * 1.e4
+                           argument['FCAM']) ** 4 * math.sin(beta) / 24. / \
+            argument['rho'] * 1.e4
         # what are the min and max wavelengths to consider?
         wl0 = np.polyval(coefficients, argument['xvals'][argument['minrow']])
         wl1 = np.polyval(coefficients, argument['xvals'][argument['maxrow']])
@@ -136,14 +134,16 @@ def bar_fit_helper(argument):
         samples_number = len(ref_wave_of_sub_spectrum)
         offsets_array = np.arange(1 - samples_number, samples_number)
         # Cross-correlate
-        crosscorrelation = np.correlate(intspec, ref_flux_of_sub_spectrum, mode='full')
+        crosscorrelation = np.correlate(intspec, ref_flux_of_sub_spectrum,
+                                        mode='full')
         # Get central region
         x0c = int(len(crosscorrelation) / 3)
         x1c = int(2 * (len(crosscorrelation) / 3))
         central_crosscorrelation = crosscorrelation[x0c:x1c]
         central_offsets_array = offsets_array[x0c:x1c]
         # Calculate offset
-        maxima.append(central_crosscorrelation[central_crosscorrelation.argmax()])
+        maxima.append(central_crosscorrelation[
+                          central_crosscorrelation.argmax()])
         shifts.append(central_offsets_array[central_crosscorrelation.argmax()])
     # Get interpolations
     int_max = interpolate.interp1d(argument['disps'], maxima, kind='cubic',
@@ -163,19 +163,24 @@ def bar_fit_helper(argument):
     coefficients[4] = argument['p0'][b] - barshift
     coefficients[3] = bardisp
     cosbeta = coefficients[3] / (argument['PIX'] * argument['ybin']) * \
-              argument['rho'] * argument['FCAM'] * 1.e-4
+        argument['rho'] * argument['FCAM'] * 1.e-4
     if cosbeta > 1.:
         cosbeta = 1.
     beta = math.acos(cosbeta)
-    coefficients[2] = -(argument['PIX'] * argument['ybin'] / argument['FCAM']) ** 2 * \
-            math.sin(beta) / 2. / argument['rho'] * 1.e4
-    coefficients[1] = -(argument['PIX'] * argument['ybin'] / argument['FCAM']) ** 3 * \
-            math.cos(beta) / 6. / argument['rho'] * 1.e4
-    coefficients[0] = (argument['PIX'] * argument['ybin'] / argument['FCAM']) ** 4 * \
-            math.sin(beta) / 24. / argument['rho'] * 1.e4
+    coefficients[2] = -(argument['PIX'] * argument['ybin'] /
+                        argument['FCAM']) ** 2 * \
+        math.sin(beta) / 2. / argument['rho'] * 1.e4
+    coefficients[1] = -(argument['PIX'] * argument['ybin'] /
+                        argument['FCAM']) ** 3 * \
+        math.cos(beta) / 6. / argument['rho'] * 1.e4
+    coefficients[0] = (argument['PIX'] * argument['ybin'] /
+                       argument['FCAM']) ** 4 * \
+        math.sin(beta) / 24. / argument['rho'] * 1.e4
     shifted_coefficients = pascal_shift(coefficients, argument['x0'])
-    logger.info("Central Fit: Bar# %3d, Cdisp %.4f, Coefs: %.2f  %.4f  %13.5e %13.5e" %
-                (b, bardisp, shifted_coefficients[4], shifted_coefficients[3], shifted_coefficients[2], shifted_coefficients[1]))
+    logger.info("Central Fit: Bar# %3d, Cdisp %.4f, "
+                "Coefs: %.2f  %.4f  %13.5e %13.5e" %
+                (b, bardisp, shifted_coefficients[4], shifted_coefficients[3],
+                 shifted_coefficients[2], shifted_coefficients[1]))
     # Return results
     return b, shifted_coefficients, coefficients[4], coefficients[3], maxima
     # END: def bar_fit_helper()
@@ -202,23 +207,27 @@ class FitCenter(BasePrimitive):
         y_binning = self.action.args.ybinsize
         # let's populate the 0 points vector
         p0 = self.action.args.cwave + np.array(self.context.bar_offsets) * \
-             self.context.prelim_disp - self.action.args.offset_wave
+            self.context.prelim_disp - self.action.args.offset_wave
         # next we are going to brute-force scan around the preliminary
         # dispersion for a better solution. We will wander 5% away from it.
         maximum_dispersion_deviation = 0.05  # fraction
         # we will try nn values
-        number_of_values_to_try = (int(maximum_dispersion_deviation * abs(self.context.prelim_disp) /
-                  self.action.args.refdisp * (self.action.args.maxrow -
-                                              self.action.args.minrow) / 3.0))
+        number_of_values_to_try = (int(maximum_dispersion_deviation *
+                                       abs(self.context.prelim_disp) /
+                                   self.action.args.refdisp *
+                                       (self.action.args.maxrow -
+                                        self.action.args.minrow) / 3.0))
         if number_of_values_to_try < 10:
             number_of_values_to_try = 10
         if number_of_values_to_try > 25:
             number_of_values_to_try = 25
         self.logger.info("N disp. samples: %d" % number_of_values_to_try)
         # dispersions to try
-        disps = self.context.prelim_disp * (1.0 + maximum_dispersion_deviation *
-                                            (np.arange(0, number_of_values_to_try + 1) - number_of_values_to_try / 2.) *
-                                            2.0 / number_of_values_to_try)
+        disps = self.context.prelim_disp * (
+                1.0 + maximum_dispersion_deviation *
+                (np.arange(0, number_of_values_to_try + 1) -
+                 number_of_values_to_try / 2.) *
+                2.0 / number_of_values_to_try)
         # values for central fit
         subxvals = self.action.args.xvals[
                    self.action.args.minrow:self.action.args.maxrow]
@@ -268,8 +277,8 @@ class FitCenter(BasePrimitive):
             if do_inter:
                 # plot maxima
                 p = figure(title=self.action.args.plotlabel +
-                                 "CENTRAL DISPERSION FIT for Bar: %d Slice: %d" %
-                                 (b, int(b / 5)),
+                           "CENTRAL DISPERSION FIT for Bar: %d Slice: %d" %
+                           (b, int(b / 5)),
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height,
                            x_axis_label="Central dispersion (Ang/px)",
@@ -333,7 +342,7 @@ class FitCenter(BasePrimitive):
             else:
                 time.sleep(self.config.instrument.plot_pause)
 
-        log_string = FitCenter.__module__ + "." + FitCenter.__qualname__
+        log_string = FitCenter.__module__
         self.action.args.ccddata.header['HISTORY'] = log_string
         self.logger.info(log_string)
 

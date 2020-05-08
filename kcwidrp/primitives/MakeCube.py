@@ -62,7 +62,7 @@ class MakeCube(BasePrimitive):
     def _perform(self):
         self.logger.info("Creating data cube")
 
-        log_string = MakeCube.__module__ + "." + MakeCube.__qualname__
+        log_string = MakeCube.__module__
 
         # Are we interactive?
         if self.config.instrument.plot_level >= 3:

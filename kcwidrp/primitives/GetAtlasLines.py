@@ -370,7 +370,7 @@ class GetAtlasLines(BasePrimitive):
                         self.action.args.ccddata.header['FRAMENO']))
         self.logger.info("Final atlas list has %d lines" % len(refws))
 
-        log_string = GetAtlasLines.__module__ + "." + GetAtlasLines.__qualname__
+        log_string = GetAtlasLines.__module__
         self.action.args.ccddata.header['HISTORY'] = log_string
         self.logger.info(log_string)
 

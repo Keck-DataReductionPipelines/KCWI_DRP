@@ -43,7 +43,7 @@ class CorrectDar(BasePrimitive):
     def _perform(self):
         self.logger.info("Correcting for DAR")
 
-        log_string = CorrectDar.__module__ + "." + CorrectDar.__qualname__
+        log_string = CorrectDar.__module__
 
         # Check image
         if 'GEOMCOR' not in self.action.args.ccddata.header:

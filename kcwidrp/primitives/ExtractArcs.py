@@ -92,7 +92,7 @@ class ExtractArcs(BasePrimitive):
             self.logger.error("Did not extract %d arcs, extracted %d" %
                               (self.config.instrument.NBARS, len(arcs)))
 
-        log_string = ExtractArcs.__module__ + "." + ExtractArcs.__qualname__
+        log_string = ExtractArcs.__module__
         self.action.args.ccddata.header['HISTORY'] = log_string
         self.logger.info(log_string)
 

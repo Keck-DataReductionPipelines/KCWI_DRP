@@ -1,10 +1,9 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
-from keckdrpframework.models.arguments import Arguments
-from kcwidrp.core.bokeh_plotting import bokeh_plot, bokeh_save
+from kcwidrp.core.bokeh_plotting import bokeh_plot
 
 import numpy as np
-from bokeh.plotting import figure, show
-import time
+from bokeh.plotting import figure
+
 
 class ArcOffsets(BasePrimitive):
     """Derive offset of each bar relative to reference bar"""
@@ -32,7 +31,8 @@ class ArcOffsets(BasePrimitive):
             offsets = []
             for arc_number, arc in enumerate(arcs):
                 # Cross-correlate, avoiding junk on the ends
-                cross_correlation = np.correlate(reference_arc[10:-10], arc[10:-10], mode='full')
+                cross_correlation = np.correlate(reference_arc[10:-10],
+                                                 arc[10:-10], mode='full')
                 # Calculate offset
                 offset = offsets_array[cross_correlation.argmax()]
                 offsets.append(offset)
@@ -47,7 +47,8 @@ class ArcOffsets(BasePrimitive):
                                plot_width=self.config.instrument.plot_width,
                                plot_height=self.config.instrument.plot_height)
                     x = range(len(reference_arc))
-                    p.line(x, reference_arc, color='green', legend_label='ref bar (%d)' %
+                    p.line(x, reference_arc, color='green',
+                           legend_label='ref bar (%d)' %
                            self.config.instrument.REFBAR)
                     p.line(x, np.roll(arc, offset), color='red',
                            legend_label='bar %d' % arc_number)
@@ -65,5 +66,3 @@ class ArcOffsets(BasePrimitive):
 
         return self.action.args
     # END: class ArcOffsets()
-
-

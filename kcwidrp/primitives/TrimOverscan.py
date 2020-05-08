@@ -1,7 +1,8 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
-from keckdrpframework.models.arguments import Arguments
+from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer
 
 import numpy as np
+
 
 class TrimOverscan(BasePrimitive):
     """Trim off overscan region"""
@@ -55,7 +56,7 @@ class TrimOverscan(BasePrimitive):
         self.action.args.ccddata.header['NAXIS2'] = max_sec[1] + 1
         self.action.args.ccddata.header[key] = (True, keycom)
 
-        log_string = TrimOverscan.__module__ + "." + TrimOverscan.__qualname__
+        log_string = TrimOverscan.__module__
         self.action.args.ccddata.header['HISTORY'] = log_string
         self.logger.info(log_string)
 
@@ -65,4 +66,3 @@ class TrimOverscan(BasePrimitive):
                              output_file=self.action.args.name, suffix="trim")
         return self.action.args
     # END: class TrimOverscan()
-

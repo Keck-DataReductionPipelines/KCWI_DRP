@@ -87,7 +87,8 @@ class MakeMasterBias(BaseImg):
             stacked.header['BIASRN%d' % (ia + 1)] = \
                 (float("%.3f" % bias_rn), "RN in e- from bias")
             if self.config.instrument.plot_level >= 1:
-                plabel = '[Img # %d' % self.action.args.ccddata.header['FRAMENO']
+                plabel = '[Img # %d' % self.action.args.ccddata.header[
+                    'FRAMENO']
                 plabel += ': %s' % self.action.args.ccddata.header['BINNING']
                 plabel += ' %s' % self.action.args.ccddata.header['AMPMODE']
                 plabel += ' %d' % self.action.args.ccddata.header['GAINMUL']
@@ -119,7 +120,7 @@ class MakeMasterBias(BaseImg):
                 else:
                     time.sleep(self.config.instrument.plot_pause)
 
-        log_string = MakeMasterBias.__module__ + "." + MakeMasterBias.__qualname__
+        log_string = MakeMasterBias.__module__
         stacked.header['HISTORY'] = log_string
         self.logger.info(log_string)
 

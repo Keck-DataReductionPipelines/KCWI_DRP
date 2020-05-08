@@ -1,9 +1,8 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
-from keckdrpframework.models.arguments import Arguments
-from kcwidrp.core.bokeh_plotting import bokeh_plot, bokeh_save
+from kcwidrp.core.bokeh_plotting import bokeh_plot
 
-from bokeh.plotting import figure, show
-from bokeh.models import Range1d, LinearAxis
+from bokeh.plotting import figure
+from bokeh.models import Range1d
 import pkg_resources
 import os
 from astropy.io import fits as pf
@@ -29,7 +28,6 @@ class ReadAtlas(BasePrimitive):
         #    rezfact = 0.5
         # else:
         #    rezfact = 1.0
-        # atpath = os.path.join("../data", "%s.fits" % lamp.lower())
         # Does the atlas file exist?
         path = "data/%s.fits" % lamp.lower()  # always use slash
         pkg = __name__.split('.')[0]
@@ -130,7 +128,7 @@ class ReadAtlas(BasePrimitive):
                 p.line(obswav[minow:maxow] - offset_wav,
                        obsarc[minow:maxow]/np.nanmax(obsarc[minow:maxow]),
                        legend_label="ref bar (%d)" %
-                              self.config.instrument.REFBAR)
+                       self.config.instrument.REFBAR)
                 p.line(refwav[minrw:maxrw],
                        reflux[minrw:maxrw]/np.nanmax(reflux[minrw:maxrw]),
                        color="red", legend_label="Atlas")
@@ -173,11 +171,9 @@ class ReadAtlas(BasePrimitive):
         self.action.args.xvals = xvals
         self.action.args.x0 = int(len(obsarc)/2)
 
-        log_string = ReadAtlas.__module__ + "." + ReadAtlas.__qualname__
+        log_string = ReadAtlas.__module__
         self.action.args.ccddata.header['HISTORY'] = log_string
         self.logger.info(log_string)
 
         return self.action.args
     # END: class ReadAtlas()
-
-

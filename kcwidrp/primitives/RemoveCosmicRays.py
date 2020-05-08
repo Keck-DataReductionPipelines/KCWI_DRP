@@ -1,5 +1,4 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
-from keckdrpframework.models.arguments import Arguments
 from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer
 
 import numpy as np
@@ -97,8 +96,7 @@ class RemoveCosmicRays(BasePrimitive):
             header[key] = (False, keycom)
             header['NCRCLEAN'] = (0, "number of cosmic ray pixels")
 
-        log_string = RemoveCosmicRays.__module__ + \
-            "." + RemoveCosmicRays.__qualname__
+        log_string = RemoveCosmicRays.__module__
         self.action.args.ccddata.header['HISTORY'] = log_string
         self.logger.info(log_string)
 
@@ -109,5 +107,3 @@ class RemoveCosmicRays(BasePrimitive):
 
         return self.action.args
     # END: class RemoveCosmicRays()
-
-

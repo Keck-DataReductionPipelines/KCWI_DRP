@@ -73,7 +73,7 @@ class StackFlats(BaseImg):
         for ii, fname in enumerate(stackf):
             stacked.header['STACKF%d' % (ii + 1)] = (fname, "stack input file")
 
-        log_string = StackFlats.__module__ + "." + StackFlats.__qualname__
+        log_string = StackFlats.__module__
         stacked.header['HISTORY'] = log_string
 
         # output stacked flat

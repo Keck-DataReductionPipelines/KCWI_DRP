@@ -1,5 +1,4 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
-from keckdrpframework.models.arguments import Arguments
 from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_reader
 
 import os
@@ -49,7 +48,7 @@ class SubtractBias(BasePrimitive):
 
             self.action.args.ccddata.header[key] = (False, keycom)
 
-        log_string = SubtractBias.__module__ + "." + SubtractBias.__qualname__
+        log_string = SubtractBias.__module__
         self.action.args.ccddata.header['HISTORY'] = log_string
         self.logger.info(log_string)
 
