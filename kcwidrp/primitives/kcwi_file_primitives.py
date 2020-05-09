@@ -52,7 +52,8 @@ class ingest_file(BasePrimitive):
         self.logger = context.pipeline_logger
 
     def get_keyword(self, keyword):
-        return self.context.data_set.get_info_column(self.name, keyword)
+        #return self.context.data_set.get_info_column(self.name, keyword)
+        return self.ccddata.header[keyword]
 
     def camera(self):
         camera = self.get_keyword('CAMERA')
@@ -412,6 +413,10 @@ class ingest_file(BasePrimitive):
         out_args = Arguments()
 
         ccddata, table = kcwi_fits_reader(self.name)
+
+        # save the ccd data into an object that can be shared across the functions
+        self.ccddata = ccddata
+
         out_args.ccddata = ccddata
         out_args.table = table
 
