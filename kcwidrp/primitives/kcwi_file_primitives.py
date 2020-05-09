@@ -236,9 +236,9 @@ class ingest_file(BasePrimitive):
     def plotlabel(self):
         lab = "[Img # %d " % self.get_keyword('FRAMENO')
         lab += "(%s) " % self.illum()
-        lab += "Slice: %s " % self.ifuname()
-        lab += "Filt: %s " % self.filter()
-        lab += "Grat: %s" % self.grating()
+        lab += "Slicer: %s " % self.ifuname()
+        lab += "Filter: %s " % self.filter()
+        lab += "Grating: %s" % self.grating()
         lab += "] "
         return lab
 
