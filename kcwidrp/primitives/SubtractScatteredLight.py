@@ -48,7 +48,12 @@ class SubtractScatteredLight(BasePrimitive):
             # X data values
             xvals = np.arange(len(yvals), dtype=np.float)
             # Break points
-            nbpts = 20 / ybin
+            if 'FLAT' in self.action.args.ccddata.header['IMTYPE']:
+                nbpts = 40 / ybin
+            else:
+                nbpts = 20 / ybin
+            self.logger.info("Fitting scattered light with %d breakpoints"
+                             % nbpts)
             bkpt = np.min(xvals) + np.arange(nbpts) * \
                 (np.max(xvals) - np.min(xvals)) / nbpts
             # B-spline fit
