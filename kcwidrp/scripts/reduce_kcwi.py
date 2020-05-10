@@ -86,10 +86,6 @@ def check_directory(directory):
 
 def main():
 
-    def process(subset):
-        for frame in subset.index:
-            arguments = Arguments(name=frame)
-            framework.append_event('next_file', arguments)
 
     args = _parse_arguments(sys.argv)
 
@@ -140,9 +136,8 @@ def main():
     # start the bokeh server is requested by the configuration parameters
     if framework.config.instrument.enable_bokeh is True:
         if check_bokeh_server() is False:
-            subprocess.Popen('bokeh serve', shell=True) # --session-ids=unsigned --session-token-expiration=86400', shell=True)
+            subprocess.Popen('bokeh serve', shell=True)
             time.sleep(5)
-        #subprocess.Popen('open http://localhost:5006?bokeh-session-id=kcwi', shell=True)
 
     # initialize the proctab and read it
     framework.context.proctab = Proctab(framework.logger)
@@ -150,18 +145,13 @@ def main():
 
     framework.logger.info("Framework initialized")
 
+    framework.config.default_ingestion_event = "add_only"
+
+
     # add a start_bokeh event to the processing queue,
     # if requested by the configuration parameters
     if framework.config.instrument.enable_bokeh:
         framework.append_event('start_bokeh', None)
-
-    # important: to be able to use the grouping mode, we need to reset
-    # the default ingestion action to no-event,
-    # otherwise the system will automatically trigger the next_file event
-    # which initiates the processing
-    if args.group_mode is True:
-        # set the default ingestion event to None
-        framework.config.default_ingestion_event = "add_only"
 
     # start queue manager only (useful for RPC)
     if args.queue_manager_only:
@@ -175,9 +165,13 @@ def main():
     # is no_event then, manually, a next_file event is generated for each group
     # specified in the variable imtypes
 
+
+
     # single frame processing
     elif args.frames:
         framework.ingest_data(None, args.frames, False)
+        for frame in args.frames:
+            framework.append_event('next_file', Arguments(name=frame), recurrent=True)
 
     # processing of a list of files contained in a file
     elif args.file_list:
@@ -187,33 +181,15 @@ def main():
                 if "#" not in frame:
                     frames.append(frame.strip('\n'))
         framework.ingest_data(None, frames, False)
+        for frame in frames:
+            framework.append_event('next_file', Arguments(name=frame), recurrent=True)
 
     # ingest an entire directory, trigger "next_file" (which is an option
     # specified in the config file) on each file,
     # optionally continue to monitor if -m is specified
     elif args.dirname is not None:
-
+        framework.config.default_ingestion_event = "next_file"
         framework.ingest_data(args.dirname, None, args.monitor)
-
-    # implement the group mode
-    if args.group_mode is True:
-        data_set = framework.context.data_set
-
-        # remove focus images and ccd clearing images from the dataset
-        focus_frames = data_set.data_table[data_set.data_table.OBJECT ==
-                                           "focus"].index
-        ccdclear_frames = data_set.data_table[data_set.data_table.OBJECT ==
-                                              "Clearing ccd"].index
-        data_set.data_table.drop(focus_frames, inplace=True)
-        data_set.data_table.drop(ccdclear_frames, inplace=True)
-
-        # processing
-        imtypes = ['BIAS', 'CONTBARS', 'ARCLAMP', 'FLATLAMP', 'OBJECT']
-
-        for imtype in imtypes:
-            subset = data_set.data_table[
-                framework.context.data_set.data_table.IMTYPE == imtype]
-            process(subset)
 
     framework.start(args.queue_manager_only, args.ingest_data_only,
                     args.wait_for_event, args.continuous)

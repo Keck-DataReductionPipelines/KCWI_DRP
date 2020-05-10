@@ -42,7 +42,7 @@ def parse_imsec(section=None):
     return sec, rfor
 
 
-class ingest_file(BasePrimitive):
+class IngestFile(BasePrimitive):
 
     def __init__(self, action, context):
         """
@@ -401,11 +401,49 @@ class ingest_file(BasePrimitive):
 
         return bsec, dsec, tsec, direc
 
+    def check_if_file_can_be_processed(self, imtype):
+        # bias frames
+        bias_frames = self.context.proctab.n_proctab(frame=self.ccddata, target_type='MBIAS', nearest=True)
+        # continuum bars
+        contbars_frames = self.context.proctab.n_proctab(frame=self.ccddata, target_type='CONTBARS', nearest=True)
+        # master flats
+        masterflat_frames = self.context.proctab.n_proctab(frame=self.ccddata, target_type='MFLAT', nearest=True)
+        # inverse sensitivity
+        inverse_sensitivity_frames = self.context.proctab.n_proctab(frame=self.ccddata, target_type='INVSENS', nearest=True)
+        # arclamp
+        arclamp_frames = self.context.proctab.n_proctab(frame=self.ccddata, target_type='ARCLAMP', nearest=True)
+
+        if imtype == 'OBJECT':
+            if len(bias_frames) > 0 and len(masterflat_frames) > 0:
+                return True
+            else:
+                self.logger.warn("Cannot reduce OBJECT frame. Missing master bias or flat. Rescheduling for later.")
+                return False
+
+        if imtype == 'ARCLAMP':
+            if (len(contbars_frames)) > 0:
+                return True
+            else:
+                self.logger.warn("Cannot reduce ARCLAMP frame. Missing continuum bars. Rescheduling for later.")
+                return False
+
+        if imtype == 'FLATLAMP':
+            if len(bias_frames) > 0:
+                return True
+            else:
+                self.logger.warn("Cannot reduce FLATLAMP frame. Missing master bias. Rescheduling for later.")
+                return False
+
+
+
+
+
+        return True
+
     def _perform(self):
-        # if self.context.data_set is None:
-        #    self.context.data_set = DataSet(None, self.logger, self.config,
-        #    self.context.event_queue)
-        # self.context.data_set.append_item(self.action.args.name)
+        # setting recurrent to True to be compatible with the automatic use of next_file
+        # when monitoring a directory
+        self.action.event._recurrent = True
         self.logger.info(
             "------------------- Ingesting file %s -------------------" %
             self.action.args.name)
@@ -428,6 +466,15 @@ class ingest_file(BasePrimitive):
             groupid = "Unknown"
             fname = os.path.basename(self.action.args.name)
             self.logger.warn(f"Unknown IMTYPE {fname}")
+
+        if self.check_if_file_can_be_processed(imtype) is False:
+            self.logger.warn("Object frame cannot be reduced. Rescheduling")
+            self.action.new_event = None
+            return None
+        else:
+            self.action.event._recurrent = False
+
+
 
         out_args.name = self.action.args.name
         out_args.imtype = imtype
@@ -488,6 +535,7 @@ class ingest_file(BasePrimitive):
             except ValueError as e:
                 self.logger.warn("UNABLE TO INGEST THE FILE")
                 self.logger.warn("Reason: %s" % e)
+                self.action.event._recurrent = False
                 return None
             if self._post_condition():
                 self.output = output
@@ -557,33 +605,6 @@ def kcwi_fits_reader(file):
     return ccddata, table
 
 
-class kcwi_fits_ingest(BasePrimitive):
-    """
-    classdocs
-    """
-
-    def __init__(self, action, context):
-        """
-        Constructor
-        """
-        BasePrimitive.__init__(self, action, context)
-        self.logger = context.pipeline_logger
-
-    def _perform(self):
-        """
-        Expects action.args.name as fits file name
-        Returns HDUs or (later) data model
-        """
-        name = self.action.args.name
-        self.logger.info(f"Reading {name}")
-        out_args = Arguments()
-        out_args.name = name
-        ccddata, table = self.kcwi_fits_reader(name)
-        out_args.ccddata = ccddata
-        out_args.table = table
-        out_args.imtype = out_args.hdus.header['IMTYPE']
-
-        return out_args
 
 
 def write_table(output_dir=None, table=None, names=None, comment=None,

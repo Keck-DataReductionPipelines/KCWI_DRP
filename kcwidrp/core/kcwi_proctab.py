@@ -164,6 +164,7 @@ class Proctab:
             if self.proctab is None:
                 self.log.warning("Proctab is empty")
             tab = None
+        self.log.info("Found: %d" % len(tab))
         return tab
 
     def in_proctab(self, frame):

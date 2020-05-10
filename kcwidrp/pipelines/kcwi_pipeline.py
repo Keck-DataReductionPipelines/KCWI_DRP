@@ -26,10 +26,10 @@ class Kcwi_pipeline(BasePipeline):
         #
         "start_bokeh":               ("StartBokeh", None, None),
         # For every file do this
-        "next_file":                 ("ingest_file",
+        "next_file":                 ("IngestFile",
                                       "ingest_file_started",
-                                      "file_ingested"),
-        "file_ingested":             ("action_planner", None, None),
+                                      "processing_type"),
+        "processing_type":             ("ActionPlanner", None, None),
         # BIAS PROCESSING
         "process_bias":              ("ProcessBias",
                                       "bias_processing_started",
@@ -231,7 +231,7 @@ class Kcwi_pipeline(BasePipeline):
     def add_to_dataframe_only(self, action, context):
         return action.args
 
-    def action_planner(self, action, context):
+    def ActionPlanner(self, action, context):
         try:
             self.logger.info("******* FILE TYPE DETERMINED AS %s" %
                              action.args.imtype)
@@ -246,60 +246,68 @@ class Kcwi_pipeline(BasePipeline):
             self.logger.warn("Pushing noop to queue")
             context.push_event("noop", action.args)
         elif action.args.imtype == "BIAS":
-            bias_args = action.args
-            bias_args.groupid = groupid
-            bias_args.want_type = "BIAS"
-            bias_args.new_type = "MBIAS"
-            bias_args.min_files = context.config.instrument.bias_min_nframes
-            bias_args.new_file_name = "master_bias_%s.fits" % groupid
-            context.push_event("process_bias", bias_args)
+ 
+            arguments = action.args
+            arguments.groupid = groupid
+            arguments.want_type = "BIAS"
+            arguments.new_type = "MBIAS"
+            arguments.min_files = context.config.instrument.bias_min_nframes
+            arguments.new_file_name = "master_bias_%s.fits" % groupid
+            context.push_event("process_bias", arguments)
+
         elif action.args.imtype == "DARK":
-            dark_args = action.args
-            dark_args.groupid = groupid
-            dark_args.want_type = "DARK"
-            dark_args.new_type = "MDARK"
-            dark_args.min_files = context.config.instrument.dark_min_nframes
-            dark_args.new_file_name = "master_dark_%s.fits" % groupid
-            dark_args.in_directory = "redux"
-            context.push_event("process_dark", dark_args)
+            arguments = action.args
+            arguments.groupid = groupid
+            arguments.want_type = "DARK"
+            arguments.new_type = "MDARK"
+            arguments.min_files = context.config.instrument.dark_min_nframes
+            arguments.new_file_name = "master_dark_%s.fits" % groupid
+            arguments.in_directory = "redux"
+            context.push_event("process_dark", arguments)
+
         elif "CONTBARS" in action.args.imtype:
             context.push_event("process_contbars", action.args)
         elif "FLATLAMP" in action.args.imtype:
-            flat_args = action.args
-            flat_args.groupid = groupid
-            flat_args.want_type = "FLATLAMP"
-            flat_args.stack_type = "SFLAT"
-            flat_args.new_type = "MFLAT"
-            flat_args.min_files = context.config.instrument.flat_min_nframes
-            flat_args.new_file_name = "master_flat_%s.fits" % groupid
-            flat_args.in_directory = "redux"
-            context.push_event("process_flat", flat_args)
+            arguments = action.args
+            arguments.groupid = groupid
+            arguments.want_type = "FLATLAMP"
+            arguments.stack_type = "SFLAT"
+            arguments.new_type = "MFLAT"
+            arguments.min_files = context.config.instrument.flat_min_nframes
+            arguments.new_file_name = "master_flat_%s.fits" % groupid
+            arguments.in_directory = "redux"
+            context.push_event("process_flat", arguments)
+
         elif "DOMEFLAT" in action.args.imtype:
-            flat_args = action.args
-            flat_args.groupid = groupid
-            flat_args.want_type = "DOMEFLAT"
-            flat_args.stack_type = "SDOME"
-            flat_args.new_type = "MDOME"
-            flat_args.min_files = context.config.instrument.dome_min_nframes
-            flat_args.new_file_name = "master_flat_%s.fits" % groupid
-            flat_args.in_directory = "redux"
-            context.push_event("process_flat", flat_args)
+            arguments = action.args
+            arguments.groupid = groupid
+            arguments.want_type = "DOMEFLAT"
+            arguments.stack_type = "SDOME"
+            arguments.new_type = "MDOME"
+            arguments.min_files = context.config.instrument.dome_min_nframes
+            arguments.new_file_name = "master_flat_%s.fits" % groupid
+            arguments.in_directory = "redux"
+            context.push_event("process_flat", arguments)
+
         elif "TWIFLAT" in action.args.imtype:
-            flat_args = action.args
-            flat_args.groupid = groupid
-            flat_args.want_type = "TWIFLAT"
-            flat_args.stack_type = "STWIF"
-            flat_args.new_type = "MTWIF"
-            flat_args.min_files = context.config.instrument.twiflat_min_nframes
-            flat_args.new_file_name = "master_flat_%s.fits" % groupid
-            flat_args.in_directory = "redux"
-            context.push_event("process_flat", flat_args)
+            arguments = action.args
+            arguments.groupid = groupid
+            arguments.want_type = "TWIFLAT"
+            arguments.stack_type = "STWIF"
+            arguments.new_type = "MTWIF"
+            arguments.min_files = context.config.instrument.twiflat_min_nframes
+            arguments.new_file_name = "master_flat_%s.fits" % groupid
+            arguments.in_directory = "redux"
+            context.push_event("process_flat", arguments)
+
         elif "ARCLAMP" in action.args.imtype:
-            context.push_event("process_arc", action.args)
+            arguments = action.args
+            arguments.next_event = "process_arc"
+            context.push_event("process_arc", arguments)
         elif "OBJECT" in action.args.imtype:
-            object_args = action.args
-            object_args.new_type = "SKY"
-            context.push_event("process_object", action.args)
+            arguments = action.args
+            arguments.new_type = "SKY"
+            context.push_event("process_object", arguments)
 
 
 if __name__ == "__main__":
