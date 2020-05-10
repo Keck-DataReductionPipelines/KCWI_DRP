@@ -38,6 +38,7 @@ class MakeInvsens(BasePrimitive):
                 stdname = obname
             else:
                 self.logger.info("Not found in data/stds: %s" % full_path)
+                self.action.new_event = None
         else:
             self.logger.warning("Not object type: %s" %
                                 self.action.args.imtype)
@@ -52,11 +53,13 @@ class MakeInvsens(BasePrimitive):
             invsensf = os.path.join(rdir, msname)
             if os.path.exists(invsensf):
                 self.logger.info("Master cal already exists: %s" % invsensf)
+                self.action.new_event = None
                 return False
             else:
                 self.logger.info("Master cal will be generated.")
                 return True
         else:
+            self.action.new_event = None
             return False
 
     def _perform(self):
