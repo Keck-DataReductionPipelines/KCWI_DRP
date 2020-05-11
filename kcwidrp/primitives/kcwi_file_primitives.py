@@ -52,7 +52,8 @@ class ingest_file(BasePrimitive):
         self.logger = context.pipeline_logger
 
     def get_keyword(self, keyword):
-        return self.context.data_set.get_info_column(self.name, keyword)
+        #return self.context.data_set.get_info_column(self.name, keyword)
+        return self.ccddata.header[keyword]
 
     def camera(self):
         camera = self.get_keyword('CAMERA')
@@ -412,6 +413,10 @@ class ingest_file(BasePrimitive):
         out_args = Arguments()
 
         ccddata, table = kcwi_fits_reader(self.name)
+
+        # save the ccd data into an object that can be shared across the functions
+        self.ccddata = ccddata
+
         out_args.ccddata = ccddata
         out_args.table = table
 
@@ -617,7 +622,8 @@ def kcwi_fits_writer(ccddata, table=None, output_file=None, suffix=None):
     output_file = os.path.join(os.path.dirname(output_file), 'redux',
                                os.path.basename(output_file))
     if suffix is not None:
-        output_file = output_file.split('.')[0]+"_"+suffix+".fits"
+        (main_name, extension) = os.path.splitext(output_file)
+        output_file = main_name + "_" + suffix + extension
     hdus_to_save = ccddata.to_hdu()
     # if table is not None:
     #    hdus_to_save.append(table)
