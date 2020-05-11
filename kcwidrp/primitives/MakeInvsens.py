@@ -3,13 +3,14 @@ from kcwidrp.core.bokeh_plotting import bokeh_plot
 from kcwidrp.core.kcwi_correct_extin import kcwi_correct_extin
 from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer
 
-from bokeh.plotting import figure
+from bokeh.plotting import figure, ColumnDataSource
 from scipy.signal import find_peaks
 from scipy.interpolate import interp1d
 from astropy.io import fits as pf
 from astropy.nddata import CCDData
 from astropy import units as u
 
+import time
 import os
 import pkg_resources
 import numpy as np
@@ -211,23 +212,20 @@ class MakeInvsens(BasePrimitive):
         # Balmer lines
         blines = [6563., 4861., 4341., 4102., 3970., 3889., 3835.]
         # default values (for BM)
-        bwid = 0.017    # fractional width to mask
+        bwid = 0.008    # fractional width to mask
         ford = 9        # fit order
-        sigf = 3.0      # rejection sigma
         if 'BL' in self.action.args.grating:
             bwid = 0.004
             ford = 7
-            sigf = 4.0
         elif 'BH' in self.action.args.grating:
-            bwid = 0.008
+            bwid = 0.012
             ford = 9
-            sigf = 3.0
         bwids = [bl * bwid for bl in blines]
         # fit inverse sensitivity and effective area
         # get initial region of interest
-        t = [i for i, v in enumerate(w) if wgoo0 <= v <= wgoo1]
-        nt = len(t)
-        if nt <= 0:
+        wl_good = [i for i, v in enumerate(w) if wgoo0 <= v <= wgoo1]
+        nwl_good = len(wl_good)
+        if nwl_good <= 0:
             self.logger.error("No good wavelengths to fit")
             return self.action.args
         wlm0 = wgoo0
@@ -235,15 +233,17 @@ class MakeInvsens(BasePrimitive):
         # interactively set wavelength limits
         if self.config.instrument.plot_level >= 2:
             yran = [np.min(obsspec), np.max(obsspec)]
+            source = ColumnDataSource(data=dict(x=w, y=obsspec))
             done = False
             while not done:
                 p = figure(
+                    tooltips=[("x", "@x{0,0.0}"), ("y", "@y{0,0.0}")],
                     title=self.action.args.plotlabel + ' %s Obs Spec' % stdname,
                     x_axis_label='Wave (A)',
                     y_axis_label='Intensity (e-)',
                     plot_width=self.config.instrument.plot_width,
                     plot_height=self.config.instrument.plot_height)
-                p.line(w, obsspec, line_color='black')
+                p.line('x', 'y', line_color='black', source=source)
                 p.line([wgoo0, wgoo0], yran, line_color='green',
                        legend_label='WAVGOOD')
                 p.line([wgoo1, wgoo1], yran, line_color='green')
@@ -273,15 +273,17 @@ class MakeInvsens(BasePrimitive):
                         wlm1 = wgoo1
                         print("format error, try again")
             # update region of interest
-            t = [i for i, v in enumerate(w) if wlm0 <= v <= wlm1]
-            nt = len(t)
+            wl_good = [i for i, v in enumerate(w) if wlm0 <= v <= wlm1]
+            nwl_good = len(wl_good)
         # END: interactively set wavelength limits
         # Now interactively identify lines
         if self.config.instrument.plot_level >= 2:
             yran = [np.min(obsspec), np.max(obsspec)]
+            # source = ColumnDataSource(data=dict(x=w, y=obsspec))
             done = False
             while not done:
                 p = figure(
+                    tooltips=[("x", "@x{0.0}"), ("y", "@y{0.0}")],
                     title=self.action.args.plotlabel + ' %s Obs Spec' % stdname,
                     x_axis_label='Wave (A)',
                     y_axis_label='Intensity (e-)',
@@ -321,13 +323,13 @@ class MakeInvsens(BasePrimitive):
                             print("line outside range: %s" % lstr)
         # END: interactively identify lines
         # set up fitting vectors, flux, waves, measure errors
-        sf = invsen[t]  # dependent variable
-        af = earea[t]   # effective area
-        wf = w[t]       # independent variable
-        bf = obsspec[t]  # input electrons
-        rf = rsflx[t]   # reference flux
-        mw = np.ones(sf.shape, dtype=float)     # weights
-        use = np.ones(nt)   # toggles for usage
+        sf = invsen[wl_good]   # dependent variable
+        af = earea[wl_good]    # effective area
+        wf = w[wl_good]        # independent variable
+        bf = obsspec[wl_good]  # input electrons
+        rf = rsflx[wl_good]    # reference flux
+        mw = np.ones(nwl_good, dtype=float)     # weights
+        use = np.ones(nwl_good, dtype=int)      # toggles for usage
         # loop over Balmer lines
         for il, bl in enumerate(blines):
             roi = [i for i, v in enumerate(wf)
@@ -342,14 +344,17 @@ class MakeInvsens(BasePrimitive):
         ef = []
         ww = []
         used = []
+        not_used = []
         for i in range(len(use)):
-            if use[i] != 1:
+            if use[i] == 1:
+                used.append(i)
+            else:
                 mw[i] = 1.e-9
                 mf.append(sf[i])
                 ef.append(100.*af[i]/area)
                 ww.append(wf[i])
-            else:
-                used.append(i)
+                not_used.append(i)
+
         # initial polynomial fit of inverse sensitivity
         wf0 = np.min(wf)
         res = np.polyfit(wf-wf0, sf, deg=ford, w=mw)
@@ -357,103 +362,159 @@ class MakeInvsens(BasePrimitive):
         sinvsen = np.polyval(res, wf-wf0)
         calspec = obsspec * finvsen
         scalspec = bf * sinvsen
-        # TODO: put in interactive tweaking of invsens fitting
         # initial polynomial fit of effective area
         res = np.polyfit(wf-wf0, af, ford, w=mw)
         fearea = np.polyval(res, w-wf0)
-
-        yran = [np.min(100.*af/area), np.max(100.*af/area)]
-        p = figure(
-            title=self.action.args.plotlabel + ' %s Efficiency' % stdname,
-            x_axis_label='Wave (A)',
-            y_axis_label='Effective Efficiency (%)',
-            plot_width=self.config.instrument.plot_width,
-            plot_height=self.config.instrument.plot_height)
-        p.line(wf, 100.*af/area, line_color='black', legend_label='Data')
-        p.line(w, 100.*fearea/area, line_color='green', legend_label='Fit')
-        p.scatter(ww, ef, marker='x')
-        p.line([wlm0, wlm0], yran, line_color='orange')
-        p.line([wlm1, wlm1], yran, line_color='orange')
-        p.y_range.start = yran[0]
-        p.y_range.end = yran[1]
-        p.x_range.start = wall0
-        p.x_range.end = wall1
-        bokeh_plot(p, self.context.bokeh_session)
-        input("Next? <cr>: ")
-
-        yran = [np.min(sf), np.max(sf)]
-        p = figure(
-            title=self.action.args.plotlabel +
-            ' %s Inverse sensitivity' % stdname,
-            x_axis_label='Wave (A)',
-            y_axis_label='Invserse Sensitivity (Flux/e-/s)',
-            plot_width=self.config.instrument.plot_width,
-            plot_height=self.config.instrument.plot_height)
-        p.line(wf, sf, line_color='black', legend_label='Data')
-        p.line(w, finvsen, line_color='green', legend_label='Fit')
-        p.scatter(ww, mf, marker='x')
-        p.line([wlm0, wlm0], yran, line_color='orange')
-        p.line([wlm1, wlm1], yran, line_color='orange')
-        p.y_range.start = yran[0]
-        p.y_range.end = yran[1]
-        p.x_range.start = wall0
-        p.x_range.end = wall1
-        bokeh_plot(p, self.context.bokeh_session)
-        input("Next? <cr>: ")
-
-        yran = [np.min(calspec), np.max(calspec)]
-        p = figure(
-            title=self.action.args.plotlabel + ' %s Calibrated' % stdname,
-            x_axis_label='Wave (A)',
-            y_axis_label='Flux (ergs/s/cm^s/A)',
-            plot_width=self.config.instrument.plot_width,
-            plot_height=self.config.instrument.plot_height)
-        p.line(w, calspec, line_color='black', legend_label='Obs')
-        p.line(w, rsflx, line_color='red', legend_label='Ref')
-        p.line([wlm0, wlm0], yran, line_color='orange')
-        p.line([wlm1, wlm1], yran, line_color='orange')
-        p.y_range.start = yran[0]
-        p.y_range.end = yran[1]
-        p.x_range.start = wall0
-        p.x_range.end = wall1
-        bokeh_plot(p, self.context.bokeh_session)
-        input("Next? <cr>: ")
-
+        # calculate residuals
         resid = 100.0 * (rf - scalspec) / rf
+        if len(not_used) > 0:
+            rbad = resid[not_used]
+        else:
+            rbad = None
         rsd_mean = float(np.nanmean(resid[used]))
         rsd_stdv = float(np.nanstd(resid[used]))
-        self.logger.info("Calibration residuals = %f +- %f %%" % (rsd_mean,
-                                                                  rsd_stdv))
+        self.logger.info("Calibration residuals = %f +- %f %%" %
+                         (rsd_mean, rsd_stdv))
+        # interactively adjust fit
+        if self.config.instrument.plot_level >= 1:
+            done = False
+            while not done:
+                yran = [np.min(100.*af/area), np.max(100.*af/area)]
+                p = figure(
+                    title=self.action.args.plotlabel +
+                    ' %s Efficiency' % stdname,
+                    x_axis_label='Wave (A)',
+                    y_axis_label='Effective Efficiency (%)',
+                    plot_width=self.config.instrument.plot_width,
+                    plot_height=self.config.instrument.plot_height)
+                p.line(wf, 100.*af/area, line_color='black',
+                       legend_label='Data')
+                p.line(w, 100.*fearea/area, line_color='green',
+                       legend_label='Fit')
+                p.scatter(ww, ef, marker='x', legend_label='Rej')
+                p.line([wlm0, wlm0], yran, line_color='orange')
+                p.line([wlm1, wlm1], yran, line_color='orange')
+                p.y_range.start = yran[0]
+                p.y_range.end = yran[1]
+                p.x_range.start = wall0
+                p.x_range.end = wall1
+                bokeh_plot(p, self.context.bokeh_session)
+                if self.config.instrument.plot_level >= 2:
+                    input("Next? <cr>: ")
+                else:
+                    time.sleep(2. * self.config.instrument.plot_pause)
 
-        yran = [np.min(resid), np.max(resid)]
-        p = figure(
-            title=self.action.args.plotlabel + ' %s Residuals (%%)' % stdname,
-            x_axis_label='Wave (A)',
-            y_axis_label='Ref - Cal / Ref (%)',
-            plot_width=self.config.instrument.plot_width,
-            plot_height=self.config.instrument.plot_height)
-        p.line(wf, resid, line_color='black', legend_label='Ref - Cal (%)')
-        p.line([wlm0, wlm0], yran, line_color='orange')
-        p.line([wlm1, wlm1], yran, line_color='orange')
-        p.line([wall0, wall1], [0, 0], line_color='blue')
-        p.line([wall0, wall1], [rsd_mean+rsd_stdv, rsd_mean+rsd_stdv],
-               line_color='green')
-        p.line([wall0, wall1], [rsd_mean-rsd_stdv, rsd_mean-rsd_stdv],
-               line_color='green')
-        p.y_range.start = yran[0]
-        p.y_range.end = yran[1]
-        p.x_range.start = wall0
-        p.x_range.end = wall1
-        bokeh_plot(p, self.context.bokeh_session)
-        input("Next? <cr>: ")
+                yran = [np.min(sf), np.max(sf)]
+                p = figure(
+                    title=self.action.args.plotlabel +
+                    ' %s Inverse sensitivity' % stdname,
+                    x_axis_label='Wave (A)',
+                    y_axis_label='Invserse Sensitivity (Flux/e-/s)',
+                    plot_width=self.config.instrument.plot_width,
+                    plot_height=self.config.instrument.plot_height)
+                p.line(wf, sf, line_color='black', legend_label='Data')
+                p.line(w, finvsen, line_color='green', legend_label='Fit')
+                p.scatter(ww, mf, marker='x', legend_label='Rej')
+                p.line([wlm0, wlm0], yran, line_color='orange')
+                p.line([wlm1, wlm1], yran, line_color='orange')
+                p.y_range.start = yran[0]
+                p.y_range.end = yran[1]
+                p.x_range.start = wall0
+                p.x_range.end = wall1
+                bokeh_plot(p, self.context.bokeh_session)
+                if self.config.instrument.plot_level >= 2:
+                    input("Next? <cr>: ")
+                else:
+                    time.sleep(2. * self.config.instrument.plot_pause)
+
+                yran = [np.min(calspec), np.max(calspec)]
+                p = figure(
+                    title=self.action.args.plotlabel +
+                    ' %s Calibrated' % stdname,
+                    x_axis_label='Wave (A)',
+                    y_axis_label='Flux (ergs/s/cm^s/A)',
+                    plot_width=self.config.instrument.plot_width,
+                    plot_height=self.config.instrument.plot_height)
+                p.line(w, calspec, line_color='black', legend_label='Obs')
+                p.line(w, rsflx, line_color='red', legend_label='Ref')
+                p.line([wlm0, wlm0], yran, line_color='orange')
+                p.line([wlm1, wlm1], yran, line_color='orange')
+                p.y_range.start = yran[0]
+                p.y_range.end = yran[1]
+                p.x_range.start = wall0
+                p.x_range.end = wall1
+                bokeh_plot(p, self.context.bokeh_session)
+                if self.config.instrument.plot_level >= 2:
+                    input("Next? <cr>: ")
+                else:
+                    time.sleep(2. * self.config.instrument.plot_pause)
+
+                yran = [np.min(resid), np.max(resid)]
+                p = figure(
+                    title=self.action.args.plotlabel +
+                    ' %s Residuals = %.1f +- %.1f (%%)' % (stdname, rsd_mean,
+                                                           rsd_stdv),
+                    x_axis_label='Wave (A)',
+                    y_axis_label='Ref - Cal / Ref (%)',
+                    plot_width=self.config.instrument.plot_width,
+                    plot_height=self.config.instrument.plot_height)
+                p.line(wf, resid, line_color='black',
+                       legend_label='Ref - Cal (%)')
+                if len(not_used) > 0:
+                    p.scatter(ww, rbad, marker='x', legend_label='Rej')
+                p.line([wlm0, wlm0], yran, line_color='orange')
+                p.line([wlm1, wlm1], yran, line_color='orange')
+                p.line([wall0, wall1], [0, 0], line_color='blue')
+                p.line([wall0, wall1], [rsd_mean+rsd_stdv, rsd_mean+rsd_stdv],
+                       line_color='green')
+                p.line([wall0, wall1], [rsd_mean-rsd_stdv, rsd_mean-rsd_stdv],
+                       line_color='green')
+                p.y_range.start = yran[0]
+                p.y_range.end = yran[1]
+                p.x_range.start = wall0
+                p.x_range.end = wall1
+                bokeh_plot(p, self.context.bokeh_session)
+                if self.config.instrument.plot_level >= 2:
+                    qstr = input("Current fit order = %d, "
+                                 "New fit order? <int>, <cr> - done: " % ford)
+                    if len(qstr) <= 0:
+                        done = True
+                    else:
+                        try:
+                            ford = int(qstr)
+                            # update fit of inverse sensitivity
+                            res = np.polyfit(wf - wf0, sf, deg=ford, w=mw)
+                            finvsen = np.polyval(res, w - wf0)
+                            sinvsen = np.polyval(res, wf - wf0)
+                            calspec = obsspec * finvsen
+                            scalspec = bf * sinvsen
+                            # update polynomial fit of effective area
+                            res = np.polyfit(wf - wf0, af, ford, w=mw)
+                            fearea = np.polyval(res, w - wf0)
+                            # re-calculate residuals
+                            resid = 100.0 * (rf - scalspec) / rf
+                            if len(not_used) > 0:
+                                rbad = resid[not_used]
+                            else:
+                                rbad = None
+                            rsd_mean = float(np.nanmean(resid[used]))
+                            rsd_stdv = float(np.nanstd(resid[used]))
+                            self.logger.info(
+                                "Calibration residuals = %f +- %f %%" %
+                                (rsd_mean, rsd_stdv))
+                        except ValueError:
+                            print("Bad fit order, try again")
+                else:
+                    done = True
+                    time.sleep(2. * self.config.instrument.plot_pause)
 
         log_string = MakeInvsens.__module__
         self.action.args.ccddata.header['HISTORY'] = log_string
         self.logger.info(log_string)
 
-        # write out effictive inverse sensitivity
+        # write out effective inverse sensitivity
 
-        # update invsens header
+        # update inverse sensitivity header
         hdr = self.action.args.ccddata.header.copy()
         hdr['HISTORY'] = log_string
         hdr['INVSENS'] = (True, 'effective inv. sens. spectrum?')
