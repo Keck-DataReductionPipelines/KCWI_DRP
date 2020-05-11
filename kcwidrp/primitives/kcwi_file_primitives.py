@@ -622,7 +622,8 @@ def kcwi_fits_writer(ccddata, table=None, output_file=None, suffix=None):
     output_file = os.path.join(os.path.dirname(output_file), 'redux',
                                os.path.basename(output_file))
     if suffix is not None:
-        output_file = output_file.split('.')[0]+"_"+suffix+".fits"
+        (main_name, extension) = os.path.splitext(output_file)
+        output_file = main_name + "_" + suffix + extension
     hdus_to_save = ccddata.to_hdu()
     # if table is not None:
     #    hdus_to_save.append(table)
