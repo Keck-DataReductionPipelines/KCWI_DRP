@@ -86,9 +86,9 @@ def check_directory(directory):
 
 def main():
 
-    def process(subset):
-        for frame in subset.index:
-            arguments = Arguments(name=frame)
+    def process(in_subset):
+        for in_frame in in_subset.index:
+            arguments = Arguments(name=in_frame)
             framework.append_event('next_file', arguments)
 
     args = _parse_arguments(sys.argv)
@@ -117,7 +117,7 @@ def main():
             pkg, kcwi_config_file)
         kcwi_config = ConfigClass(kcwi_config_fullpath, default_section='KCWI')
     else:
-        kcwi_config_fullpath = os.path.abspath(args.kcwi_config_file)
+        # kcwi_config_fullpath = os.path.abspath(args.kcwi_config_file)
         kcwi_config = ConfigClass(args.kcwi_config_file, default_section='KCWI')
 
     # END HANDLING OF CONFIGURATION FILES ##########
@@ -136,13 +136,18 @@ def main():
         sys.exit(1)
     framework.context.pipeline_logger = getLogger(framework_logcfg_fullpath,
                                                   name="KCWI")
+    framework.logger = getLogger(framework_logcfg_fullpath,
+                                 name="DRPF")
 
     # start the bokeh server is requested by the configuration parameters
     if framework.config.instrument.enable_bokeh is True:
         if check_bokeh_server() is False:
-            subprocess.Popen('bokeh serve', shell=True) # --session-ids=unsigned --session-token-expiration=86400', shell=True)
+            subprocess.Popen('bokeh serve', shell=True)
+            # --session-ids=unsigned --session-token-expiration=86400',
+            # shell=True)
             time.sleep(5)
-        #subprocess.Popen('open http://localhost:5006?bokeh-session-id=kcwi', shell=True)
+        # subprocess.Popen('open http://localhost:5006?bokeh-session-id=kcwi',
+        # shell=True)
 
     # initialize the proctab and read it
     framework.context.proctab = Proctab(framework.logger)
