@@ -158,10 +158,11 @@ class TraceBars(BasePrimitive):
                 warped = tf.warp(self.action.args.ccddata.data, tform)
                 # write out warped image
                 self.action.args.ccddata.data = warped
-                kcwi_fits_writer(self.action.args.ccddata,
-                                 self.action.args.table,
-                                 output_file=self.action.args.name,
-                                 suffix='warped')
+                kcwi_fits_writer(
+                    self.action.args.ccddata, self.action.args.table,
+                    output_file=self.action.args.name,
+                    output_dir=self.config.instrument.output_directory,
+                    suffix='warped')
                 self.logger.info("Transformed bars produced")
 
             log_string = TraceBars.__module__

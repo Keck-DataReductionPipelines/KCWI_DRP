@@ -78,7 +78,9 @@ class CorrectDefects(BasePrimitive):
         if self.config.instrument.saveintims:
             kcwi_fits_writer(self.action.args.ccddata,
                              table=self.action.args.table,
-                             output_file=self.action.args.name, suffix="def")
+                             output_file=self.action.args.name,
+                             output_dir=self.config.instrument.output_directory,
+                             suffix="def")
 
         return self.action.args
     # END: class CorrectDefects()

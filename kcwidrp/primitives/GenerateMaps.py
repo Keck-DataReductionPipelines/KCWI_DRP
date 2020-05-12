@@ -102,16 +102,19 @@ class GenerateMaps(BasePrimitive):
                                      unit=u.angstrom),
                              table=self.action.args.table,
                              output_file=self.action.args.name,
+                             output_dir=self.config.instrument.output_directory,
                              suffix="wavemap")
             kcwi_fits_writer(CCDData(xpos_map_img, meta=header,
                                      unit=u.pix),
                              table=self.action.args.table,
                              output_file=self.action.args.name,
+                             output_dir=self.config.instrument.output_directory,
                              suffix="posmap")
             kcwi_fits_writer(CCDData(slice_map_img, meta=header,
                                      unit=u.pix),
                              table=self.action.args.table,
                              output_file=self.action.args.name,
+                             output_dir=self.config.instrument.output_directory,
                              suffix="slicemap")
 
         else:

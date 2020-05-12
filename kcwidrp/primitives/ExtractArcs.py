@@ -74,6 +74,7 @@ class ExtractArcs(BasePrimitive):
             kcwi_fits_writer(self.action.args.ccddata,
                              table=self.action.args.table,
                              output_file=self.action.args.name,
+                             output_dir=self.config.instrument.output_directory,
                              suffix="warped")
             self.logger.info("Transformed arcs produced")
         # extract arcs

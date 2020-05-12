@@ -539,7 +539,7 @@ def kcwi_fits_reader(file):
         ccddata.uncertainty = hdul['UNCERT'].data
         table = None
     elif len(hdul) == 4:
-        # pure ccd data
+        # ccd data + table
         ccddata = CCDData(hdul['PRIMARY'].data, meta=hdul['PRIMARY'].header,
                           unit='adu')
         ccddata.mask = hdul['MASK'].data
@@ -617,15 +617,15 @@ def read_table(input_dir=None, file_name=None):
     return retab
 
 
-def kcwi_fits_writer(ccddata, table=None, output_file=None, suffix=None):
-    output_file = os.path.join(os.path.dirname(output_file), 'redux',
-                               os.path.basename(output_file))
+def kcwi_fits_writer(ccddata, table=None, output_file=None, output_dir=None,
+                     suffix=None):
+    out_file = os.path.join(output_dir, os.path.basename(output_file))
     if suffix is not None:
-        (main_name, extension) = os.path.splitext(output_file)
-        output_file = main_name + "_" + suffix + extension
+        (main_name, extension) = os.path.splitext(out_file)
+        out_file = main_name + "_" + suffix + extension
     hdus_to_save = ccddata.to_hdu()
     # if table is not None:
     #    hdus_to_save.append(table)
     # hdus_to_save.info()
-    logger.info(">>> Saving to %s" % output_file)
-    hdus_to_save.writeto(output_file, overwrite=True)
+    logger.info(">>> Saving to %s" % out_file)
+    hdus_to_save.writeto(out_file, overwrite=True)

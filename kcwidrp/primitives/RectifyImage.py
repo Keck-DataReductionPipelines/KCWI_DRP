@@ -63,7 +63,9 @@ class RectifyImage(BasePrimitive):
         # write out int image
         kcwi_fits_writer(self.action.args.ccddata,
                          table=self.action.args.table,
-                         output_file=self.action.args.name, suffix="int")
+                         output_file=self.action.args.name,
+                         output_dir=self.config.instrument.output_directory,
+                         suffix="int")
         self.context.proctab.update_proctab(frame=self.action.args.ccddata,
                                             suffix="int")
         self.context.proctab.write_proctab()

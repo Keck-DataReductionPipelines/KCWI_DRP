@@ -89,7 +89,9 @@ class SubtractScatteredLight(BasePrimitive):
         # write out int image
         kcwi_fits_writer(self.action.args.ccddata,
                          table=self.action.args.table,
-                         output_file=self.action.args.name, suffix="intd")
+                         output_file=self.action.args.name,
+                         output_dir=self.config.instrument.output_directory,
+                         suffix="intd")
         self.context.proctab.update_proctab(frame=self.action.args.ccddata,
                                             suffix="intd")
         self.context.proctab.write_proctab()

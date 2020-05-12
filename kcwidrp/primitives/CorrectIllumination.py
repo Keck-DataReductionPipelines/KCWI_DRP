@@ -67,7 +67,9 @@ class CorrectIllumination(BasePrimitive):
         # write out intf image
         kcwi_fits_writer(self.action.args.ccddata,
                          table=self.action.args.table,
-                         output_file=self.action.args.name, suffix="intf")
+                         output_file=self.action.args.name,
+                         output_dir=self.config.instrument.output_directory,
+                         suffix="intf")
         self.context.proctab.update_proctab(frame=self.action.args.ccddata,
                                             suffix="intf")
         self.context.proctab.write_proctab()

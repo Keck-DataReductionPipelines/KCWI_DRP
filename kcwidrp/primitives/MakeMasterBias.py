@@ -124,7 +124,8 @@ class MakeMasterBias(BaseImg):
         stacked.header['HISTORY'] = log_string
         self.logger.info(log_string)
 
-        kcwi_fits_writer(stacked, output_file=mbname)
+        kcwi_fits_writer(stacked, output_file=mbname,
+                         output_dir=self.config.instrument.output_directory)
         self.context.proctab.update_proctab(frame=stacked, suffix=suffix,
                                             newtype=self.action.args.new_type)
         self.context.proctab.write_proctab()

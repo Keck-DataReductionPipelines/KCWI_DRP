@@ -44,6 +44,8 @@ class CorrectGain(BasePrimitive):
         if self.config.instrument.saveintims:
             kcwi_fits_writer(self.action.args.ccddata,
                              table=self.action.args.table,
-                             output_file=self.action.args.name, suffix="gain")
+                             output_file=self.action.args.name,
+                             output_dir=self.config.instrument.output_directory,
+                             suffix="gain")
         return self.action.args
     # END: class CorrectGain()

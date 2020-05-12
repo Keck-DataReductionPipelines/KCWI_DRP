@@ -77,7 +77,8 @@ class StackFlats(BaseImg):
         stacked.header['HISTORY'] = log_string
 
         # output stacked flat
-        kcwi_fits_writer(stacked, output_file=stname)
+        kcwi_fits_writer(stacked, output_file=stname,
+                         output_dir=self.config.instrument.output_directory)
 
         self.context.proctab.update_proctab(frame=stacked, suffix=suffix,
                                             newtype=self.action.args.stack_type)

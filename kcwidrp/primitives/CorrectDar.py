@@ -181,7 +181,9 @@ class CorrectDar(BasePrimitive):
         # write out corrected image
         kcwi_fits_writer(self.action.args.ccddata,
                          table=self.action.args.table,
-                         output_file=self.action.args.name, suffix="icubed")
+                         output_file=self.action.args.name,
+                         output_dir=self.config.instrument.output_directory,
+                         suffix="icubed")
         self.context.proctab.update_proctab(frame=self.action.args.ccddata,
                                             suffix="icubed")
         self.context.proctab.write_proctab()

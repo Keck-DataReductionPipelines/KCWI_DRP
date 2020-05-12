@@ -581,13 +581,15 @@ class MakeInvsens(BasePrimitive):
         # output inverse sensitivity
         out_invsens = CCDData(np.asarray([invsen, finvsen, obsspec]),
                               meta=hdr, unit=invsens_u)
-        kcwi_fits_writer(out_invsens, output_file=invsname)
+        kcwi_fits_writer(out_invsens, output_file=invsname,
+                         output_dir=self.config.instrument.output_directory)
         self.context.proctab.update_proctab(frame=out_invsens, suffix=suffix,
                                             newtype='INVSENS')
         # output effective area
         ea_u = u.cm ** 2 / u.angstrom
         out_ea = CCDData(np.asarray([earea, fearea]), meta=hdr, unit=ea_u)
-        kcwi_fits_writer(out_ea, output_file=eaname)
+        kcwi_fits_writer(out_ea, output_file=eaname,
+                         output_dir=self.config.instrument.output_directory)
         self.context.proctab.update_proctab(frame=out_ea, suffix='ea',
                                             newtype='EAREA')
 

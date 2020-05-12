@@ -278,7 +278,8 @@ class MakeMasterSky(BaseImg):
         self.action.args.ccddata.header['POSMAPF'] = pof
 
         # output master sky
-        kcwi_fits_writer(self.action.args.ccddata, output_file=msname)
+        kcwi_fits_writer(self.action.args.ccddata, output_file=msname,
+                         output_dir=self.config.instrument.output_directory)
         self.context.proctab.update_proctab(frame=self.action.args.ccddata,
                                             suffix=suffix,
                                             newtype=self.action.args.new_type)

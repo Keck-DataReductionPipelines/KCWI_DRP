@@ -708,7 +708,8 @@ class MakeMasterFlat(BaseImg):
         stacked.data = ratio
 
         # output master flat
-        kcwi_fits_writer(stacked, output_file=mfname)
+        kcwi_fits_writer(stacked, output_file=mfname,
+                         output_dir=self.config.instrument.output_directory)
         self.context.proctab.update_proctab(frame=stacked, suffix=suffix,
                                             newtype=self.action.args.new_type)
         self.context.proctab.write_proctab()

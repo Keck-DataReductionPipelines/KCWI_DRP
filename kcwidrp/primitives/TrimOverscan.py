@@ -61,8 +61,10 @@ class TrimOverscan(BasePrimitive):
         self.logger.info(log_string)
 
         if self.config.instrument.saveintims:
-            kcwi_fits_writer(self.action.args.ccddata,
-                             table=self.action.args.table,
-                             output_file=self.action.args.name, suffix="trim")
+            kcwi_fits_writer(
+                self.action.args.ccddata, table=self.action.args.table,
+                output_file=self.action.args.name,
+                output_dir=self.config.instrument.output_directory,
+                suffix="trim")
         return self.action.args
     # END: class TrimOverscan()

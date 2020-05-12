@@ -115,7 +115,9 @@ class FluxCalibrate(BasePrimitive):
         # write out icubes image
         kcwi_fits_writer(self.action.args.ccddata,
                          table=self.action.args.table,
-                         output_file=self.action.args.name, suffix="icubes")
+                         output_file=self.action.args.name,
+                         output_dir=self.config.instrument.output_directory,
+                         suffix="icubes")
         self.context.proctab.update_proctab(frame=self.action.args.ccddata,
                                             suffix="icubes")
         self.context.proctab.write_proctab()
