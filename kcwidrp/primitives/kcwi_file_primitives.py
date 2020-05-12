@@ -589,8 +589,16 @@ class kcwi_fits_ingest(BasePrimitive):
 
 
 def write_table(output_dir=None, table=None, names=None, comment=None,
-                keywords=None, output_name=None):
+                keywords=None, output_name=None, clobber=False):
     output_file = os.path.join(output_dir, output_name)
+    # check if file already exists
+    if os.path.exists(output_file) and clobber is False:
+        logger.warning("Table %s already exists and overwrite is set to False" % output_file)
+        return
+    if os.path.exists(output_file) and clobber is True:
+        logger.warning("Table %s already exists and will be overwritten" % output_file)
+        logger.info("Removing file: %s" % output_file)
+        os.remove(output_file)
 
     t = Table(table, names=names)
     if comment:
@@ -601,8 +609,10 @@ def write_table(output_dir=None, table=None, names=None, comment=None,
     try:
         t.write(output_file, format='fits')
     except FileExistsError:
-        logger.warning("Table already exists")
-    print("output file: %s" % output_file)
+        logger.error("Something went wrong creating the table: table already exists")
+    except OSError:
+        logger.error("Something went wrong creating the table: Table already exists")
+    logger.info("Output table: %s" % output_file)
 
 
 def read_table(input_dir=None, file_name=None):

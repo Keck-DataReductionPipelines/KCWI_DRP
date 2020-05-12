@@ -131,6 +131,7 @@ class TraceBars(BasePrimitive):
                             os.path.dirname(self.action.args.name),
                             self.config.instrument.output_directory),
                         output_name=ofname,
+                        clobber = self.config.instrument.clobber,
                         comment=['Source and destination fiducial points',
                                  'Derived from KCWI continuum bars images',
                                  'For defining spatial transformation'],
