@@ -38,8 +38,10 @@ class ExtractArcs(BasePrimitive):
         if hasattr(self.context, 'trace'):
             trace = self.context.trace
         else:
-            trace = read_table(input_dir=os.path.dirname(self.action.args.name),
-                               file_name=original_filename)
+            trace = read_table(
+                input_dir=os.path.join(os.path.dirname(self.action.args.name),
+                                       self.config.instrument.output_directory),
+                file_name=original_filename)
             self.context.trace = {}
             for key in trace.meta.keys():
                 self.context.trace[key] = trace.meta[key]

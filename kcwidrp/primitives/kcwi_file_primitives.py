@@ -52,8 +52,12 @@ class ingest_file(BasePrimitive):
         self.logger = context.pipeline_logger
 
     def get_keyword(self, keyword):
-        #return self.context.data_set.get_info_column(self.name, keyword)
-        return self.ccddata.header[keyword]
+        try:
+            keyval = self.ccddata.header[keyword]
+        except KeyError:
+            keyval = None
+        # return self.context.data_set.get_info_column(self.name, keyword)
+        return keyval
 
     def camera(self):
         camera = self.get_keyword('CAMERA')
@@ -414,18 +418,16 @@ class ingest_file(BasePrimitive):
 
         ccddata, table = kcwi_fits_reader(self.name)
 
-        # save the ccd data into an object that can be shared across the functions
+        # save the ccd data into an object
+        # that can be shared across the functions
         self.ccddata = ccddata
 
         out_args.ccddata = ccddata
         out_args.table = table
 
-        try:
-            imtype = self.get_keyword("IMTYPE")
-            groupid = self.get_keyword("GROUPID")
-        except KeyError:
-            imtype = "Unknown"
-            groupid = "Unknown"
+        imtype = self.get_keyword("IMTYPE")
+        groupid = self.get_keyword("GROUPID")
+        if imtype is None:
             fname = os.path.basename(self.action.args.name)
             self.logger.warn(f"Unknown IMTYPE {fname}")
 
@@ -504,10 +506,10 @@ def kcwi_fits_reader(file):
     try:
         hdul = fits.open(file)
     except FileNotFoundError as e:
-        print(e.msg)
+        print(e)
         raise e
     except OSError as e:
-        print(e.msg)
+        print(e)
         raise e
 
     if len(hdul) == 1:
@@ -578,7 +580,7 @@ class kcwi_fits_ingest(BasePrimitive):
         self.logger.info(f"Reading {name}")
         out_args = Arguments()
         out_args.name = name
-        ccddata, table = self.kcwi_fits_reader(name)
+        ccddata, table = kcwi_fits_reader(name)
         out_args.ccddata = ccddata
         out_args.table = table
         out_args.imtype = out_args.hdus.header['IMTYPE']
@@ -588,7 +590,7 @@ class kcwi_fits_ingest(BasePrimitive):
 
 def write_table(output_dir=None, table=None, names=None, comment=None,
                 keywords=None, output_name=None):
-    output_file = os.path.join(output_dir, 'redux', output_name)
+    output_file = os.path.join(output_dir, output_name)
 
     t = Table(table, names=names)
     if comment:
@@ -598,21 +600,18 @@ def write_table(output_dir=None, table=None, names=None, comment=None,
             t.meta[k] = v
     try:
         t.write(output_file, format='fits')
-    except:
+    except FileExistsError:
         logger.warning("Table already exists")
     print("output file: %s" % output_file)
 
 
 def read_table(input_dir=None, file_name=None):
     # Set up return table
-    input_file = os.path.join(input_dir, 'redux', file_name)
-    # Construct table file name
-    # if suffix is not None:
-    #    input_file = input_file.split('.')[0] + "_" + suffix + ".fits"
+    input_file = os.path.join(input_dir, file_name)
     logger.info("Trying to read table: %s" % input_file)
     try:
         retab = Table.read(input_file, format='fits')
-    except:
+    except FileNotFoundError:
         logger.warning("No table to read")
         retab = None
     return retab

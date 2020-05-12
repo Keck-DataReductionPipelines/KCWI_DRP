@@ -127,7 +127,9 @@ class TraceBars(BasePrimitive):
                 "_trace.fits"
             write_table(table=[src, dst, barid, slid],
                         names=('src', 'dst', 'barid', 'slid'),
-                        output_dir=os.path.dirname(self.action.args.name),
+                        output_dir=os.path.join(
+                            os.path.dirname(self.action.args.name),
+                            self.config.instrument.output_directory),
                         output_name=ofname,
                         comment=['Source and destination fiducial points',
                                  'Derived from KCWI continuum bars images',
