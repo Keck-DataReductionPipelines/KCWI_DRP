@@ -495,15 +495,27 @@ class MakeMasterFlat(BaseImg):
             nwaves = 1000
         waves = minwave + (maxwave - minwave) * np.arange(nwaves+1) / nwaves
         if self.config.instrument.plot_level >= 1:
+            if xbin == 1:
+                stride = int(len(xfr) / 8000.)
+                if stride <= 0:
+                    stride = 1
+            else:
+                stride = 1
+            xrplt = xfr[::stride]
+            yrplt = yfitr[::stride]
+            xbplt = xfb[::stride]
+            ybplt = yfitb[::stride]
+            xdplt = xfd[::stride]
+            ydplt = yfitd[::stride]
             p = figure(
                 title=self.action.args.plotlabel + ' Blue/Red fits',
                 x_axis_label='Wave (A)',
                 y_axis_label='Flux (e-)',
                 plot_width=self.config.instrument.plot_width,
                 plot_height=self.config.instrument.plot_height)
-            p.line(xfr, yfitr, line_color='black', legend_label='Ref')
-            p.line(xfb, yfitb, line_color='blue', legend_label='Blue')
-            p.line(xfd, yfitd, line_color='red', legend_label='Red')
+            p.line(xrplt, yrplt, line_color='black', legend_label='Ref')
+            p.line(xbplt, ybplt, line_color='blue', legend_label='Blue')
+            p.line(xdplt, ydplt, line_color='red', legend_label='Red')
             bokeh_plot(p, self.context.bokeh_session)
             if self.config.instrument.plot_level >= 2:
                 input("Next? <cr>: ")
@@ -647,18 +659,28 @@ class MakeMasterFlat(BaseImg):
         yfitall, _ = sftall.value(allx)
 
         if self.config.instrument.plot_level >= 1:
+            if xbin == 1:
+                stride = int(len(allx) / 8000.)
+            else:
+                stride = 1
+            xplt = allx[::stride]
+            yplt = ally[::stride]
+            fplt = yfitall[::stride]
+            xrplt = xfr[::stride]
+            yrplt = yfr[::stride]
+            yfplt = yfitr[::stride]
             p = figure(
                 title=self.action.args.plotlabel + ' Master Illumination',
                 x_axis_label='Wave (A)',
                 y_axis_label='Flux (e-)',
                 plot_width=self.config.instrument.plot_width,
                 plot_height=self.config.instrument.plot_height)
-            p.circle(allx, ally, size=1, line_alpha=0., fill_color='purple',
+            p.circle(xplt, yplt, size=1, line_alpha=0., fill_color='purple',
                      legend_label='Data')
-            p.line(allx, yfitall, line_color='red', legend_label='Fit')
-            p.circle(xfr, yfr, size=1, line_alpha=0., fill_color='black',
+            p.line(xplt, fplt, line_color='red', legend_label='Fit')
+            p.circle(xrplt, yrplt, size=1, line_alpha=0., fill_color='black',
                      legend_label='Ref Data')
-            p.line(xfr, yfitr, line_color='green', legend_label='Ref Fit')
+            p.line(xrplt, yfplt, line_color='green', legend_label='Ref Fit')
             bokeh_plot(p, self.context.bokeh_session)
             if self.config.instrument.plot_level >= 2:
                 input("Next? <cr>: ")
