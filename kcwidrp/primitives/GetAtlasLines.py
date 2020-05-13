@@ -1,9 +1,9 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from kcwidrp.core.bokeh_plotting import bokeh_plot
+from kcwidrp.core.kcwi_plotting import save_plot
 
 from bokeh.plotting import figure
 from bokeh.models import Range1d
-from bokeh.io import export_png
 import numpy as np
 import scipy as sp
 from scipy.interpolate import interpolate
@@ -11,6 +11,7 @@ from scipy.signal.windows import boxcar
 from scipy.optimize import curve_fit
 from scipy.stats import sigmaclip
 import time
+import os
 
 
 def gaus(x, a, mu, sigma):
@@ -364,10 +365,12 @@ class GetAtlasLines(BasePrimitive):
                 input("Next? <cr>: ")
             else:
                 time.sleep(self.config.instrument.plot_pause)
-            export_png(p, filename="atlas_lines_%s_%s_%s_%05d.png" %
-                       (self.action.args.illum, self.action.args.grating,
-                        self.action.args.ifuname,
-                        self.action.args.ccddata.header['FRAMENO']))
+            save_plot(p, filename=os.path.join(
+                self.config.instrument.output_directory,
+                "arc_%05d_atlines_%s_%s_%s.png" %
+                (self.action.args.ccddata.header['FRAMENO'],
+                 self.action.args.illum, self.action.args.grating,
+                 self.action.args.ifuname)))
         self.logger.info("Final atlas list has %d lines" % len(refws))
 
         log_string = GetAtlasLines.__module__

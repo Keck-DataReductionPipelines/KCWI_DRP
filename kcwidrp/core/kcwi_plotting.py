@@ -1,4 +1,9 @@
 import numpy as np
+from bokeh.io import export_png
+
+import logging
+
+logger = logging.getLogger('KCWI')
 
 
 def get_plot_lims(data, padding=0.05):
@@ -24,3 +29,13 @@ def set_plot_lims(fig, xlim=None, ylim=None):
     if ylim:
         fig.y_range.start = ylim[0]
         fig.y_range.end = ylim[1]
+
+
+def save_plot(fig, filename=None):
+    if filename is None:
+        fnam = 'kcwi_plot.png'
+    else:
+        fnam = filename
+    export_png(fig, filename=fnam)
+
+    logger.info(">>> Saving to %s" % fnam)

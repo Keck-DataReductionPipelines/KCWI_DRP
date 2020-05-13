@@ -1,6 +1,7 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from kcwidrp.core.bokeh_plotting import bokeh_plot
 from kcwidrp.core.kcwi_correct_extin import kcwi_correct_extin
+from kcwidrp.core.kcwi_plotting import set_plot_lims, save_plot
 from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer
 
 from bokeh.plotting import figure, ColumnDataSource
@@ -254,10 +255,7 @@ class MakeInvsens(BasePrimitive):
                        legend_label='LIMITS')
                 p.line([wlm1, wlm1], yran, line_color='blue')
                 p.line([cwv, cwv], yran, line_color='red', legend_label='CWAV')
-                p.y_range.start = yran[0]
-                p.y_range.end = yran[1]
-                p.x_range.start = wall0
-                p.x_range.end = wall1
+                set_plot_lims(p, xlim=[wall0, wall1], ylim=yran)
                 bokeh_plot(p, self.context.bokeh_session)
                 print("WL limits: %.1f - %.1f" % (wlm0, wlm1))
                 qstr = input("New? <float> <float>, <cr> - done: ")
@@ -303,10 +301,7 @@ class MakeInvsens(BasePrimitive):
                 for il, bl in enumerate(blines):
                     if wall0 < bl < wall1:
                         p.line([bl, bl], yran, line_color='orange')
-                p.y_range.start = yran[0]
-                p.y_range.end = yran[1]
-                p.x_range.start = wall0
-                p.x_range.end = wall1
+                set_plot_lims(p, xlim=[wall0, wall1], ylim=yran)
                 bokeh_plot(p, self.context.bokeh_session)
                 qstr = input("New lines? <float> [<float>] ... (A), "
                              "<cr> - done: ")
@@ -378,82 +373,78 @@ class MakeInvsens(BasePrimitive):
         rsd_stdv = float(np.nanstd(resid[used]))
         self.logger.info("Calibration residuals = %f +- %f %%" %
                          (rsd_mean, rsd_stdv))
+        # plots
+        peff = None
+        pivs = None
+        pcal = None
+        prsd = None
         # interactively adjust fit
         if self.config.instrument.plot_level >= 1:
             done = False
             while not done:
                 yran = [np.min(100.*af/area), np.max(100.*af/area)]
-                p = figure(
+                peff = figure(
                     title=self.action.args.plotlabel +
                     ' %s Efficiency' % stdname,
                     x_axis_label='Wave (A)',
                     y_axis_label='Effective Efficiency (%)',
                     plot_width=self.config.instrument.plot_width,
                     plot_height=self.config.instrument.plot_height)
-                p.line(wf, 100.*af/area, line_color='black',
-                       legend_label='Data')
-                p.line(w, 100.*fearea/area, line_color='green',
-                       legend_label='Fit')
-                p.scatter(ww, ef, marker='x', legend_label='Rej')
-                p.line([wlm0, wlm0], yran, line_color='orange')
-                p.line([wlm1, wlm1], yran, line_color='orange')
-                p.y_range.start = yran[0]
-                p.y_range.end = yran[1]
-                p.x_range.start = wall0
-                p.x_range.end = wall1
-                bokeh_plot(p, self.context.bokeh_session)
+                peff.line(wf, 100.*af/area, line_color='black',
+                          legend_label='Data')
+                peff.line(w, 100.*fearea/area, line_color='green',
+                          legend_label='Fit')
+                peff.scatter(ww, ef, marker='x', legend_label='Rej')
+                peff.line([wlm0, wlm0], yran, line_color='orange')
+                peff.line([wlm1, wlm1], yran, line_color='orange')
+                set_plot_lims(peff, xlim=[wall0, wall1], ylim=yran)
+                bokeh_plot(peff, self.context.bokeh_session)
                 if self.config.instrument.plot_level >= 2:
                     input("Next? <cr>: ")
                 else:
                     time.sleep(2. * self.config.instrument.plot_pause)
 
                 yran = [np.min(sf), np.max(sf)]
-                p = figure(
+                pivs = figure(
                     title=self.action.args.plotlabel +
                     ' %s Inverse sensitivity' % stdname,
                     x_axis_label='Wave (A)',
                     y_axis_label='Invserse Sensitivity (Flux/e-/s)',
                     plot_width=self.config.instrument.plot_width,
                     plot_height=self.config.instrument.plot_height)
-                p.line(wf, sf, line_color='black', legend_label='Data')
-                p.line(w, finvsen, line_color='green', legend_label='Fit')
-                p.scatter(ww, mf, marker='x', legend_label='Rej')
-                p.line([wlm0, wlm0], yran, line_color='orange')
-                p.line([wlm1, wlm1], yran, line_color='orange')
-                p.y_range.start = yran[0]
-                p.y_range.end = yran[1]
-                p.x_range.start = wall0
-                p.x_range.end = wall1
-                bokeh_plot(p, self.context.bokeh_session)
+                pivs.line(wf, sf, line_color='black', legend_label='Data')
+                pivs.line(w, finvsen, line_color='green', legend_label='Fit')
+                pivs.scatter(ww, mf, marker='x', legend_label='Rej')
+                pivs.line([wlm0, wlm0], yran, line_color='orange')
+                pivs.line([wlm1, wlm1], yran, line_color='orange')
+                set_plot_lims(pivs, xlim=[wall0, wall1], ylim=yran)
+                bokeh_plot(pivs, self.context.bokeh_session)
                 if self.config.instrument.plot_level >= 2:
                     input("Next? <cr>: ")
                 else:
                     time.sleep(2. * self.config.instrument.plot_pause)
 
                 yran = [np.min(calspec), np.max(calspec)]
-                p = figure(
+                pcal = figure(
                     title=self.action.args.plotlabel +
                     ' %s Calibrated' % stdname,
                     x_axis_label='Wave (A)',
                     y_axis_label='Flux (ergs/s/cm^s/A)',
                     plot_width=self.config.instrument.plot_width,
                     plot_height=self.config.instrument.plot_height)
-                p.line(w, calspec, line_color='black', legend_label='Obs')
-                p.line(w, rsflx, line_color='red', legend_label='Ref')
-                p.line([wlm0, wlm0], yran, line_color='orange')
-                p.line([wlm1, wlm1], yran, line_color='orange')
-                p.y_range.start = yran[0]
-                p.y_range.end = yran[1]
-                p.x_range.start = wall0
-                p.x_range.end = wall1
-                bokeh_plot(p, self.context.bokeh_session)
+                pcal.line(w, calspec, line_color='black', legend_label='Obs')
+                pcal.line(w, rsflx, line_color='red', legend_label='Ref')
+                pcal.line([wlm0, wlm0], yran, line_color='orange')
+                pcal.line([wlm1, wlm1], yran, line_color='orange')
+                set_plot_lims(pcal, xlim=[wall0, wall1], ylim=yran)
+                bokeh_plot(pcal, self.context.bokeh_session)
                 if self.config.instrument.plot_level >= 2:
                     input("Next? <cr>: ")
                 else:
                     time.sleep(2. * self.config.instrument.plot_pause)
 
                 yran = [np.min(resid), np.max(resid)]
-                p = figure(
+                prsd = figure(
                     title=self.action.args.plotlabel +
                     ' %s Residuals = %.1f +- %.1f (%%)' % (stdname, rsd_mean,
                                                            rsd_stdv),
@@ -461,22 +452,21 @@ class MakeInvsens(BasePrimitive):
                     y_axis_label='Ref - Cal / Ref (%)',
                     plot_width=self.config.instrument.plot_width,
                     plot_height=self.config.instrument.plot_height)
-                p.line(wf, resid, line_color='black',
-                       legend_label='Ref - Cal (%)')
+                prsd.line(wf, resid, line_color='black',
+                          legend_label='Ref - Cal (%)')
                 if len(not_used) > 0:
-                    p.scatter(ww, rbad, marker='x', legend_label='Rej')
-                p.line([wlm0, wlm0], yran, line_color='orange')
-                p.line([wlm1, wlm1], yran, line_color='orange')
-                p.line([wall0, wall1], [0, 0], line_color='blue')
-                p.line([wall0, wall1], [rsd_mean+rsd_stdv, rsd_mean+rsd_stdv],
-                       line_color='green')
-                p.line([wall0, wall1], [rsd_mean-rsd_stdv, rsd_mean-rsd_stdv],
-                       line_color='green')
-                p.y_range.start = yran[0]
-                p.y_range.end = yran[1]
-                p.x_range.start = wall0
-                p.x_range.end = wall1
-                bokeh_plot(p, self.context.bokeh_session)
+                    prsd.scatter(ww, rbad, marker='x', legend_label='Rej')
+                prsd.line([wlm0, wlm0], yran, line_color='orange')
+                prsd.line([wlm1, wlm1], yran, line_color='orange')
+                prsd.line([wall0, wall1], [0, 0], line_color='blue')
+                prsd.line([wall0, wall1],
+                          [rsd_mean+rsd_stdv, rsd_mean+rsd_stdv],
+                          line_color='green')
+                prsd.line([wall0, wall1],
+                          [rsd_mean-rsd_stdv, rsd_mean-rsd_stdv],
+                          line_color='green')
+                set_plot_lims(prsd, xlim=[wall0, wall1], ylim=yran)
+                bokeh_plot(prsd, self.context.bokeh_session)
                 if self.config.instrument.plot_level >= 2:
                     qstr = input("Current fit order = %d, "
                                  "New fit order? <int>, <cr> - done: " % ford)
@@ -510,6 +500,19 @@ class MakeInvsens(BasePrimitive):
                 else:
                     done = True
                     time.sleep(2. * self.config.instrument.plot_pause)
+            # output plots
+            imstr = "%05d" % self.action.args.ccddata.header['FRAMENO']
+            cwv = "%d" % int(self.action.args.cwave)
+            grat = self.action.args.grating.strip()
+            ifu = self.action.args.ifuname.strip()
+            pfname = os.path.join(self.config.instrument.output_directory,
+                                  stdname + '_' + grat + '_' + cwv + '_' +
+                                  ifu + '_' + imstr)
+            # Save plots
+            save_plot(peff, filename=pfname + '_eff.png')      # Efficiency
+            save_plot(pivs, filename=pfname + '_invsens.png')  # Inv. Sens.
+            save_plot(prsd, filename=pfname + '_resid.png')    # Residuals
+            save_plot(pcal, filename=pfname + '_cal.png')      # Calibrated
 
         log_string = MakeInvsens.__module__
         self.action.args.ccddata.header['HISTORY'] = log_string
