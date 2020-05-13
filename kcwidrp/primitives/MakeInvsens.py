@@ -364,7 +364,7 @@ class MakeInvsens(BasePrimitive):
         res = np.polyfit(wf-wf0, af, ford, w=mw)
         fearea = np.polyval(res, w-wf0)
         # calculate residuals
-        resid = 100.0 * (rf - scalspec) / rf
+        resid = 100.0 * (scalspec - rf) / rf
         if len(not_used) > 0:
             rbad = resid[not_used]
         else:
@@ -383,6 +383,8 @@ class MakeInvsens(BasePrimitive):
             done = False
             while not done:
                 yran = [np.min(100.*af/area), np.max(100.*af/area)]
+                effmax = np.nanmax(100.*fearea/area)
+                effmean = np.nanmean(100.*fearea/area)
                 peff = figure(
                     title=self.action.args.plotlabel +
                     ' %s Efficiency' % stdname,
@@ -392,11 +394,16 @@ class MakeInvsens(BasePrimitive):
                     plot_height=self.config.instrument.plot_height)
                 peff.line(wf, 100.*af/area, line_color='black',
                           legend_label='Data')
-                peff.line(w, 100.*fearea/area, line_color='green',
+                peff.line(w, 100.*fearea/area, line_color='red',
                           legend_label='Fit')
                 peff.scatter(ww, ef, marker='x', legend_label='Rej')
-                peff.line([wlm0, wlm0], yran, line_color='orange')
-                peff.line([wlm1, wlm1], yran, line_color='orange')
+                peff.line([wlm0, wlm0], yran, line_color='green',
+                          legend_label='WL lims')
+                peff.line([wlm1, wlm1], yran, line_color='green')
+                peff.line([wall0, wall1], [effmax, effmax],
+                          line_color='black', line_dash='dashed')
+                peff.line([wall0, wall1], [effmean, effmean],
+                          line_color='black', line_dash='dashdot')
                 set_plot_lims(peff, xlim=[wall0, wall1], ylim=yran)
                 bokeh_plot(peff, self.context.bokeh_session)
                 if self.config.instrument.plot_level >= 2:
@@ -413,10 +420,11 @@ class MakeInvsens(BasePrimitive):
                     plot_width=self.config.instrument.plot_width,
                     plot_height=self.config.instrument.plot_height)
                 pivs.line(wf, sf, line_color='black', legend_label='Data')
-                pivs.line(w, finvsen, line_color='green', legend_label='Fit')
+                pivs.line(w, finvsen, line_color='red', legend_label='Fit')
                 pivs.scatter(ww, mf, marker='x', legend_label='Rej')
-                pivs.line([wlm0, wlm0], yran, line_color='orange')
-                pivs.line([wlm1, wlm1], yran, line_color='orange')
+                pivs.line([wlm0, wlm0], yran, line_color='green',
+                          legend_label='WL lims')
+                pivs.line([wlm1, wlm1], yran, line_color='green')
                 set_plot_lims(pivs, xlim=[wall0, wall1], ylim=yran)
                 bokeh_plot(pivs, self.context.bokeh_session)
                 if self.config.instrument.plot_level >= 2:
@@ -434,8 +442,9 @@ class MakeInvsens(BasePrimitive):
                     plot_height=self.config.instrument.plot_height)
                 pcal.line(w, calspec, line_color='black', legend_label='Obs')
                 pcal.line(w, rsflx, line_color='red', legend_label='Ref')
-                pcal.line([wlm0, wlm0], yran, line_color='orange')
-                pcal.line([wlm1, wlm1], yran, line_color='orange')
+                pcal.line([wlm0, wlm0], yran, line_color='green',
+                          legend_label='WL lims')
+                pcal.line([wlm1, wlm1], yran, line_color='green')
                 set_plot_lims(pcal, xlim=[wall0, wall1], ylim=yran)
                 bokeh_plot(pcal, self.context.bokeh_session)
                 if self.config.instrument.plot_level >= 2:
@@ -449,22 +458,24 @@ class MakeInvsens(BasePrimitive):
                     ' %s Residuals = %.1f +- %.1f (%%)' % (stdname, rsd_mean,
                                                            rsd_stdv),
                     x_axis_label='Wave (A)',
-                    y_axis_label='Ref - Cal / Ref (%)',
+                    y_axis_label='Obs - Ref / Ref (%)',
                     plot_width=self.config.instrument.plot_width,
                     plot_height=self.config.instrument.plot_height)
                 prsd.line(wf, resid, line_color='black',
-                          legend_label='Ref - Cal (%)')
+                          legend_label='Obs - Ref (%)')
                 if len(not_used) > 0:
                     prsd.scatter(ww, rbad, marker='x', legend_label='Rej')
-                prsd.line([wlm0, wlm0], yran, line_color='orange')
-                prsd.line([wlm1, wlm1], yran, line_color='orange')
-                prsd.line([wall0, wall1], [0, 0], line_color='blue')
+                prsd.line([wlm0, wlm0], yran, line_color='green',
+                          legend_label='WL lims')
+                prsd.line([wlm1, wlm1], yran, line_color='green')
+                prsd.line([wall0, wall1], [rsd_mean, rsd_mean],
+                          line_color='red')
                 prsd.line([wall0, wall1],
                           [rsd_mean+rsd_stdv, rsd_mean+rsd_stdv],
-                          line_color='green')
+                          line_color='black', line_dash='dashed')
                 prsd.line([wall0, wall1],
                           [rsd_mean-rsd_stdv, rsd_mean-rsd_stdv],
-                          line_color='green')
+                          line_color='black', line_dash='dashed')
                 set_plot_lims(prsd, xlim=[wall0, wall1], ylim=yran)
                 bokeh_plot(prsd, self.context.bokeh_session)
                 if self.config.instrument.plot_level >= 2:
@@ -485,7 +496,7 @@ class MakeInvsens(BasePrimitive):
                             res = np.polyfit(wf - wf0, af, ford, w=mw)
                             fearea = np.polyval(res, w - wf0)
                             # re-calculate residuals
-                            resid = 100.0 * (rf - scalspec) / rf
+                            resid = 100.0 * (scalspec - rf) / rf
                             if len(not_used) > 0:
                                 rbad = resid[not_used]
                             else:
@@ -500,14 +511,19 @@ class MakeInvsens(BasePrimitive):
                 else:
                     done = True
                     time.sleep(2. * self.config.instrument.plot_pause)
+            # log results
+            effmax = float(np.nanmax(100. * fearea / area))
+            effmean = float(np.nanmean(100. * fearea / area))
+            self.logger.info("Peak, mean efficiency (%%): %.1f, %.1f" %
+                             (effmax, effmean))
+            self.logger.info("Fit order = %d" % ford)
             # output plots
-            imstr = "%05d" % self.action.args.ccddata.header['FRAMENO']
-            cwv = "%d" % int(self.action.args.cwave)
-            grat = self.action.args.grating.strip()
-            ifu = self.action.args.ifuname.strip()
             pfname = os.path.join(self.config.instrument.output_directory,
-                                  stdname + '_' + grat + '_' + cwv + '_' +
-                                  ifu + '_' + imstr)
+                                  "std_%05d_%s_%s_%s_%d" %
+                                  (self.action.args.ccddata.header['FRAMENO'],
+                                   stdname, self.action.args.grating.strip(),
+                                   self.action.args.ifuname.strip(),
+                                   int(self.action.args.cwave)))
             # Save plots
             save_plot(peff, filename=pfname + '_eff.png')      # Efficiency
             save_plot(pivs, filename=pfname + '_invsens.png')  # Inv. Sens.
@@ -534,6 +550,9 @@ class MakeInvsens(BasePrimitive):
         hdr['INVSL0'] = (sl0, 'lowest std star slice summed')
         hdr['INVSL1'] = (sl1, 'highest std star slice summed')
         hdr['INVSLY'] = (cy, 'spatial pixel position of std within slice')
+        hdr['INVFW0'] = (wlm0, 'low wavelength for fits')
+        hdr['INVFW1'] = (wlm1, 'high wavelength for fits')
+        hdr['INVFORD'] = (ford, 'fit order')
         hdr['EXPTIME'] = (1., 'effective exposure time (seconds)')
         hdr['XPOSURE'] = (1., 'effective exposure time (seconds)')
 

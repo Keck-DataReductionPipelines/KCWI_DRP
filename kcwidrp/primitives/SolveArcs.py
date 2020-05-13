@@ -456,11 +456,14 @@ class SolveArcs(BasePrimitive):
                 input("Next? <cr>: ")
             else:
                 time.sleep(self.config.instrument.plot_pause)
-        save_plot(p, filename=os.path.join(
-            self.config.instrument.output_directory,
-            "arc_%05d_resid_%s_%s_%s.png" %
-            (self.action.args.ccddata.header['FRAMENO'], self.action.args.illum,
-             self.action.args.grating, self.action.args.ifuname)))
+        # plot output name stub
+        pfname = os.path.join(self.config.instrument.output_directory,
+                              "arc_%05d_%s_%s_%s" %
+                              (self.action.args.ccddata.header['FRAMENO'],
+                               self.action.args.illum, self.action.args.grating,
+                               self.action.args.ifuname))
+        # save residual plot
+        save_plot(p, filename=pfname + '_resid.png')
         # Plot number of lines fit
         self.action.args.av_bar_nls = float(np.nanmean(bar_nls))
         self.action.args.st_bar_nls = float(np.nanstd(bar_nls))
@@ -497,12 +500,8 @@ class SolveArcs(BasePrimitive):
                 input("Next? <cr>: ")
             else:
                 time.sleep(self.config.instrument.plot_pause)
-        save_plot(p, filename=os.path.join(
-            self.config.instrument.output_directory,
-            "arc_%05d_nlines_%s_%s_%s.png" %
-            (self.action.args.ccddata.header['FRAMENO'],
-             self.action.args.illum,
-             self.action.args.grating, self.action.args.ifuname)))
+        # save N lines plot
+        save_plot(p, filename=pfname + '_nlines.png')
         # Plot coefs
         if self.config.instrument.plot_level >= 1:
             ylabs = ['Ang/px^4', 'Ang/px^3', 'Ang/px^2', 'Ang/px', 'Ang']
@@ -526,12 +525,8 @@ class SolveArcs(BasePrimitive):
                     input("Next? <cr>: ")
                 else:
                     time.sleep(self.config.instrument.plot_pause)
-                save_plot(p, filename=os.path.join(
-                    self.config.instrument.output_directory,
-                    "arc_%05d_coef%d_%s_%s_%s.png" %
-                    (self.action.args.ccddata.header['FRAMENO'], ic,
-                     self.action.args.illum, self.action.args.grating,
-                     self.action.args.ifuname)))
+                # save coefficients plot
+                save_plot(p, filename=pfname + '_coef%d.png' % ic)
 
         log_string = SolveArcs.__module__
         self.action.args.ccddata.header['HISTORY'] = log_string

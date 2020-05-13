@@ -681,6 +681,7 @@ class MakeMasterFlat(BaseImg):
             p.circle(xrplt, yrplt, size=1, line_alpha=0., fill_color='black',
                      legend_label='Ref Data')
             p.line(xrplt, yfplt, line_color='green', legend_label='Ref Fit')
+            p.legend.location = "top_left"
             bokeh_plot(p, self.context.bokeh_session)
             if self.config.instrument.plot_level >= 2:
                 input("Next? <cr>: ")

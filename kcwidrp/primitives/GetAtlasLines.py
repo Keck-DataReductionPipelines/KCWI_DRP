@@ -367,7 +367,7 @@ class GetAtlasLines(BasePrimitive):
                 time.sleep(self.config.instrument.plot_pause)
             save_plot(p, filename=os.path.join(
                 self.config.instrument.output_directory,
-                "arc_%05d_atlines_%s_%s_%s.png" %
+                "arc_%05d_%s_%s_%s_atlines.png" %
                 (self.action.args.ccddata.header['FRAMENO'],
                  self.action.args.illum, self.action.args.grating,
                  self.action.args.ifuname)))
