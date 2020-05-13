@@ -593,10 +593,12 @@ def write_table(output_dir=None, table=None, names=None, comment=None,
     output_file = os.path.join(output_dir, output_name)
     # check if file already exists
     if os.path.exists(output_file) and clobber is False:
-        logger.warning("Table %s already exists and overwrite is set to False" % output_file)
+        logger.warning("Table %s already exists and overwrite is set to False"
+                       % output_file)
         return
     if os.path.exists(output_file) and clobber is True:
-        logger.warning("Table %s already exists and will be overwritten" % output_file)
+        logger.warning("Table %s already exists and will be overwritten"
+                       % output_file)
         logger.info("Removing file: %s" % output_file)
         os.remove(output_file)
 
@@ -608,11 +610,10 @@ def write_table(output_dir=None, table=None, names=None, comment=None,
             t.meta[k] = v
     try:
         t.write(output_file, format='fits')
-    except FileExistsError:
-        logger.error("Something went wrong creating the table: table already exists")
-    except OSError:
-        logger.error("Something went wrong creating the table: Table already exists")
-    logger.info("Output table: %s" % output_file)
+        logger.info("Output table: %s" % output_file)
+    except (FileExistsError, OSError):
+        logger.error("Something went wrong creating the table: "
+                     "table already exists")
 
 
 def read_table(input_dir=None, file_name=None):
