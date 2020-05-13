@@ -1,5 +1,7 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from kcwidrp.core.bokeh_plotting import bokeh_plot
+from kcwidrp.core.kcwi_plotting import get_plot_lims, oplot_slices, \
+    set_plot_lims
 
 from bokeh.plotting import figure
 from bokeh.models import Range1d
@@ -308,12 +310,12 @@ class FitCenter(BasePrimitive):
             p.scatter(x, centwave, marker='x', legend_label='bar wave')
             p.line([0, 120], [self.action.args.cwave, self.action.args.cwave],
                    color='red', legend_label='CWAVE')
-            ylim = [min(centwave), max(centwave)]
-            for ix in range(1, 24):
-                sx = ix * 5 - 0.5
-                p.line([sx, sx], ylim, color='black')
-            p.x_range = Range1d(-1, 120)
+            xlim = [-1, 120]
+            ylim = get_plot_lims(centwave)
+            p.xgrid.grid_line_color = None
+            oplot_slices(p, ylim)
             p.legend.location = "top_center"
+            set_plot_lims(p, xlim=xlim, ylim=ylim)
             bokeh_plot(p, self.context.bokeh_session)
             if self.config.instrument.plot_level >= 2:
                 input("Next? <cr>: ")
@@ -330,12 +332,12 @@ class FitCenter(BasePrimitive):
             p.line([0, 120], [self.context.prelim_disp,
                               self.context.prelim_disp], color='red',
                    legend_label='Calc Disp')
-            ylim = [min(centdisp), max(centdisp)]
-            for ix in range(1, 24):
-                sx = ix * 5 - 0.5
-                p.line([sx, sx], ylim, color='black')
-            p.x_range = Range1d(-1, 120)
+            xlim = [-2, 121]
+            ylim = get_plot_lims(centdisp)
+            p.xgrid.grid_line_color = None
+            oplot_slices(p, ylim)
             p.legend.location = "bottom_center"
+            set_plot_lims(p, xlim=xlim, ylim=ylim)
             bokeh_plot(p, self.context.bokeh_session)
             if self.config.instrument.plot_level >= 2:
                 input("Next? <cr>: ")

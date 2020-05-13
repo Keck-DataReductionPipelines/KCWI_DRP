@@ -1,5 +1,7 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from kcwidrp.core.bokeh_plotting import bokeh_plot
+from kcwidrp.core.kcwi_plotting import get_plot_lims, oplot_slices, \
+    set_plot_lims
 
 import numpy as np
 from scipy.signal.windows import boxcar
@@ -432,23 +434,22 @@ class SolveArcs(BasePrimitive):
                    plot_height=self.config.instrument.plot_height)
         p.diamond(list(range(120)), bar_sig, size=8)
         xlim = [-1, 120]
-        ylim = [np.nanmin(bar_sig), np.nanmax(bar_sig)]
-
+        ylim = get_plot_lims(bar_sig)
         p.line(xlim, [self.action.args.av_bar_sig,
-                      self.action.args.av_bar_sig], color='black')
+                      self.action.args.av_bar_sig], color='red')
         p.line(xlim, [(self.action.args.av_bar_sig -
                        self.action.args.st_bar_sig),
                       (self.action.args.av_bar_sig -
-                       self.action.args.st_bar_sig)], color='black',
-               line_dash='dotted')
+                       self.action.args.st_bar_sig)], color='green',
+               line_dash='dashed')
         p.line(xlim, [(self.action.args.av_bar_sig +
                        self.action.args.st_bar_sig),
                       (self.action.args.av_bar_sig +
-                       self.action.args.st_bar_sig)], color='black',
-               line_dash='dotted')
-        for ix in range(1, 24):
-            sx = ix * 5 - 0.5
-            p.line([sx, sx], ylim, color='black', line_dash='dashdot')
+                       self.action.args.st_bar_sig)], color='green',
+               line_dash='dashed')
+        p.xgrid.grid_line_color = None
+        oplot_slices(p, ylim)
+        set_plot_lims(p, xlim=xlim, ylim=ylim)
         if self.config.instrument.plot_level >= 1:
             bokeh_plot(p, self.context.bokeh_session)
             if self.config.instrument.plot_level >= 2:
@@ -470,26 +471,25 @@ class SolveArcs(BasePrimitive):
                    plot_height=self.config.instrument.plot_height)
         p.diamond(list(range(120)), bar_nls,  size=8)
         xlim = [-1, 120]
-        ylim = [np.nanmin(bar_nls), np.nanmax(bar_nls)]
+        ylim = get_plot_lims(bar_nls)
         self.logger.info("<N Lines> = %.1f +- %.1f" %
                          (self.action.args.av_bar_nls,
                           self.action.args.st_bar_nls))
         p.line(xlim, [self.action.args.av_bar_nls,
-                      self.action.args.av_bar_nls], color='black')
+                      self.action.args.av_bar_nls], color='red')
         p.line(xlim, [(self.action.args.av_bar_nls -
                        self.action.args.st_bar_nls),
                       (self.action.args.av_bar_nls -
-                       self.action.args.st_bar_nls)], color='black',
-               line_dash='dotted')
+                       self.action.args.st_bar_nls)], color='green',
+               line_dash='dashed')
         p.line(xlim, [(self.action.args.av_bar_nls +
                        self.action.args.st_bar_nls),
                       (self.action.args.av_bar_nls +
-                       self.action.args.st_bar_nls)], color='black',
-               line_dash='dotted')
-        for ix in range(1, 24):
-            sx = ix * 5 - 0.5
-            p.line([sx, sx], ylim, color='black', line_dash='dashdot')
-
+                       self.action.args.st_bar_nls)], color='green',
+               line_dash='dashed')
+        p.xgrid.grid_line_color = None
+        oplot_slices(p, ylim)
+        set_plot_lims(p, xlim=xlim, ylim=ylim)
         if self.config.instrument.plot_level >= 1:
             bokeh_plot(p, self.context.bokeh_session)
             if self.config.instrument.plot_level >= 2:
@@ -513,10 +513,11 @@ class SolveArcs(BasePrimitive):
                 for c in self.action.args.fincoeff:
                     coef.append(c[ic])
                 p.diamond(list(range(120)), coef, size=8)
-                ylim = [np.nanmin(coef), np.nanmax(coef)]
-                for ix in range(1, 24):
-                    sx = ix * 5 - 0.5
-                    p.line([sx, sx], ylim, color='black', line_dash='dashdot')
+                xlim = [-1, 120]
+                ylim = get_plot_lims(coef)
+                p.xgrid.grid_line_color = None
+                oplot_slices(p, ylim)
+                set_plot_lims(p, xlim=xlim, ylim=ylim)
                 bokeh_plot(p, self.context.bokeh_session)
                 if self.config.instrument.plot_level >= 2:
                     input("Next? <cr>: ")
