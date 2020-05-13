@@ -33,21 +33,23 @@ class MakeMasterFlat(BaseImg):
         """
         # get list of master flats
         self.logger.info("Checking precondition for MakeMasterFlat")
-        target_type = 'MFLAT'
-        tab = self.context.proctab.n_proctab(frame=self.action.args.ccddata,
-                                             target_type=target_type,
-                                             nearest=True)
+        tab = self.context.proctab.n_proctab(
+            frame=self.action.args.ccddata,
+            target_type=self.action.args.new_type, nearest=True)
         if len(tab) > 0:
-            self.logger.info(f"already have {len(tab)} master flats, "
-                             f" expecting 0")
+            self.logger.info("already have %d master %s flats, "
+                             " expecting 0" % (len(tab),
+                                               self.action.args.new_type))
             return False
         else:
+            self.logger.info("No %s master flat found, proceeding." %
+                             self.action.args.new_type)
             self.stack_list = self.context.proctab.n_proctab(
                 frame=self.action.args.ccddata,
                 target_type=self.action.args.stack_type,
                 target_group=self.action.args.groupid)
-            self.logger.info(f"pre condition got {len(self.stack_list)},"
-                             f" expecting 1")
+            self.logger.info("pre condition got {len(self.stack_list)},"
+                             " expecting 1")
             # do we meet the criterion?
             if len(self.stack_list) >= 1:
                 return True
