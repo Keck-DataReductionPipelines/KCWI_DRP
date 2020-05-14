@@ -45,20 +45,30 @@ class MakeInvsens(BasePrimitive):
                                 self.action.args.imtype)
         self.action.args.stdfile = stdfile
         self.action.args.stdname = stdname
-        # check pre condition
-        if self.action.args.stdfile is not None:
-            # does file already exist?
-            ofn = self.action.args.ccddata.header['OFNAME']
-            msname = ofn.split('.fits')[0] + '_invsens.fits'
-            rdir = self.config.instrument.output_directory
-            invsensf = os.path.join(rdir, msname)
-            if os.path.exists(invsensf):
-                self.logger.info("Master cal already exists: %s" % invsensf)
-                return False
+        # have we been processed correctly?
+        if 'DARCOR' in self.action.args.ccddata.header:
+            if self.action.args.ccddata.header['DARCOR']:
+                # check pre condition
+                if self.action.args.stdfile is not None:
+                    # does file already exist?
+                    ofn = self.action.args.ccddata.header['OFNAME']
+                    msname = ofn.split('.fits')[0] + '_invsens.fits'
+                    rdir = self.config.instrument.output_directory
+                    invsensf = os.path.join(rdir, msname)
+                    if os.path.exists(invsensf):
+                        self.logger.info("Master cal already exists: %s" % invsensf)
+                        return False
+                    else:
+                        self.logger.info("Master cal will be generated.")
+                        return True
+                else:
+                    return False
             else:
-                self.logger.info("Master cal will be generated.")
-                return True
+                self.logger.warning("DAR not corrected, cannot generate "
+                                    "inverse sensitivity")
         else:
+            self.logger.warning("Not processed enough to generate "
+                                "inverse sensitivity")
             return False
 
     def _perform(self):
@@ -242,7 +252,7 @@ class MakeInvsens(BasePrimitive):
             while not done:
                 p = figure(
                     tooltips=[("x", "@x{0,0.0}"), ("y", "@y{0,0.0}")],
-                    title=self.action.args.plotlabel + ' %s Obs Spec' % stdname,
+                    title=self.action.args.plotlabel + ' Obs Spec',
                     x_axis_label='Wave (A)',
                     y_axis_label='Intensity (e-)',
                     plot_width=self.config.instrument.plot_width,
@@ -285,7 +295,7 @@ class MakeInvsens(BasePrimitive):
             while not done:
                 p = figure(
                     tooltips=[("x", "@x{0.0}"), ("y", "@y{0.0}")],
-                    title=self.action.args.plotlabel + ' %s Obs Spec' % stdname,
+                    title=self.action.args.plotlabel + ' Obs Spec',
                     x_axis_label='Wave (A)',
                     y_axis_label='Intensity (e-)',
                     plot_width=self.config.instrument.plot_width,
@@ -386,8 +396,7 @@ class MakeInvsens(BasePrimitive):
                 effmax = np.nanmax(100.*fearea/area)
                 effmean = np.nanmean(100.*fearea/area)
                 peff = figure(
-                    title=self.action.args.plotlabel +
-                    ' %s Efficiency' % stdname,
+                    title=self.action.args.plotlabel + ' Efficiency',
                     x_axis_label='Wave (A)',
                     y_axis_label='Effective Efficiency (%)',
                     plot_width=self.config.instrument.plot_width,
@@ -413,8 +422,7 @@ class MakeInvsens(BasePrimitive):
 
                 yran = [np.min(sf), np.max(sf)]
                 pivs = figure(
-                    title=self.action.args.plotlabel +
-                    ' %s Inverse sensitivity' % stdname,
+                    title=self.action.args.plotlabel + ' Inverse sensitivity',
                     x_axis_label='Wave (A)',
                     y_axis_label='Invserse Sensitivity (Flux/e-/s)',
                     plot_width=self.config.instrument.plot_width,
@@ -434,8 +442,7 @@ class MakeInvsens(BasePrimitive):
 
                 yran = [np.min(calspec), np.max(calspec)]
                 pcal = figure(
-                    title=self.action.args.plotlabel +
-                    ' %s Calibrated' % stdname,
+                    title=self.action.args.plotlabel + ' Calibrated',
                     x_axis_label='Wave (A)',
                     y_axis_label='Flux (ergs/s/cm^s/A)',
                     plot_width=self.config.instrument.plot_width,
@@ -455,8 +462,7 @@ class MakeInvsens(BasePrimitive):
                 yran = [np.min(resid), np.max(resid)]
                 prsd = figure(
                     title=self.action.args.plotlabel +
-                    ' %s Residuals = %.1f +- %.1f (%%)' % (stdname, rsd_mean,
-                                                           rsd_stdv),
+                    ' Residuals = %.1f +- %.1f (%%)' % (rsd_mean, rsd_stdv),
                     x_axis_label='Wave (A)',
                     y_axis_label='Obs - Ref / Ref (%)',
                     plot_width=self.config.instrument.plot_width,
@@ -518,12 +524,10 @@ class MakeInvsens(BasePrimitive):
                              (effmax, effmean))
             self.logger.info("Fit order = %d" % ford)
             # output plots
-            pfname = os.path.join(self.config.instrument.output_directory,
-                                  "std_%05d_%s_%s_%s_%d" %
-                                  (self.action.args.ccddata.header['FRAMENO'],
-                                   stdname, self.action.args.grating.strip(),
-                                   self.action.args.ifuname.strip(),
-                                   int(self.action.args.cwave)))
+            pfname = "std_%05d_%s_%s_%s_%d" % (
+                self.action.args.ccddata.header['FRAMENO'],
+                stdname, self.action.args.grating.strip(),
+                self.action.args.ifuname.strip(), int(self.action.args.cwave))
             # Save plots
             save_plot(peff, filename=pfname + '_eff.png')      # Efficiency
             save_plot(pivs, filename=pfname + '_invsens.png')  # Inv. Sens.
