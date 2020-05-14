@@ -130,7 +130,7 @@ class CorrectDar(BasePrimitive):
         # prepare output cubes
         output_image = np.zeros((image_size[0], image_size[1]+2*padding_y,
                                  image_size[2]+2*padding_x), dtype=np.float64)
-        output_variance = output_image.copy()
+        output_stddev = output_image.copy()
         output_mask = np.zeros((image_size[0], image_size[1]+2*padding_y,
                                 image_size[2]+2*padding_x), dtype=np.uint8)
 
@@ -138,7 +138,7 @@ class CorrectDar(BasePrimitive):
                      padding_x:(padding_x+image_size[2])] = \
             self.action.args.ccddata.data
 
-        output_variance[:, padding_y:(padding_y+image_size[1]),
+        output_stddev[:, padding_y:(padding_y+image_size[1]),
                         padding_x:(padding_x+image_size[2])] = \
             self.action.args.ccddata.uncertainty.array
 
@@ -155,13 +155,13 @@ class CorrectDar(BasePrimitive):
                 math.cos(projection_angle) / y_scale
             output_image[j, :, :] = shift(output_image[j, :, :], (y_shift,
                                                                   x_shift))
-            output_variance[j, :, :] = shift(output_variance[j, :, :],
+            output_stddev[j, :, :] = shift(output_stddev[j, :, :],
                                              (y_shift, x_shift))
             output_mask[j, :, :] = shift(output_mask[j, :, :], (y_shift,
                                                                 x_shift))
 
         self.action.args.ccddata.data = output_image
-        self.action.args.ccddata.uncertainty.array = output_variance
+        self.action.args.ccddata.uncertainty.array = output_stddev
         self.action.args.ccddata.mask = output_mask
 
         log_string = CorrectDar.__module__

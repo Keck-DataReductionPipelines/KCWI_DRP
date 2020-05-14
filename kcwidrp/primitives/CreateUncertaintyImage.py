@@ -1,7 +1,9 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from kcwidrp.primitives.kcwi_file_primitives import parse_imsec
 
-from astropy.nddata import VarianceUncertainty
+from astropy.nddata import StdDevUncertainty
+
+import numpy as np
 
 
 class CreateUncertaintyImage(BasePrimitive):
@@ -15,13 +17,13 @@ class CreateUncertaintyImage(BasePrimitive):
         """Assumes units of image are electron"""
 
         # Header keyword to update
-        key = 'UNCVAR'
-        keycom = 'variance created?'
+        key = 'UNCSTD'
+        keycom = 'stddev uncertainty created?'
 
         self.logger.info("Create uncertainty image")
         # start with Poisson noise
-        self.action.args.ccddata.uncertainty = VarianceUncertainty(
-            self.action.args.ccddata.data, unit='electron^2', copy=True)
+        self.action.args.ccddata.uncertainty = StdDevUncertainty(
+            np.sqrt(np.abs(self.action.args.ccddata.data)), copy=True)
         # add readnoise, if known
         if 'BIASRN1' in self.action.args.ccddata.header:
             number_of_amplifiers = self.action.args.ccddata.header['NVIDINP']
@@ -34,7 +36,12 @@ class CreateUncertaintyImage(BasePrimitive):
                 parsed_section, read_forward = parse_imsec(section)
                 self.action.args.ccddata.uncertainty.array[
                     parsed_section[0]:(parsed_section[1]+1),
-                    parsed_section[2]:(parsed_section[3]+1)] += bias_readnoise
+                    parsed_section[2]:(parsed_section[3]+1)] = \
+                    np.sqrt(
+                    self.action.args.ccddata.uncertainty.array[
+                        parsed_section[0]:(parsed_section[1] + 1),
+                        parsed_section[2]:(parsed_section[3] + 1)] ** 2 +
+                        bias_readnoise ** 2)
         else:
             self.logger.warn("Readnoise undefined, uncertainty Poisson only")
         # document variance image creation
