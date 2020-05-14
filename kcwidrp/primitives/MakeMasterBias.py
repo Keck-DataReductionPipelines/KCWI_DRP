@@ -87,15 +87,16 @@ class MakeMasterBias(BaseImg):
             stacked.header['BIASRN%d' % (ia + 1)] = \
                 (float("%.3f" % bias_rn), "RN in e- from bias")
             if self.config.instrument.plot_level >= 1:
-                plabel = '[Img # %d' % self.action.args.ccddata.header[
+                plabel = '[ Img # %d' % self.action.args.ccddata.header[
                     'FRAMENO']
-                plabel += ': %s' % self.action.args.ccddata.header['BINNING']
+                plabel += ' (Bias)'
+                plabel += ' %s' % self.action.args.ccddata.header['BINNING']
                 plabel += ' %s' % self.action.args.ccddata.header['AMPMODE']
                 plabel += ' %d' % self.action.args.ccddata.header['GAINMUL']
                 plabel += ' %s' % ('fast' if
                                    self.action.args.ccddata.header['CCDMODE']
                                    else 'slow')
-                plabel += '] '
+                plabel += ' ] '
                 hist, edges = np.histogram(noise, range=(low, upp),
                                            density=False, bins=50)
                 x = np.linspace(low, upp, 500)
