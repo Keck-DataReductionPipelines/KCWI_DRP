@@ -239,11 +239,12 @@ class ingest_file(BasePrimitive):
         return int(self.get_keyword('BINNING').split(',')[-1])
 
     def plotlabel(self):
-        lab = "[Img # %d " % self.get_keyword('FRAMENO')
+        lab = "[ Img # %d " % self.get_keyword('FRAMENO')
         lab += "(%s) " % self.illum()
-        lab += "Slicer: %s " % self.ifuname()
+        lab += "Slicer: %s, " % self.ifuname()
+        lab += "Grating: %s, " % self.grating()
+        lab += "CWave: %d, " % int(self.cwave())
         lab += "Filter: %s " % self.filter()
-        lab += "Grating: %s" % self.grating()
         lab += "] "
         return lab
 
@@ -292,7 +293,12 @@ class ingest_file(BasePrimitive):
                 illum = 'Test'
         # OBJECT
         elif self.get_keyword('IMTYPE') == 'OBJECT':
-            illum = 'Object'
+            obnam = self.get_keyword('OBJECT')
+            if obnam is None:
+                obnam = self.get_keyword('TARGNAME')
+                if obnam is None:
+                    obnam = 'Object'
+            illum = obnam
         else:
             illum = 'Test'
         return illum
