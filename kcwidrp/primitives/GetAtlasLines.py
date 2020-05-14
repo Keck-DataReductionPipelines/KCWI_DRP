@@ -365,12 +365,11 @@ class GetAtlasLines(BasePrimitive):
                 input("Next? <cr>: ")
             else:
                 time.sleep(self.config.instrument.plot_pause)
-            save_plot(p, filename=os.path.join(
-                self.config.instrument.output_directory,
-                "arc_%05d_%s_%s_%s_atlines.png" %
-                (self.action.args.ccddata.header['FRAMENO'],
-                 self.action.args.illum, self.action.args.grating,
-                 self.action.args.ifuname)))
+            save_plot(p, filename="arc_%05d_%s_%s_%s_atlines.png" %
+                                  (self.action.args.ccddata.header['FRAMENO'],
+                                   self.action.args.illum,
+                                   self.action.args.grating,
+                                   self.action.args.ifuname))
         self.logger.info("Final atlas list has %d lines" % len(refws))
 
         log_string = GetAtlasLines.__module__

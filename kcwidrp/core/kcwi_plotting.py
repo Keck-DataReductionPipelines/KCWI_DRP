@@ -1,6 +1,7 @@
 import numpy as np
 from bokeh.io import export_png
 
+import os
 import logging
 
 logger = logging.getLogger('KCWI')
@@ -33,9 +34,9 @@ def set_plot_lims(fig, xlim=None, ylim=None):
 
 def save_plot(fig, filename=None):
     if filename is None:
-        fnam = 'kcwi_plot.png'
+        fnam = os.path.join('plots', 'kcwi_drp_plot.png')
     else:
-        fnam = filename
+        fnam = os.path.join('plots', filename)
     export_png(fig, filename=fnam)
 
     logger.info(">>> Saving to %s" % fnam)

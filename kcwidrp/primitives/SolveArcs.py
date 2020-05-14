@@ -12,7 +12,6 @@ from scipy.stats import sigmaclip
 from bokeh.plotting import figure
 from bokeh.models import Range1d, LinearAxis
 import time
-import os
 
 
 def gaus(x, a, mu, sigma):
@@ -418,7 +417,84 @@ class SolveArcs(BasePrimitive):
                 q = input("Next? <cr>, q - quit: ")
                 if 'Q' in q.upper():
                     master_inter = False
+
         # Plot final results
+
+        # plot output name stub
+        pfname = "arc_%05d_%s_%s_%s" % (
+            self.action.args.ccddata.header['FRAMENO'],
+            self.action.args.illum, self.action.args.grating,
+            self.action.args.ifuname)
+
+        # Plot coefs
+        if self.config.instrument.plot_level >= 1:
+            ylabs = ['Ang/px^4', 'Ang/px^3', 'Ang/px^2', 'Ang/px',
+                     'Ang']
+            for ic in reversed(
+                    range(len(self.action.args.fincoeff[0]))):
+                ptitle = self.action.args.plotlabel + "COEF %d VALUES" % ic
+                p = figure(title=ptitle, x_axis_label="Bar #",
+                           y_axis_label="Coef %d (%s)" % (
+                           ic, ylabs[ic]),
+                           plot_width=self.config.instrument.plot_width,
+                           plot_height=self.config.instrument.plot_height)
+                coef = []
+                for c in self.action.args.fincoeff:
+                    coef.append(c[ic])
+                p.diamond(list(range(120)), coef, size=8)
+                xlim = [-1, 120]
+                ylim = get_plot_lims(coef)
+                p.xgrid.grid_line_color = None
+                oplot_slices(p, ylim)
+                set_plot_lims(p, xlim=xlim, ylim=ylim)
+                bokeh_plot(p, self.context.bokeh_session)
+                if self.config.instrument.plot_level >= 2:
+                    input("Next? <cr>: ")
+                else:
+                    time.sleep(self.config.instrument.plot_pause)
+                # save coefficients plot
+                save_plot(p, filename=pfname + '_coef%d.png' % ic)
+
+        # Plot number of lines fit
+        self.action.args.av_bar_nls = float(np.nanmean(bar_nls))
+        self.action.args.st_bar_nls = float(np.nanstd(bar_nls))
+        ptitle = self.action.args.plotlabel + \
+            "FIT STATS <Nlns> = %.1f +- %.1f" % (self.action.args.av_bar_nls,
+                                                 self.action.args.st_bar_nls)
+        p = figure(title=ptitle, x_axis_label="Bar #",
+                   y_axis_label="N Lines",
+                   plot_width=self.config.instrument.plot_width,
+                   plot_height=self.config.instrument.plot_height)
+        p.diamond(list(range(120)), bar_nls, size=8)
+        xlim = [-1, 120]
+        ylim = get_plot_lims(bar_nls)
+        self.logger.info("<N Lines> = %.1f +- %.1f" %
+                         (self.action.args.av_bar_nls,
+                          self.action.args.st_bar_nls))
+        p.line(xlim, [self.action.args.av_bar_nls,
+                      self.action.args.av_bar_nls], color='red')
+        p.line(xlim, [(self.action.args.av_bar_nls -
+                       self.action.args.st_bar_nls),
+                      (self.action.args.av_bar_nls -
+                       self.action.args.st_bar_nls)], color='green',
+               line_dash='dashed')
+        p.line(xlim, [(self.action.args.av_bar_nls +
+                       self.action.args.st_bar_nls),
+                      (self.action.args.av_bar_nls +
+                       self.action.args.st_bar_nls)], color='green',
+               line_dash='dashed')
+        p.xgrid.grid_line_color = None
+        oplot_slices(p, ylim)
+        set_plot_lims(p, xlim=xlim, ylim=ylim)
+        if self.config.instrument.plot_level >= 1:
+            bokeh_plot(p, self.context.bokeh_session)
+            if self.config.instrument.plot_level >= 2:
+                input("Next? <cr>: ")
+            else:
+                time.sleep(self.config.instrument.plot_pause)
+        # save N lines plot
+        save_plot(p, filename=pfname + '_nlines.png')
+
         # Plot fit sigmas
         self.action.args.av_bar_sig = float(np.nanmean(bar_sig))
         self.action.args.st_bar_sig = float(np.nanstd(bar_sig))
@@ -456,77 +532,9 @@ class SolveArcs(BasePrimitive):
                 input("Next? <cr>: ")
             else:
                 time.sleep(self.config.instrument.plot_pause)
-        # plot output name stub
-        pfname = os.path.join(self.config.instrument.output_directory,
-                              "arc_%05d_%s_%s_%s" %
-                              (self.action.args.ccddata.header['FRAMENO'],
-                               self.action.args.illum, self.action.args.grating,
-                               self.action.args.ifuname))
+
         # save residual plot
         save_plot(p, filename=pfname + '_resid.png')
-        # Plot number of lines fit
-        self.action.args.av_bar_nls = float(np.nanmean(bar_nls))
-        self.action.args.st_bar_nls = float(np.nanstd(bar_nls))
-        ptitle = self.action.args.plotlabel + \
-            "FIT STATS <Nlns> = %.1f +- %.1f" % (self.action.args.av_bar_nls,
-                                                 self.action.args.st_bar_nls)
-        p = figure(title=ptitle, x_axis_label="Bar #", y_axis_label="N Lines",
-                   plot_width=self.config.instrument.plot_width,
-                   plot_height=self.config.instrument.plot_height)
-        p.diamond(list(range(120)), bar_nls,  size=8)
-        xlim = [-1, 120]
-        ylim = get_plot_lims(bar_nls)
-        self.logger.info("<N Lines> = %.1f +- %.1f" %
-                         (self.action.args.av_bar_nls,
-                          self.action.args.st_bar_nls))
-        p.line(xlim, [self.action.args.av_bar_nls,
-                      self.action.args.av_bar_nls], color='red')
-        p.line(xlim, [(self.action.args.av_bar_nls -
-                       self.action.args.st_bar_nls),
-                      (self.action.args.av_bar_nls -
-                       self.action.args.st_bar_nls)], color='green',
-               line_dash='dashed')
-        p.line(xlim, [(self.action.args.av_bar_nls +
-                       self.action.args.st_bar_nls),
-                      (self.action.args.av_bar_nls +
-                       self.action.args.st_bar_nls)], color='green',
-               line_dash='dashed')
-        p.xgrid.grid_line_color = None
-        oplot_slices(p, ylim)
-        set_plot_lims(p, xlim=xlim, ylim=ylim)
-        if self.config.instrument.plot_level >= 1:
-            bokeh_plot(p, self.context.bokeh_session)
-            if self.config.instrument.plot_level >= 2:
-                input("Next? <cr>: ")
-            else:
-                time.sleep(self.config.instrument.plot_pause)
-        # save N lines plot
-        save_plot(p, filename=pfname + '_nlines.png')
-        # Plot coefs
-        if self.config.instrument.plot_level >= 1:
-            ylabs = ['Ang/px^4', 'Ang/px^3', 'Ang/px^2', 'Ang/px', 'Ang']
-            for ic in reversed(range(len(self.action.args.fincoeff[0]))):
-                ptitle = self.action.args.plotlabel + "COEF %d VALUES" % ic
-                p = figure(title=ptitle, x_axis_label="Bar #",
-                           y_axis_label="Coef %d (%s)" % (ic, ylabs[ic]),
-                           plot_width=self.config.instrument.plot_width,
-                           plot_height=self.config.instrument.plot_height)
-                coef = []
-                for c in self.action.args.fincoeff:
-                    coef.append(c[ic])
-                p.diamond(list(range(120)), coef, size=8)
-                xlim = [-1, 120]
-                ylim = get_plot_lims(coef)
-                p.xgrid.grid_line_color = None
-                oplot_slices(p, ylim)
-                set_plot_lims(p, xlim=xlim, ylim=ylim)
-                bokeh_plot(p, self.context.bokeh_session)
-                if self.config.instrument.plot_level >= 2:
-                    input("Next? <cr>: ")
-                else:
-                    time.sleep(self.config.instrument.plot_pause)
-                # save coefficients plot
-                save_plot(p, filename=pfname + '_coef%d.png' % ic)
 
         log_string = SolveArcs.__module__
         self.action.args.ccddata.header['HISTORY'] = log_string
