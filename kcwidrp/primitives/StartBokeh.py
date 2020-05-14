@@ -25,3 +25,5 @@ class StartBokeh(BasePrimitive):
         session.document.add_root(c)
         self.context.bokeh_session = session
         session.show(c)
+
+        return True
