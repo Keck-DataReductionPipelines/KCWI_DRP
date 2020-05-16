@@ -261,7 +261,9 @@ class Kcwi_pipeline(BasePipeline):
             bias_args.new_type = "MBIAS"
             bias_args.min_files = context.config.instrument.bias_min_nframes
             bias_args.new_file_name = "master_bias_%s.fits" % groupid
-            context.push_event("process_bias", bias_args)
+            action.new_event = "process_bias"
+            return bias_args
+            #context.push_event("process_bias", bias_args)
         elif action.args.imtype == "DARK":
             dark_args = action.args
             dark_args.groupid = groupid
@@ -270,9 +272,13 @@ class Kcwi_pipeline(BasePipeline):
             dark_args.min_files = context.config.instrument.dark_min_nframes
             dark_args.new_file_name = "master_dark_%s.fits" % groupid
             dark_args.in_directory = "redux"
-            context.push_event("process_dark", dark_args)
+            action.new_event = "process_darks"
+            return darks_args
+            #context.push_event("process_dark", dark_args)
         elif "CONTBARS" in action.args.imtype:
-            context.push_event("process_contbars", action.args)
+            action.new_event = "process_contbars"
+            return action.args
+            #context.push_event("process_contbars", action.args)
         elif "FLATLAMP" in action.args.imtype:
             flat_args = action.args
             flat_args.groupid = groupid
@@ -282,7 +288,9 @@ class Kcwi_pipeline(BasePipeline):
             flat_args.min_files = context.config.instrument.flat_min_nframes
             flat_args.new_file_name = "master_flat_%s.fits" % groupid
             flat_args.in_directory = "redux"
-            context.push_event("process_flat", flat_args)
+            action.new_event = "process_flat"
+            return flat_args
+            #context.push_event("process_flat", flat_args)
         elif "DOMEFLAT" in action.args.imtype:
             flat_args = action.args
             flat_args.groupid = groupid
@@ -292,7 +300,9 @@ class Kcwi_pipeline(BasePipeline):
             flat_args.min_files = context.config.instrument.dome_min_nframes
             flat_args.new_file_name = "master_flat_%s.fits" % groupid
             flat_args.in_directory = "redux"
-            context.push_event("process_flat", flat_args)
+            action.new_event = "process_flat"
+            return flat_args
+            #context.push_event("process_flat", flat_args)
         elif "TWIFLAT" in action.args.imtype:
             flat_args = action.args
             flat_args.groupid = groupid
@@ -302,13 +312,19 @@ class Kcwi_pipeline(BasePipeline):
             flat_args.min_files = context.config.instrument.twiflat_min_nframes
             flat_args.new_file_name = "master_flat_%s.fits" % groupid
             flat_args.in_directory = "redux"
-            context.push_event("process_flat", flat_args)
+            action.new_event = "process_flat"
+            return flat_args
+            #context.push_event("process_flat", flat_args)
         elif "ARCLAMP" in action.args.imtype:
-            context.push_event("process_arc", action.args)
+            action.new_event = "process_arc"
+            return action.args
+            #context.push_event("process_arc", action.args)
         elif "OBJECT" in action.args.imtype:
             object_args = action.args
             object_args.new_type = "SKY"
-            context.push_event("process_object", action.args)
+            action.new_event = "process_object"
+            return object_args
+            #context.push_event("process_object", action.args)
 
 
 if __name__ == "__main__":
