@@ -24,16 +24,6 @@ def bokeh_plot(plot, session):
     session.push()
 
 
-def bokeh_add_plot(glyph, session):
-
-    figure = session.document.select_one(selector=dict(type=Figure))
-    new_figure = figure.glyph
-    c.childen.remove(p)
-    c.children.insert(0, new_p)
-    session.push()
-    # session.show(c)
-
-
 def check_bokeh_server():
     """
     Check if there is any running process that contains
@@ -46,7 +36,8 @@ def check_bokeh_server():
             for command in proc.cmdline():
                 if 'bokeh' in command:
                     return True
-        except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
+        except (psutil.NoSuchProcess, psutil.AccessDenied,
+                psutil.ZombieProcess):
             pass
     return False
 

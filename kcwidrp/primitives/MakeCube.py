@@ -97,7 +97,7 @@ class MakeCube(BasePrimitive):
             out_mube = np.zeros((ysize, xsize, 24), dtype=np.uint8)
             # Store original data
             data_img = self.action.args.ccddata.data
-            data_var = self.action.args.ccddata.uncertainty.array
+            data_std = self.action.args.ccddata.uncertainty.array
             data_msk = self.action.args.ccddata.mask
             # Loop over 24 slices
 
@@ -107,7 +107,7 @@ class MakeCube(BasePrimitive):
                     'slice_number': isl,
                     'geom': geom,
                     'img': data_img,
-                    'var': data_var,
+                    'std': data_std,
                     'msk': data_msk,
                     'xsize': xsize,
                     'ysize': ysize,

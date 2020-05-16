@@ -98,7 +98,7 @@ class FluxCalibrate(BasePrimitive):
             # units
             flam16_u = 1.e16 * u.erg / (u.angstrom * u.cm ** 2 * u.s)
             self.action.args.ccddata.unit = flam16_u
-            self.action.args.ccddata.uncertainty.unit = flam16_u ** 2
+            self.action.args.ccddata.uncertainty.unit = flam16_u
             # update header keywords
             self.action.args.ccddata.header[key] = (True, keycom)
             self.action.args.ccddata.header['MSFILE'] = (msname,

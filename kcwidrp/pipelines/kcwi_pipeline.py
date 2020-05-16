@@ -7,7 +7,6 @@ KCWI
 from keckdrpframework.pipelines.base_pipeline import BasePipeline
 from keckdrpframework.models.processing_context import ProcessingContext
 from kcwidrp.primitives.kcwi_file_primitives import *
-#from kcwidrp.primitives.StartBokeh import *
 from kcwidrp.core.kcwi_proctab import Proctab
 
 
@@ -58,9 +57,9 @@ class Kcwi_pipeline(BasePipeline):
                                       "dark_remove_crs"),
         "dark_remove_crs":           ("RemoveCosmicRays",
                                       "remove_crs_started",
-#                                      "dark_create_unc"),
-#        "dark_create_unc":           ("CreateUncertaintyImage",
-#                                      "create_unc_started",
+                                      "dark_create_unc"),
+        "dark_create_unc":           ("CreateUncertaintyImage",
+                                      "create_unc_started",
                                       "dark_rectify_image"),
         "dark_rectify_image":        ("RectifyImage",
                                       "rectification_started",

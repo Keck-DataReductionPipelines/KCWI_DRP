@@ -2,6 +2,7 @@ from keckdrpframework.models.arguments import Arguments
 from astropy.io import fits
 from astropy.nddata import CCDData
 from astropy.table import Table
+# from astropy import units as u
 import numpy as np
 
 from keckdrpframework.primitives.base_primitive import BasePrimitive
@@ -560,38 +561,11 @@ def kcwi_fits_reader(file):
     if ccddata:
         if 'BUNIT' in ccddata.header:
             ccddata.unit = ccddata.header['BUNIT']
+            if ccddata.uncertainty:
+                ccddata.uncertainty.unit = ccddata.header['BUNIT']
             # print("setting image units to " + ccddata.header['BUNIT'])
 
     return ccddata, table
-
-
-class kcwi_fits_ingest(BasePrimitive):
-    """
-    classdocs
-    """
-
-    def __init__(self, action, context):
-        """
-        Constructor
-        """
-        BasePrimitive.__init__(self, action, context)
-        self.logger = context.pipeline_logger
-
-    def _perform(self):
-        """
-        Expects action.args.name as fits file name
-        Returns HDUs or (later) data model
-        """
-        name = self.action.args.name
-        self.logger.info(f"Reading {name}")
-        out_args = Arguments()
-        out_args.name = name
-        ccddata, table = kcwi_fits_reader(name)
-        out_args.ccddata = ccddata
-        out_args.table = table
-        out_args.imtype = out_args.hdus.header['IMTYPE']
-
-        return out_args
 
 
 def write_table(output_dir=None, table=None, names=None, comment=None,
