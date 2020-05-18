@@ -25,7 +25,7 @@ def make_cube_helper(argument):
     xl1 = argument['geom']['xl1'][slice_number]
 
     slice_img = argument['img'][:, xl0:xl1]
-    slice_var = argument['var'][:, xl0:xl1]
+    slice_var = argument['std'][:, xl0:xl1]
     slice_msk = argument['msk'][:, xl0:xl1]
     xsize = argument['xsize']
     ysize = argument['ysize']
