@@ -48,8 +48,8 @@ class MakeMasterFlat(BaseImg):
                 frame=self.action.args.ccddata,
                 target_type=self.action.args.stack_type,
                 target_group=self.action.args.groupid)
-            self.logger.info("pre condition got {len(self.stack_list)},"
-                             " expecting 1")
+            self.logger.info(f"pre condition got {len(self.stack_list)},"
+                             f" expecting {self.action.args.min_files}")
             # do we meet the criterion?
             if len(self.stack_list) >= 1:
                 return True
