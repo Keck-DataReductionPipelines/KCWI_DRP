@@ -24,10 +24,16 @@ class CorrectDefects(BasePrimitive):
         # Create flags for bad columns fixed
         flags = np.zeros(self.action.args.ccddata.data.shape, dtype=np.uint8)
 
+        # Nod and Shuffle?
+        if self.action.args.nasmask and self.action.args.numopen > 1:
+            nastr = "_nas"
+        else:
+            nastr = ""
+
         # Does the defect file exist?
-        path = "data/defect_%s_%dx%d.dat" % (self.action.args.ampmode.strip(),
-                                             self.action.args.xbinsize,
-                                             self.action.args.ybinsize)
+        path = "data/defect_%s_%dx%d%s.dat" % (self.action.args.ampmode.strip(),
+                                               self.action.args.xbinsize,
+                                               self.action.args.ybinsize, nastr)
         package = __name__.split('.')[0]
         full_path = pkg_resources.resource_filename(package, path)
         number_of_bad_pixels = 0   # count of defective pixels cleaned

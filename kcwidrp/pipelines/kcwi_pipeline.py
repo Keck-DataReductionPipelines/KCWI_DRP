@@ -202,10 +202,10 @@ class Kcwi_pipeline(BasePipeline):
                                       "object_subtract_scat"),
         "object_subtract_scat":      ("SubtractScatteredLight",
                                       "scat_subtract_started",
-                                      "object_correct_illumination"),
-        "object_correct_illumination": ("CorrectIllumination",
-                                        "illumination_correction_started",
-                                        "object_make_sky"),
+                                      "object_correct_illum"),
+        "object_correct_illum":      ("CorrectIllumination",
+                                      "illumination_correction_started",
+                                      "object_make_sky"),
         "object_make_sky":           ("MakeMasterSky",
                                       "making_master_sky_started",
                                       "object_subtract_sky"),
@@ -222,6 +222,49 @@ class Kcwi_pipeline(BasePipeline):
                                       "make_invsens_started",
                                       "object_flux_calibrate"),
         "object_flux_calibrate":     ("FluxCalibrate",
+                                      "flux_calibration_started",
+                                      None),
+        # NOD AND SHUFFLE OBJECT PROCESSING
+        "process_nandshuff":         ("ProcessObject",
+                                      "nandshuff_processing_started",
+                                      "nandshuff_subtract_bias"),
+        "nandshuff_subtract_bias":   ("SubtractBias",
+                                      "subtract_bias started",
+                                      "nandshuff_subtract_overscan"),
+        "nandshuff_subtract_overscan": ("SubtractOverscan",
+                                        "subtract_overscan_started",
+                                        "nandshuff_trim_overscan"),
+        "nandshuff_trim_overscan":   ("TrimOverscan",
+                                      "trim_overscan_started",
+                                      "nandshuff_correct_gain"),
+        "nandshuff_correct_gain":    ("CorrectGain",
+                                      "gain_correction_started",
+                                      "nandshuff_correct_defects"),
+        "nandshuff_correct_defects": ("CorrectDefects",
+                                      "defect_correction_started",
+                                      "nandshuff_remove_crs"),
+        "nandshuff_remove_crs":      ("RemoveCosmicRays",
+                                      "remove_crs_started",
+                                      "nandshuff_create_unc"),
+        "nandshuff_create_unc":      ("CreateUncertaintyImage",
+                                      "create_unc_started",
+                                      "nandshuff_rectify_image"),
+        "nandshuff_rectify_image":   ("RectifyImage",
+                                      "rectification_started",
+                                      "nandshuff_subtract_sky"),
+        "nandshuff_subtract_sky":    ("NandshuffSubtractSky",
+                                      "nandshuff_skysub_started",
+                                      "nandshuff_correct_illum"),
+        "nandshuff_correct_illum":   ("CorrectIllumination",
+                                      "illumination_correction_started",
+                                      "nandshuff_make_cube"),
+        "nandshuff_make_cube":       ("MakeCube",
+                                      "making_cube_started",
+                                      "nandshuff_correct_dar"),
+        "nandshuff_correct_dar":     ("CorrectDar",
+                                      "correcting_dar_started",
+                                      "nandshuff_flux_calibrate"),
+        "nandshuff_flux_calibrate":  ("FluxCalibrate",
                                       "flux_calibration_started",
                                       None),
         "next_file_stop":            ("ingest_file", "file_ingested", None)
@@ -305,9 +348,12 @@ class Kcwi_pipeline(BasePipeline):
         elif "ARCLAMP" in action.args.imtype:
             context.push_event("process_arc", action.args)
         elif "OBJECT" in action.args.imtype:
-            object_args = action.args
-            object_args.new_type = "SKY"
-            context.push_event("process_object", action.args)
+            if action.args.nasmask and action.args.numopen > 1:
+                context.push_event("process_nandshuff", action.args)
+            else:
+                object_args = action.args
+                object_args.new_type = "SKY"
+                context.push_event("process_object", object_args)
 
 
 if __name__ == "__main__":

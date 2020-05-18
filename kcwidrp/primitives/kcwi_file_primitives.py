@@ -227,6 +227,9 @@ class ingest_file(BasePrimitive):
         else:
             raise ValueError("unable to determine mask: CAMERA undefined")
 
+    def numopen(self):
+        return self.get_keyword('NUMOPEN')
+
     def shufrows(self):
         return self.get_keyword('SHUFROWS')
 
@@ -467,6 +470,8 @@ class ingest_file(BasePrimitive):
         out_args.nasmask = self.nasmask()
         # SHUFROWS
         out_args.shufrows = self.shufrows()
+        # NUMOPEN
+        out_args.numopen = self.numopen()
         # AMPMODE
         out_args.ampmode = self.ampmode()
         # BINNING
