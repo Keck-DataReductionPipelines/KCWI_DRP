@@ -81,12 +81,20 @@ class RemoveCosmicRays(BasePrimitive):
                 self.config.instrument.CRR_MINEXPTIME)
             # header['history'] = "LA CosmicX run on %s" % time.strftime("%c")
 
+            # update arrays
             mask = np.cast["bool"](mask)
+            fmask = np.where(mask)
+            try:
+                self.action.args.ccddata.flags[fmask] += 4
+            except AttributeError:
+                self.logger.warning("Flags array not found!")
             n_crs = mask.sum()
-            header[key] = (True, keycom)
-            header['NCRCLEAN'] = (n_crs, "number of cosmic ray pixels")
             self.action.args.ccddata.mask += mask
             self.action.args.ccddata.data = clean
+            # update header
+            header[key] = (True, keycom)
+            header['NCRCLEAN'] = (n_crs, "number of cosmic ray pixels")
+
         else:
             self.logger.info("LA CosmicX: exptime < minexptime=%.1f" %
                              self.config.instrument.CRR_MINEXPTIME)
