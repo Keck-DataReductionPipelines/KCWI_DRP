@@ -63,6 +63,7 @@ class SubtractSky(BasePrimitive):
         target_type = 'SKY'
 
         skyfile = self.action.args.skyfile
+        skymask = self.action.args.skymask
 
         if not self.action.args.skyfile:
             tab = self.context.proctab.n_proctab(frame=self.action.args.ccddata,
@@ -102,6 +103,9 @@ class SubtractSky(BasePrimitive):
                                                           "Master sky filename")
             self.action.args.ccddata.header['SKYSCL'] = (skscl,
                                                          'sky scale factor')
+            if skymask:
+                self.action.args.ccddata.header['SKYMSKF'] = (skymask,
+                                                              'sky mask file')
 
         else:
             # update header keywords
