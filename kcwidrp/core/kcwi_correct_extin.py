@@ -24,7 +24,8 @@ def kcwi_correct_extin(img, hdr, logger=None):
         w0 = hdr['CRVAL3']
         owls = np.arange(sz[0]) * dw + w0
         # linear interpolation
-        exint = interp1d(exwl, exma, kind='cubic')
+        exint = interp1d(exwl, exma, kind='cubic', bounds_error=False,
+                         fill_value='extrapolate')
         # resample extinction curve
         oexma = exint(owls)
         # convert to flux ratio
