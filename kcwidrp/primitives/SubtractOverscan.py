@@ -34,8 +34,6 @@ class SubtractOverscan(BasePrimitive):
 
         for ia in range(namps):
             # get gain
-            #gain = self.context.data_set.get_info_column(self.action.args.name,
-                                                         #'GAIN%d' % (ia + 1))
             gain = self.action.args.ccddata.header['GAIN%d' % (ia + 1)]
             # check if we have enough data to fit
             if (bsec[ia][3] - bsec[ia][2]) > self.config.instrument.minoscanpix:
