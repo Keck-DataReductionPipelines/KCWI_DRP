@@ -26,33 +26,54 @@ class RectifyImage(BasePrimitive):
             if self.action.args.ccddata.uncertainty:
                 newunc = np.rot90(self.action.args.ccddata.uncertainty.array, 2)
                 self.action.args.ccddata.uncertainty.array = newunc
-            if hasattr(self.action.args.ccddata, 'mask'):
-                newmask = np.rot90(self.action.args.ccddata.mask, 2)
+            mask = getattr(self.action.args.ccddata, "mask", None)
+            if mask is not None:
+                newmask = np.rot90(mask, 2)
                 self.action.args.ccddata.mask = newmask
             else:
                 self.logger.info("No mask data to rectify")
+            flags = getattr(self.action.args.ccddata, "flags", None)
+            if flags is not None:
+                newflags = np.rot90(flags, 2)
+                self.action.args.ccddata.flags = newflags
+            else:
+                self.logger.info("No flags data to rectify")
         elif '__D' in ampmode or '__F' in ampmode:
             newimg = np.fliplr(self.action.args.ccddata.data)
             self.action.args.ccddata.data = newimg
             if self.action.args.ccddata.uncertainty:
                 newunc = np.fliplr(self.action.args.ccddata.uncertainty.array)
                 self.action.args.ccddata.uncertainty.array = newunc
-            if hasattr(self.action.args.ccddata, 'mask'):
-                newmask = np.fliplr(self.action.args.ccddata.mask)
+            mask = getattr(self.action.args.ccddata, "mask", None)
+            if mask is not None:
+                newmask = np.fliplr(mask)
                 self.action.args.ccddata.mask = newmask
             else:
                 self.logger.info("No mask data to rectify")
+            flags = getattr(self.action.args.ccddata, "flags", None)
+            if flags is not None:
+                newflags = np.fliplr(flags)
+                self.action.args.ccddata.flags = newflags
+            else:
+                self.logger.info("No flags data to rectify")
         elif '__A' in ampmode or '__H' in ampmode or 'TUP' in ampmode:
             newimg = np.flipud(self.action.args.ccddata.data)
             self.action.args.ccddata.data = newimg
             if self.action.args.ccddata.uncertainty:
                 newunc = np.flipud(self.action.args.ccddata.uncertainty.array)
                 self.action.args.ccddata.uncertainty.array = newunc
-            if hasattr(self.action.args.ccddata, 'mask'):
-                newmask = np.flipud(self.action.args.ccddata.mask)
+            mask = getattr(self.action.args.ccddata, "mask", None)
+            if mask is not None:
+                newmask = np.flipud(mask)
                 self.action.args.ccddata.mask = newmask
             else:
                 self.logger.info("No mask data to rectify")
+            flags = getattr(self.action.args.ccddata, "flags", None)
+            if flags is not None:
+                newflags = np.flipud(flags)
+                self.action.args.ccddata.flags = newflags
+            else:
+                self.logger.info("No flags data to rectify")
 
         self.action.args.ccddata.header[key] = (True, keycom)
 
