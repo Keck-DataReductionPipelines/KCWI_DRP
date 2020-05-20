@@ -520,24 +520,25 @@ def kcwi_fits_reader(file):
     except (FileNotFoundError, OSError) as e:
         print(e)
         raise e
-    read_hdus = 0
+    read_imgs = 0
+    read_tabs = 0
     # primary image
     ccddata = CCDData(hdul['PRIMARY'].data, meta=hdul['PRIMARY'].header,
                       unit='adu')
-    read_hdus += 1
+    read_imgs += 1
     # check for other legal components
     if 'UNCERT' in hdul:
         ccddata.uncertainty = hdul['UNCERT'].data
-        read_hdus += 1
+        read_imgs += 1
     if 'FLAGS' in hdul:
         ccddata.flags = hdul['FLAGS'].data
-        read_hdus += 1
+        read_imgs += 1
     if 'MASK' in hdul:
         ccddata.mask = hdul['MASK'].data
-        read_hdus += 1
+        read_imgs += 1
     if 'Exposure Events' in hdul:
         table = hdul['Exposure Events']
-        read_hdus += 1
+        read_tabs += 1
     else:
         table = None
     # prepare for floating point
@@ -557,8 +558,8 @@ def kcwi_fits_reader(file):
                 ccddata.uncertainty.unit = ccddata.header['BUNIT']
             # print("setting image units to " + ccddata.header['BUNIT'])
 
-    logger.info("<<< read %d hdus out of %d from %s" % (len(hdul), read_hdus,
-                                                        file))
+    logger.info("<<< read %d imgs and %d tables out of %d hdus in %s" %
+                (read_imgs, read_tabs, len(hdul), file))
     return ccddata, table
 
 
