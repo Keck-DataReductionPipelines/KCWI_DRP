@@ -160,8 +160,7 @@ class TraceBars(BasePrimitive):
                 # write out warped image
                 self.action.args.ccddata.data = warped
                 kcwi_fits_writer(
-                    self.action.args.ccddata, self.action.args.table,
-                    output_file=self.action.args.name,
+                    self.action.args.ccddata, output_file=self.action.args.name,
                     output_dir=self.config.instrument.output_directory,
                     suffix='warped')
                 self.logger.info("Transformed bars produced")
