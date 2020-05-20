@@ -1,5 +1,6 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
-from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer
+from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer, \
+    kcwi_fits_reader
 
 import time
 import os
@@ -9,47 +10,58 @@ import numpy as np
 from skimage import transform as tf
 from astropy.coordinates import SkyCoord
 from astropy import units as u
+from astropy.nddata import CCDData
 from kcwidrp.core.bokeh_plotting import bokeh_plot
 from bokeh.plotting import figure
 from multiprocessing import Pool
 
 
 def make_cube_helper(argument):
+    """Warp each slice"""
     logger = argument['logger']
     logger.info("Transforming image slice %d" % (argument['slice_number']+1))
+    # input params
     slice_number = argument['slice_number']
-    # print(argument['geom']['xl0'])
-    # print(argument['geom']['xl1'])
+    xsize = argument['xsize']
+    ysize = argument['ysize']
     tform = argument['geom']['tform'][slice_number]
     xl0 = argument['geom']['xl0'][slice_number]
     xl1 = argument['geom']['xl1'][slice_number]
-
+    # slice data
     slice_img = argument['img'][:, xl0:xl1]
     slice_var = argument['std'][:, xl0:xl1]
     slice_msk = argument['msk'][:, xl0:xl1]
-    xsize = argument['xsize']
-    ysize = argument['ysize']
-    # print("Now working on slice %d [%d:%d] with sizes: %d %d" %
-    # (argument['slice_number'], xl0, xl1, ysize, xsize))
-
+    slice_flg = argument['flg'][:, xl0:xl1]
+    if 'obj' in argument:
+        slice_obj = argument['obj'][:, xl0:xl1]
+    else:
+        slice_obj = None
+    if 'sky' in argument:
+        slice_sky = argument['sky'][:, xl0:xl1]
+    else:
+        slice_sky = None
+    # do the warping
     warped = tf.warp(slice_img, tform, order=3,
                      output_shape=(ysize, xsize))
     varped = tf.warp(slice_var, tform, order=3,
                      output_shape=(ysize, xsize))
     marped = tf.warp(slice_msk, tform, order=3,
                      output_shape=(ysize, xsize))
+    farped = tf.warp(slice_flg, tform, order=3,
+                     output_shape=(ysize, xsize), preserve_range=True)
+    if slice_obj is not None:
+        oarped = tf.warp(slice_obj, tform, order=3,
+                         output_shape=(ysize, xsize))
+    else:
+        oarped = None
+    if slice_sky is not None:
+        sarped = tf.warp(slice_sky, tform, order=3,
+                         output_shape=(ysize, xsize))
+    else:
+        sarped = None
 
-    # out_cube_local = np.zeros((ysize, xsize), dtype=np.float64)
-    # out_vube_local = np.zeros((ysize, xsize), dtype=np.float64)
-    # out_mube_local = np.zeros((ysize, xsize), dtype=np.uint8)
-    # for iy in range(ysize):
-    #    for ix in range(xsize):
-    #        out_cube_local[iy, ix] = warped[iy, ix]
-    #        out_vube_local[iy, ix] = varped[iy, ix]
-    #        out_mube_local[iy, ix] = int(marped[iy, ix])
-    return argument['slice_number'], warped, varped, marped
-    # return argument['slice_number'], out_cube_local, out_vube_local,
-    # out_mube_local
+    return argument['slice_number'], warped, varped, marped, farped, \
+        oarped, sarped
 
 
 class MakeCube(BasePrimitive):
@@ -95,12 +107,38 @@ class MakeCube(BasePrimitive):
             out_cube = np.zeros((ysize, xsize, 24), dtype=np.float64)
             out_vube = np.zeros((ysize, xsize, 24), dtype=np.float64)
             out_mube = np.zeros((ysize, xsize, 24), dtype=np.uint8)
+            out_fube = np.zeros((ysize, xsize, 24), dtype=np.uint8)
+            out_oube = np.zeros((ysize, xsize, 24), dtype=np.float64)
+            out_sube = np.zeros((ysize, xsize, 24), dtype=np.float64)
             # Store original data
             data_img = self.action.args.ccddata.data
             data_std = self.action.args.ccddata.uncertainty.array
             data_msk = self.action.args.ccddata.mask
-            # Loop over 24 slices
+            data_flg = self.action.args.ccddata.flags
+            # check for obj, sky images
+            obj = None
+            data_obj = None
+            sky = None
+            data_sky = None
+            if self.action.args.nasmask and self.action.args.numopen > 1:
+                ofn = self.action.args.ccddata.header['OFNAME']
 
+                objfn = ofn.split('.')[0] + '_objf.fits'
+                full_path = os.path.join(
+                    os.path.dirname(self.action.args.name),
+                    self.config.instrument.output_directory, objfn)
+                if os.path.exists(full_path):
+                    obj = kcwi_fits_reader(full_path)[0]
+                    data_obj = obj.data
+
+                skyfn = ofn.split('.')[0] + '_skyf.fits'
+                full_path = os.path.join(
+                    os.path.dirname(self.action.args.name),
+                    self.config.instrument.output_directory, skyfn)
+                if os.path.exists(full_path):
+                    sky = kcwi_fits_reader(full_path)[0]
+                    data_sky = sky.data
+            # Loop over 24 slices
             my_arguments = []
             for isl in range(0, 24):
                 arguments = {
@@ -109,10 +147,15 @@ class MakeCube(BasePrimitive):
                     'img': data_img,
                     'std': data_std,
                     'msk': data_msk,
+                    'flg': data_flg,
                     'xsize': xsize,
                     'ysize': ysize,
                     'logger': self.logger
                 }
+                if obj is not None:
+                    arguments['obj'] = data_obj
+                if sky is not None:
+                    arguments['sky'] = data_sky
                 my_arguments.append(arguments)
 
             p = Pool()
@@ -125,6 +168,11 @@ class MakeCube(BasePrimitive):
                 out_cube[:, :, slice_number] = partial_cube[1]
                 out_vube[:, :, slice_number] = partial_cube[2]
                 out_mube[:, :, slice_number] = partial_cube[3]
+                out_fube[:, :, slice_number] = partial_cube[4]
+                if obj is not None:
+                    out_oube[:, :, slice_number] = partial_cube[5]
+                if sky is not None:
+                    out_sube[:, :, slice_number] = partial_cube[6]
 
             if self.config.instrument.plot_level >= 3:
                 for isl in range(0, 24):
@@ -308,6 +356,7 @@ class MakeCube(BasePrimitive):
             self.action.args.ccddata.data = out_cube
             self.action.args.ccddata.uncertainty.array = out_vube
             self.action.args.ccddata.mask = out_mube
+            self.action.args.ccddata.flags = out_fube
 
             # write out int image
             kcwi_fits_writer(self.action.args.ccddata,
@@ -318,6 +367,24 @@ class MakeCube(BasePrimitive):
             self.context.proctab.update_proctab(frame=self.action.args.ccddata,
                                                 suffix="icube")
             self.context.proctab.write_proctab()
+
+            # check for obj, sky outputs
+            if obj is not None:
+                out_obj = CCDData(out_oube,
+                                  meta=self.action.args.ccddata.header,
+                                  unit=self.action.args.ccddata.unit)
+                kcwi_fits_writer(
+                    out_obj, output_file=self.action.args.name,
+                    output_dir=self.config.instrument.output_directory,
+                    suffix="ocube")
+            if sky is not None:
+                out_sky = CCDData(out_sube,
+                                  meta=self.action.args.ccddata.header,
+                                  unit=self.action.args.ccddata.unit)
+                kcwi_fits_writer(
+                    out_sky, output_file=self.action.args.name,
+                    output_dir=self.config.instrument.output_directory,
+                    suffix="scube")
         else:
             self.logger.error("Geometry file not found: %s" % geom_file)
 

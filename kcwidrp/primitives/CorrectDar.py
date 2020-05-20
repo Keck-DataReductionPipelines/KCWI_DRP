@@ -1,10 +1,13 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
-from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer
+from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer, \
+    kcwi_fits_reader
 
 import numpy as np
 from scipy.ndimage import shift
+from astropy.nddata import CCDData
 import math
 import ref_index
+import os
 
 
 def atm_disper(w0, w1, airmass, temperature=10.0, pressure_pa=61100.0,
@@ -40,16 +43,15 @@ class CorrectDar(BasePrimitive):
         BasePrimitive.__init__(self, action, context)
         self.logger = context.pipeline_logger
 
-    def _perform(self):
-        self.logger.info("Correcting for DAR")
-
+    def _pre_condition(self):
+        """Checks if DAR correction is appropriate"""
         # Check image
         if 'GEOMCOR' not in self.action.args.ccddata.header:
             self.logger.error("Can only correct DAR on geometrically corrected "
                               "images")
             self.action.args.ccddata.header['DARCOR'] = (False,
                                                          'DAR corrected?')
-            return self.action.args
+            return False
         else:
             if not self.action.args.ccddata.header['GEOMCOR']:
                 self.logger.error(
@@ -57,8 +59,13 @@ class CorrectDar(BasePrimitive):
                     "images")
                 self.action.args.ccddata.header['DARCOR'] = (False,
                                                              'DAR corrected?')
-                return self.action.args
+                return False
+            else:
+                return True
 
+    def _perform(self):
+        """Correct for differential atmospheric refraction"""
+        self.logger.info("Correcting for DAR")
         # image size
         image_size = self.action.args.ccddata.data.shape
 
@@ -133,18 +140,56 @@ class CorrectDar(BasePrimitive):
         output_stddev = output_image.copy()
         output_mask = np.zeros((image_size[0], image_size[1]+2*padding_y,
                                 image_size[2]+2*padding_x), dtype=np.uint8)
+        output_flags = np.zeros((image_size[0], image_size[1] + 2 * padding_y,
+                                 image_size[2] + 2 * padding_x), dtype=np.uint8)
+        # DAR padded pixel flag
+        output_flags += 128
 
         output_image[:, padding_y:(padding_y+image_size[1]),
                      padding_x:(padding_x+image_size[2])] = \
             self.action.args.ccddata.data
 
         output_stddev[:, padding_y:(padding_y+image_size[1]),
-                        padding_x:(padding_x+image_size[2])] = \
+                      padding_x:(padding_x+image_size[2])] = \
             self.action.args.ccddata.uncertainty.array
 
         output_mask[:, padding_y:(padding_y+image_size[1]),
                     padding_x:(padding_x+image_size[2])] = \
             self.action.args.ccddata.mask
+
+        output_flags[:, padding_y:(padding_y+image_size[1]),
+                     padding_x:(padding_x+image_size[2])] = \
+            self.action.args.ccddata.flags
+
+        # check for obj, sky cubes
+        output_obj = None
+        output_sky = None
+        if self.action.args.nasmask and self.action.args.numopen > 1:
+            ofn = self.action.args.ccddata.header['OFNAME']
+
+            objfn = ofn.split('.')[0] + '_ocube.fits'
+            full_path = os.path.join(
+                os.path.dirname(self.action.args.name),
+                self.config.instrument.output_directory, objfn)
+            if os.path.exists(full_path):
+                obj = kcwi_fits_reader(full_path)[0]
+                output_obj = np.zeros(
+                    (image_size[0], image_size[1] + 2 * padding_y,
+                     image_size[2] + 2 * padding_x), dtype=np.float64)
+                output_obj[:, padding_y:(padding_y + image_size[1]),
+                           padding_x:(padding_x + image_size[2])] = obj.data
+
+            skyfn = ofn.split('.')[0] + '_scube.fits'
+            full_path = os.path.join(
+                os.path.dirname(self.action.args.name),
+                self.config.instrument.output_directory, skyfn)
+            if os.path.exists(full_path):
+                sky = kcwi_fits_reader(full_path)[0]
+                output_sky = np.zeros(
+                    (image_size[0], image_size[1] + 2 * padding_y,
+                     image_size[2] + 2 * padding_x), dtype=np.float64)
+                output_sky[:, padding_y:(padding_y + image_size[1]),
+                           padding_x:(padding_x + image_size[2])] = sky.data
 
         # Perform correction
         for j, wl in enumerate(waves):
@@ -155,14 +200,37 @@ class CorrectDar(BasePrimitive):
                 math.cos(projection_angle) / y_scale
             output_image[j, :, :] = shift(output_image[j, :, :], (y_shift,
                                                                   x_shift))
-            output_stddev[j, :, :] = shift(output_stddev[j, :, :],
-                                             (y_shift, x_shift))
+            output_stddev[j, :, :] = shift(output_stddev[j, :, :], (y_shift,
+                                                                    x_shift))
             output_mask[j, :, :] = shift(output_mask[j, :, :], (y_shift,
                                                                 x_shift))
+            output_flags[j, :, :] = shift(output_flags[j, :, :], (y_shift,
+                                                                  x_shift))
+        # for obj, sky if they exist
+        if output_obj is not None:
+            for j, wl in enumerate(waves):
+                dispersion_correction = atm_disper(wref, wl, airmass)
+                x_shift = dispersion_correction * \
+                    math.sin(projection_angle) / x_scale
+                y_shift = dispersion_correction * \
+                    math.cos(projection_angle) / y_scale
+                output_obj[j, :, :] = shift(output_obj[j, :, :], (y_shift,
+                                                                  x_shift))
+
+        if output_sky is not None:
+            for j, wl in enumerate(waves):
+                dispersion_correction = atm_disper(wref, wl, airmass)
+                x_shift = dispersion_correction * \
+                    math.sin(projection_angle) / x_scale
+                y_shift = dispersion_correction * \
+                    math.cos(projection_angle) / y_scale
+                output_sky[j, :, :] = shift(output_sky[j, :, :], (y_shift,
+                                                                  x_shift))
 
         self.action.args.ccddata.data = output_image
         self.action.args.ccddata.uncertainty.array = output_stddev
         self.action.args.ccddata.mask = output_mask
+        self.action.args.ccddata.flags = output_flags
 
         log_string = CorrectDar.__module__
 
@@ -187,6 +255,24 @@ class CorrectDar(BasePrimitive):
         self.context.proctab.update_proctab(frame=self.action.args.ccddata,
                                             suffix="icubed")
         self.context.proctab.write_proctab()
+
+        # check for sky, obj cube
+        if output_obj is not None:
+            out_obj = CCDData(output_obj,
+                              meta=self.action.args.ccddata.header,
+                              unit=self.action.args.ccddata.unit)
+            kcwi_fits_writer(
+                out_obj, output_file=self.action.args.name,
+                output_dir=self.config.instrument.output_directory,
+                suffix="ocubed")
+        if output_sky is not None:
+            out_sky = CCDData(output_sky,
+                              meta=self.action.args.ccddata.header,
+                              unit=self.action.args.ccddata.unit)
+            kcwi_fits_writer(
+                out_sky, output_file=self.action.args.name,
+                output_dir=self.config.instrument.output_directory,
+                suffix="scubed")
 
         self.logger.info(log_string)
 

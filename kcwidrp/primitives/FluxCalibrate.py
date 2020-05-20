@@ -1,5 +1,6 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
-from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer
+from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer, \
+    kcwi_fits_reader
 from kcwidrp.core.kcwi_correct_extin import kcwi_correct_extin
 
 import os
@@ -8,6 +9,7 @@ from scipy.interpolate import interp1d
 
 from astropy.io import fits as pf
 from astropy import units as u
+from astropy.nddata import CCDData
 
 
 class FluxCalibrate(BasePrimitive):
@@ -38,6 +40,8 @@ class FluxCalibrate(BasePrimitive):
         key = 'STDCOR'
         keycom = 'std corrected?'
         target_type = 'INVSENS'
+        obj = None
+        sky = None
 
         self.logger.info("Calibrating object flux")
         tab = self.context.proctab.n_proctab(frame=self.action.args.ccddata,
@@ -95,10 +99,41 @@ class FluxCalibrate(BasePrimitive):
                     self.action.args.ccddata.uncertainty.array[:, ix, isl] *= \
                         mscal ** 2
 
+            # check for obj, sky cubes
+            if self.action.args.nasmask and self.action.args.numopen > 1:
+                ofn = self.action.args.ccddata.header['OFNAME']
+
+                objfn = ofn.split('.')[0] + '_ocubed.fits'
+                full_path = os.path.join(
+                    os.path.dirname(self.action.args.name),
+                    self.config.instrument.output_directory, objfn)
+                if os.path.exists(full_path):
+                    obj = kcwi_fits_reader(full_path)[0]
+                    kcwi_correct_extin(obj.data, obj.header, logger=self.logger)
+                    # do calibration
+                    for isl in range(sz[2]):
+                        for ix in range(sz[1]):
+                            obj.data[:, ix, isl] *= mscal
+
+                skyfn = ofn.split('.')[0] + '_scubed.fits'
+                full_path = os.path.join(
+                    os.path.dirname(self.action.args.name),
+                    self.config.instrument.output_directory, skyfn)
+                if os.path.exists(full_path):
+                    sky = kcwi_fits_reader(full_path)[0]
+                    # do calibration
+                    for isl in range(sz[2]):
+                        for ix in range(sz[1]):
+                            sky.data[:, ix, isl] *= mscal
+
             # units
             flam16_u = 1.e16 * u.erg / (u.angstrom * u.cm ** 2 * u.s)
             self.action.args.ccddata.unit = flam16_u
             self.action.args.ccddata.uncertainty.unit = flam16_u
+            if obj is not None:
+                obj.unit = flam16_u
+            if sky is not None:
+                sky.unit = flam16_u
             # update header keywords
             self.action.args.ccddata.header[key] = (True, keycom)
             self.action.args.ccddata.header['MSFILE'] = (msname,
@@ -121,6 +156,23 @@ class FluxCalibrate(BasePrimitive):
         self.context.proctab.update_proctab(frame=self.action.args.ccddata,
                                             suffix="icubes")
         self.context.proctab.write_proctab()
+
+        # check for sky, obj cube
+        if obj is not None:
+            out_obj = CCDData(obj, meta=self.action.args.ccddata.header,
+                              unit=self.action.args.ccddata.unit)
+            kcwi_fits_writer(
+                out_obj, output_file=self.action.args.name,
+                output_dir=self.config.instrument.output_directory,
+                suffix="ocubes")
+
+        if sky is not None:
+            out_sky = CCDData(sky, meta=self.action.args.ccddata.header,
+                              unit=self.action.args.ccddata.unit)
+            kcwi_fits_writer(
+                out_sky, output_file=self.action.args.name,
+                output_dir=self.config.instrument.output_directory,
+                suffix="scubes")
 
         self.logger.info(log_string)
 
