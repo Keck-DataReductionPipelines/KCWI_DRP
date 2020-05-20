@@ -27,7 +27,7 @@ class RemoveCosmicRays(BasePrimitive):
 
         header = self.action.args.ccddata.header
 
-        if header['TTIME'] >= self.config.instrument.CRR_MINEXPTIME:
+        if header['XPOSURE'] >= self.config.instrument.CRR_MINEXPTIME:
 
             namps = header['NVIDINP']
             read_noise = 0.
