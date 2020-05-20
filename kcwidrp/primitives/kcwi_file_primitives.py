@@ -517,51 +517,38 @@ def kcwi_fits_reader(file):
     """
     try:
         hdul = fits.open(file)
-    except FileNotFoundError as e:
+    except (FileNotFoundError, OSError) as e:
         print(e)
         raise e
-    except OSError as e:
-        print(e)
-        raise e
-
-    if len(hdul) == 1:
-        # Simple input, no table
-        ccddata = CCDData(hdul[0].data, meta=hdul[0].header, unit='adu')
-        table = None
-    elif len(hdul) == 2:
-        # raw data
-        # 1- read the first extension into a ccddata
-        ccddata = CCDData(hdul[0].data, meta=hdul[0].header, unit='adu')
-        # 2- read the table
-        table = hdul[1]
-        # 3- prepare for floating point
-        ccddata.data = ccddata.data.astype(np.float64)
-        # 4- Check for CCDCFG keyword
-        if 'CCDCFG' not in ccddata.header:
-            ccdcfg = ccddata.header['CCDSUM'].replace(" ", "")
-            ccdcfg += "%1d" % ccddata.header['CCDMODE']
-            ccdcfg += "%02d" % ccddata.header['GAINMUL']
-            ccdcfg += "%02d" % ccddata.header['AMPMNUM']
-            ccddata.header['CCDCFG'] = ccdcfg
-    elif len(hdul) == 3:
-        # pure ccd data
-        ccddata = CCDData(hdul['PRIMARY'].data, meta=hdul['PRIMARY'].header,
-                          unit='adu')
-        ccddata.mask = hdul['MASK'].data
+    read_hdus = 0
+    # primary image
+    ccddata = CCDData(hdul['PRIMARY'].data, meta=hdul['PRIMARY'].header,
+                      unit='adu')
+    read_hdus += 1
+    # check for other legal components
+    if 'UNCERT' in hdul:
         ccddata.uncertainty = hdul['UNCERT'].data
-        table = None
-    elif len(hdul) == 4:
-        # ccd data + table
-        ccddata = CCDData(hdul['PRIMARY'].data, meta=hdul['PRIMARY'].header,
-                          unit='adu')
+        read_hdus += 1
+    if 'FLAGS' in hdul:
+        ccddata.flags = hdul['FLAGS'].data
+        read_hdus += 1
+    if 'MASK' in hdul:
         ccddata.mask = hdul['MASK'].data
-        ccddata.uncertainty = hdul['UNCERT'].data
-        table = Table(hdul[3])
+        read_hdus += 1
+    if 'Exposure Events' in hdul:
+        table = hdul['Exposure Events']
+        read_hdus += 1
     else:
-        logger.warning("Wrong number of HDUnits in %s: should be 1-4, but is %d"
-                       % (file, len(hdul)))
-        ccddata = None
         table = None
+    # prepare for floating point
+    ccddata.data = ccddata.data.astype(np.float64)
+    # Check for CCDCFG keyword
+    if 'CCDCFG' not in ccddata.header:
+        ccdcfg = ccddata.header['CCDSUM'].replace(" ", "")
+        ccdcfg += "%1d" % ccddata.header['CCDMODE']
+        ccdcfg += "%02d" % ccddata.header['GAINMUL']
+        ccdcfg += "%02d" % ccddata.header['AMPMNUM']
+        ccddata.header['CCDCFG'] = ccdcfg
 
     if ccddata:
         if 'BUNIT' in ccddata.header:
@@ -570,6 +557,8 @@ def kcwi_fits_reader(file):
                 ccddata.uncertainty.unit = ccddata.header['BUNIT']
             # print("setting image units to " + ccddata.header['BUNIT'])
 
+    logger.info("<<< read %d hdus out of %d from %s" % (len(hdul), read_hdus,
+                                                        file))
     return ccddata, table
 
 
@@ -620,8 +609,15 @@ def kcwi_fits_writer(ccddata, table=None, output_file=None, output_dir=None,
         (main_name, extension) = os.path.splitext(out_file)
         out_file = main_name + "_" + suffix + extension
     hdus_to_save = ccddata.to_hdu()
+    # check for flags
+    flags = getattr(ccddata, "flags", None)
+    if flags is not None:
+        hdus_to_save.append(fits.ImageHDU(flags, name='FLAGS',
+                                          do_not_scale_image_data=True))
+    # something about the way the original table is written out is wrong
+    # and causes problems.  Leaving it off for now.
     # if table is not None:
     #    hdus_to_save.append(table)
-    # hdus_to_save.info()
-    logger.info(">>> Saving to %s" % out_file)
+    # log
+    logger.info(">>> Saving %d hdus to %s" % (len(hdus_to_save), out_file))
     hdus_to_save.writeto(out_file, overwrite=True)
