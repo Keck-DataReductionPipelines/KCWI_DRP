@@ -31,8 +31,11 @@ class FluxCalibrate(BasePrimitive):
         self.logger.info("pre condition got %d invsens files, expected >= 1"
                          % len(tab))
         if len(tab) <= 0:
+            self.action.args.invsname = None
             return False
         else:
+            self.action.args.invsname = tab['OFNAME'][0].split('.')[0] + '_' + \
+                target_type.lower() + ".fits"
             return True
 
     def _perform(self):
@@ -49,14 +52,13 @@ class FluxCalibrate(BasePrimitive):
                                              nearest=True)
         self.logger.info("%d invsens files found" % len(tab))
 
-        if len(tab) > 0:
+        if self.action.args.invsname is not None:
 
             # read in master calibration (inverse sensitivity)
-            msname = tab['OFNAME'][0].split('.')[0] + '_' + \
-                target_type.lower() + ".fits"
-            self.logger.info("Reading invsens: %s" % msname)
+            invsname = self.action.args.invsname
+            self.logger.info("Reading invsens: %s" % invsname)
             hdul = pf.open(os.path.join(os.path.dirname(self.action.args.name),
-                                        'redux', msname))
+                                        'redux', invsname))
             mcal = hdul[0].data[1, :]
             mchdr = hdul[0].header
             hdul.close()
@@ -136,7 +138,7 @@ class FluxCalibrate(BasePrimitive):
                 sky.unit = flam16_u
             # update header keywords
             self.action.args.ccddata.header[key] = (True, keycom)
-            self.action.args.ccddata.header['MSFILE'] = (msname,
+            self.action.args.ccddata.header['MSFILE'] = (invsname,
                                                          "Master std filename")
             self.action.args.ccddata.header['MSIMNO'] = (
                 msimgno, 'master std image number')

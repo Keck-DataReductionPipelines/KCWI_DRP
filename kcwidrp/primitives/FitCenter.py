@@ -4,7 +4,6 @@ from kcwidrp.core.kcwi_plotting import get_plot_lims, oplot_slices, \
     set_plot_lims
 
 from bokeh.plotting import figure
-from bokeh.models import Range1d
 import numpy as np
 import math
 from scipy.interpolate import interpolate

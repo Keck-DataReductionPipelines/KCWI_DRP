@@ -22,8 +22,6 @@ class CorrectGain(BasePrimitive):
                                                       (amplifier + 1)]
             parsed_section, read_forward = parse_imsec(section)
             # get gain for this amp
-            #gain = self.context.data_set.get_info_column(
-            #    self.action.args.name, 'GAIN%d' % (amplifier + 1))
             gain = self.action.args.ccddata.header['GAIN%d' % (amplifier + 1)]
             self.logger.info(
                 "Applying gain correction of %.3f in section %s" %
