@@ -44,6 +44,13 @@ class CreateUncertaintyImage(BasePrimitive):
                         bias_readnoise ** 2)
         else:
             self.logger.warn("Readnoise undefined, uncertainty Poisson only")
+        # check for flags and mask arrays
+        if self.action.args.ccddata.flags is None:
+            self.action.args.ccddata.flags = np.zeros(
+                self.action.args.ccddata.data.shape, dtype=np.uint8)
+        if self.action.args.ccddata.mask is None:
+            self.action.args.ccddata.mask = np.zeros(
+                self.action.args.ccddata.data.shape, dtype=np.uint8)
         # document variance image creation
         self.action.args.ccddata.header[key] = (True, keycom)
 
