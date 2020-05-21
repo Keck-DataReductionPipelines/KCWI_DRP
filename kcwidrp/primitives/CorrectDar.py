@@ -1,4 +1,5 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
+from kcwidrp.core.kcwi_get_std import kcwi_get_std
 from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer, \
     kcwi_fits_reader
 
@@ -191,6 +192,25 @@ class CorrectDar(BasePrimitive):
                 output_sky[:, padding_y:(padding_y + image_size[1]),
                            padding_x:(padding_x + image_size[2])] = sky.data
 
+        # check if we have a standard star observation
+        output_del = None
+        stdfile, _ = kcwi_get_std(self.action.args.ccddata.header['OBJECT'],
+                                  self.logger)
+        if stdfile is not None:
+            afn = self.action.args.ccddata.header['ARCFL']
+
+            delfn = afn.split('.')[0] + '_dcube.fits'
+            full_path = os.path.join(
+                os.path.dirname(self.action.args.name),
+                self.config.instrument.output_directory, delfn)
+            if os.path.exists(full_path):
+                dew = kcwi_fits_reader(full_path)[0]
+                output_del = np.zeros(
+                    (image_size[0], image_size[1] + 2 * padding_y,
+                     image_size[2] + 2 * padding_x), dtype=np.float64)
+                output_del[:, padding_y:(padding_y + image_size[1]),
+                           padding_x:(padding_x + image_size[2])] = dew.data
+
         # Perform correction
         for j, wl in enumerate(waves):
             dispersion_correction = atm_disper(wref, wl, airmass)
@@ -225,6 +245,17 @@ class CorrectDar(BasePrimitive):
                 y_shift = dispersion_correction * \
                     math.cos(projection_angle) / y_scale
                 output_sky[j, :, :] = shift(output_sky[j, :, :], (y_shift,
+                                                                  x_shift))
+
+        # for delta wavelength cube, if it exists
+        if output_del is not None:
+            for j, wl in enumerate(waves):
+                dispersion_correction = atm_disper(wref, wl, airmass)
+                x_shift = dispersion_correction * \
+                    math.sin(projection_angle) / x_scale
+                y_shift = dispersion_correction * \
+                    math.cos(projection_angle) / y_scale
+                output_del[j, :, :] = shift(output_del[j, :, :], (y_shift,
                                                                   x_shift))
 
         self.action.args.ccddata.data = output_image
@@ -273,6 +304,16 @@ class CorrectDar(BasePrimitive):
                 out_sky, output_file=self.action.args.name,
                 output_dir=self.config.instrument.output_directory,
                 suffix="scubed")
+
+        # check for delta wave cube
+        if output_del is not None:
+            out_del = CCDData(output_del,
+                              meta=self.action.args.ccddata.header,
+                              unit=self.action.args.ccddata.unit)
+            kcwi_fits_writer(
+                out_del, output_file=self.action.args.name,
+                output_dir=self.config.instrument.output_directory,
+                suffix="dcubed")
 
         self.logger.info(log_string)
 
