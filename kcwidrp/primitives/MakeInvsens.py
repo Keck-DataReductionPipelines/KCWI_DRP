@@ -1,8 +1,10 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from kcwidrp.core.bokeh_plotting import bokeh_plot
 from kcwidrp.core.kcwi_correct_extin import kcwi_correct_extin
+from kcwidrp.core.kcwi_get_std import kcwi_get_std
 from kcwidrp.core.kcwi_plotting import set_plot_lims, save_plot
-from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer
+from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer, \
+    kcwi_fits_reader
 
 from bokeh.plotting import figure, ColumnDataSource
 from scipy.signal import find_peaks
@@ -13,7 +15,6 @@ from astropy import units as u
 
 import time
 import os
-import pkg_resources
 import numpy as np
 
 
@@ -30,16 +31,8 @@ class MakeInvsens(BasePrimitive):
         stdfile = None
         stdname = None
         if 'object' in self.action.args.imtype.lower():
-            obname = self.action.args.ccddata.header['OBJECT'].lower()
-            path = 'data/stds/%s.fits' % obname
-            package = __name__.split('.')[0]
-            full_path = pkg_resources.resource_filename(package, path)
-            if os.path.exists(full_path):
-                self.logger.info("Found std file: %s" % full_path)
-                stdfile = full_path
-                stdname = obname
-            else:
-                self.logger.info("Not found in data/stds: %s" % full_path)
+            stdfile, stdname = kcwi_get_std(
+                self.action.args.ccddata.header['OBJECT'], self.logger)
         else:
             self.logger.warning("Not object type: %s" %
                                 self.action.args.imtype)
@@ -56,12 +49,14 @@ class MakeInvsens(BasePrimitive):
                     rdir = self.config.instrument.output_directory
                     invsensf = os.path.join(rdir, msname)
                     if os.path.exists(invsensf):
-                        self.logger.info("Master cal already exists: %s" % invsensf)
+                        self.logger.info("Master cal already exists: %s" %
+                                         invsensf)
                         return False
                     else:
                         self.logger.info("Master cal will be generated.")
                         return True
                 else:
+                    self.logger.warning("Not a KCWI standard observation.")
                     return False
             else:
                 self.logger.warning("DAR not corrected, cannot generate "
@@ -155,7 +150,19 @@ class MakeInvsens(BasePrimitive):
         self.logger.info("Std lices: max, sl0, sl1, spatial cntrd: "
                          "%d, %d, %d, %.2f" % (mxsl, sl0, sl1, cy))
         # get dwave spectrum
-        dwspec = np.zeros(sz[0]) + dw
+        ofn = self.action.args.ccddata.header['OFNAME']
+        delfn = ofn.split('.')[0] + '_dcubed.fits'
+        full_path = os.path.join(
+            os.path.dirname(self.action.args.name),
+            self.config.instrument.output_directory, delfn)
+        if os.path.exists(full_path):
+            dew = kcwi_fits_reader(full_path)[0]
+            dwspec = dew.data[:, cy, mxsl]
+            zeros = np.where(dwspec == 0)
+            if len(zeros) > 0:
+                dwspec[zeros] = dw
+        else:
+            dwspec = np.zeros(sz[0]) + dw
         # copy of input cube
         scub = self.action.args.ccddata.data.copy()
         # sky window width in pixels
@@ -180,6 +187,11 @@ class MakeInvsens(BasePrimitive):
         # convert to e-/second
         obsspec /= expt
         ubsspec /= expt
+        # check for zeros
+        zeros = np.where(obsspec == 0.)
+        if len(zeros) > 0:
+            obsmean = np.nanmean(obsspec)
+            obsspec[zeros] = obsmean
         # read in standard star spectrum
         hdul = pf.open(self.action.args.stdfile)
         swl = hdul[1].data['WAVELENGTH']
