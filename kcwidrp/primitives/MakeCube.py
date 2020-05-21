@@ -40,6 +40,10 @@ def make_cube_helper(argument):
         slice_sky = argument['sky'][:, xl0:xl1]
     else:
         slice_sky = None
+    if 'del' in argument:
+        slice_del = argument['del'][:, xl0:xl1]
+    else:
+        slice_del = None
     # do the warping
     warped = tf.warp(slice_img, tform, order=3,
                      output_shape=(ysize, xsize))
@@ -49,19 +53,27 @@ def make_cube_helper(argument):
                      output_shape=(ysize, xsize))
     farped = tf.warp(slice_flg, tform, order=3,
                      output_shape=(ysize, xsize), preserve_range=True)
+
     if slice_obj is not None:
         oarped = tf.warp(slice_obj, tform, order=3,
                          output_shape=(ysize, xsize))
     else:
         oarped = None
+
     if slice_sky is not None:
         sarped = tf.warp(slice_sky, tform, order=3,
                          output_shape=(ysize, xsize))
     else:
         sarped = None
 
+    if slice_del is not None:
+        darped = tf.warp(slice_del, tform, order=3,
+                         output_shape=(ysize, xsize), preserve_range=True)
+    else:
+        darped = None
+
     return argument['slice_number'], warped, varped, marped, farped, \
-        oarped, sarped
+        oarped, sarped, darped
 
 
 class MakeCube(BasePrimitive):
@@ -110,6 +122,7 @@ class MakeCube(BasePrimitive):
             out_fube = np.zeros((ysize, xsize, 24), dtype=np.uint8)
             out_oube = np.zeros((ysize, xsize, 24), dtype=np.float64)
             out_sube = np.zeros((ysize, xsize, 24), dtype=np.float64)
+            out_dube = np.zeros((ysize, xsize, 24), dtype=np.float64)
             # Store original data
             data_img = self.action.args.ccddata.data
             data_std = self.action.args.ccddata.uncertainty.array
@@ -138,6 +151,18 @@ class MakeCube(BasePrimitive):
                 if os.path.exists(full_path):
                     sky = kcwi_fits_reader(full_path)[0]
                     data_sky = sky.data
+            # check for geometry maps
+            dew = None
+            data_dew = None
+            if 'ARCLAMP' in self.action.args.imtype:
+                ofn = self.action.args.ccddata.header['OFNAME']
+                dewfn = ofn.split('.')[0] + '_delmap.fits'
+                full_path = os.path.join(
+                    os.path.dirname(self.action.args.name),
+                    self.config.instrument.output_directory, dewfn)
+                if os.path.exists(full_path):
+                    dew = kcwi_fits_reader(full_path)[0]
+                    data_dew = dew.data
             # Loop over 24 slices
             my_arguments = []
             for isl in range(0, 24):
@@ -156,6 +181,8 @@ class MakeCube(BasePrimitive):
                     arguments['obj'] = data_obj
                 if sky is not None:
                     arguments['sky'] = data_sky
+                if dew is not None:
+                    arguments['del'] = data_dew
                 my_arguments.append(arguments)
 
             p = Pool()
@@ -173,6 +200,8 @@ class MakeCube(BasePrimitive):
                     out_oube[:, :, slice_number] = partial_cube[5]
                 if sky is not None:
                     out_sube[:, :, slice_number] = partial_cube[6]
+                if dew is not None:
+                    out_dube[:, :, slice_number] = partial_cube[7]
 
             if self.config.instrument.plot_level >= 3:
                 for isl in range(0, 24):
@@ -385,6 +414,15 @@ class MakeCube(BasePrimitive):
                     out_sky, output_file=self.action.args.name,
                     output_dir=self.config.instrument.output_directory,
                     suffix="scube")
+            # check for dew outputs
+            if dew is not None:
+                out_dew = CCDData(out_dube,
+                                  meta=self.action.args.ccddata.header,
+                                  unit=dew.unit)
+                kcwi_fits_writer(
+                    out_dew, output_file=self.action.args.name,
+                    output_dir=self.config.instrument.output_directory,
+                    suffix="dcube")
         else:
             self.logger.error("Geometry file not found: %s" % geom_file)
 

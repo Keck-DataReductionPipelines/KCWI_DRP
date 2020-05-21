@@ -101,6 +101,9 @@ class Kcwi_pipeline(BasePipeline):
                                       "arcs_correct_gain"),
         "arcs_correct_gain":         ("CorrectGain",
                                       "gain_correction_started",
+                                      "arcs_create_unc"),
+        "arcs_create_unc":           ("CreateUncertaintyImage",
+                                      "create_unc_started",
                                       "arcs_rectify_image"),
         "arcs_rectify_image":        ("RectifyImage",
                                       "rectification_started",
@@ -131,6 +134,9 @@ class Kcwi_pipeline(BasePipeline):
                                       "arcs_generate_maps"),
         "arcs_generate_maps":        ("GenerateMaps",
                                       "generating_maps_started",
+                                      "arc_make_cube"),
+        "arc_make_cube":             ("MakeCube",
+                                      "making_cube_started",
                                       None),
         # FLAT PROCESSING
         "process_flat":              ("ProcessFlat",
@@ -296,7 +302,7 @@ class Kcwi_pipeline(BasePipeline):
         if action.args.in_proctab and not context.config.instrument.clobber:
             self.logger.warn("Pushing noop to queue")
             context.push_event("noop", action.args)
-        elif action.args.imtype == "BIAS":
+        elif "BIAS" in action.args.imtype:
             bias_args = action.args
             bias_args.groupid = groupid
             bias_args.want_type = "BIAS"
@@ -304,7 +310,7 @@ class Kcwi_pipeline(BasePipeline):
             bias_args.min_files = context.config.instrument.bias_min_nframes
             bias_args.new_file_name = "master_bias_%s.fits" % groupid
             context.push_event("process_bias", bias_args)
-        elif action.args.imtype == "DARK":
+        elif "DARK" in action.args.imtype:
             dark_args = action.args
             dark_args.groupid = groupid
             dark_args.want_type = "DARK"
