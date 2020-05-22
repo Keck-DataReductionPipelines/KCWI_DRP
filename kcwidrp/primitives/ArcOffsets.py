@@ -1,5 +1,9 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from kcwidrp.core.bokeh_plotting import bokeh_plot
+from kcwidrp.core.kcwi_plotting import get_plot_lims, oplot_slices, \
+    set_plot_lims
+
+import time
 
 import numpy as np
 from bokeh.plotting import figure
@@ -29,6 +33,7 @@ class ArcOffsets(BasePrimitive):
             offsets_array = np.arange(1-number_of_samples, number_of_samples)
             # Collect offsets
             offsets = []
+            next_bar_to_plot = 0
             for arc_number, arc in enumerate(arcs):
                 # Cross-correlate, avoiding junk on the ends
                 cross_correlation = np.correlate(reference_arc[10:-10],
@@ -39,7 +44,7 @@ class ArcOffsets(BasePrimitive):
                 self.logger.info("Arc %d Slice %d XCorr shift = %d" %
                                  (arc_number, int(arc_number/5), offset))
                 # display if requested
-                if do_plot:
+                if do_plot and arc_number == next_bar_to_plot:
                     p = figure(title=self.action.args.plotlabel +
                                "BAR OFFSET for Arc: %d Slice: %d = %d" %
                                (arc_number, int(arc_number/5), offset),
@@ -53,9 +58,32 @@ class ArcOffsets(BasePrimitive):
                     p.line(x, np.roll(arc, offset), color='red',
                            legend_label='bar %d' % arc_number)
                     bokeh_plot(p, self.context.bokeh_session)
-                    q = input("Next? <cr>, q to quit: ")
+                    q = input("Next? <int> or <cr>, q to quit: ")
                     if 'Q' in q.upper():
                         do_plot = False
+                    else:
+                        try:
+                            next_bar_to_plot = int(q)
+                        except ValueError:
+                            next_bar_to_plot = arc_number + 1
+            # plot offsets
+            if self.config.instrument.plot_level >= 1:
+                p = figure(title=self.action.args.plotlabel + "BAR OFFSETS ",
+                           x_axis_label="Bar #",
+                           y_axis_label="Wave offset (px)",
+                           plot_width=self.config.instrument.plot_width,
+                           plot_height=self.config.instrument.plot_height)
+                p.diamond(list(range(120)), offsets, size=8)
+                xlim = [-1, 120]
+                ylim = get_plot_lims(offsets)
+                p.xgrid.grid_line_color = None
+                oplot_slices(p, ylim)
+                set_plot_lims(p, xlim=xlim, ylim=ylim)
+                bokeh_plot(p, self.context.bokeh_session)
+                if self.config.instrument.plot_level >= 2:
+                    input("Next? <cr>: ")
+                else:
+                    time.sleep(self.config.instrument.plot_pause)
             self.context.bar_offsets = offsets
         else:
             self.logger.error("No extracted arcs found")
