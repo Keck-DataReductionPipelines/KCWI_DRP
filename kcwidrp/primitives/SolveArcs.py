@@ -19,13 +19,17 @@ def gaus(x, a, mu, sigma):
     return a * np.exp(-(x - mu) ** 2 / (2. * sigma ** 2))
 
 
-def get_line_window(y, c, thresh=0., verbose=False):
+def get_line_window(y, c, thresh=0., logger=None):
     """Find a window that includes the fwhm of the line"""
+    if logger is None:
+        verbose = False
+    else:
+        verbose = True
     nx = len(y)
     # check edges
     if c < 2 or c > nx - 2:
         if verbose:
-            print("input center too close to edge")
+            logger.info("input center too close to edge")
         return None, None, 0
     # get initial values
     x0 = c - 2
@@ -35,27 +39,27 @@ def get_line_window(y, c, thresh=0., verbose=False):
     # check low side
     if x0 - 1 < 0:
         if verbose:
-            print("max check: low edge hit")
+            logger.info("max check: low edge hit")
         return None, None, 0
     while y[x0-1] > mx:
         x0 -= 1
         count += 1
         if x0 - 1 < 0:
             if verbose:
-                print("Max check: low edge hit")
+                logger.info("Max check: low edge hit")
             return None, None, 0
 
     # check high side
     if x1 + 1 > nx:
         if verbose:
-            print("max check: high edge hit")
+            logger.info("max check: high edge hit")
         return None, None, 0
     while y[x1+1] > mx:
         x1 += 1
         count += 1
         if x1 + 1 > nx:
             if verbose:
-                print("Max check: high edge hit")
+                logger.info("Max check: high edge hit")
             return None, None, 0
     # adjust starting window to center on max
     cmx = x0 + y[x0:x1+1].argmax()
@@ -75,11 +79,11 @@ def get_line_window(y, c, thresh=0., verbose=False):
         if y[x0] > mx or x0 <= 0 or y[x0] > prev:
             if verbose:
                 if y[x0] > mx:
-                    print("hafmax check: low index err - missed max")
+                    logger.info("hafmax check: low index err - missed max")
                 if x0 <= 0:
-                    print("hafmax check: low index err - at edge")
+                    logger.info("hafmax check: low index err - at edge")
                 if y[x0] > prev:
-                    print("hafmax check: low index err - wiggly")
+                    logger.info("hafmax check: low index err - wiggly")
             return None, None, 0
         prev = y[x0]
         x0 -= 1
@@ -90,11 +94,11 @@ def get_line_window(y, c, thresh=0., verbose=False):
         if y[x1] > mx or x1 >= nx or y[x1] > prev:
             if verbose:
                 if y[x1] > mx:
-                    print("hafmax check: high index err - missed max")
+                    logger.info("hafmax check: high index err - missed max")
                 if x1 >= nx:
-                    print("hafmax check: high index err - at edge")
+                    logger.info("hafmax check: high index err - at edge")
                 if y[x1] > prev:
-                    print("hafmax check: high index err - wiggly")
+                    logger.info("hafmax check: high index err - wiggly")
             return None, None, 0
         prev = y[x1]
         x1 += 1
@@ -102,7 +106,7 @@ def get_line_window(y, c, thresh=0., verbose=False):
     # where did we end up?
     if c < x0 or x1 < c:
         if verbose:
-            print("initial position outside final window")
+            logger.info("initial position outside final window")
         return None, None, 0
 
     return x0, x1, count
@@ -132,7 +136,10 @@ class SolveArcs(BasePrimitive):
             do_inter = True
         else:
             do_inter = False
-        verbose = False
+        if self.config.instrument.verbose > 1:
+            verbose = True
+        else:
+            verbose = False
         # Bar statistics
         bar_sig = []
         bar_nls = []
@@ -151,11 +158,12 @@ class SolveArcs(BasePrimitive):
         self.action.args.xsvals = np.arange(0, len(
             self.context.arcs[self.config.instrument.REFBAR]))
         # loop over arcs and generate a wavelength solution for each
+        next_bar_to_plot = 0
         for ib, b in enumerate(self.context.arcs):
             # print("")
             # self.logger.info("BAR %d" % ib)
             # print("")
-            # Starting pascal shifted coeffs from fit_center()
+            # Starting with pascal shifted coeffs from fit_center()
             coeff = self.action.args.twkcoeff[ib]
             # get bar wavelengths
             bw = np.polyval(coeff, self.action.args.xsvals)
@@ -185,8 +193,9 @@ class SolveArcs(BasePrimitive):
                 # get window for this line
                 try:
                     line_x = [i for i, v in enumerate(bw) if v >= aw][0]
-                    minow, maxow, count = get_line_window(bspec, line_x,
-                                                          thresh=hgt)
+                    minow, maxow, count = get_line_window(
+                        bspec, line_x, thresh=hgt,
+                        logger=(self.logger if verbose else None))
                     if count < 5 or not minow or not maxow:
                         rej_wave.append(aw)
                         rej_flux.append(self.action.args.at_flux[iw])
@@ -211,13 +220,15 @@ class SolveArcs(BasePrimitive):
                     try:
                         fit, _ = curve_fit(gaus, xvec, yvec,
                                            p0=[100., line_x, 1.])
+                        sp_pk_x = fit[1]
                     except RuntimeError:
                         nrej += 1
                         if verbose:
                             self.logger.info(
                                 "Arc Gaussian fit rejected for line %.3f" % aw)
-                        continue
-                    sp_pk_x = fit[1]
+                        sp_pk_x = line_x
+                        # continue
+
                     # Get interpolation
                     int_line = interpolate.interp1d(xvec, yvec, kind='cubic',
                                                     bounds_error=False,
@@ -234,16 +245,17 @@ class SolveArcs(BasePrimitive):
                         rej_flux.append(self.action.args.at_flux[iw])
                         nrej += 1
                         if verbose:
-                            self.logger.info("Arc peak - cent offset rejected "
-                                             "for line %.3f" % aw)
+                            self.logger.info("Arc peak - cent offset = %.2f "
+                                             "rejected for line %.3f" %
+                                             (abs(cent - peak), aw))
                         continue
                     # store data
                     arc_pix_dat.append(peak)
-                    arc_int_dat.append(fit[0])  # plt_line[max_index])
+                    arc_int_dat.append(plt_line[max_index])
                     at_wave_dat.append(aw)
                     at_flux_dat.append(self.action.args.at_flux[iw])
                     # plot, if requested
-                    if do_inter:
+                    if do_inter and ib == next_bar_to_plot:
                         ptitle = " Bar# %d - line %3d/%3d: xc = %.1f, " \
                                  "Wave = %9.2f" % \
                                  (ib, (iw + 1), len(self.action.args.at_wave),
@@ -337,8 +349,10 @@ class SolveArcs(BasePrimitive):
                         at_dat.append(at_wave_dat[il])
                         at_fdat.append(at_flux_dat[il])
                     else:
-                        # self.logger.info("REJ: %d, %.2f, %.3f" %
-                        #              (il, arc_pix_dat[il], at_wave_dat[il]))
+                        if verbose:
+                            self.logger.info("It%d REJ: %d, %.2f, %.3f" %
+                                             (it, il, arc_pix_dat[il],
+                                              at_wave_dat[il]))
                         rej_rsd_wave.append(at_wave_dat[il])
                         rej_rsd_flux.append(at_flux_dat[il])
                         rej_rsd.append(rsd)
@@ -364,7 +378,7 @@ class SolveArcs(BasePrimitive):
             bar_sig.append(wsig)
             bar_nls.append(len(arc_pix_dat))
             # do plotting?
-            if master_inter:
+            if master_inter and ib == next_bar_to_plot:
                 # plot bar fit residuals
                 ptitle = " for Bar %03d, Slice %02d, RMS = %.3f, N = %d" % \
                          (ib, int(ib / 5), wsig, len(arc_pix_dat))
@@ -414,9 +428,14 @@ class SolveArcs(BasePrimitive):
                 p.diamond(rej_wave, [rj*atnorm for rj in rej_flux],
                           color='red', legend_label='RejFit', size=6)
                 bokeh_plot(p, self.context.bokeh_session)
-                q = input("Next? <cr>, q - quit: ")
+                q = input("Next? <int> or <cr>, q - quit: ")
                 if 'Q' in q.upper():
                     master_inter = False
+                else:
+                    try:
+                        next_bar_to_plot = int(q)
+                    except ValueError:
+                        next_bar_to_plot = ib + 1
 
         # Plot final results
 
@@ -434,8 +453,7 @@ class SolveArcs(BasePrimitive):
                     range(len(self.action.args.fincoeff[0]))):
                 ptitle = self.action.args.plotlabel + "COEF %d VALUES" % ic
                 p = figure(title=ptitle, x_axis_label="Bar #",
-                           y_axis_label="Coef %d (%s)" % (
-                           ic, ylabs[ic]),
+                           y_axis_label="Coef %d (%s)" % (ic, ylabs[ic]),
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height)
                 coef = []
