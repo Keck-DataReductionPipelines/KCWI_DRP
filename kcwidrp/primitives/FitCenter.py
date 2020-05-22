@@ -155,10 +155,14 @@ def bar_fit_helper(argument):
                                      fill_value='extrapolate')
     xdisps = np.linspace(min(argument['disps']), max(argument['disps']),
                          num=argument['nn'] * 100)
+    # get central region
+    x0c = int(len(xdisps) / 3)
+    x1c = int(2 * (len(xdisps) / 3))
     # get peak values
-    maxima_res = int_max(xdisps)
-    shifts_res = int_shift(xdisps) * argument['refdisp']
-    bardisp = xdisps[maxima_res.argmax()]
+    central_xdisps = xdisps[x0c:x1c]
+    maxima_res = int_max(central_xdisps)
+    shifts_res = int_shift(central_xdisps) * argument['refdisp']
+    bardisp = central_xdisps[maxima_res.argmax()]
     barshift = shifts_res[maxima_res.argmax()]
     # update coeffs
     coefficients[4] = argument['p0'][b] - barshift
@@ -266,7 +270,8 @@ class FitCenter(BasePrimitive):
         results = p.map(bar_fit_helper, list(my_arguments))
         p.close()
 
-        for result in results:
+        next_bar_to_plot = 0
+        for ir, result in enumerate(results):
             b = result[0]
             shifted_coefficients = result[1]
             _centwave = result[2]
@@ -275,7 +280,7 @@ class FitCenter(BasePrimitive):
             centwave.append(_centwave)
             centdisp.append(_centdisp)
             maxima = result[4]
-            if do_inter:
+            if do_inter and ir == next_bar_to_plot:
                 # plot maxima
                 p = figure(title=self.action.args.plotlabel +
                            "CENTRAL DISPERSION FIT for Bar: %d Slice: %d" %
@@ -292,9 +297,14 @@ class FitCenter(BasePrimitive):
                 p.line([self.context.prelim_disp, self.context.prelim_disp],
                        ylim, color='red', legend_label="Calc Disp")
                 bokeh_plot(p, self.context.bokeh_session)
-                q = input("Next? <cr>, q to quit: ")
+                q = input("Next? <int> or <cr>, q to quit: ")
                 if 'Q' in q.upper():
                     do_inter = False
+                else:
+                    try:
+                        next_bar_to_plot = int(q)
+                    except ValueError:
+                        next_bar_to_plot = ir + 1
 
         self.action.args.twkcoeff = twkcoeff
         # Plot results
