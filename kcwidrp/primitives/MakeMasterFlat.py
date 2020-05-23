@@ -1,6 +1,7 @@
 from keckdrpframework.primitives.base_img import BaseImg
 from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_reader, \
     kcwi_fits_writer
+from kcwidrp.core.kcwi_plotting import get_plot_lims
 from kcwidrp.core.bokeh_plotting import bokeh_plot
 from kcwidrp.core.bspline import Bspline
 from bokeh.plotting import figure
@@ -351,7 +352,7 @@ class MakeMasterFlat(BaseImg):
                 s = np.argsort(xledge)
                 xledge = [xledge[i] for i in s]
                 yledge = [yledge[i] for i in s]
-                win = boxcar(150)
+                win = boxcar(250)
                 smyledge = sp.signal.convolve(yledge,
                                               win, mode='same') / sum(win)
                 ylmax = np.max(yledge)
@@ -362,12 +363,36 @@ class MakeMasterFlat(BaseImg):
                                                      upper=1, lower=1)
                 ylfit, _ = ledgefit.value(np.asarray(fpoints))
                 deriv = -(np.roll(ylfit, 1) - np.roll(ylfit, -1)) / 2.0
-                deriv = deriv[4:-4]
-                xvals = fpoints[4:-4]
+                # trim edges
+                trm = int(len(deriv)/5)
+                deriv = deriv[trm:-trm]
+                xvals = fpoints[trm:-trm]
                 peaks, _ = find_peaks(deriv, height=100)
                 if len(peaks) != 1:
-                    raise ValueError
-                ipk = peaks[0]
+                    self.logger.warning("Extra peak found!")
+                    p = figure(title=self.action.args.plotlabel +
+                               ' Ledge', x_axis_label='Wavelength (A)',
+                               y_axis_label='Value',
+                               plot_width=self.config.instrument.plot_width,
+                               plot_height=self.config.instrument.plot_height)
+                    p.circle(xledge, smyledge, fill_color='green')
+                    p.line(fpoints, ylfit)
+                    bokeh_plot(p, self.context.bokeh_session)
+                    input("Next? <cr>: ")
+                    p = figure(title=self.action.args.plotlabel +
+                               ' Deriv', x_axis_label='px',
+                               y_axis_label='Value',
+                               plot_width=self.config.instrument.plot_width,
+                               plot_height=self.config.instrument.plot_height)
+                    xx = list(range(len(deriv)))
+                    ylim = get_plot_lims(deriv)
+                    p.circle(xx, deriv)
+                    for pk in peaks:
+                        p.line([pk, pk], ylim)
+                    bokeh_plot(p, self.context.bokeh_session)
+                    ipk = int(input("Peak? <int>: "))
+                else:
+                    ipk = peaks[0]
                 apk = xvals[ipk]
                 if self.config.instrument.plot_level >= 3:
                     p = figure(
