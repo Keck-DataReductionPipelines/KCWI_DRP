@@ -83,8 +83,6 @@ class SolveGeom(BasePrimitive):
             self.action.args.reference_bar_separation + self.action.args.x0out
         # Variables for output control points
         srcw = []
-        max_srcw = 0
-        min_srcw = 4096 / self.action.args.ybinsize
         # Loop over source control points
         for ixy, xy in enumerate(self.action.args.source_control_points):
             # Calculate y wavelength
@@ -92,14 +90,10 @@ class SolveGeom(BasePrimitive):
                 self.action.args.fincoeff[self.action.args.bar_id[ixy]], xy[1]))
             # Convert to output pixels
             yw = (yw - self.action.args.wave0out) / dwout
-            # Calculate extreme values
-            if yw > max_srcw:
-                max_srcw = yw
-            if yw < min_srcw:
-                min_srcw = yw
             srcw.append([xy[0], yw])
         # Use extremes to define output size
-        ysize = int(max_srcw + min_srcw + 20 / self.action.args.ybinsize)
+        ysize = int((self.action.args.waveall1 - self.action.args.wave0out)
+                    / dwout)
         xsize = int(5. * self.action.args.reference_bar_separation) + 1
         self.logger.info("Output slices will be %d x %d px" % (xsize, ysize))
         # Now loop over slices and get relevant control points for each slice
