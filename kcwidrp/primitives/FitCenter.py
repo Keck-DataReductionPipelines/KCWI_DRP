@@ -240,6 +240,8 @@ class FitCenter(BasePrimitive):
         # log taperfrac: important!
         self.logger.info("Using TAPERFRAC = %.3f" %
                          self.config.instrument.TAPERFRAC)
+        self.action.args.ccddata.header['TAPFRAC'] = (
+            self.config.instrument.TAPERFRAC, "taper fraction for central fit")
         # loop over bars and assemble input arguments
         my_arguments = []
         for b, bs in enumerate(self.context.arcs):
