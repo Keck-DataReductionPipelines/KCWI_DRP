@@ -237,6 +237,9 @@ class FitCenter(BasePrimitive):
         subxvals = self.action.args.xvals[
                    self.action.args.minrow:self.action.args.maxrow]
 
+        # log taperfrac: important!
+        self.logger.info("Using TAPERFRAC = %.3f" %
+                         self.config.instrument.TAPERFRAC)
         # loop over bars and assemble input arguments
         my_arguments = []
         for b, bs in enumerate(self.context.arcs):
