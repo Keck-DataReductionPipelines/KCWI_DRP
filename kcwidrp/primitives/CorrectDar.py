@@ -46,6 +46,7 @@ class CorrectDar(BasePrimitive):
 
     def _pre_condition(self):
         """Checks if DAR correction is appropriate"""
+        self.logger.info("Checking precondition for CorrectDar")
         # Check image
         if 'GEOMCOR' not in self.action.args.ccddata.header:
             self.logger.error("Can only correct DAR on geometrically corrected "

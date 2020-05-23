@@ -137,6 +137,9 @@ class Kcwi_pipeline(BasePipeline):
                                       "arc_make_cube"),
         "arc_make_cube":             ("MakeCube",
                                       "making_cube_started",
+                                      "arc_make_cubeimage"),
+        "arc_make_cubeimage":        ("CubeImage",
+                                      "making_cubeimage_started",
                                       None),
         # FLAT PROCESSING
         "process_flat":              ("ProcessFlat",
