@@ -40,7 +40,12 @@ class CubeImage(BasePrimitive):
         dw = self.action.args.ccddata.header['CD3_3']
         crpixw = self.action.args.ccddata.header['CRPIX3']
         y0 = int((wall0 - w0) / dw)
+        if y0 < 0:
+            y0 = 0
+        out_w0 = y0 * dw + w0
         y1 = int((wall1 - w0) / dw)
+        if y1 > self.action.args.cube_size[0]:
+            y1 = self.action.args.cube_size[0]
         out_y = y1 - y0
         # create output image
         cub_x = self.action.args.cube_size[1]
@@ -50,6 +55,10 @@ class CubeImage(BasePrimitive):
         s0 = 0.
         ds = 24.0 / out_x
         crpixs = 1.
+        self.logger.info("cube dims: y, x, z: %d, %d, %d" %
+                         self.action.args.cube_size)
+        self.logger.info("y0, y1 = %d, %d: out_x, out_y = %d, %d" %
+                         (y0, y1, out_x, out_y))
 
         # loop over slices
         for isl in range(24):
@@ -98,7 +107,7 @@ class CubeImage(BasePrimitive):
         out_ccd.header['CTYPE2'] = ('AWAV', 'Air Wavelengths')
         out_ccd.header['CUNIT2'] = ('Angstrom', 'Wavelength units')
         out_ccd.header['CNAME2'] = ('KCWI Wavelength', 'Wavelength name')
-        out_ccd.header['CRVAL2'] = (wall0, 'Wavelength zeropoint')
+        out_ccd.header['CRVAL2'] = (out_w0, 'Wavelength zeropoint')
         out_ccd.header['CRPIX2'] = (crpixw, 'Wavelength reference pixel')
         out_ccd.header['CDELT2'] = (dw, 'Wavelength Angstroms per pixel')
 
