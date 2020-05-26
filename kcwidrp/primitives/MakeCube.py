@@ -303,16 +303,28 @@ class MakeCube(BasePrimitive):
             self.action.args.ccddata.header['BAR0'] = (
                 geom['bar0'], 'first bar pixel position')
             # Wavelength ranges
-            self.action.args.ccddata.header['WAVALL0'] = (
-                geom['waveall0'], 'Low inclusive wavelength')
-            self.action.args.ccddata.header['WAVALL1'] = (
-                geom['waveall1'], 'High inclusive wavelength')
-            self.action.args.ccddata.header['WAVGOOD0'] = (
-                geom['wavegood0'], 'Low good wavelength')
-            self.action.args.ccddata.header['WAVGOOD1'] = (
-                geom['wavegood1'], 'High good wavelength')
-            self.action.args.ccddata.header['WAVMID'] = (
-                geom['wavemid'], 'middle wavelength')
+            if self.action.args.nasmask:
+                self.action.args.ccddata.header['WAVALL0'] = (
+                    geom['wavensall0'], 'Low inclusive wavelength')
+                self.action.args.ccddata.header['WAVALL1'] = (
+                    geom['wavensall1'], 'High inclusive wavelength')
+                self.action.args.ccddata.header['WAVGOOD0'] = (
+                    geom['wavensgood0'], 'Low good wavelength')
+                self.action.args.ccddata.header['WAVGOOD1'] = (
+                    geom['wavensgood1'], 'High good wavelength')
+                self.action.args.ccddata.header['WAVMID'] = (
+                    geom['wavensmid'], 'middle wavelength')
+            else:
+                self.action.args.ccddata.header['WAVALL0'] = (
+                    geom['waveall0'], 'Low inclusive wavelength')
+                self.action.args.ccddata.header['WAVALL1'] = (
+                    geom['waveall1'], 'High inclusive wavelength')
+                self.action.args.ccddata.header['WAVGOOD0'] = (
+                    geom['wavegood0'], 'Low good wavelength')
+                self.action.args.ccddata.header['WAVGOOD1'] = (
+                    geom['wavegood1'], 'High good wavelength')
+                self.action.args.ccddata.header['WAVMID'] = (
+                    geom['wavemid'], 'middle wavelength')
             # Wavelength fit statistics
             self.action.args.ccddata.header['AVWVSIG'] = (
                 geom['avwvsig'], 'Avg. bar wave sigma (Ang)')

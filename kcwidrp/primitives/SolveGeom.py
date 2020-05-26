@@ -26,24 +26,32 @@ class SolveGeom(BasePrimitive):
         self.logger.info("Solving overall geometry")
 
         # Get some geometry constraints
-        if self.action.args.nasmask:
-            goody0 = self.action.args.shufrows + 1
-            goody1 = goody0 + self.action.args.shufrows
-        else:
-            goody0 = 0
-            goody1 = max(self.action.args.xsvals)
+        goody0 = 0
+        goody1 = max(self.action.args.xsvals)
+        # N&S limits
+        goodnsy0 = self.action.args.shufrows
+        goodnsy1 = goodnsy0 + self.action.args.shufrows
         # Calculate wavelength ranges
         y0wvs = []
         y1wvs = []
+        # N&S ranges
+        y0nswvs = []
+        y1nswvs = []
         # Get wavelength extremes for each bar
         for fcfs in self.action.args.fincoeff:
             y0wvs.append(float(np.polyval(fcfs, goody0)))
             y1wvs.append(float(np.polyval(fcfs, goody1)))
+            y0nswvs.append(float(np.polyval(fcfs, goodnsy0)))
+            y1nswvs.append(float(np.polyval(fcfs, goodnsy1)))
         # Now get ensemble extremes
         y0max = max(y0wvs)
         y0min = min(y0wvs)
         y1max = max(y1wvs)
         y1min = min(y1wvs)
+        y0nsmax = max(y0nswvs)
+        y0nsmin = min(y0nswvs)
+        y1nsmax = max(y1nswvs)
+        y1nsmin = min(y1nswvs)
         # Cube trimming wavelengths
         trimw0 = y0min
         trimw1 = y1max
@@ -70,6 +78,14 @@ class SolveGeom(BasePrimitive):
                                                self.action.args.wavegood1,
                                                self.action.args.waveall0,
                                                self.action.args.waveall1])
+        self.action.args.wavensgood0 = min([y0nsmax, y1nsmax])
+        self.action.args.wavensgood1 = max([y0nsmin, y1nsmin])
+        self.action.args.wavensall0 = min([y0nsmin, y1nsmin])
+        self.action.args.wavensall1 = max([y0nsmax, y1nsmax])
+        self.action.args.wavensmid = np.average([self.action.args.wavensgood0,
+                                                 self.action.args.wavensgood1,
+                                                 self.action.args.wavensall0,
+                                                 self.action.args.wavensall1])
         self.logger.info("WAVE  GOOD: %.2f - %.2f" %
                          (self.action.args.wavegood0,
                           self.action.args.wavegood1))
@@ -179,6 +195,11 @@ class SolveGeom(BasePrimitive):
                 "wavegood0": self.action.args.wavegood0,
                 "wavegood1": self.action.args.wavegood1,
                 "wavemid": self.action.args.wavemid,
+                "wavensall0": self.action.args.wavensall0,
+                "wavensall1": self.action.args.wavensall1,
+                "wavensgood0": self.action.args.wavensgood0,
+                "wavensgood1": self.action.args.wavensgood1,
+                "wavensmid": self.action.args.wavensmid,
                 "dwout": dwout,
                 "wave0out": self.action.args.wave0out,
                 "wave1out": self.action.args.wave1out,
