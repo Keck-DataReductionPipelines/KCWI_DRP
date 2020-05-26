@@ -440,10 +440,10 @@ class SolveArcs(BasePrimitive):
         # Plot final results
 
         # plot output name stub
-        pfname = "arc_%05d_%s_%s_%s" % (
+        pfname = "arc_%05d_%s_%s_%s_tf%02d" % (
             self.action.args.ccddata.header['FRAMENO'],
             self.action.args.illum, self.action.args.grating,
-            self.action.args.ifuname)
+            self.action.args.ifuname, int(100*self.config.instrument.TAPERFRAC))
 
         # Plot coefs
         if self.config.instrument.plot_level >= 1:
