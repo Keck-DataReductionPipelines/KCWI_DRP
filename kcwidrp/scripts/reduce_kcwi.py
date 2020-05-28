@@ -43,6 +43,9 @@ def _parse_arguments(in_args: list) -> argparse.Namespace:
                         help='Use group mode: separate files by image type and '
                              'reduce in the correct order',
                         default=False, action='store_true')
+    parser.add_argument('-t', '--taperfrac', dest='taperfrac', type=float,
+                        help='Taper fraction for wavelength fitting',
+                        default=None)
 
     # in this case, we are loading an entire directory,
     # and ingesting all the files in that directory
@@ -138,6 +141,14 @@ def main():
                                                   name="KCWI")
     framework.logger = getLogger(framework_logcfg_fullpath,
                                  name="DRPF")
+
+    # check for taperfrac argument
+    if args.taperfrac:
+        def_tf = getattr(framework.config.instrument, 'TAPERFRAC', None)
+        if def_tf is not None:
+            framework.context.pipeline_logger.info(
+                "Setting new taperfrac = %.3f" % args.taperfrac)
+            framework.config.instrument.TAPERFRAC = args.taperfrac
 
     # start the bokeh server is requested by the configuration parameters
     if framework.config.instrument.enable_bokeh is True:
