@@ -3,5 +3,9 @@
 *.egg-info
 *.pyc
 *__pycache__*
+<<<<<<< HEAD
 /build
 *.egg
+=======
+docs/build
+>>>>>>> First commit of documentation
