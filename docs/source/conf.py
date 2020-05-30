@@ -31,13 +31,10 @@ release = '0.1'
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx_automodapi.automodapi',
-    'sphinx_automodapi.smart_resolver',
-              'sphinx.ext.napoleon',
+extensions = ['sphinx.ext.napoleon',
               'sphinx.ext.autodoc',
               'sphinx.ext.viewcode'
 ]
-numpydoc_show_class_members = False
 napoleon_numpy_docstring = True
 # autosummary_generate = False
 
