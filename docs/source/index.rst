@@ -15,7 +15,7 @@ Release 0.1
 ===========
 
 What this version provides
-++++++++++++++++++++++++++
+--------------------------
 
 * First end-to-end version including all the reduction step of the IDL pipeline
 * Three execution modes
@@ -28,7 +28,7 @@ What this version provides
 * Multi-processing for large datasets
 
 What this version is missing
-++++++++++++++++++++++++++++
+----------------------------
 
 What are we working on?
 
@@ -41,6 +41,10 @@ Follow the documentation in this section to reduce KCWI data.
    :maxdepth: 1
 
    installing
+   quickstart
+   configuration
+   start_up
+   api
 
 
 
