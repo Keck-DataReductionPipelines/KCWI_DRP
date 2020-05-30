@@ -44,10 +44,16 @@ Follow the documentation in this section to reduce KCWI data.
    quickstart
    configuration
    start_up
+
+
+More information
+================
+
+.. toctree::
+   :maxdepth: 1
+
+   pipeline_concepts
    api
-
-
-
 
 Indices and tables
 ==================
