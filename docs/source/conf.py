@@ -14,10 +14,11 @@ import os
 import sys
 from importlib import import_module
 sys.path.insert(0, os.path.abspath('.'))
-sys.path.insert(0, os.path.abspath('../'))
+sys.path.insert(0, os.path.abspath('../kcwidrp'))
+sys.path.insert(0, os.path.abspath('../kcwidrp/primitives'))
 
-import_module('kcwidrp')
-package = sys.modules['kcwidrp']
+import_module('kcwidrp.primitives')
+package = sys.modules['kcwidrp.primitives']
 
 # -- Project information -----------------------------------------------------
 
