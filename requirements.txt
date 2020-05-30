@@ -15,7 +15,10 @@ setuptools~=46.1.1
 ref_index~=1.0
 pyregion~=2.0
 <<<<<<< HEAD
+<<<<<<< HEAD
 selenium
 =======
 numpy
+>>>>>>> adding requirement for readthedocs
+=======
 >>>>>>> adding requirement for readthedocs
