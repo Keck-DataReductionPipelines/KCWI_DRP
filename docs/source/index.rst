@@ -55,6 +55,15 @@ More information
    pipeline_concepts
    api
 
+Developers
+==========
+
+.. toctree::
+   :maxdepth: 1
+
+   updating_docs
+
+
 Indices and tables
 ==================
 
