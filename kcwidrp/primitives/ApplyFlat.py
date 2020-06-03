@@ -3,6 +3,9 @@ from keckdrpframework.models.arguments import Arguments
 
 
 class ApplyFlat(BasePrimitive):
+    """
+    Generic routine to apply flat fielding. Not yet implemented.
+    """
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)

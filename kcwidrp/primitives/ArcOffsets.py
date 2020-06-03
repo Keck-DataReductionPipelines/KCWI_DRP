@@ -10,7 +10,14 @@ from bokeh.plotting import figure
 
 
 class ArcOffsets(BasePrimitive):
-    """Derive offset of each bar relative to reference bar"""
+    """Derive offset of each bar relative to reference bar.
+
+    Using cross correlation techniques, this routine calculates the relative
+    offsets between the reference bar (loaded as a parameter as
+    config.instrument.REFBAR).
+
+    Arcs must be available as context.arcs.
+    """
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
