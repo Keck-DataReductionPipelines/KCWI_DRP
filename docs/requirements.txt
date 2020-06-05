@@ -1,4 +1,4 @@
 numpy
 astropy
 Cython
-
+-e git://github.com/Keck-DataReductionPipelines/KeckDRPFramework.git#egg=keckdrpframework
