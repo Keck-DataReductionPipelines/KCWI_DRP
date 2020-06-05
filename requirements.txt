@@ -7,6 +7,7 @@ bokeh~=2.0.0
 psutil~=5.7.0
 pytest~=5.4.1
 -e git://github.com/Keck-DataReductionPipelines/KeckDRPFramework.git#egg=keckdrpframework
+-e git://github.com/cmccully/lacosmicx.git#egg=lacosmicx
 requests~=2.23.0
 pandas~=1.0.3
 matplotlib~=3.1.3
