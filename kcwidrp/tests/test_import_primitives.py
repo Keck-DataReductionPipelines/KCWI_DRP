@@ -1,52 +1,61 @@
 import pytest
 
 
+
 def test_import_ApplyFlat():
     import kcwidrp.primitives.ApplyFlat
 
 
 def test_import_ArcOffsets():
-   import kcwidrp.primitives.ArcOffsets
+    import kcwidrp.primitives.ArcOffsets
 
 
 def test_import_CalcPrelimDisp():
-   import kcwidrp.primitives.CalcPrelimDisp
+    import kcwidrp.primitives.CalcPrelimDisp
 
 
 def test_import_CorrectDar():
-     import kcwidrp.primitives.CorrectDar
+    import kcwidrp.primitives.CorrectDar
 
 
 def test_import_CorrectDefects():
-     import kcwidrp.primitives.CorrectDefects
+    import kcwidrp.primitives.CorrectDefects
 
 
 def test_import_CorrectGain():
-     import kcwidrp.primitives.CorrectGain
+    import kcwidrp.primitives.CorrectGain
+
+
+def test_import_CorrectIllumination():
+    import kcwidrp.primitives.CorrectIllumination
 
 
 def test_import_CreateUncertaintyImage():
-     import kcwidrp.primitives.CreateUncertaintyImage
+    import kcwidrp.primitives.CreateUncertaintyImage
+
+
+def test_import_CubeImage():
+    import kcwidrp.primitives.CubeImage
 
 
 def test_import_ExtractArcs():
-     import kcwidrp.primitives.ExtractArcs
+    import kcwidrp.primitives.ExtractArcs
 
 
 def test_import_FindBars():
-     import kcwidrp.primitives.FindBars
+    import kcwidrp.primitives.FindBars
 
 
 def test_import_FitCenter():
-     import kcwidrp.primitives.FitCenter
+    import kcwidrp.primitives.FitCenter
 
 
 def test_import_FluxCalibrate():
-     import kcwidrp.primitives.FluxCalibrate
+    import kcwidrp.primitives.FluxCalibrate
 
 
 def test_import_GenerateMaps():
-     import kcwidrp.primitives.GenerateMaps
+    import kcwidrp.primitives.GenerateMaps
 
 
 def test_import_GetAtlasLines():
@@ -71,6 +80,14 @@ def test_import_MakeMasterDark():
 
 def test_import_MakeMasterFlat():
     import kcwidrp.primitives.MakeMasterFlat
+
+
+def test_import_MakeMasterSky():
+    import kcwidrp.primitives.MakeMasterSky
+
+
+def test_import_NandshuffSubtractSky():
+    import kcwidrp.primitives.NandshuffSubtractSky
 
 
 def test_import_ProcessArc():
@@ -117,6 +134,14 @@ def test_import_SolveGeom():
     import kcwidrp.primitives.SolveGeom
 
 
+def test_import_StackFlats():
+    import kcwidrp.primitives.StackFlats
+
+
+def test_import_StartBokeh():
+    import kcwidrp.primitives.StartBokeh
+
+
 def test_import_SubtractBias():
     import kcwidrp.primitives.SubtractBias
 
@@ -151,10 +176,5 @@ def test_import_TrimOverscan():
 
 def test_import_kcwi_file_primitives():
     import kcwidrp.primitives.kcwi_file_primitives
-
-
-def test_import_StartBokeh():
-    import kcwidrp.primitives.StartBokeh
-
 
 
