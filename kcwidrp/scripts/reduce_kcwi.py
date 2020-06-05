@@ -10,7 +10,7 @@ from keckdrpframework.core.framework import Framework
 from keckdrpframework.config.framework_config import ConfigClass
 from keckdrpframework.models.arguments import Arguments
 from keckdrpframework.utils.drpf_logger import getLogger
-from kcwidrp.core.bokeh_plotting import check_bokeh_server
+from kcwidrp.core.bokeh_plotting import check_running_process
 
 import subprocess
 import time
@@ -152,7 +152,7 @@ def main():
 
     # start the bokeh server is requested by the configuration parameters
     if framework.config.instrument.enable_bokeh is True:
-        if check_bokeh_server() is False:
+        if check_running_process(process='bokeh') is False:
             subprocess.Popen('bokeh serve', shell=True)
             # --session-ids=unsigned --session-token-expiration=86400',
             # shell=True)
