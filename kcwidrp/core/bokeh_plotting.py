@@ -16,6 +16,8 @@ import os
 
 def bokeh_plot(plot, session):
 
+    # NOT TESTED YET
+
     figure = session.document.select_one(selector=dict(type=Figure))
     layout = session.document.select_one(selector=dict(type=Column))
 
@@ -24,7 +26,7 @@ def bokeh_plot(plot, session):
     session.push()
 
 
-def check_bokeh_server():
+def check_running_process(process=None):
     """
     Check if there is any running process that contains
     the given name processName.
@@ -34,7 +36,7 @@ def check_bokeh_server():
         try:
             # Check if process name contains the given name string.
             for command in proc.cmdline():
-                if 'bokeh' in command:
+                if process in command:
                     return True
         except (psutil.NoSuchProcess, psutil.AccessDenied,
                 psutil.ZombieProcess):
@@ -43,6 +45,9 @@ def check_bokeh_server():
 
 
 def bokeh_save(plot):
+
+    # NOT TESTED YET
+
     cwd = os.getcwd()
     filename = os.path.join(cwd, 'plots', 'plot.html')
     # try:
