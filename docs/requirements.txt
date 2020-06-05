@@ -1,4 +1,6 @@
 numpy
 astropy
 Cython
+ref_index
+psutil
 -e git://github.com/Keck-DataReductionPipelines/KeckDRPFramework.git#egg=keckdrpframework
