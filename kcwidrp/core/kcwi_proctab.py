@@ -87,24 +87,43 @@ class Proctab:
             #    dto = self.frame.header['DATE-OBS']
             #    fno = self.frame.header['FRAMENO']
             #    self.frame.header['GROUPID'] = "%s-%s" % (dto, fno)
+            cam = frame.header['CAMERA']
+            if 'BLUE' in cam:
+                grnam = frame.header['BGRATNAM']
+                grang = frame.header['BGRANGLE']
+                cwave = frame.header['BCWAVE']
+                fltnm = frame.header['BFILTNAM']
+            elif 'RED' in cam:
+                grnam = frame.header['RGRATNAM']
+                grang = frame.header['RGRANGLE']
+                cwave = frame.header['RCWAVE']
+                fltnm = frame.header['RFILTNAM']
+            else:
+                grnam = None
+                grang = None
+                cwave = None
+                fltnm = None
+            trgnm = frame.header['TARGNAME'].replace(" ", "")
+            if len(trgnm) <= 0:
+                trgnm = frame.header['OBJECT'].replace(" ", "")
             new_row = [frame.header['FRAMENO'],
                        frame.header['STATEID'],
                        frame.header['CCDCFG'],
                        frame.header['IMTYPE'],
                        frame.header['GROUPID'],
                        frame.header['TTIME'],
-                       frame.header['CAMERA'],
+                       cam,
                        frame.header['IFUNAM'],
-                       frame.header['BGRATNAM'],
-                       frame.header['BGRANGLE'],
-                       frame.header['BCWAVE'],
+                       grnam,
+                       grang,
+                       cwave,
                        frame.header['BINNING'],
-                       frame.header['BFILTNAM'],
+                       fltnm,
                        frame.header['MJD'],
                        stage,
                        suffix,
                        frame.header['OFNAME'],
-                       frame.header['TARGNAME'].replace(" ", "")]
+                       trgnm]
         else:
             new_row = None
         # print("Attempting to add %s" % str(new_row))
