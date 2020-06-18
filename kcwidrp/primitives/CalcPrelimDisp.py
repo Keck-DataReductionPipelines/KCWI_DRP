@@ -8,7 +8,8 @@ class CalcPrelimDisp(BasePrimitive):
 
     The parameters of the grating equation are calculates as:
 
-    alpha = grating_angle - 13 - adjustment_ange (180 for BH, RH and 0 for all other gratings)
+    alpha = grating_angle - 13 - adjustment_ange (180 for BH, RH and
+            0 for all other gratings)
 
     beta = camera_angle - alpha
 
