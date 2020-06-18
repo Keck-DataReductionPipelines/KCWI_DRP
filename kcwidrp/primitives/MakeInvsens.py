@@ -225,7 +225,7 @@ class MakeInvsens(BasePrimitive):
         fwhm = np.max(sfw)
         self.logger.info("Reference spectrum FWHM used = %.1f (A)" % fwhm)
         # resample standard onto our wavelength grid
-        rsint = interp1d(swl, sflx, kind='cubic')
+        rsint = interp1d(swl, sflx, kind='cubic', fill_value='extrapolate')
         rsflx = rsint(w)
         # get effective inverse sensitivity
         invsen = rsflx / obsspec
