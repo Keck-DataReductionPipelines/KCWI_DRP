@@ -97,7 +97,7 @@ class Proctab:
                 grnam = frame.header['RGRATNAM']
                 grang = frame.header['RGRANGLE']
                 cwave = frame.header['RCWAVE']
-                fltnm = frame.header['RFILTNAM']
+                fltnm = None
             else:
                 grnam = None
                 grang = None
