@@ -170,15 +170,15 @@ class ingest_file(BasePrimitive):
         if 'BH' in self.grating():
             rez = rw / 5000.
         elif 'RH' in self.grating():
-            rez = rw / 5000.
+            rez = rw / 4600.
         elif 'BM' in self.grating():
             rez = rw / 2500.
         elif 'RM' in self.grating():
-            rez = rw / 2500.
+            rez = rw / 1900.
         elif 'BL' in self.grating():
             rez = rw / 1250.
         elif 'RL' in self.grating():
-            rez = rw / 1250.
+            rez = rw / 800.
         else:
             raise ValueError("unable to compute atlas resolution: "
                              "grating undefined")
