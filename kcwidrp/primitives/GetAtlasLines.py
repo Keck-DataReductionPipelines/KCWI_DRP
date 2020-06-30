@@ -140,7 +140,7 @@ def findpeaks(x, y, wid, sth, ath, pkg=None, verbose=False):
                     if len(yy) > 3:
                         try:
                             res, _ = curve_fit(gaus, xx, yy,
-                                               p0=[100., x[i], 1.])
+                                               p0=[y[i], x[i], 1.])
                             r = abs(x - res[1])
                             t = r.argmin()
                             if abs(i - t) > pkg:
