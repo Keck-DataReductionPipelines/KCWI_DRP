@@ -7,6 +7,7 @@ import time
 
 import numpy as np
 from bokeh.plotting import figure
+from scipy import signal
 
 
 class ArcOffsets(BasePrimitive):
@@ -34,6 +35,9 @@ class ArcOffsets(BasePrimitive):
                 do_plot = False
             # Compare with reference arc
             reference_arc = arcs[self.config.instrument.REFBAR][:]
+            tkwgt = signal.windows.tukey(len(reference_arc),
+                                         alpha=self.config.instrument.TAPERFRAC)
+            reference_arc *= tkwgt
             # number of cross-correlation samples (avoiding ends)
             number_of_samples = len(reference_arc[10:-10])
             # possible offsets
@@ -42,11 +46,17 @@ class ArcOffsets(BasePrimitive):
             offsets = []
             next_bar_to_plot = 0
             for arc_number, arc in enumerate(arcs):
+                arc *= tkwgt
                 # Cross-correlate, avoiding junk on the ends
                 cross_correlation = np.correlate(reference_arc[10:-10],
                                                  arc[10:-10], mode='full')
                 # Calculate offset
-                offset = offsets_array[cross_correlation.argmax()]
+                ncross = len(cross_correlation)
+                cr0 = int(ncross * 0.25)
+                cr1 = int(ncross * 0.75)
+                central_cross = cross_correlation[cr0:cr1]
+                central_offs = offsets_array[cr0:cr1]
+                offset = central_offs[central_cross.argmax()]
                 offsets.append(offset)
                 self.logger.info("Arc %d Slice %d XCorr shift = %d" %
                                  (arc_number, int(arc_number/5), offset))
