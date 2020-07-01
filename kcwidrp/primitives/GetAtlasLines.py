@@ -229,7 +229,32 @@ class GetAtlasLines(BasePrimitive):
         subyvals = sp.signal.convolve(subyvals, win, mode='same') / sum(win)
         # find good peaks in arc spectrum
         smooth_width = 4  # in pixels
-        ampl_thresh = 0.
+        # get amplitude threshold
+        c, low, upp = sigmaclip(atspec, low=3.5, high=3.5)
+        atflxsig = c.std()
+        atflxmn = c.mean()
+        # plot atlas flux histogram
+        if self.config.instrument.plot_level >= 2:
+            hist, edges = np.histogram(atspec, range=(low, upp),
+                                       density=False, bins=50)
+            p = figure(title='Atlas flux',
+                       x_axis_label='flx', y_axis_label='N',
+                       plot_width=self.config.instrument.plot_width,
+                       plot_height=self.config.instrument.plot_height)
+            p.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:],
+                   fill_color="navy", line_color="white", alpha=0.5)
+            p.line([atflxmn-atflxsig, atflxmn-atflxsig], [0, np.max(hist)],
+                   color='red',
+                   legend_label="Sigma")
+            p.line([atflxmn+atflxsig, atflxmn+atflxsig], [0, np.max(hist)],
+                   color='red')
+            p.line([atflxmn, atflxmn], [0, np.max(hist)], color='green',
+                   legend_label='Mean')
+            p.y_range.start = 0
+            bokeh_plot(p, self.context.bokeh_session)
+            input("Next? <cr>: ")
+        # make sure atlas lines are significant w.r.t. background
+        ampl_thresh = atflxmn + 2.5 * atflxsig
         # slope_thresh = 0.7 * smooth_width / 1000.   # more severe for arc
         # for fitting peaks
         peak_width = int(self.action.args.resolution /
@@ -301,7 +326,7 @@ class GetAtlasLines(BasePrimitive):
             yvec = atspec[minow:maxow + 1]
             xvec = atwave[minow:maxow + 1]
             try:
-                fit, _ = curve_fit(gaus, xvec, yvec, p0=[100., pk, 1.])
+                fit, _ = curve_fit(gaus, xvec, yvec, p0=[spec_hgt[i], pk, 1.])
             except RuntimeError:
                 rej_fit_w.append(pk)
                 rej_fit_y.append(spec_hgt[i])
