@@ -114,7 +114,6 @@ class MakeMasterBias(BaseImg):
                        legend_label="Sigma")
                 p.line([bias_rn, bias_rn], [0, np.max(hist)], color='red')
                 p.y_range.start = 0
-                print(p)
                 bokeh_plot(p, self.context.bokeh_session)
                 if self.config.instrument.plot_level >= 2:
                     input("Next? <cr>: ")
