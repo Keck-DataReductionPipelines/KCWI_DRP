@@ -1,9 +1,11 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from kcwidrp.primitives.kcwi_file_primitives import read_table
+from kcwidrp.core.bokeh_plotting import bokeh_plot
 
 import numpy as np
 import os
 from skimage import transform as tf
+from bokeh.plotting import figure
 
 
 class ExtractArcs(BasePrimitive):
@@ -80,12 +82,42 @@ class ExtractArcs(BasePrimitive):
         # extract arcs
         self.logger.info("Extracting arcs")
         arcs = []
+        # sectors for bkgnd subtraction
+        sectors = 16
         for xyi, xy in enumerate(self.action.args.source_control_points):
             if xy[1] == middle_row:
                 xi = int(xy[0]+0.5)
                 arc = np.median(
                     warped_image[:, (xi - window):(xi + window + 1)], axis=1)
-                arc = arc - np.nanmin(arc[100:-100])    # avoid ends
+                # divide spectrum into sectors
+                div = int((len(arc)-200) / sectors)
+                # get minimum for each sector
+                xv = []
+                yv = []
+                for i in range(sectors):
+                    mi = np.nanargmin(arc[100+i*div:100+(i+1)*div])
+                    mn = np.nanmin(arc[100+i*div:100+(i+1)*div])
+                    xv.append(mi+100+i*div)
+                    yv.append(mn)
+                # fit minima to model background
+                res = np.polyfit(xv, yv, 3)
+                xp = np.arange(len(arc))
+                bkg = np.polyval(res, xp)   # resulting model
+                # plot if requested
+                if self.config.instrument.plot_level >= 3:
+                    p = figure(title=self.action.args.plotlabel + "ARC # %d" %
+                               len(arcs),
+                               x_axis_label="Y CCD Pixel",
+                               y_axis_label="Flux",
+                               plot_width=self.config.instrument.plot_width,
+                               plot_height=self.config.instrument.plot_height)
+                    p.line(xp, arc, legend_label='Arc', color='blue')
+                    p.line(xp, bkg, legend_label='Bkg', color='red')
+                    bokeh_plot(p, self.context.bokeh_session)
+                    input("Next? <cr>: ")
+                # subtract model background
+                arc -= bkg
+                # add to arcs list
                 arcs.append(arc)
         # Did we get the correct number of arcs?
         if len(arcs) == self.config.instrument.NBARS:
