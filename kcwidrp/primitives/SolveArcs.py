@@ -216,18 +216,19 @@ class SolveArcs(BasePrimitive):
                     yvec = bspec[minow:maxow + 1]
                     xvec = self.action.args.xsvals[minow:maxow + 1]
                     wvec = bw[minow:maxow + 1]
+                    f0 = max(yvec)
                     # Gaussian fit
                     try:
                         fit, _ = curve_fit(gaus, xvec, yvec,
-                                           p0=[100., line_x, 1.])
+                                           p0=[f0, line_x, 1.])
                         sp_pk_x = fit[1]
                     except RuntimeError:
                         nrej += 1
                         if verbose:
                             self.logger.info(
                                 "Arc Gaussian fit rejected for line %.3f" % aw)
-                        sp_pk_x = line_x
-                        # continue
+                        # sp_pk_x = line_x
+                        continue
 
                     # Get interpolation
                     int_line = interpolate.interp1d(xvec, yvec, kind='cubic',
