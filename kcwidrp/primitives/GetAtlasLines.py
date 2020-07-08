@@ -97,8 +97,13 @@ def get_line_window(y, c, thresh=0., verbose=False):
                     print("hafmax check: high index err - wiggly")
             return None, None, 0
         prev = y[x1]
-        x1 += 1
-        count += 1
+        if x1 < (nx-1):
+            x1 += 1
+            count += 1
+        else:
+            if verbose:
+                print("Edge encountered")
+            return None, None, 0
     # where did we end up?
     if c < x0 or x1 < c:
         if verbose:
@@ -196,11 +201,14 @@ class GetAtlasLines(BasePrimitive):
         # wavelength range
         mnwvs = []
         mxwvs = []
+        refbar_disp = 1.
         # Get wavelengths
         for b in range(self.config.instrument.NBARS):
             waves = np.polyval(self.action.args.twkcoeff[b], xvals)
             mnwvs.append(np.min(waves))
             mxwvs.append(np.max(waves))
+            if b == self.config.instrument.REFBAR:
+                refbar_disp = self.action.args.twkcoeff[b][-2]
         minwav = min(mnwvs) + 10.
         maxwav = max(mxwvs) - 10.
         # Get corresponding atlas range
@@ -229,80 +237,56 @@ class GetAtlasLines(BasePrimitive):
         subyvals = sp.signal.convolve(subyvals, win, mode='same') / sum(win)
         # find good peaks in arc spectrum
         smooth_width = 4  # in pixels
-        # get amplitude threshold
-        c, low, upp = sigmaclip(atspec, low=3.5, high=3.5)
-        atflxsig = c.std()
-        atflxmn = c.mean()
-        # plot atlas flux histogram
-        if self.config.instrument.plot_level >= 2:
-            hist, edges = np.histogram(atspec, range=(low, upp),
-                                       density=False, bins=50)
-            p = figure(title='Atlas flux',
-                       x_axis_label='flx', y_axis_label='N',
-                       plot_width=self.config.instrument.plot_width,
-                       plot_height=self.config.instrument.plot_height)
-            p.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:],
-                   fill_color="navy", line_color="white", alpha=0.5)
-            p.line([atflxmn-atflxsig, atflxmn-atflxsig], [0, np.max(hist)],
-                   color='red',
-                   legend_label="Sigma")
-            p.line([atflxmn+atflxsig, atflxmn+atflxsig], [0, np.max(hist)],
-                   color='red')
-            p.line([atflxmn, atflxmn], [0, np.max(hist)], color='green',
-                   legend_label='Mean')
-            p.y_range.start = 0
-            bokeh_plot(p, self.context.bokeh_session)
-            input("Next? <cr>: ")
-        # make sure atlas lines are significant w.r.t. background
-        ampl_thresh = atflxmn + 2.5 * atflxsig
-        # slope_thresh = 0.7 * smooth_width / 1000.   # more severe for arc
-        # for fitting peaks
-        peak_width = int(self.action.args.resolution /
-                         self.action.args.refdisp)  # in pixels
+        # peak width
+        peak_width = int(self.action.args.atsig/abs(refbar_disp))
         if peak_width < 4:
             peak_width = 4
-        # slope_thresh = peak_width / 12000.
-        slope_thresh = 0.016 / peak_width
+        # slope threshold
+        slope_thresh = 0.7 * smooth_width / 2. / 100.
+        # get amplitude threshold
+        ampl_thresh = 0.
+        # slope_thresh = 0.7 * smooth_width / 1000.   # more severe for arc
+        # slope_thresh = 0.016 / peak_width
         self.logger.info("Using a peak_width of %d px, a slope_thresh of %.5f "
                          "a smooth_width of %d and an ampl_thresh of %.3f" %
                          (peak_width, slope_thresh, smooth_width, ampl_thresh))
-        init_cent, avwsg, init_hgt = findpeaks(atwave, atspec, smooth_width,
-                                               slope_thresh, ampl_thresh,
-                                               peak_width)
+        arc_cent, avwsg, arc_hgt = findpeaks(subwvals, subyvals, smooth_width,
+                                             slope_thresh, ampl_thresh,
+                                             peak_width)
         avwfwhm = avwsg * 2.354
         self.logger.info("Found %d peaks with <sig> = %.3f (A),"
-                         " <FWHM> = %.3f (A)" % (len(init_cent), avwsg,
+                         " <FWHM> = %.3f (A)" % (len(arc_cent), avwsg,
                                                  avwfwhm))
         if 'BH' in self.action.args.grating or 'BM' in self.action.args.grating:
             fwid = avwfwhm
         else:
-            fwid = avwfwhm
+            fwid = avwsg
         # clean near neighbors
-        diffs = np.diff(init_cent)
+        diffs = np.diff(arc_cent)
         spec_cent = []
         spec_hgt = []
         rej_neigh_w = []
         rej_neigh_y = []
-        neigh_fact = 1.25
-        for i, w in enumerate(init_cent):
+        neigh_fact = 1.50
+        for i, w in enumerate(arc_cent):
             if i == 0:
                 if diffs[i] < avwfwhm * neigh_fact:
                     rej_neigh_w.append(w)
-                    rej_neigh_y.append(init_hgt[i])
+                    rej_neigh_y.append(arc_hgt[i])
                     continue
             elif i == len(diffs):
                 if diffs[i - 1] < avwfwhm * neigh_fact:
                     rej_neigh_w.append(w)
-                    rej_neigh_y.append(init_hgt[i])
+                    rej_neigh_y.append(arc_hgt[i])
                     continue
             else:
                 if diffs[i - 1] < avwfwhm * neigh_fact or \
                         diffs[i] < avwfwhm * neigh_fact:
                     rej_neigh_w.append(w)
-                    rej_neigh_y.append(init_hgt[i])
+                    rej_neigh_y.append(arc_hgt[i])
                     continue
             spec_cent.append(w)
-            spec_hgt.append(init_hgt[i])
+            spec_hgt.append(arc_hgt[i])
         self.logger.info("Found %d isolated peaks" % len(spec_cent))
         #
         # generate an atlas line list
@@ -357,7 +341,21 @@ class GetAtlasLines(BasePrimitive):
                 continue
             refws.append(pkw)
             refas.append(y_dense[pki])
-        # store wavelengths
+        # eliminate faintest lines
+        if len(refas) > 100:
+            # sort on flux
+            sf = np.argsort(refas)
+            refws = np.asarray(refws)[sf]
+            refas = np.asarray(refas)[sf]
+            # remove faintest two-thirds
+            hlim = int(len(refas) * 0.67)
+            refws = refws[hlim:]
+            refas = refas[hlim:]
+            # sort back onto wavelength
+            sw = np.argsort(refws)
+            refws = refws[sw].tolist()
+            refas = refas[sw].tolist()
+            # store wavelengths, fluxes
         self.action.args.at_wave = refws
         self.action.args.at_flux = refas
         # plot results
