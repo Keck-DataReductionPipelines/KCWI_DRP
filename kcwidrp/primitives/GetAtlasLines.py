@@ -11,7 +11,6 @@ from scipy.signal.windows import boxcar
 from scipy.optimize import curve_fit
 from scipy.stats import sigmaclip
 import time
-import os
 
 
 def gaus(x, a, mu, sigma):
@@ -19,13 +18,14 @@ def gaus(x, a, mu, sigma):
     return a * np.exp(-(x - mu) ** 2 / (2. * sigma ** 2))
 
 
-def get_line_window(y, c, thresh=0., verbose=False):
+def get_line_window(y, c, thresh=0., logger=None):
     """Find a window that includes the fwhm of the line"""
+    verbose = logger is not None
     nx = len(y)
     # check edges
     if c < 2 or c > nx - 2:
         if verbose:
-            print("input center too close to edge")
+            logger.info("input center too close to edge")
         return None, None, 0
     # get initial values
     x0 = c - 2
@@ -35,27 +35,27 @@ def get_line_window(y, c, thresh=0., verbose=False):
     # check low side
     if x0 - 1 < 0:
         if verbose:
-            print("max check: low edge hit")
+            logger.info("max check: low edge hit")
         return None, None, 0
     while y[x0-1] > mx:
         x0 -= 1
         count += 1
         if x0 - 1 < 0:
             if verbose:
-                print("Max check: low edge hit")
+                logger.info("Max check: low edge hit")
             return None, None, 0
 
     # check high side
     if x1 + 1 >= nx:
         if verbose:
-            print("max check: high edge hit")
+            logger.info("max check: high edge hit")
         return None, None, 0
     while y[x1+1] > mx:
         x1 += 1
         count += 1
         if x1 + 1 >= nx:
             if verbose:
-                print("Max check: high edge hit")
+                logger.info("Max check: high edge hit")
             return None, None, 0
     # adjust starting window to center on max
     cmx = x0 + y[x0:x1+1].argmax()
@@ -75,11 +75,11 @@ def get_line_window(y, c, thresh=0., verbose=False):
         if y[x0] > mx or x0 <= 0 or y[x0] > prev:
             if verbose:
                 if y[x0] > mx:
-                    print("hafmax check: low index err - missed max")
+                    logger.info("hafmax check: low index err - missed max")
                 if x0 <= 0:
-                    print("hafmax check: low index err - at edge")
+                    logger.info("hafmax check: low index err - at edge")
                 if y[x0] > prev:
-                    print("hafmax check: low index err - wiggly")
+                    logger.info("hafmax check: low index err - wiggly")
             return None, None, 0
         prev = y[x0]
         x0 -= 1
@@ -90,11 +90,11 @@ def get_line_window(y, c, thresh=0., verbose=False):
         if y[x1] > mx or x1 >= nx or y[x1] > prev:
             if verbose:
                 if y[x1] > mx:
-                    print("hafmax check: high index err - missed max")
+                    logger.info("hafmax check: high index err - missed max")
                 if x1 >= nx:
-                    print("hafmax check: high index err - at edge")
+                    logger.info("hafmax check: high index err - at edge")
                 if y[x1] > prev:
-                    print("hafmax check: high index err - wiggly")
+                    logger.info("hafmax check: high index err - wiggly")
             return None, None, 0
         prev = y[x1]
         if x1 < (nx-1):
@@ -102,12 +102,12 @@ def get_line_window(y, c, thresh=0., verbose=False):
             count += 1
         else:
             if verbose:
-                print("Edge encountered")
+                logger.info("Edge encountered")
             return None, None, 0
     # where did we end up?
     if c < x0 or x1 < c:
         if verbose:
-            print("initial position outside final window")
+            logger.info("initial position outside final window")
         return None, None, 0
 
     return x0, x1, count
