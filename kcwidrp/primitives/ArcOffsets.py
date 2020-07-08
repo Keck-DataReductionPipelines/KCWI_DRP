@@ -29,14 +29,10 @@ class ArcOffsets(BasePrimitive):
         arcs = self.context.arcs
         if arcs is not None:
             # Do we plot?
-            if self.config.instrument.plot_level >= 2:
-                do_plot = True
-            else:
-                do_plot = False
+            do_plot = (self.config.instrument.plot_level >= 2)
             # Compare with reference arc
             reference_arc = arcs[self.config.instrument.REFBAR][:]
-            tkwgt = signal.windows.tukey(len(reference_arc),
-                                         alpha=self.config.instrument.TAPERFRAC)
+            tkwgt = signal.windows.tukey(len(reference_arc), alpha=0.2)
             reference_arc *= tkwgt
             # number of cross-correlation samples (avoiding ends)
             number_of_samples = len(reference_arc[10:-10])
