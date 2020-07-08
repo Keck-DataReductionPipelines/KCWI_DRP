@@ -25,6 +25,7 @@ class ExtractArcs(BasePrimitive):
         self.action.args.slice_id = None
 
     def _perform(self):
+        do_plot = (self.config.instrument.plot_level >= 3)
         self.logger.info("Extracting arc spectra")
         contbars_in_proctable = self.context.proctab.n_proctab(
             frame=self.action.args.ccddata, target_type='CONTBARS',
@@ -104,7 +105,7 @@ class ExtractArcs(BasePrimitive):
                 xp = np.arange(len(arc))
                 bkg = np.polyval(res, xp)   # resulting model
                 # plot if requested
-                if self.config.instrument.plot_level >= 3:
+                if do_plot:
                     p = figure(title=self.action.args.plotlabel + "ARC # %d" %
                                len(arcs),
                                x_axis_label="Y CCD Pixel",
@@ -114,7 +115,9 @@ class ExtractArcs(BasePrimitive):
                     p.line(xp, arc, legend_label='Arc', color='blue')
                     p.line(xp, bkg, legend_label='Bkg', color='red')
                     bokeh_plot(p, self.context.bokeh_session)
-                    input("Next? <cr>: ")
+                    q = input("Next? <cr>, q to quit: ")
+                    if 'Q' in q.upper():
+                        do_plot = False
                 # subtract model background
                 arc -= bkg
                 # add to arcs list
