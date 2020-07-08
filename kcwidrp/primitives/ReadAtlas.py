@@ -43,11 +43,9 @@ class ReadAtlas(BasePrimitive):
         refwav = np.arange(0, len(reflux)) * refdisp + ff[0].header['CRVAL1']
         ff.close()
         # Convolve with appropriate Gaussian
-        resolution = self.action.args.resolution
-        atrespix = resolution / refdisp
-        self.logger.info("Resolution = %.3f Ang, or %.2f Atlas px" %
-                         (resolution, atrespix))
-        reflux = gaussian_filter1d(reflux, atrespix/2.354)
+        self.logger.info("Convolving Atlas with Gaussian having sigma of %.2f "
+                         "px" % self.action.args.atsig)
+        reflux = gaussian_filter1d(reflux, self.action.args.atsig)
         # Observed arc spectrum
         obsarc = self.context.arcs[self.config.instrument.REFBAR]
         # Preliminary wavelength solution

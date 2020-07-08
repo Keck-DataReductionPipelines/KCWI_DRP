@@ -116,6 +116,25 @@ class ingest_file(BasePrimitive):
         if 'BL' in self.grating() or 'RL' in self.grating():
             return 0.0
 
+    def atsig(self):
+        if 'H' in self.grating():
+            if self.ifunum() > 2:
+                return 1.5
+            else:
+                return 2.5
+        elif 'M' in self.grating():
+            if self.ifunum() >= 2:
+                return 2.0
+            else:
+                return 4.0
+        elif 'L' in self.grating():
+            if self.ifunum() == 2:
+                return 10.0
+            elif self.ifunum() == 3:
+                return 7.0
+            else:
+                return 14.0
+
     def rho(self):
         if 'BH1' in self.grating():
             return 3.751
@@ -126,7 +145,7 @@ class ingest_file(BasePrimitive):
         elif 'RH1' in self.grating():
             return 2.420
         elif 'RH2' in self.grating():
-            return 2.030
+            return 2.068    # kcwi_sim_kcrm value is 2.030
         elif 'RH3' in self.grating():
             return 1.705
         elif 'RH4' in self.grating():
@@ -462,6 +481,8 @@ class ingest_file(BasePrimitive):
         out_args.cwave = self.cwave()
         # RESOLUTION
         out_args.resolution = self.resolution()
+        # ATSIG
+        out_args.atsig = self.atsig()
         # DELTA WAVE OUT
         out_args.dwout = self.delta_wave_out()
         # NAMPS
