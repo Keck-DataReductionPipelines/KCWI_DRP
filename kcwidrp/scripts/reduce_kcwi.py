@@ -46,6 +46,8 @@ def _parse_arguments(in_args: list) -> argparse.Namespace:
     parser.add_argument('-t', '--taperfrac', dest='taperfrac', type=float,
                         help='Taper fraction for wavelength fitting',
                         default=None)
+    parser.add_argument('-a', '--atlas_line_list', dest='atlas_line_list',
+                        type=str, help="Atlas line list file", default=None)
 
     # in this case, we are loading an entire directory,
     # and ingesting all the files in that directory
@@ -149,6 +151,15 @@ def main():
             framework.context.pipeline_logger.info(
                 "Setting new taperfrac = %.3f" % args.taperfrac)
             framework.config.instrument.TAPERFRAC = args.taperfrac
+
+    # check for atlas line list argument
+    if args.atlas_line_list:
+        def_ll = getattr(framework.config.instrument, 'LINELIST', None)
+        if def_ll is not None:
+            framework.context.pipeline_logger.info(
+                "Using line list %s instead of generated list" %
+                args.atlas_line_list)
+            framework.config.instrument.LINELIST = args.atlas_line_list
 
     # start the bokeh server is requested by the configuration parameters
     if framework.config.instrument.enable_bokeh is True:
