@@ -11,6 +11,7 @@ from scipy.signal.windows import boxcar
 from scipy.optimize import curve_fit
 from scipy.stats import sigmaclip
 import time
+import os
 
 
 def gaus(x, a, mu, sigma):
@@ -342,7 +343,6 @@ class GetAtlasLines(BasePrimitive):
             # get peak amplitude and wavelength
             pki = y_dense.argmax()
             pkw = x_dense[pki]
-            # pka = yvec.argmax()
             # calculate some diagnostic parameters for the line
             # how many atlas pixels have we moved?
             xoff = abs(pkw - fit[1]) / self.action.args.refdisp
@@ -377,9 +377,35 @@ class GetAtlasLines(BasePrimitive):
             sw = np.argsort(refws)
             refws = refws[sw].tolist()
             refas = refas[sw].tolist()
+        # check if line list was given on command line
+        if self.config.instrument.LINELIST:
+            with open(self.config.instrument.LINELIST) as llfn:
+                atlines = llfn.readlines()
+            refws = []
+            refas = []
+            for line in atlines:
+                refws.append(float(line.split()[0]))
+                refas.append(float(line.split()[1]))
+            self.logger.info("Read %d lines from %s" %
+                             (len(refws), self.config.instrument.LINELIST))
+        else:
+            self.logger.info("Using %d generated lines" % len(refws))
         # store wavelengths, fluxes
         self.action.args.at_wave = refws
         self.action.args.at_flux = refas
+        # output filename stub
+        atfnam = "arc_%05d_%s_%s_%s_atlines" % \
+            (self.action.args.ccddata.header['FRAMENO'],
+             self.action.args.illum, self.action.args.grating,
+             self.action.args.ifuname)
+        # output directory
+        output_dir = os.path.join(os.path.dirname(self.action.args.name),
+                                  self.config.instrument.output_directory)
+        # write out final atlas line list
+        atlines = np.array([refws, refas])
+        atlines = atlines.T
+        with open(os.path.join(output_dir, atfnam+'.txt'), 'w') as atlfn:
+            np.savetxt(atlfn, atlines, fmt=['%12.3f', '%12.3f'])
         # plot final list of Atlas lines and show rejections
         norm_fac = np.nanmax(atspec)
         if self.config.instrument.plot_level >= 1:
@@ -410,11 +436,7 @@ class GetAtlasLines(BasePrimitive):
                 input("Next? <cr>: ")
             else:
                 time.sleep(self.config.instrument.plot_pause)
-            save_plot(p, filename="arc_%05d_%s_%s_%s_atlines.png" %
-                                  (self.action.args.ccddata.header['FRAMENO'],
-                                   self.action.args.illum,
-                                   self.action.args.grating,
-                                   self.action.args.ifuname))
+            save_plot(p, filename=atfnam+".png")
         self.logger.info("Final atlas list has %d lines" % len(refws))
 
         log_string = GetAtlasLines.__module__
