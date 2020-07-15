@@ -131,7 +131,7 @@ class ingest_file(BasePrimitive):
             if self.ifunum() == 2:
                 return 10.0
             elif self.ifunum() == 3:
-                return 7.0
+                return 5.0
             else:
                 return 14.0
 
