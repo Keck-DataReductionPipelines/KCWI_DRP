@@ -384,6 +384,8 @@ class GetAtlasLines(BasePrimitive):
             refws = []
             refas = []
             for line in atlines:
+                if '#' in line:
+                    continue
                 refws.append(float(line.split()[0]))
                 refas.append(float(line.split()[1]))
             self.logger.info("Read %d lines from %s" %
