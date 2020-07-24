@@ -30,10 +30,14 @@ def kcwi_correct_extin(img, hdr, logger=None):
         oexma = exint(owls)
         # convert to flux ratio
         flxr = 10.**(oexma * air * 0.4)
-        # apply to cube
-        for ix in range(sz[2]):
-            for iy in range(sz[1]):
-                img[:, iy, ix] *= flxr
+        if len(sz) == 3:
+            # apply to cube
+            for ix in range(sz[2]):
+                for iy in range(sz[1]):
+                    img[:, iy, ix] *= flxr
+        else:
+            # apply to vector
+            img *= flxr
 
         flrmn = np.nanmean(flxr)
         hdr['HISTORY'] = 'kcwi_correct_extin'
