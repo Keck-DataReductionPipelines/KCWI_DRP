@@ -437,6 +437,7 @@ class MakeInvsens(BasePrimitive):
                     title=self.action.args.plotlabel + ' Inverse sensitivity',
                     x_axis_label='Wave (A)',
                     y_axis_label='Invserse Sensitivity (Flux/e-/s)',
+                    y_axis_type='log',
                     plot_width=self.config.instrument.plot_width,
                     plot_height=self.config.instrument.plot_height)
                 pivs.line(wf, sf, line_color='black', legend_label='Data')
@@ -452,11 +453,11 @@ class MakeInvsens(BasePrimitive):
                 else:
                     time.sleep(2. * self.config.instrument.plot_pause)
 
-                yran = [np.min(calspec), np.max(calspec)]
+                yran = [np.min(calspec[wl_good]), np.max(calspec[wl_good])]
                 pcal = figure(
                     title=self.action.args.plotlabel + ' Calibrated',
                     x_axis_label='Wave (A)',
-                    y_axis_label='Flux (ergs/s/cm^s/A)',
+                    y_axis_label='Flux (ergs/s/cm^2/A)',
                     plot_width=self.config.instrument.plot_width,
                     plot_height=self.config.instrument.plot_height)
                 pcal.line(w, calspec, line_color='black', legend_label='Obs')
