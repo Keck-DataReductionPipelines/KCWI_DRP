@@ -90,9 +90,8 @@ class FluxCalibrate(BasePrimitive):
             else:
                 mscal = mcal * 1.e16 / expt
 
-            # extinction correct data
-            kcwi_correct_extin(self.action.args.ccddata.data,
-                               self.action.args.ccddata.header,
+            # extinction correct calibration
+            kcwi_correct_extin(mscal, self.action.args.ccddata.header,
                                logger=self.logger)
             # do calibration
             for isl in range(sz[2]):
@@ -104,19 +103,18 @@ class FluxCalibrate(BasePrimitive):
             # check for obj, sky cubes
             if self.action.args.nasmask and self.action.args.numopen > 1:
                 ofn = self.action.args.ccddata.header['OFNAME']
-
+                # obj cube
                 objfn = ofn.split('.')[0] + '_ocubed.fits'
                 full_path = os.path.join(
                     os.path.dirname(self.action.args.name),
                     self.config.instrument.output_directory, objfn)
                 if os.path.exists(full_path):
                     obj = kcwi_fits_reader(full_path)[0]
-                    kcwi_correct_extin(obj.data, obj.header, logger=self.logger)
                     # do calibration
                     for isl in range(sz[2]):
                         for ix in range(sz[1]):
                             obj.data[:, ix, isl] *= mscal
-
+                # sky cube
                 skyfn = ofn.split('.')[0] + '_scubed.fits'
                 full_path = os.path.join(
                     os.path.dirname(self.action.args.name),
