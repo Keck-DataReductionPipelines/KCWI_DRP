@@ -63,10 +63,13 @@ class TraceBars(BasePrimitive):
                         yi.append(samy)
                         barid.append(barn)
                         slid.append(int(barn/5))
+                        barxi = int(xc)
                     else:
                         done = True
                     samy += samp
                 # trace down
+                # nearest pixel to bar center
+                barxi = int(barx + 0.5)
                 samy = self.action.args.middle_row - samp
                 done = False
                 while samy >= win and not done:
@@ -85,6 +88,7 @@ class TraceBars(BasePrimitive):
                         yi.append(samy)
                         barid.append(barn)
                         slid.append(int(barn / 5))
+                        barxi = int(xc)
                     else:
                         done = True
                     # disable for now
