@@ -91,14 +91,14 @@ class ExtractArcs(BasePrimitive):
                 arc = np.median(
                     warped_image[:, (xi - window):(xi + window + 1)], axis=1)
                 # divide spectrum into sectors
-                div = int((len(arc)-200) / sectors)
+                div = int((len(arc)-100) / sectors)
                 # get minimum for each sector
                 xv = []
                 yv = []
                 for i in range(sectors):
-                    mi = np.nanargmin(arc[100+i*div:100+(i+1)*div])
-                    mn = np.nanmin(arc[100+i*div:100+(i+1)*div])
-                    xv.append(mi+100+i*div)
+                    mi = np.nanargmin(arc[50+i*div:50+(i+1)*div])
+                    mn = np.nanmin(arc[50+i*div:50+(i+1)*div])
+                    xv.append(mi+50+i*div)
                     yv.append(mn)
                 # fit minima to model background
                 res = np.polyfit(xv, yv, 3)

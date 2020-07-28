@@ -145,8 +145,10 @@ def findpeaks(x, y, wid, sth, ath, pkg=None, verbose=False):
                     yy = y[(i-hgrp):(i+hgrp+1)]
                     if len(yy) > 3:
                         try:
+                            # gaussian fit
                             res, _ = curve_fit(gaus, xx, yy,
                                                p0=[y[i], x[i], 1.])
+                            # check offset of fit from initial peak
                             r = abs(x - res[1])
                             t = r.argmin()
                             if abs(i - t) > pkg:
@@ -161,18 +163,18 @@ def findpeaks(x, y, wid, sth, ath, pkg=None, verbose=False):
     # clean by sigmas
     cvals = []
     cpks = []
-    sgmd = None
+    sgmn = None
     if len(pks) > 0:
         cln_sgs, low, upp = sigmaclip(sgs, low=3., high=3.)
         for i in range(len(pks)):
             if low < sgs[i] < upp:
                 cpks.append(pks[i])
                 cvals.append(hgt[i])
-        # sgmn = cln_sgs.mean()
-        sgmd = float(np.nanmedian(cln_sgs))
+        sgmn = cln_sgs.mean()
+        # sgmd = float(np.nanmedian(cln_sgs))
     else:
         print("No peaks found!")
-    return cpks, sgmd, cvals
+    return cpks, sgmn, cvals
     # END: findpeaks()
 
 
@@ -210,6 +212,8 @@ class GetAtlasLines(BasePrimitive):
             mxwvs.append(np.max(waves))
             if b == self.config.instrument.REFBAR:
                 refbar_disp = self.action.args.twkcoeff[b][-2]
+        self.logger.info("Ref bar (%d) dispersion = %.3f Ang/px" %
+                         (self.config.instrument.REFBAR, refbar_disp))
         # Get extrema (trim ends a bit)
         minwav = min(mnwvs) + 10.
         maxwav = max(mxwvs) - 10.
@@ -256,7 +260,7 @@ class GetAtlasLines(BasePrimitive):
                                              slope_thresh, ampl_thresh,
                                              peak_width)
         avwfwhm = avwsg * 2.354
-        self.logger.info("Found %d peaks with <sig> = %.3f (A),"
+        self.logger.info("Found %d lines with <sig> = %.3f (A),"
                          " <FWHM> = %.3f (A)" % (len(arc_cent), avwsg,
                                                  avwfwhm))
         # fitting window based on grating type
@@ -265,36 +269,8 @@ class GetAtlasLines(BasePrimitive):
         else:
             fwid = avwsg
         # clean near neighbors
-        diffs = np.diff(arc_cent)
-        spec_cent = []      # arc line wavelength
-        spec_hgt = []       # arc line peak flux
-        rej_neigh_w = []    # rejected arc line wavelength
-        rej_neigh_y = []    # rejected arc line flux
-        neigh_fact = 1.50   # how close can we be?
-        for i, w in enumerate(arc_cent):
-            # first one
-            if i == 0:
-                if diffs[i] < avwfwhm * neigh_fact:
-                    rej_neigh_w.append(w)
-                    rej_neigh_y.append(arc_hgt[i])
-                    continue
-            # last one
-            elif i == len(diffs):
-                if diffs[i - 1] < avwfwhm * neigh_fact:
-                    rej_neigh_w.append(w)
-                    rej_neigh_y.append(arc_hgt[i])
-                    continue
-            # the rest of them
-            else:
-                if diffs[i - 1] < avwfwhm * neigh_fact or \
-                        diffs[i] < avwfwhm * neigh_fact:
-                    rej_neigh_w.append(w)
-                    rej_neigh_y.append(arc_hgt[i])
-                    continue
-            # add the surviving lines
-            spec_cent.append(w)
-            spec_hgt.append(arc_hgt[i])
-        self.logger.info("Found %d isolated peaks" % len(spec_cent))
+        spec_cent = arc_cent
+        spec_hgt = arc_hgt
         #
         # generate an atlas line list
         refws = []      # atlas line wavelength
@@ -351,7 +327,7 @@ class GetAtlasLines(BasePrimitive):
             # what fraction of the canonical fit width is the line?
             wrat = abs(fit[2]) / fwid  # can be neg or pos
             # current criteria for these diagnostic parameters
-            if woff > 1. or xoff > 1. or wrat > 1.1:
+            if woff > 1.5 or xoff > 1. or wrat > 1.1:
                 # keep track of par rejected atlas lines
                 rej_par_w.append(pkw)
                 rej_par_a.append(y_dense[pki])
@@ -364,7 +340,8 @@ class GetAtlasLines(BasePrimitive):
             refws.append(pkw)
             refas.append(y_dense[pki])
         # eliminate faintest lines if we have a large number
-        if len(refas) > 100:
+        self.logger.info("number of remaining lines: %d" % len(refas))
+        if len(refas) > 400:
             # sort on flux
             sf = np.argsort(refas)
             refws = np.asarray(refws)[sf]
@@ -422,8 +399,8 @@ class GetAtlasLines(BasePrimitive):
             p.line(atwave, atspec / norm_fac, legend_label='Atlas',
                    color='blue')
             # Rejected: nearby neighbor
-            p.diamond(rej_neigh_w, rej_neigh_y / norm_fac,
-                      legend_label='NeighRej', color='cyan', size=8)
+            # p.diamond(rej_neigh_w, rej_neigh_y / norm_fac,
+            #          legend_label='NeighRej', color='cyan', size=8)
             # Rejected: fit failure
             p.diamond(rej_fit_w, rej_fit_y / norm_fac, legend_label='FitRej',
                       color='red', size=8)
