@@ -327,7 +327,7 @@ class GetAtlasLines(BasePrimitive):
             # what fraction of the canonical fit width is the line?
             wrat = abs(fit[2]) / fwid  # can be neg or pos
             # current criteria for these diagnostic parameters
-            if woff > 1.5 or xoff > 1. or wrat > 1.1:
+            if woff > 5. or xoff > 1.5 or wrat > 1.1:
                 # keep track of par rejected atlas lines
                 rej_par_w.append(pkw)
                 rej_par_a.append(y_dense[pki])
