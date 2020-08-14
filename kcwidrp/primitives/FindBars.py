@@ -27,25 +27,47 @@ class FindBars(BasePrimitive):
         y_size = self.action.args.ccddata.data.shape[0]
         # get binning
         y_binning = self.action.args.ybinsize
+        # get camera
+        camera = self.action.args.camera
         window = int(10 / y_binning)
         # select from center rows of image
-        middle_y_row = int(y_size / 2)
-        middle_vector = np.median(
-            self.action.args.ccddata.data[
-                (middle_y_row-window):(middle_y_row+window+1), :], axis=0)
-        # set threshold for peak finding
-        average_value_midddle_vector = np.average(middle_vector)
-        self.logger.info("peak threshold = %f" % average_value_midddle_vector)
-        # find peaks above threshold
-        peaks_in_middle_vector, _ = find_peaks(
-            middle_vector, height=average_value_midddle_vector)
-        # do we have the requisite number?
-        if len(peaks_in_middle_vector) != self.config.instrument.NBARS:
+        div_fac = 2
+        middle_y_row = int(y_size / div_fac)
+        # handle dichroic edge by moving middle until we get enough peaks
+        n_tries = 0
+        peaks_found = 0
+        middle_vector = None
+        average_value_middle_vector = None
+        peaks_in_middle_vector = None
+        while peaks_found < self.config.instrument.NBARS and n_tries < 5:
+            self.logger.info("Middle row for bars finding: %d" % middle_y_row)
+            middle_vector = np.median(
+                self.action.args.ccddata.data[
+                    (middle_y_row-window):(middle_y_row+window+1), :], axis=0)
+            # set threshold for peak finding
+            average_value_middle_vector = np.average(middle_vector)
+            self.logger.info("peak threshold = %f" %
+                             average_value_middle_vector)
+            # find peaks above threshold
+            peaks_in_middle_vector, _ = find_peaks(
+                middle_vector, height=average_value_middle_vector)
+            peaks_found = len(peaks_in_middle_vector)
+            n_tries += 1
+            # do we have the requisite number?
+            if peaks_found != self.config.instrument.NBARS:
+                self.logger.warning("Did not find %d peaks: n peaks = %d" %
+                                    (self.config.instrument.NBARS, peaks_found))
+                self.logger.info("Calculating new middle row and retrying")
+                if camera == 0:     # BLUE
+                    div_fac += 0.5
+                else:               # RED
+                    div_fac -= 0.5
+                middle_y_row = int(y_size / div_fac)
+        if peaks_found != self.config.instrument.NBARS:
             self.logger.error("Did not find %d peaks: n peaks = %d" %
-                              (self.config.instrument.NBARS,
-                               len(peaks_in_middle_vector)))
+                              (self.config.instrument.NBARS, peaks_found))
         else:
-            self.logger.info("found %d bars" % len(peaks_in_middle_vector))
+            self.logger.info("found %d bars" % peaks_found)
 
             if self.config.instrument.plot_level >= 1:
                 # plot the peak positions
@@ -53,7 +75,7 @@ class FindBars(BasePrimitive):
                 p = figure(
                     title=self.action.args.plotlabel +
                     "BARS MID TRACE Thresh = %.2f" %
-                    average_value_midddle_vector,
+                    average_value_middle_vector,
                     x_axis_label='CCD X (px)', y_axis_label='e-',
                     plot_width=self.config.instrument.plot_width,
                     plot_height=self.config.instrument.plot_height)
@@ -61,8 +83,8 @@ class FindBars(BasePrimitive):
                 p.scatter(peaks_in_middle_vector,
                           middle_vector[peaks_in_middle_vector], marker='x',
                           color='red', legend_label="FoundBar")
-                p.line([0, x_size], [average_value_midddle_vector,
-                                     average_value_midddle_vector],
+                p.line([0, x_size], [average_value_middle_vector,
+                                     average_value_middle_vector],
                        color='grey', line_dash='dashed')
                 p.legend.location = "bottom_center"
                 bokeh_plot(p, self.context.bokeh_session)
@@ -91,7 +113,7 @@ class FindBars(BasePrimitive):
                         plot_height=self.config.instrument.plot_height)
                     p.line(xs, ys, color='blue', legend_label='Bar Trace')
                     p.circle(xs, ys, color='red', legend_label='Bar Trace')
-                    p.line([xc, xc], [average_value_midddle_vector,
+                    p.line([xc, xc], [average_value_middle_vector,
                                       middle_vector[peak]], color='green',
                            legend_label='Cntrd')
                     bokeh_plot(p, self.context.bokeh_session)
