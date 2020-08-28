@@ -56,6 +56,7 @@ class SolveArcs(BasePrimitive):
             self.context.arcs[self.config.instrument.REFBAR]))
         # loop over arcs and generate a wavelength solution for each
         next_bar_to_plot = 0
+        poly_order = 4
         for ib, b in enumerate(self.context.arcs):
             # Starting with pascal shifted coeffs from fit_center()
             coeff = self.action.args.twkcoeff[ib]
@@ -227,8 +228,16 @@ class SolveArcs(BasePrimitive):
                              "lines after rejecting %d lines" %
                              (len(arc_pix_dat), nrej))
             # Fit wavelengths
+            # Get poly order
+            if self.action.args.dichroic_fraction < 0.6:
+                poly_order = 2
+            elif self.action.args.dichroic_fraction < 0.75:
+                poly_order = 3
+            else:
+                poly_order = 4
+            self.logger.info("Fitting with polynomial order %d" % poly_order)
             # Initial fit
-            wfit = np.polyfit(arc_pix_dat, at_wave_dat, 4)
+            wfit = np.polyfit(arc_pix_dat, at_wave_dat, poly_order)
             pwfit = np.poly1d(wfit)
             arc_wave_fit = pwfit(arc_pix_dat)
             resid = arc_wave_fit - at_wave_dat
@@ -268,7 +277,7 @@ class SolveArcs(BasePrimitive):
                 at_wave_dat = at_dat.copy()
                 at_flux_dat = at_fdat.copy()
                 # refit cleaned data
-                wfit = np.polyfit(arc_pix_dat, at_wave_dat, 4)
+                wfit = np.polyfit(arc_pix_dat, at_wave_dat, poly_order)
                 # new wavelength function
                 pwfit = np.poly1d(wfit)
                 # new wavelengths for arc lines
@@ -284,6 +293,8 @@ class SolveArcs(BasePrimitive):
                              (ib, int(ib / 5), wsig, len(arc_pix_dat)))
             self.logger.info("RejRsd: %d, RejFit: %d" % (len(rej_rsd_wave),
                                                          len(rej_wave)))
+            self.logger.info("Coefs: " + ' '.join(['%.6g' % (c,)
+                                                   for c in reversed(wfit)]))
             # store final fit coefficients
             self.action.args.fincoeff.append(wfit)
             # store statistics
@@ -361,11 +372,13 @@ class SolveArcs(BasePrimitive):
         if self.config.instrument.plot_level >= 1:
             ylabs = ['Ang/px^4', 'Ang/px^3', 'Ang/px^2', 'Ang/px',
                      'Ang']
+            ylabs = ylabs[-(poly_order+1):]
             for ic in reversed(
                     range(len(self.action.args.fincoeff[0]))):
-                ptitle = self.action.args.plotlabel + "COEF %d VALUES" % ic
+                cn = poly_order - ic
+                ptitle = self.action.args.plotlabel + "COEF %d VALUES" % cn
                 p = figure(title=ptitle, x_axis_label="Bar #",
-                           y_axis_label="Coef %d (%s)" % (ic, ylabs[ic]),
+                           y_axis_label="Coef %d (%s)" % (cn, ylabs[ic]),
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height)
                 coef = []
@@ -383,7 +396,7 @@ class SolveArcs(BasePrimitive):
                 else:
                     time.sleep(self.config.instrument.plot_pause)
                 # save coefficients plot
-                save_plot(p, filename=pfname + '_coef%d.png' % ic)
+                save_plot(p, filename=pfname + '_coef%d.png' % cn)
 
         # Plot number of lines fit
         self.action.args.av_bar_nls = float(np.nanmean(bar_nls))
