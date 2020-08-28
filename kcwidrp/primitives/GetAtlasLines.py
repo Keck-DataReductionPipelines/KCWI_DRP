@@ -19,7 +19,7 @@ def gaus(x, a, mu, sigma):
     return a * np.exp(-(x - mu) ** 2 / (2. * sigma ** 2))
 
 
-def get_line_window(y, c, thresh=0., logger=None):
+def get_line_window(y, c, thresh=0., logger=None, strict=False):
     """Find a window that includes the fwhm of the line"""
     verbose = logger is not None
     nx = len(y)
@@ -105,11 +105,12 @@ def get_line_window(y, c, thresh=0., logger=None):
             if verbose:
                 logger.info("Edge encountered")
             return None, None, 0
-    # where did we end up?
-    if c < x0 or x1 < c:
-        if verbose:
-            logger.info("initial position outside final window")
-        return None, None, 0
+    if strict:
+        # where did we end up?
+        if c < x0 or x1 < c:
+            if verbose:
+                logger.info("initial position outside final window")
+            return None, None, 0
 
     return x0, x1, count
     # END: get_line_window()
@@ -217,17 +218,30 @@ class GetAtlasLines(BasePrimitive):
         # Get extrema (trim ends a bit)
         minwav = min(mnwvs) + 10.
         maxwav = max(mxwvs) - 10.
+        wave_range = maxwav - minwav
+        # Do we have a dichroic?
+        if self.action.args.dich:
+            if self.action.args.camera == 0:  # Blue
+                maxwav = min([maxwav, 5620.])
+            elif self.action.args.camera == 1:  # Red
+                minwav = max([minwav, 5580.])
+            else:
+                self.logger.error("Camera keyword not defined!")
+        dichroic_fraction = (maxwav - minwav) / wave_range
         # Get corresponding atlas range
         minrw = [i for i, v in enumerate(self.action.args.refwave)
                  if v >= minwav][0]
         maxrw = [i for i, v in enumerate(self.action.args.refwave)
                  if v <= maxwav][-1]
         self.logger.info("Min, Max wave (A): %.2f, %.2f" % (minwav, maxwav))
+        if self.action.args.dich:
+            self.logger.info("Dichroic fraction: %.3f" % dichroic_fraction)
         # store atlas ranges
         self.action.args.atminrow = minrw
         self.action.args.atmaxrow = maxrw
         self.action.args.atminwave = minwav
         self.action.args.atmaxwave = maxwav
+        self.action.args.dichroic_fraction = dichroic_fraction
         # get atlas sub spectrum
         atspec = self.action.args.reflux[minrw:maxrw]
         atwave = self.action.args.refwave[minrw:maxrw]
@@ -282,6 +296,8 @@ class GetAtlasLines(BasePrimitive):
         nrej = 0
         # look at each arc spectrum line
         for i, pk in enumerate(spec_cent):
+            if pk < minwav or pk > maxwav:
+                continue
             # get atlas pixel position corresponding to arc line
             line_x = [ii for ii, v in enumerate(atwave) if v >= pk][0]
             # get window around atlas line to fit
@@ -409,7 +425,11 @@ class GetAtlasLines(BasePrimitive):
                       color='orange', size=8)
             p.diamond(refws, refas / norm_fac, legend_label='Kept',
                       color='green', size=10)
-            p.x_range = Range1d(min(subwvals), max(subwvals))
+            p.line([minwav, minwav], [-0.1, 1.1], legend_label='WavLim',
+                   color='brown')
+            p.line([maxwav, maxwav], [-0.1, 1.1], color='brown')
+            p.x_range = Range1d(min([min(subwvals), minwav-10.]), max(subwvals))
+            p.y_range = Range1d(-0.04, 1.04)
             bokeh_plot(p, self.context.bokeh_session)
             if self.config.instrument.plot_level >= 2:
                 input("Next? <cr>: ")
