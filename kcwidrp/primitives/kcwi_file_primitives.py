@@ -173,6 +173,15 @@ class ingest_file(BasePrimitive):
                              "CAMERA undefined")
         return self.get_keyword(key)
 
+    def dich(self):
+        if self.camera() == 0:  # Blue
+            if self.get_keyword('RCWAVE'):
+                return True
+            else:
+                return False
+        elif self.camera() == 1:    # Red
+            return True
+
     def resolution(self):
         """Return FWHM resolution in Angstroms for the given grating"""
         # get reference wavelength
@@ -465,6 +474,8 @@ class ingest_file(BasePrimitive):
         out_args.groupid = groupid
         # CAMERA
         out_args.camera = self.camera()
+        # DICH
+        out_args.dich = self.dich()
         # CAMANGLE
         out_args.camangle = self.camang()
         # FILTER
