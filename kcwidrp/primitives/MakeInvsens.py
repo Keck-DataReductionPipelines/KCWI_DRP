@@ -31,8 +31,13 @@ class MakeInvsens(BasePrimitive):
         stdfile = None
         stdname = None
         if 'object' in self.action.args.imtype.lower():
+            self.logger.info("Checking OBJECT keyword")
             stdfile, stdname = kcwi_get_std(
                 self.action.args.ccddata.header['OBJECT'], self.logger)
+            if not stdfile:
+                self.logger.info("Checking TARGNAME keyword")
+                stdfile, stdname = kcwi_get_std(
+                    self.action.args.ccddata.header['TARGNAME'], self.logger)
         else:
             self.logger.warning("Not object type: %s" %
                                 self.action.args.imtype)
@@ -246,6 +251,15 @@ class MakeInvsens(BasePrimitive):
         elif 'BH' in self.action.args.grating:
             bwid = 0.012
             ford = 9
+        # Adjust for dichroic fraction
+        try:
+            dichroic_fraction = self.action.args.ccddata.header['DICHFRAC']
+        except KeyError:
+            dichroic_fraction = 1.
+        ford = int(ford * dichroic_fraction)
+        if ford < 3:
+            ford = 3
+        self.logger.info("Fitting Invsens with polynomial order %d" % ford)
         bwids = [bl * bwid for bl in blines]
         # fit inverse sensitivity and effective area
         # get initial region of interest
