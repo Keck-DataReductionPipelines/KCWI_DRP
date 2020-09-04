@@ -171,6 +171,12 @@ class SolveGeom(BasePrimitive):
             slscl = self.config.instrument.SLICESCALE / 4.0
         else:
             slscl = self.config.instrument.SLICESCALE
+        # Dichroic fraction
+        try:
+            dichroic_fraction = self.action.args.dichroic_fraction
+        except AttributeError:
+            dichroic_fraction = 1.
+
         # Package geometry data
         ofname = self.action.args.ccddata.header['OFNAME']
         self.action.args.geometry_file = os.path.join(
@@ -200,6 +206,7 @@ class SolveGeom(BasePrimitive):
                 "wavensgood0": self.action.args.wavensgood0,
                 "wavensgood1": self.action.args.wavensgood1,
                 "wavensmid": self.action.args.wavensmid,
+                "dich_frac": dichroic_fraction,
                 "dwout": dwout,
                 "wave0out": self.action.args.wave0out,
                 "wave1out": self.action.args.wave1out,

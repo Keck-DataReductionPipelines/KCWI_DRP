@@ -325,6 +325,13 @@ class MakeCube(BasePrimitive):
                     geom['wavegood1'], 'High good wavelength')
                 self.action.args.ccddata.header['WAVMID'] = (
                     geom['wavemid'], 'middle wavelength')
+            # Dichroic fraction
+            try:
+                dichroic_fraction = geom['dich_frac']
+            except AttributeError:
+                dichroic_fraction = 1.
+            self.action.args.ccddata.header['DICHFRAC'] = (
+                dichroic_fraction, 'Dichroic Fraction')
             # Wavelength fit statistics
             self.action.args.ccddata.header['AVWVSIG'] = (
                 geom['avwvsig'], 'Avg. bar wave sigma (Ang)')
