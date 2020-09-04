@@ -60,6 +60,33 @@ class ReadAtlas(BasePrimitive):
             maxow = int(4.*len(obsarc)/5)
         minwav = obswav[minow]
         maxwav = obswav[maxow]
+        # Check for dichroic
+        if self.action.args.dich:
+            obs_extent = maxow - minow
+            if self.action.args.camera == 0:  # Blue
+                # test if correction needed
+                if maxwav > 5600:
+                    maxwav = [w for w in obswav if w < 5620.][-1]
+                    maxow = [i for i, w in enumerate(obswav) if w < 5620.][-1]
+                    minow = maxow - obs_extent
+                    if minow < 0:
+                        minow = 0
+                    self.logger.info("Dichroic adjusted - x0, x1, w0, w1: "
+                                     "%d, %d, %.2f, %.2f" % (minow, maxow,
+                                                             minwav, maxwav))
+            elif self.action.args.camera == 1:  # Red
+                # test if correction needed
+                if minwav < 5600:
+                    minwav = [w for w in obswav if w > 5580.][0]
+                    minow = [i for i, w in enumerate(obswav) if w > 5580.][0]
+                    maxow = minow + obs_extent
+                    if maxow > (len(obsarc) - 1):
+                        maxow = len(obsarc) - 1
+                    self.logger.info("Dichroic adjusted - x0, x1, w0, w1: "
+                                     "%d, %d, %.2f, %.2f" % (minow, maxow,
+                                                             minwav, maxwav))
+            else:
+                self.logger.warning("Camera undefined!!")
         # Get corresponding ref range
         minrw = [i for i, v in enumerate(refwav) if v >= minwav][0]
         maxrw = [i for i, v in enumerate(refwav) if v <= maxwav][-1]
@@ -130,8 +157,7 @@ class ReadAtlas(BasePrimitive):
                 p.line(refwav[minrw:maxrw],
                        reflux[minrw:maxrw]/np.nanmax(reflux[minrw:maxrw]),
                        color="red", legend_label="Atlas")
-                p.x_range = Range1d(np.nanmin(obswav[minow:maxow]),
-                                    np.nanmax(obswav[minow:maxow]))
+                p.x_range = Range1d(minwav, maxwav)
                 ylim_min = min(
                     obsarc[minow:maxow]/np.nanmax(obsarc[minow:maxow]))
                 ylim_max = max(
