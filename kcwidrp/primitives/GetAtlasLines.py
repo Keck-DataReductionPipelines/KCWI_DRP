@@ -296,10 +296,14 @@ class GetAtlasLines(BasePrimitive):
         nrej = 0
         # look at each arc spectrum line
         for i, pk in enumerate(spec_cent):
-            if pk < minwav or pk > maxwav:
+            if pk <= minwav or pk >= maxwav:
                 continue
             # get atlas pixel position corresponding to arc line
-            line_x = [ii for ii, v in enumerate(atwave) if v >= pk][0]
+            try:
+                line_x = [ii for ii, v in enumerate(atwave) if v >= pk][0]
+            except IndexError:
+                self.logger.warning("line at edge: %d, %.2f, %.f2f" %
+                                    (i, pk, max(atwave)))
             # get window around atlas line to fit
             minow, maxow, count = get_line_window(atspec, line_x)
             # is resulting window large enough for fitting?
