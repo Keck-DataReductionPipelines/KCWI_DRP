@@ -217,15 +217,20 @@ class FitCenter(BasePrimitive):
         # dispersion for a better solution. We will wander 5% away from it.
         maximum_dispersion_deviation = 0.05  # fraction
         # we will try nn values
+        self.logger.info("prelim disp = %.3f, refdisp = %.3f,"
+                         " min,max rows = %d, %d" % (self.context.prelim_disp,
+                                                     self.action.args.refdisp,
+                                                     self.action.args.minrow,
+                                                     self.action.args.maxrow))
         number_of_values_to_try = (int(maximum_dispersion_deviation *
                                        abs(self.context.prelim_disp) /
                                    self.action.args.refdisp *
                                        (self.action.args.maxrow -
-                                        self.action.args.minrow) / 3.0))
+                                        self.action.args.minrow) / 2.0))
         if number_of_values_to_try < 10:
             number_of_values_to_try = 10
-        if number_of_values_to_try > 25:
-            number_of_values_to_try = 25
+        if number_of_values_to_try > 50:
+            number_of_values_to_try = 50
         self.logger.info("N disp. samples: %d" % number_of_values_to_try)
         # dispersions to try
         disps = self.context.prelim_disp * (
