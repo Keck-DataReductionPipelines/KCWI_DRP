@@ -39,7 +39,7 @@ class FindBars(BasePrimitive):
         middle_vector = None
         average_value_middle_vector = None
         peaks_in_middle_vector = None
-        while peaks_found < self.config.instrument.NBARS and n_tries < 5:
+        while peaks_found != self.config.instrument.NBARS and n_tries < 5:
             self.logger.info("Middle row for bars finding: %d" % middle_y_row)
             middle_vector = np.median(
                 self.action.args.ccddata.data[
