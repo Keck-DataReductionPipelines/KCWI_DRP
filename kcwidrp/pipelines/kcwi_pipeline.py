@@ -301,7 +301,7 @@ class Kcwi_pipeline(BasePipeline):
         groupid = action.args.groupid
         self.logger.info("******* GROUPID is %s " % action.args.groupid)
         if action.args.in_proctab:
-            self.logger.warn("Already processed (already in proctab")
+            self.logger.warn("Already processed (already in proctab)")
         if action.args.in_proctab and not context.config.instrument.clobber:
             self.logger.warn("Pushing noop to queue")
             context.push_event("noop", action.args)
