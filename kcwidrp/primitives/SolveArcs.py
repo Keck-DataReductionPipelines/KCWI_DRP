@@ -122,6 +122,8 @@ class SolveArcs(BasePrimitive):
                                            p0=[f0, line_x, 1.])
                         sp_pk_x = fit[1]
                     except RuntimeError:
+                        rej_wave.append(aw)
+                        rej_flux.append(self.action.args.at_flux[iw])
                         nrej += 1
                         if verbose:
                             self.logger.info(
@@ -152,6 +154,16 @@ class SolveArcs(BasePrimitive):
                             self.logger.info("Arc peak - cent offset = %.2f "
                                              "rejected for line %.3f" %
                                              (abs(cent - peak), aw))
+                        continue
+                    if plt_line[max_index] < 100:
+                        # keep track of rejected line
+                        rej_wave.append(aw)
+                        rej_flux.append(self.action.args.at_flux[iw])
+                        nrej += 1
+                        if verbose:
+                            self.logger.info("Arc peak too low = %.2f "
+                                             "rejected for line %.3f" %
+                                             (plt_line[max_index], aw))
                         continue
                     # store surviving line data
                     arc_pix_dat.append(peak)
@@ -240,23 +252,27 @@ class SolveArcs(BasePrimitive):
             wfit = np.polyfit(arc_pix_dat, at_wave_dat, poly_order)
             pwfit = np.poly1d(wfit)
             arc_wave_fit = pwfit(arc_pix_dat)
+            # fit residuals
             resid = arc_wave_fit - at_wave_dat
             resid_c, low, upp = sigmaclip(resid, low=3., high=3.)
             wsig = resid_c.std()
+            # maximum outlier
+            max_resid = np.max(abs(resid))
+            self.logger.info("wsig: %.3f, max_resid: %.3f" % (wsig, max_resid))
             # keep track of rejected lines
             rej_rsd = []        # rejected line residuals
             rej_rsd_wave = []   # rejected line wavelengths
             rej_rsd_flux = []   # rejected line fluxes
             # iteratively remove outliers
-            for it in range(4):
-                # self.logger.info("Iteration %d" % it)
+            it = 0
+            while max_resid > 3.5 * wsig and it < 5:
                 arc_dat = []    # arc line pixel values
                 arc_fdat = []   # arc line flux data
                 at_dat = []     # atlas line wavelength values
                 at_fdat = []    # atlas line flux data
-                # trim outliers
+                # trim largest outlier
                 for il, rsd in enumerate(resid):
-                    if low < rsd < upp:
+                    if abs(rsd) < max_resid:
                         # append data for line that passed cut
                         arc_dat.append(arc_pix_dat[il])
                         arc_fdat.append(arc_int_dat[il])
@@ -264,9 +280,9 @@ class SolveArcs(BasePrimitive):
                         at_fdat.append(at_flux_dat[il])
                     else:
                         if verbose:
-                            self.logger.info("It%d REJ: %d, %.2f, %.3f" %
+                            self.logger.info("It%d REJ: %d, %.2f, %.3f, %.3f" %
                                              (it, il, arc_pix_dat[il],
-                                              at_wave_dat[il]))
+                                              at_wave_dat[il], rsd))
                         # keep track of rejected lines
                         rej_rsd_wave.append(at_wave_dat[il])
                         rej_rsd_flux.append(at_flux_dat[il])
@@ -286,8 +302,14 @@ class SolveArcs(BasePrimitive):
                 resid = arc_wave_fit - at_wave_dat
                 # get statistics
                 resid_c, low, upp = sigmaclip(resid, low=3., high=3.)
-                wsig = np.nanstd(resid)
-            # END for it in range(4):
+                wsig = resid_c.std()
+                # maximum outlier
+                max_resid = np.max(abs(resid))
+                # wsig = np.nanstd(resid)
+                self.logger.info(
+                    "wsig: %.3f, max_resid: %.3f" % (wsig, max_resid))
+                it += 1
+            # END while max_resid > 3.5 * wsig and it < 5:
             # log arc bar results
             self.logger.info("Bar %03d, Slice = %02d, RMS = %.3f, N = %d" %
                              (ib, int(ib / 5), wsig, len(arc_pix_dat)))
@@ -336,6 +358,7 @@ class SolveArcs(BasePrimitive):
                            plot_height=self.config.instrument.plot_height)
                 bwav = pwfit(self.action.args.xsvals)
                 p.line(bwav, b, color='darkgrey', legend_label='Arc')
+                p.diamond(arc_wave_fit, arc_int_dat, color='darkgrey', size=8)
                 ylim = [np.nanmin(b), np.nanmax(b)]
                 atnorm = np.nanmax(b) / np.nanmax(atspec)
                 p.line(atwave, atspec * atnorm, color='blue',
