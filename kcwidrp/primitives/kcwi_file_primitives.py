@@ -119,7 +119,7 @@ class ingest_file(BasePrimitive):
     def atsig(self):
         if 'H' in self.grating():
             if self.ifunum() > 2:
-                return 1.5
+                return 0.75
             else:
                 return 2.5
         elif 'M' in self.grating():
