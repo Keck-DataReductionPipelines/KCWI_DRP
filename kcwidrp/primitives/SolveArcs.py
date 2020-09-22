@@ -241,9 +241,9 @@ class SolveArcs(BasePrimitive):
                              (len(arc_pix_dat), nrej))
             # Fit wavelengths
             # Get poly order
-            if self.action.args.dichroic_fraction < 0.6:
+            if self.action.args.dichroic_fraction <= 0.6:
                 poly_order = 2
-            elif self.action.args.dichroic_fraction < 0.75:
+            elif 0.6 < self.action.args.dichroic_fraction < 0.75:
                 poly_order = 3
             else:
                 poly_order = 4
@@ -265,7 +265,7 @@ class SolveArcs(BasePrimitive):
             rej_rsd_flux = []   # rejected line fluxes
             # iteratively remove outliers
             it = 0
-            while max_resid > 3.5 * wsig and it < 5:
+            while max_resid > 3.5 * wsig and it < 15:
                 arc_dat = []    # arc line pixel values
                 arc_fdat = []   # arc line flux data
                 at_dat = []     # atlas line wavelength values
