@@ -23,11 +23,6 @@ class ReadAtlas(BasePrimitive):
     def _perform(self):
         # What lamp are we using?
         lamp = self.action.args.illum
-        # rez factor
-        # if 'fear' in lamp.lower():
-        #    rezfact = 0.5
-        # else:
-        #    rezfact = 1.0
         # Does the atlas file exist?
         path = "data/%s.fits" % lamp.lower()  # always use slash
         pkg = __name__.split('.')[0]
