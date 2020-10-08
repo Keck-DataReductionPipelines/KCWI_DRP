@@ -12,7 +12,8 @@ Documentation
 
 Documentation for this project is maintained with ReadTheDocs at the following link:
 
-`<https://readthedocs.org/projects/kcwi-drp>`_
+`https://kcwi-drp.readthedocs.io/en/latest/installing.html`
+
 
 .. image:: https://readthedocs.org/projects/kcwi-drp/badge/?version=latest
    :target: https://kcwi-drp.readthedocs.io/en/latest/?badge=latest
