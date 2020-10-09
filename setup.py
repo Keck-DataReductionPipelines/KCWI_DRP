@@ -46,5 +46,5 @@ setup(name=NAME,
       packages=find_packages(),
       scripts=scripts,
       entry_points=entry_points,
-      install_requires=options["install_requires"].split(',')
+      install_requires=['ccdproc', 'bokeh', 'numpy', 'scipy', 'astropy']
       )
