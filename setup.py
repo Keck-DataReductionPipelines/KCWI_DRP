@@ -44,6 +44,7 @@ setup(name=NAME,
       author=AUTHOR,
       author_email=AUTHOR_EMAIL,
       packages=find_packages(),
+      package_data={'kcwidrp': ['configs/*.cfg', 'data/*']},
       scripts=scripts,
       entry_points=entry_points,
       install_requires=['ccdproc', 'bokeh', 'numpy', 'scipy', 'astropy']
