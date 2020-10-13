@@ -22,9 +22,13 @@ Python Dependencies
 .. code-block:: bash
 
    conda install bokeh
-   conda install selenium
-   conda install -c conda-forge phantomjs
-   conda install -c astropy ccdproc
+   conda install -c conda-forge selenium geckodriver firefox phantomjs
+   conda install -c astropy ccdproc pyregion
+   conda install psutil
+   conda install requests
+   conda install pytest
+   conda install cython
+   conda install pandas
    pip install ref_index
 
 * `LACosmicX <https://github.com/cmccully/lacosmicx>`_
@@ -43,5 +47,12 @@ Python Dependencies
    cd KeckDRPFramework
    python setup.py install (or develop)
 
+* `KCWI DRP <https://github.com/Keck-DataReductionPipelines/KCWI_DRP>`_
+
+.. code-block:: bash
+
+   git clone https://github.com/Keck-DataReductionPipelines/KCWI_DRP.git
+   cd KCWI_DRP
+   python setup.py install (or develop)
 
 
