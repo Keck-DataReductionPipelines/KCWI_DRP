@@ -33,24 +33,11 @@ Status of tests:
 Dependencies
 ------------
 
-* conda install bokeh
-* conda install selenium
-* conda install -c conda-forge phantomjs
-* conda install -c astropy ccdproc
-* pip install ref_index
-* # LACOSMICX
-* git clone https://github.com/cmccully/lacosmicx.git
-* cd lacosmicx
-* python setup.py install
-
-It is possible to install the requirements by using:
-
-.. code-block:: bash
-
-   pip install -r requirements.txt
+Please see 'Installing KCWIDRP' in the documentation above for details about
+dependencies and how to satisfy them.
 
 Also:
 
 USE THE MASTER BRANCH of the KeckDRPFramework
 
-Luca, March 6, 2020
+Luca, Don October 13, 2020
