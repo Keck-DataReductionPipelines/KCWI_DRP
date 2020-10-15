@@ -23,10 +23,14 @@ class TraceBars(BasePrimitive):
             do_plot = False
         if len(self.action.args.middle_centers) < 1:
             self.logger.error("No bars found")
+        elif not self.action.args.bar_avg:
+            self.logger.error("No threshold for tracing")
         else:
             # initialize
             samp = int(80 / self.action.args.ybinsize)
             win = self.action.args.window
+            bar_thresh = self.action.args.bar_avg
+            self.logger.info("Tracing bars with threshold of %.1f" % bar_thresh)
             xi = []     # x input
             xo = []     # x output
             yi = []     # y input (and output)
@@ -57,7 +61,7 @@ class TraceBars(BasePrimitive):
                     ys = ys - np.nanmin(ys)
                     xs = list(range(barxi - win, barxi + win + 1))
                     xc = np.sum(xs * ys) / np.sum(ys)
-                    if np.nanmax(ys) > 255:
+                    if np.nanmax(ys) > bar_thresh:
                         xi.append(xc)
                         xo.append(barx)
                         yi.append(samy)
@@ -82,7 +86,7 @@ class TraceBars(BasePrimitive):
                     ys = ys - np.nanmin(ys)
                     xs = list(range(barxi - win, barxi + win + 1))
                     xc = np.sum(xs * ys) / np.sum(ys)
-                    if np.nanmax(ys) > 255:
+                    if np.nanmax(ys) > bar_thresh:
                         xi.append(xc)
                         xo.append(barx)
                         yi.append(samy)
