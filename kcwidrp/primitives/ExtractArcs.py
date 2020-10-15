@@ -24,18 +24,30 @@ class ExtractArcs(BasePrimitive):
         self.action.args.bar_id = None
         self.action.args.slice_id = None
 
-    def _perform(self):
-        do_plot = (self.config.instrument.plot_level >= 3)
-        self.logger.info("Extracting arc spectra")
+    def _pre_condition(self):
         contbars_in_proctable = self.context.proctab.n_proctab(
             frame=self.action.args.ccddata, target_type='CONTBARS',
             nearest=True)
         self.logger.info("%d continuum bars frames found" %
                          len(contbars_in_proctable))
-        # ofname = tab['OFNAME'][0]
-        original_filename = contbars_in_proctable['OFNAME'][0].split('.')[0] + \
-            "_trace.fits"
-        self.logger.info("Reading Trace Table: %s" % original_filename)
+        if len(contbars_in_proctable) > 0:
+            self.action.args.original_filename = contbars_in_proctable[
+                'OFNAME'][0].split('.')[0] + "_trace.fits"
+            return True
+        else:
+            self.action.args.original_filename = None
+            return False
+
+    def _perform(self):
+        do_plot = (self.config.instrument.plot_level >= 3)
+        self.logger.info("Extracting arc spectra")
+        # Double check
+        if not self.action.args.original_filename:
+            self.logger.error("No traces found")
+            return self.action.args
+        # All is ready
+        original_filename = self.action.args.original_filename
+        self.logger.info("Trace table found: %s" % original_filename)
         # trace = read_table(tab=tab, indir='redux', suffix='trace')
         # Find  and read control points from continuum bars
         if hasattr(self.context, 'trace'):
