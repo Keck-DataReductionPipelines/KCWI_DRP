@@ -59,9 +59,9 @@ class TraceBars(BasePrimitive):
                                                       (barxi + win + 1)],
                         axis=0)
                     ys = ys - np.nanmin(ys)
-                    xs = list(range(barxi - win, barxi + win + 1))
-                    xc = np.sum(xs * ys) / np.sum(ys)
-                    if np.nanmax(ys) > bar_thresh:
+                    if np.nanmax(ys) > bar_thresh and np.nansum(ys) > 0:
+                        xs = list(range(barxi - win, barxi + win + 1))
+                        xc = np.nansum(xs * ys) / np.nansum(ys)
                         xi.append(xc)
                         xo.append(barx)
                         yi.append(samy)
@@ -84,9 +84,9 @@ class TraceBars(BasePrimitive):
                                                       (barxi + win + 1)],
                         axis=0)
                     ys = ys - np.nanmin(ys)
-                    xs = list(range(barxi - win, barxi + win + 1))
-                    xc = np.sum(xs * ys) / np.sum(ys)
-                    if np.nanmax(ys) > bar_thresh:
+                    if np.nanmax(ys) > bar_thresh and np.nansum(ys) > 0:
+                        xs = list(range(barxi - win, barxi + win + 1))
+                        xc = np.sum(xs * ys) / np.sum(ys)
                         xi.append(xc)
                         xo.append(barx)
                         yi.append(samy)
@@ -95,7 +95,6 @@ class TraceBars(BasePrimitive):
                         barxi = int(xc)
                     else:
                         done = True
-                    # disable for now
                     samy -= samp
             # end loop over bars
             # create source and destination coords
@@ -139,7 +138,7 @@ class TraceBars(BasePrimitive):
                             os.path.dirname(self.action.args.name),
                             self.config.instrument.output_directory),
                         output_name=ofname,
-                        clobber = self.config.instrument.clobber,
+                        clobber=self.config.instrument.clobber,
                         comment=['Source and destination fiducial points',
                                  'Derived from KCWI continuum bars images',
                                  'For defining spatial transformation'],
