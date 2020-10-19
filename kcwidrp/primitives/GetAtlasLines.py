@@ -301,11 +301,14 @@ class GetAtlasLines(BasePrimitive):
             # get atlas pixel position corresponding to arc line
             try:
                 line_x = [ii for ii, v in enumerate(atwave) if v >= pk][0]
+                # get window around atlas line to fit
+                minow, maxow, count = get_line_window(atspec, line_x)
             except IndexError:
+                count = 0
+                minow = None
+                maxow = None
                 self.logger.warning("line at edge: %d, %.2f, %.f2f" %
                                     (i, pk, max(atwave)))
-            # get window around atlas line to fit
-            minow, maxow, count = get_line_window(atspec, line_x)
             # is resulting window large enough for fitting?
             if count < 5 or not minow or not maxow:
                 # keep track of fit rejected lines
