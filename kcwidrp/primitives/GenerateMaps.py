@@ -69,6 +69,13 @@ class GenerateMaps(BasePrimitive):
                 geom['barsep'], 'separation of bars (binned pix)')
             self.action.args.ccddata.header['BAR0'] = (
                 geom['bar0'], 'first bar pixel position')
+            # Dichroic fraction
+            try:
+                dichroic_fraction = geom['dich_frac']
+            except AttributeError:
+                dichroic_fraction = 1.
+            self.action.args.ccddata.header['DICHFRAC'] = (
+                dichroic_fraction, 'Dichroic Fraction')
             # Wavelength ranges
             self.action.args.ccddata.header['WAVALL0'] = (
                 geom['waveall0'], 'Low inclusive wavelength')
