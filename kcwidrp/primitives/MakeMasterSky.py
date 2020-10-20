@@ -255,7 +255,7 @@ class MakeMasterSky(BaseImg):
         hdr = self.action.args.ccddata.header.copy()
         self.action.args.ccddata.data = sky
 
-        # get master flat output name
+        # get master sky output name
         ofn = self.action.args.ccddata.header['OFNAME']
         msname = ofn.split('.fits')[0] + '_' + suffix + '.fits'
 
@@ -292,4 +292,4 @@ class MakeMasterSky(BaseImg):
         self.logger.info(log_string)
         return self.action.args
 
-    # END: class MakeMasterFlat()
+    # END: class MakeMasterSky()

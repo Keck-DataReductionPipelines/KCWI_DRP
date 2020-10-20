@@ -755,6 +755,7 @@ class MakeMasterFlat(BaseImg):
         stacked.header['SLIMAPF'] = slf
         stacked.header['POSMAPF'] = pof
 
+        # store flat in output frame
         stacked.data = ratio
 
         # output master flat
