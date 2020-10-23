@@ -3,6 +3,7 @@ from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_reader, \
     kcwi_fits_writer
 from kcwidrp.core.kcwi_plotting import get_plot_lims
 from kcwidrp.core.bokeh_plotting import bokeh_plot
+from kcwidrp.core.kcwi_plotting import save_plot
 from kcwidrp.core.bspline import Bspline
 from bokeh.plotting import figure
 from bokeh.models import Range1d
@@ -686,6 +687,11 @@ class MakeMasterFlat(BaseImg):
         yfitall, _ = sftall.value(allx)
 
         if self.config.instrument.plot_level >= 1:
+            # output filename stub
+            fltfnam = "flat_%05d_%s_%s_%s" % \
+                      (self.action.args.ccddata.header['FRAMENO'],
+                       self.action.args.illum, self.action.args.grating,
+                       self.action.args.ifuname)
             if xbin == 1:
                 stride = int(len(allx) / 8000.)
             else:
@@ -714,6 +720,7 @@ class MakeMasterFlat(BaseImg):
                 input("Next? <cr>: ")
             else:
                 time.sleep(self.config.instrument.plot_pause)
+            save_plot(p, filename=fltfnam+".png")
 
         # OK, Now we have extended to the full range... so... we are going to
         # make a ratio flat!

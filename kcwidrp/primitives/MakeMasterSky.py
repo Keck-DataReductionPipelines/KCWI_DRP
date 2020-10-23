@@ -2,6 +2,7 @@ from keckdrpframework.primitives.base_img import BaseImg
 from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_reader, \
     kcwi_fits_writer
 from kcwidrp.core.bokeh_plotting import bokeh_plot
+from kcwidrp.core.kcwi_plotting import save_plot
 from kcwidrp.core.bspline import Bspline
 from bokeh.plotting import figure
 
@@ -227,6 +228,11 @@ class MakeMasterSky(BaseImg):
 
         # plot, if requested
         if self.config.instrument.plot_level >= 1:
+            # output filename stub
+            skyfnam = "sky_%05d_%s_%s_%s" % \
+                     (self.action.args.ccddata.header['FRAMENO'],
+                      self.action.args.illum, self.action.args.grating,
+                      self.action.args.ifuname)
             p = figure(
                 title=self.action.args.plotlabel + ' Master Sky',
                 x_axis_label='Wave (A)',
@@ -245,6 +251,7 @@ class MakeMasterSky(BaseImg):
                 input("Next? <cr>: ")
             else:
                 time.sleep(self.config.instrument.plot_pause)
+            save_plot(p, filename=skyfnam+".png")
 
         # create sky image
         sky = np.zeros(self.action.args.ccddata.data.shape, dtype=float)
