@@ -1,11 +1,12 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer
 from kcwidrp.core.bokeh_plotting import bokeh_plot
-from kcwidrp.core.bspline import Bspline
+from kcwidrp.core.kcwi_plotting import save_plot
 
 from bokeh.plotting import figure
 import numpy as np
 import time
+import warnings
 
 
 class SubtractScatteredLight(BasePrimitive):
@@ -47,20 +48,29 @@ class SubtractScatteredLight(BasePrimitive):
                                  axis=1)
             # X data values
             xvals = np.arange(len(yvals), dtype=np.float)
-            # Break points
+            # polynomial order
             if 'FLAT' in self.action.args.ccddata.header['IMTYPE']:
-                nbpts = 40 / ybin
+                porder = 16
             else:
-                nbpts = 20 / ybin
-            self.logger.info("Fitting scattered light with %d breakpoints"
-                             % nbpts)
-            bkpt = np.min(xvals) + np.arange(nbpts) * \
-                (np.max(xvals) - np.min(xvals)) / nbpts
-            # B-spline fit
-            fscat, _ = Bspline.iterfit(xvals, yvals, fullbkpt=bkpt)
+                porder = 11
+            self.logger.info("Fitting scattered light with poly of order %d"
+                             % porder)
+            warnings.simplefilter('error', np.RankWarning)
+            try:
+                scat_coef = np.polyfit(xvals, yvals, porder)
+            except np.RankWarning:
+                porder = int(porder/2)
+                self.logger.warning("RankWarning: Lowering poly order to %d"
+                                    % porder)
+                scat_coef = np.polyfit(xvals, yvals, porder)
             # Scattered light vector
-            scat, _ = fscat.value(xvals)
+            scat = np.polyval(scat_coef, xvals)
             if self.config.instrument.plot_level >= 1:
+                # output filename stub
+                scfnam = "scat_%05d_%s_%s_%s" % \
+                         (self.action.args.ccddata.header['FRAMENO'],
+                          self.action.args.illum, self.action.args.grating,
+                          self.action.args.ifuname)
                 # plot
                 p = figure(title=self.action.args.plotlabel +
                            "SCATTERED LIGHT FIT",
@@ -69,13 +79,14 @@ class SubtractScatteredLight(BasePrimitive):
                            plot_height=self.config.instrument.plot_height)
                 p.circle(xvals, yvals, legend_label="Scat")
                 p.line(xvals, scat, color='red', line_width=3,
-                       legend_label="fit")
+                       legend_label="Fit")
                 p.legend.location = "top_left"
                 bokeh_plot(p, self.context.bokeh_session)
                 if self.config.instrument.plot_level >= 2:
                     input("Next? <cr>: ")
                 else:
                     time.sleep(self.config.instrument.plot_pause)
+                save_plot(p, filename=scfnam+".png")
             # Subtract scattered light
             self.logger.info("Starting scattered light subtraction")
             for ix in range(0, siz[1]):
