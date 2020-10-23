@@ -1,6 +1,7 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from kcwidrp.primitives.kcwi_file_primitives import write_table
 from kcwidrp.core.bokeh_plotting import bokeh_plot
+from kcwidrp.core.kcwi_plotting import save_plot
 
 from bokeh.plotting import figure
 import numpy as np
@@ -102,6 +103,11 @@ class TraceBars(BasePrimitive):
             dst = np.column_stack((xi, yi))
             src = np.column_stack((xo, yo))
             if do_plot:
+                # output filename stub
+                trcfnam = "bars_%05d_%s_%s_%s" % \
+                          (self.action.args.ccddata.header['FRAMENO'],
+                           self.action.args.illum, self.action.args.grating,
+                           self.action.args.ifuname)
                 # plot them
                 p = figure(title=self.action.args.plotlabel +
                            'SPATIAL CONTROL POINTS',
@@ -116,6 +122,7 @@ class TraceBars(BasePrimitive):
                     input("Next? <cr>: ")
                 else:
                     time.sleep(self.config.instrument.plot_pause)
+                save_plot(p, filename=trcfnam+".png")
             trace = {
                 'src': src,
                 'dst': dst,
