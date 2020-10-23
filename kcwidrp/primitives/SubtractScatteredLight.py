@@ -5,8 +5,8 @@ from kcwidrp.core.kcwi_plotting import save_plot
 
 from bokeh.plotting import figure
 import numpy as np
+from scipy.signal import savgol_filter
 import time
-import warnings
 
 
 class SubtractScatteredLight(BasePrimitive):
@@ -48,23 +48,14 @@ class SubtractScatteredLight(BasePrimitive):
                                  axis=1)
             # X data values
             xvals = np.arange(len(yvals), dtype=np.float)
-            # polynomial order
+            # filter window
             if 'FLAT' in self.action.args.ccddata.header['IMTYPE']:
-                porder = 16
+                fwin = 151
             else:
-                porder = 11
-            self.logger.info("Fitting scattered light with poly of order %d"
-                             % porder)
-            warnings.simplefilter('error', np.RankWarning)
-            try:
-                scat_coef = np.polyfit(xvals, yvals, porder)
-            except np.RankWarning:
-                porder = int(porder/2)
-                self.logger.warning("RankWarning: Lowering poly order to %d"
-                                    % porder)
-                scat_coef = np.polyfit(xvals, yvals, porder)
-            # Scattered light vector
-            scat = np.polyval(scat_coef, xvals)
+                fwin = 151
+            self.logger.info("Smoothing scattered light with window of %d px"
+                             % fwin)
+            scat = savgol_filter(yvals, fwin, 3)
             if self.config.instrument.plot_level >= 1:
                 # output filename stub
                 scfnam = "scat_%05d_%s_%s_%s" % \
@@ -79,7 +70,7 @@ class SubtractScatteredLight(BasePrimitive):
                            plot_height=self.config.instrument.plot_height)
                 p.circle(xvals, yvals, legend_label="Scat")
                 p.line(xvals, scat, color='red', line_width=3,
-                       legend_label="Fit")
+                       legend_label="Smooth")
                 p.legend.location = "top_left"
                 bokeh_plot(p, self.context.bokeh_session)
                 if self.config.instrument.plot_level >= 2:
