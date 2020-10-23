@@ -115,12 +115,10 @@ class MakeInvsens(BasePrimitive):
             area = 760000.0
         else:
             area = -1.0
-        # tlab = tel
         # compute good y pixel ranges
         if w0 > 0. and dw > 0. and wgoo0 > 0. and wgoo1 > 0.:
             z0 = int((wgoo0 - w0) / dw) + 10
             z1 = int((wgoo1 - w0) / dw) - 10
-        # gz = [i for i, v in enumerate(z) if z0 <= v <= z1]
         # wavelength scale
         w = w0 + z * dw
         # good spatial range
@@ -271,7 +269,7 @@ class MakeInvsens(BasePrimitive):
         wlm0 = wgoo0
         wlm1 = wgoo1
         # interactively set wavelength limits
-        if self.config.instrument.plot_level >= 2:
+        if self.config.instrument.plot_level >= 1:
             yran = [np.min(obsspec), np.max(obsspec)]
             source = ColumnDataSource(data=dict(x=w, y=obsspec))
             done = False
@@ -314,7 +312,7 @@ class MakeInvsens(BasePrimitive):
             nwl_good = len(wl_good)
         # END: interactively set wavelength limits
         # Now interactively identify lines
-        if self.config.instrument.plot_level >= 2:
+        if self.config.instrument.plot_level >= 1:
             yran = [np.min(obsspec), np.max(obsspec)]
             # source = ColumnDataSource(data=dict(x=w, y=obsspec))
             done = False
@@ -441,7 +439,7 @@ class MakeInvsens(BasePrimitive):
                           line_color='black', line_dash='dashdot')
                 set_plot_lims(peff, xlim=[wall0, wall1], ylim=yran)
                 bokeh_plot(peff, self.context.bokeh_session)
-                if self.config.instrument.plot_level >= 2:
+                if self.config.instrument.plot_level >= 1:
                     input("Next? <cr>: ")
                 else:
                     time.sleep(2. * self.config.instrument.plot_pause)
@@ -462,7 +460,7 @@ class MakeInvsens(BasePrimitive):
                 pivs.line([wlm1, wlm1], yran, line_color='green')
                 set_plot_lims(pivs, xlim=[wall0, wall1], ylim=yran)
                 bokeh_plot(pivs, self.context.bokeh_session)
-                if self.config.instrument.plot_level >= 2:
+                if self.config.instrument.plot_level >= 1:
                     input("Next? <cr>: ")
                 else:
                     time.sleep(2. * self.config.instrument.plot_pause)
@@ -481,7 +479,7 @@ class MakeInvsens(BasePrimitive):
                 pcal.line([wlm1, wlm1], yran, line_color='green')
                 set_plot_lims(pcal, xlim=[wall0, wall1], ylim=yran)
                 bokeh_plot(pcal, self.context.bokeh_session)
-                if self.config.instrument.plot_level >= 2:
+                if self.config.instrument.plot_level >= 1:
                     input("Next? <cr>: ")
                 else:
                     time.sleep(2. * self.config.instrument.plot_pause)
@@ -511,7 +509,7 @@ class MakeInvsens(BasePrimitive):
                           line_color='black', line_dash='dashed')
                 set_plot_lims(prsd, xlim=[wall0, wall1], ylim=yran)
                 bokeh_plot(prsd, self.context.bokeh_session)
-                if self.config.instrument.plot_level >= 2:
+                if self.config.instrument.plot_level >= 1:
                     qstr = input("Current fit order = %d, "
                                  "New fit order? <int>, <cr> - done: " % ford)
                     if len(qstr) <= 0:
