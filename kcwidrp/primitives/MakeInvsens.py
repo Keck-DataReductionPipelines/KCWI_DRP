@@ -54,8 +54,8 @@ class MakeInvsens(BasePrimitive):
                     rdir = self.config.instrument.output_directory
                     invsensf = os.path.join(rdir, msname)
                     if os.path.exists(invsensf):
-                        self.logger.info("Master cal already exists: %s" %
-                                         invsensf)
+                        self.logger.warning("Master cal already exists: %s" %
+                                            invsensf)
                         return False
                     else:
                         self.logger.info("Master cal will be generated.")
