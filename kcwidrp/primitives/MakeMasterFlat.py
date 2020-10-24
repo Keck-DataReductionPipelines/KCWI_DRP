@@ -476,6 +476,8 @@ class MakeMasterFlat(BaseImg):
         else:
             knots = 100
         self.logger.info("Using %d knots for bspline fit" % knots)
+
+        # generate a fit from all points
         bkpt = np.min(xfr) + np.arange(knots+1) * \
             (np.max(xfr) - np.min(xfr)) / knots
         sftr, _ = Bspline.iterfit(xfr, yfr, fullbkpt=bkpt)
@@ -654,21 +656,23 @@ class MakeMasterFlat(BaseImg):
                     time.sleep(self.config.instrument.plot_pause)
 
         # at this point we are going to try to merge the points
-        qselred = [i for i, v in enumerate(xfd) if v >= maxrwave]
+        self.logger.info("Correcting points outside %.1f - %.1f A"
+                         % (minrwave, maxrwave))
         qselblue = [i for i, v in enumerate(xfb) if v <= minrwave]
-        nqsr = len(qselred)
+        qselred = [i for i, v in enumerate(xfd) if v >= maxrwave]
         nqsb = len(qselblue)
+        nqsr = len(qselred)
 
-        if nqsr > 0:
-            redfluxes = [yfd[i] * (redlinfit[1]+redlinfit[0]*xfd[i])
-                         for i in qselred]
-        else:
-            redfluxes = None
         if nqsb > 0:
             bluefluxes = [yfb[i] * (bluelinfit[1]+bluelinfit[0]*xfb[i])
                           for i in qselblue]
         else:
             bluefluxes = None
+        if nqsr > 0:
+            redfluxes = [yfd[i] * (redlinfit[1]+redlinfit[0]*xfd[i])
+                         for i in qselred]
+        else:
+            redfluxes = None
         allx = xfr
         ally = yfr
         if nqsb > 0:
@@ -699,21 +703,20 @@ class MakeMasterFlat(BaseImg):
             xplt = allx[::stride]
             yplt = ally[::stride]
             fplt = yfitall[::stride]
-            xrplt = xfr[::stride]
-            yrplt = yfr[::stride]
-            yfplt = yfitr[::stride]
+            yran = [np.nanmin(ally), np.nanmax(ally)]
             p = figure(
                 title=self.action.args.plotlabel + ' Master Illumination',
                 x_axis_label='Wave (A)',
                 y_axis_label='Flux (e-)',
                 plot_width=self.config.instrument.plot_width,
                 plot_height=self.config.instrument.plot_height)
-            p.circle(xplt, yplt, size=1, line_alpha=0., fill_color='purple',
+            p.circle(xplt, yplt, size=1, line_alpha=0., fill_color='black',
                      legend_label='Data')
-            p.line(xplt, fplt, line_color='red', legend_label='Fit')
-            p.circle(xrplt, yrplt, size=1, line_alpha=0., fill_color='black',
-                     legend_label='Ref Data')
-            p.line(xrplt, yfplt, line_color='green', legend_label='Ref Fit')
+            p.line(xplt, fplt, line_color='red', legend_label='Fit',
+                   line_width=2)
+            p.line([minrwave, minrwave], yran, line_color='orange',
+                   legend_label='Cor lim')
+            p.line([maxrwave, maxrwave], yran, line_color='orange')
             p.legend.location = "top_left"
             bokeh_plot(p, self.context.bokeh_session)
             if self.config.instrument.plot_level >= 2:
