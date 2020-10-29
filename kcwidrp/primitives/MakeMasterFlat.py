@@ -477,7 +477,7 @@ class MakeMasterFlat(BaseImg):
             knots = 100
         self.logger.info("Using %d knots for bspline fit" % knots)
 
-        # generate a fit from all points
+        # generate a fit from ref slice points
         bkpt = np.min(xfr) + np.arange(knots+1) * \
             (np.max(xfr) - np.min(xfr)) / knots
         sftr, _ = Bspline.iterfit(xfr, yfr, fullbkpt=bkpt)
@@ -525,6 +525,11 @@ class MakeMasterFlat(BaseImg):
             nwaves = 1000
         waves = minwave + (maxwave - minwave) * np.arange(nwaves+1) / nwaves
         if self.config.instrument.plot_level >= 1:
+            # output filename stub
+            rbfnam = "redblue_%05d_%s_%s_%s" % \
+                      (self.action.args.ccddata.header['FRAMENO'],
+                       self.action.args.illum, self.action.args.grating,
+                       self.action.args.ifuname)
             if xbin == 1:
                 stride = int(len(xfr) / 8000.)
                 if stride <= 0:
@@ -533,10 +538,13 @@ class MakeMasterFlat(BaseImg):
                 stride = 1
             xrplt = xfr[::stride]
             yrplt = yfitr[::stride]
+            yrplt_d = yfr[::stride]
             xbplt = xfb[::stride]
             ybplt = yfitb[::stride]
+            ybplt_d = yfb[::stride]
             xdplt = xfd[::stride]
             ydplt = yfitd[::stride]
+            ydplt_d = yfd[::stride]
             p = figure(
                 title=self.action.args.plotlabel + ' Blue/Red fits',
                 x_axis_label='Wave (A)',
@@ -544,13 +552,17 @@ class MakeMasterFlat(BaseImg):
                 plot_width=self.config.instrument.plot_width,
                 plot_height=self.config.instrument.plot_height)
             p.line(xrplt, yrplt, line_color='black', legend_label='Ref')
+            p.circle(xrplt, yrplt_d, size=1, line_alpha=0., fill_color='black')
             p.line(xbplt, ybplt, line_color='blue', legend_label='Blue')
+            p.circle(xbplt, ybplt_d, size=1, line_alpha=0., fill_color='blue')
             p.line(xdplt, ydplt, line_color='red', legend_label='Red')
+            p.circle(xdplt, ydplt_d, size=1, line_alpha=0., fill_color='red')
             bokeh_plot(p, self.context.bokeh_session)
             if self.config.instrument.plot_level >= 2:
                 input("Next? <cr>: ")
             else:
                 time.sleep(self.config.instrument.plot_pause)
+            save_plot(p, filename=rbfnam+'.png')
 
         wavebuffer = 0.1
         minrwave = np.min(xfr)
@@ -571,20 +583,32 @@ class MakeMasterFlat(BaseImg):
 
         if nqb > 0:
             bluefit, _ = sftb.value(waves[qbluefit])
+            blue_zero_cross = np.nanmin(bluefit) <= 0.
             refbluefit, _ = sftr.value(waves[qbluefit])
             bluelinfit = np.polyfit(waves[qbluefit], refbluefit/bluefit, 1)
+            bluelinfity = bluelinfit[1] + bluelinfit[0] * waves[qbluefit]
         else:
             bluefit = None
+            blue_zero_cross = False
             refbluefit = None
             bluelinfit = None
+            bluelinfity = None
         if nqr > 0:
             redfit, _ = sftd.value(waves[qredfit])
+            red_zero_cross = np.nanmin(redfit) <= 0.
             refredfit, _ = sftr.value(waves[qredfit])
             redlinfit = np.polyfit(waves[qredfit], refredfit/redfit, 1)
+            redlinfity = redlinfit[1] + redlinfit[0] * waves[qredfit]
         else:
             redfit = None
+            red_zero_cross = False
             refredfit = None
             redlinfit = None
+            redlinfity = None
+        if blue_zero_cross:
+            self.logger.info("Blue extension zero crossing detected")
+        if red_zero_cross:
+            self.logger.info("Red extension zero crossing detected")
         if self.config.instrument.plot_level >= 1:
             if nqb > 1:
                 # plot blue fits
@@ -596,8 +620,10 @@ class MakeMasterFlat(BaseImg):
                     plot_height=self.config.instrument.plot_height)
                 p.line(waves[qbluefit], refbluefit, line_color='black',
                        legend_label='Ref')
+                p.circle(waves[qbluefit], refbluefit, fill_color='black')
                 p.line(waves[qbluefit], bluefit, line_color='blue',
                        legend_label='Blue')
+                p.circle(waves[qbluefit], bluefit, fill_color='blue')
                 bokeh_plot(p, self.context.bokeh_session)
                 if self.config.instrument.plot_level >= 2:
                     input("Next? <cr>: ")
@@ -612,9 +638,12 @@ class MakeMasterFlat(BaseImg):
                     plot_height=self.config.instrument.plot_height)
                 p.line(waves[qbluefit], refbluefit/bluefit, line_color='black',
                        legend_label='Ref')
-                p.line(waves[qbluefit],
-                       bluelinfit[1]+bluelinfit[0]*waves[qbluefit],
+                p.circle(waves[qbluefit], refbluefit/bluefit,
+                         fill_color='black')
+                p.line(waves[qbluefit], bluelinfity,
                        line_color='blue', legend_label='Blue')
+                p.circle(waves[qbluefit], bluelinfity,
+                         fill_color='blue')
                 bokeh_plot(p, self.context.bokeh_session)
                 if self.config.instrument.plot_level >= 2:
                     input("Next? <cr>: ")
@@ -630,8 +659,10 @@ class MakeMasterFlat(BaseImg):
                     plot_height=self.config.instrument.plot_height)
                 p.line(waves[qredfit], refredfit, line_color='black',
                        legend_label='Ref')
+                p.circle(waves[qredfit], refredfit, fill_color='black')
                 p.line(waves[qredfit], redfit, line_color='red',
                        legend_label='Red')
+                p.circle(waves[qredfit], redfit, fill_color='red')
                 bokeh_plot(p, self.context.bokeh_session)
                 if self.config.instrument.plot_level >= 2:
                     input("Next? <cr>: ")
@@ -646,9 +677,10 @@ class MakeMasterFlat(BaseImg):
                     plot_height=self.config.instrument.plot_height)
                 p.line(waves[qredfit], refredfit/redfit, line_color='black',
                        legend_label='Ref')
-                p.line(waves[qredfit],
-                       redlinfit[1]+redlinfit[0]*waves[qredfit],
+                p.circle(waves[qredfit], refredfit/redfit, fill_color='black')
+                p.line(waves[qredfit], redlinfity,
                        line_color='red', legend_label='Red')
+                p.circle(waves[qredfit], redlinfity, fill_color='red')
                 bokeh_plot(p, self.context.bokeh_session)
                 if self.config.instrument.plot_level >= 2:
                     input("Next? <cr>: ")
@@ -662,15 +694,37 @@ class MakeMasterFlat(BaseImg):
         qselred = [i for i, v in enumerate(xfd) if v >= maxrwave]
         nqsb = len(qselblue)
         nqsr = len(qselred)
+        blue_all_tie = yfitr[0]
+        red_all_tie = yfitr[-1]
 
         if nqsb > 0:
-            bluefluxes = [yfb[i] * (bluelinfit[1]+bluelinfit[0]*xfb[i])
-                          for i in qselblue]
+            if blue_zero_cross:
+                blue_offset = yfb[qselblue[-1]] - blue_all_tie
+                bluefluxes = [yfb[i] - blue_offset for i in qselblue]
+                self.logger.info("Blue zero crossing, only applying offset")
+            else:
+                blue_offset = yfb[qselblue[-1]] * \
+                              (bluelinfit[1]+bluelinfit[0]*xfb[qselblue[-1]]) \
+                              - blue_all_tie
+                bluefluxes = [yfb[i] * (bluelinfit[1]+bluelinfit[0]*xfb[i])
+                              - blue_offset for i in qselblue]
+                self.logger.info("Blue linear ratio fit scaling applied")
+            self.logger.info("Blue offset of %.2f applied" % blue_offset)
         else:
             bluefluxes = None
         if nqsr > 0:
-            redfluxes = [yfd[i] * (redlinfit[1]+redlinfit[0]*xfd[i])
-                         for i in qselred]
+            if red_zero_cross:
+                red_offset = yfd[qselred[0]] - red_all_tie
+                redfluxes = [yfd[i] - red_offset for i in qselred]
+                self.logger.info("Red zero crossing, only applying offset")
+            else:
+                red_offset = yfd[qselred[0]] * \
+                             (redlinfit[1]+redlinfit[0]*xfd[qselred[0]]) \
+                             - red_all_tie
+                redfluxes = [yfd[i] * (redlinfit[1]+redlinfit[0]*xfd[i])
+                             - red_offset for i in qselred]
+                self.logger.info("Red linear ratio fit scaling applied")
+            self.logger.info("Red offset of %.2f applied" % red_offset)
         else:
             redfluxes = None
         allx = xfr
