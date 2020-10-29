@@ -330,7 +330,8 @@ class ingest_file(BasePrimitive):
                 obnam = self.get_keyword('TARGNAME')
                 if obnam is None:
                     obnam = 'Object'
-            illum = obnam
+            # clean up the string
+            illum = obnam.replace("/", "_").replace(" ", "").replace(".", "_")
         else:
             illum = 'Test'
         return illum
