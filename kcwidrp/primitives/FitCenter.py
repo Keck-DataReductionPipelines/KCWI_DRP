@@ -7,7 +7,7 @@ from bokeh.plotting import figure
 import numpy as np
 import math
 from scipy.interpolate import interpolate
-from multiprocessing import Pool
+from multiprocessing import get_context
 from scipy import signal
 import time
 
@@ -74,7 +74,6 @@ def pascal_shift(coefficients=None, x0=None):
 
 
 def bar_fit_helper(argument):
-    logger = argument['logger']
 
     b = argument['b']
     bs = argument['bs']
@@ -182,12 +181,11 @@ def bar_fit_helper(argument):
                        argument['FCAM']) ** 4 * \
         math.sin(beta) / 24. / argument['rho'] * 1.e4
     shifted_coefficients = pascal_shift(coefficients, argument['x0'])
-    logger.info("Central Fit: Bar# %3d, Cdisp %.4f, "
-                "Coefs: %.2f  %.4f  %13.5e %13.5e" %
-                (b, bardisp, shifted_coefficients[4], shifted_coefficients[3],
-                 shifted_coefficients[2], shifted_coefficients[1]))
+    print("Bar#: %3d, Cdisp: %.4f" % (b, bardisp))
+
     # Return results
-    return b, shifted_coefficients, coefficients[4], coefficients[3], maxima
+    return b, shifted_coefficients, coefficients[4], coefficients[3], \
+           maxima, bardisp
     # END: def bar_fit_helper()
 
 
@@ -267,8 +265,7 @@ class FitCenter(BasePrimitive):
                 'taperfrac': self.config.instrument.TAPERFRAC,
                 'refdisp': self.action.args.refdisp,
                 'subxvals': subxvals,
-                'nn': number_of_values_to_try, 'x0': self.action.args.x0,
-                'logger': self.logger,
+                'nn': number_of_values_to_try, 'x0': self.action.args.x0
             }
             my_arguments.append(arguments)
 
@@ -276,7 +273,7 @@ class FitCenter(BasePrimitive):
         centwave = []
         centdisp = []
 
-        p = Pool()
+        p = get_context("spawn").Pool()
         results = p.map(bar_fit_helper, list(my_arguments))
         p.close()
 
@@ -290,6 +287,12 @@ class FitCenter(BasePrimitive):
             centwave.append(_centwave)
             centdisp.append(_centdisp)
             maxima = result[4]
+            bardisp = result[5]
+            self.logger.info("Central Fit: Bar# %3d, Cdisp %.4f, "
+                             "Coefs: %.2f %.4f %13.5e %13.5e" %
+                             (b, bardisp, shifted_coefficients[4],
+                              shifted_coefficients[3], shifted_coefficients[2],
+                              shifted_coefficients[1]))
             if do_inter and ir == next_bar_to_plot:
                 # plot maxima
                 p = figure(title=self.action.args.plotlabel +
