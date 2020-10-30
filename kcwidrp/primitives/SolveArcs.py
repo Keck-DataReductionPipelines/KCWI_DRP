@@ -82,6 +82,7 @@ class SolveArcs(BasePrimitive):
             arc_int_dat = []    # arc line pixel intensities
             rej_wave = []       # rejected line wavelengths
             rej_flux = []       # rejected line fluxes
+            gaus_sig = []
             nrej = 0
             # loop over lines
             for iw, aw in enumerate(self.action.args.at_wave):
@@ -116,12 +117,16 @@ class SolveArcs(BasePrimitive):
                     xvec = self.action.args.xsvals[minow:maxow + 1]
                     wvec = bw[minow:maxow + 1]
                     f0 = max(yvec)
+                    par_start = [f0, np.nanmean(xvec), 1.0]
+                    par_bounds = ([f0*0.9, np.min(xvec), 0.5],
+                                  [f0*1.1, np.max(xvec), 2.5])
                     # Gaussian fit
                     try:
-                        fit, _ = curve_fit(gaus, xvec, yvec,
-                                           p0=[f0, line_x, 1.])
+                        fit, _ = curve_fit(gaus, xvec, yvec, p0=par_start)
+                        #  bounds=par_bounds, method='trf')
                         sp_pk_x = fit[1]
-                    except RuntimeError:
+                        gaus_sig.append(fit[2])
+                    except (RuntimeError, ValueError):
                         rej_wave.append(aw)
                         rej_flux.append(self.action.args.at_flux[iw])
                         nrej += 1
@@ -236,6 +241,7 @@ class SolveArcs(BasePrimitive):
                     rej_wave.append(aw)
                     rej_flux.append(self.action.args.at_flux[iw])
                     nrej += 1
+            self.logger.info("")
             self.logger.info("Fitting wavelength solution starting with %d "
                              "lines after rejecting %d lines" %
                              (len(arc_pix_dat), nrej))
@@ -265,7 +271,7 @@ class SolveArcs(BasePrimitive):
             rej_rsd_flux = []   # rejected line fluxes
             # iteratively remove outliers
             it = 0
-            while max_resid > 3.5 * wsig and it < 15:
+            while max_resid > 2.5 * wsig and it < 25:
                 arc_dat = []    # arc line pixel values
                 arc_fdat = []   # arc line flux data
                 at_dat = []     # atlas line wavelength values
@@ -306,15 +312,18 @@ class SolveArcs(BasePrimitive):
                 # maximum outlier
                 max_resid = np.max(abs(resid))
                 # wsig = np.nanstd(resid)
-                self.logger.info(
-                    "wsig: %.3f, max_resid: %.3f" % (wsig, max_resid))
                 it += 1
             # END while max_resid > 3.5 * wsig and it < 5:
             # log arc bar results
-            self.logger.info("Bar %03d, Slice = %02d, RMS = %.3f, N = %d" %
+            self.logger.info("")
+            self.logger.info("BAR %03d, Slice = %02d, RMS = %.3f, N = %d" %
                              (ib, int(ib / 5), wsig, len(arc_pix_dat)))
-            self.logger.info("RejRsd: %d, RejFit: %d" % (len(rej_rsd_wave),
-                                                         len(rej_wave)))
+            self.logger.info(
+                "Nits: %d, wsig: %.3f, max_resid: %.3f" % (it, wsig, max_resid))
+            self.logger.info("NRejRsd: %d, NRejFit: %d" % (len(rej_rsd_wave),
+                                                           len(rej_wave)))
+            self.logger.info("Line width median sigma: %.2f px" %
+                             np.nanmedian(gaus_sig))
             self.logger.info("Coefs: " + ' '.join(['%.6g' % (c,)
                                                    for c in reversed(wfit)]))
             # store final fit coefficients
