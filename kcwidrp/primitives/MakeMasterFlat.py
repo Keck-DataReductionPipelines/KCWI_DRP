@@ -157,6 +157,12 @@ class MakeMasterFlat(BaseImg):
         allidx = np.arange(int(140/xbin))
         newflat = stacked.data.copy()
 
+        # dichroic fraction
+        try:
+            dichroic_fraction = wavemap.header['DICHFRAC']
+        except KeyError:
+            dichroic_fraction = 1.
+
         # get reference slice data
         q = [i for i, v in enumerate(slicemap.data.flat) if v == refslice]
         # get wavelength limits
@@ -169,9 +175,19 @@ class MakeMasterFlat(BaseImg):
         if internal:
             self.logger.info("Internal flats require vignetting correction")
             # get good region for fitting
-            dw = (waves[1] - waves[0]) / 30.0
-            wavemin = (waves[0]+waves[1]) / 2.0 - dw
-            wavemax = (waves[0]+waves[1]) / 2.0 + dw
+            if self.action.args.camera == 0:    # Blue
+                wmin = waves[0]
+                wmax = min([waves[1], 5620.])
+            elif self.action.args.camera == 1:  # Red
+                wmin = max([waves[0], 5580.])
+                wmax = waves[1]
+            else:
+                self.logger.warning("Camera keyword not defined")
+                wmin = waves[0]
+                wmax = waves[1]
+            dw = (wmax - wmin) / 30.0
+            wavemin = (wmin+wmax) / 2.0 - dw
+            wavemax = (wmin+wmax) / 2.0 + dw
             self.logger.info("Using %.1f - %.1f A of slice %d" % (wavemin,
                                                                   wavemax,
                                                                   refslice))
