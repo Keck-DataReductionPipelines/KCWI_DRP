@@ -3,6 +3,7 @@ from keckdrpframework.primitives.base_img import BaseImg
 from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_reader, \
     kcwi_fits_writer, parse_imsec
 from kcwidrp.core.bokeh_plotting import bokeh_plot
+from kcwidrp.core.kcwi_plotting import save_plot
 
 from bokeh.plotting import figure
 import ccdproc
@@ -87,6 +88,9 @@ class MakeMasterBias(BaseImg):
             stacked.header['BIASRN%d' % (ia + 1)] = \
                 (float("%.3f" % bias_rn), "RN in e- from bias")
             if self.config.instrument.plot_level >= 1:
+                # output filename stub
+                biasfnam = "bias_%05d_amp%d_rdnoise" % \
+                          (self.action.args.ccddata.header['FRAMENO'], ia+1)
                 plabel = '[ Img # %d' % self.action.args.ccddata.header[
                     'FRAMENO']
                 plabel += ' (Bias)'
@@ -119,6 +123,7 @@ class MakeMasterBias(BaseImg):
                     input("Next? <cr>: ")
                 else:
                     time.sleep(self.config.instrument.plot_pause)
+                save_plot(p, filename=biasfnam+".png")
 
         log_string = MakeMasterBias.__module__
         stacked.header['HISTORY'] = log_string
