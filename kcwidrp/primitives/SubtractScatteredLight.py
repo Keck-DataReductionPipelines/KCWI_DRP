@@ -46,13 +46,13 @@ class SubtractScatteredLight(BasePrimitive):
             # Y data values
             yvals = np.nanmedian(self.action.args.ccddata.data[y0:y3, x0:x1],
                                  axis=1)
+            # Fix extreme values
+            yvals[0] = np.nanmedian(yvals[1:10])
+            yvals[-1] = np.nanmedian(yvals[-11:-2])
             # X data values
             xvals = np.arange(len(yvals), dtype=np.float)
             # filter window
-            if 'FLAT' in self.action.args.ccddata.header['IMTYPE']:
-                fwin = 151
-            else:
-                fwin = 151
+            fwin = 151
             self.logger.info("Smoothing scattered light with window of %d px"
                              % fwin)
             scat = savgol_filter(yvals, fwin, 3)
