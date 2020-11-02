@@ -57,13 +57,14 @@ class MakeMasterSky(BaseImg):
         self.action.args.skyfile = skyfile
         self.action.args.skymask = skymask
         if skyfile:
-            msname = ofn.split('.fits')[0] + '_' + suffix + '.fits'
+            msname = skyfile.split('.fits')[0] + '_' + suffix + '.fits'
             mskyf = os.path.join(rdir, msname)
             if os.path.exists(mskyf):
                 self.logger.info("Master sky already exists: %s" % mskyf)
                 return False
             else:
-                self.logger.info("No alternate master sky found.")
+                self.logger.warning("Alternate master sky %s not found."
+                                    % mskyf)
                 return True
         else:
             self.logger.info("No alternate master sky requested.")
