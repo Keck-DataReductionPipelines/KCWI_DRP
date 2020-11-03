@@ -149,6 +149,7 @@ class MakeMasterFlat(BaseImg):
         # flat fitting slice position range
         ffleft = int(10/xbin)
         ffright = int(70/xbin)
+        nrefx = int(ffright - ffleft)
 
         buffer = 6.0/float(xbin)
 
@@ -496,7 +497,8 @@ class MakeMasterFlat(BaseImg):
         # generate a fit from ref slice points
         bkpt = np.min(xfr) + np.arange(knots+1) * \
             (np.max(xfr) - np.min(xfr)) / knots
-        sftr, _ = Bspline.iterfit(xfr, yfr, fullbkpt=bkpt)
+        sftr, _ = Bspline.iterfit(xfr[nrefx:-nrefx], yfr[nrefx:-nrefx],
+                                  fullbkpt=bkpt)
         yfitr, _ = sftr.value(xfr)
 
         # generate a blue slice spectrum bspline fit
@@ -512,7 +514,8 @@ class MakeMasterFlat(BaseImg):
         yfb = yfb[s]
         bkpt = np.min(xfb) + np.arange(knots+1) * \
             (np.max(xfb) - np.min(xfb)) / knots
-        sftb, _ = Bspline.iterfit(xfb, yfb, fullbkpt=bkpt)
+        sftb, _ = Bspline.iterfit(xfb[nrefx:-nrefx], yfb[nrefx:-nrefx],
+                                  fullbkpt=bkpt)
         yfitb, _ = sftb.value(xfb)
 
         # generate a red slice spectrum bspline fit
@@ -528,7 +531,8 @@ class MakeMasterFlat(BaseImg):
         yfd = yfd[s]
         bkpt = np.min(xfd) + np.arange(knots + 1) * \
             (np.max(xfd) - np.min(xfd)) / knots
-        sftd, _ = Bspline.iterfit(xfd, yfd, fullbkpt=bkpt)
+        sftd, _ = Bspline.iterfit(xfd[nrefx:-nrefx], yfd[nrefx:-nrefx],
+                                  fullbkpt=bkpt)
         yfitd, _ = sftd.value(xfd)
 
         # waves
@@ -599,8 +603,9 @@ class MakeMasterFlat(BaseImg):
 
         if nqb > 0:
             bluefit, _ = sftb.value(waves[qbluefit])
-            blue_zero_cross = np.nanmin(bluefit) <= 0.
             refbluefit, _ = sftr.value(waves[qbluefit])
+            blue_zero_cross = np.nanmin(bluefit) <= 0. or np.nanmin(
+                refbluefit) <= 0.
             bluelinfit = np.polyfit(waves[qbluefit], refbluefit/bluefit, 1)
             bluelinfity = bluelinfit[1] + bluelinfit[0] * waves[qbluefit]
         else:
@@ -611,8 +616,9 @@ class MakeMasterFlat(BaseImg):
             bluelinfity = None
         if nqr > 0:
             redfit, _ = sftd.value(waves[qredfit])
-            red_zero_cross = np.nanmin(redfit) <= 0.
             refredfit, _ = sftr.value(waves[qredfit])
+            red_zero_cross = np.nanmin(redfit) <= 0. or np.nanmin(
+                refredfit) <= 0.
             redlinfit = np.polyfit(waves[qredfit], refredfit/redfit, 1)
             redlinfity = redlinfit[1] + redlinfit[0] * waves[qredfit]
         else:
@@ -712,8 +718,11 @@ class MakeMasterFlat(BaseImg):
         nqsr = len(qselred)
         blue_all_tie = yfitr[0]
         red_all_tie = yfitr[-1]
+        self.logger.info("Blue/Red ref tie values: %.3f, %.3f"
+                         % (blue_all_tie, red_all_tie))
 
         if nqsb > 0:
+            self.logger.info("Blue ext tie value: %.3f" % yfb[qselblue[-1]])
             if blue_zero_cross:
                 blue_offset = yfb[qselblue[-1]] - blue_all_tie
                 bluefluxes = [yfb[i] - blue_offset for i in qselblue]
@@ -729,6 +738,7 @@ class MakeMasterFlat(BaseImg):
         else:
             bluefluxes = None
         if nqsr > 0:
+            self.logger.info("Red ext tie value: %.3f" % yfd[qselred[0]])
             if red_zero_cross:
                 red_offset = yfd[qselred[0]] - red_all_tie
                 redfluxes = [yfd[i] - red_offset for i in qselred]
@@ -744,20 +754,27 @@ class MakeMasterFlat(BaseImg):
         else:
             redfluxes = None
         allx = xfr
-        ally = yfr
+        allfx = xfr[nrefx:-nrefx]
+        ally = yfr[nrefx:-nrefx]
         if nqsb > 0:
-            allx = np.append(xfb[qselblue], allx)
-            ally = np.append(bluefluxes, ally)
+            bluex = xfb[qselblue]
+            allx = np.append(bluex, allx)
+            allfx = np.append(bluex[nrefx:], allfx)
+            ally = np.append(bluefluxes[nrefx:], ally)
         if nqsr > 0:
-            allx = np.append(allx, xfd[qselred])
-            ally = np.append(ally, redfluxes)
+            redx = xfd[qselred]
+            allx = np.append(allx, redx)
+            allfx = np.append(allfx, redx[:-nrefx])
+            ally = np.append(ally, redfluxes[:-nrefx])
         s = np.argsort(allx)
         allx = allx[s]
+        s = np.argsort(allfx)
+        allfx = allfx[s]
         ally = ally[s]
 
         bkpt = np.min(allx) + np.arange(knots+1) * \
             (np.max(allx) - np.min(allx)) / knots
-        sftall, _ = Bspline.iterfit(allx, ally, fullbkpt=bkpt)
+        sftall, _ = Bspline.iterfit(allfx, ally, fullbkpt=bkpt)
         yfitall, _ = sftall.value(allx)
 
         if self.config.instrument.plot_level >= 1:
@@ -770,8 +787,9 @@ class MakeMasterFlat(BaseImg):
                 stride = int(len(allx) / 8000.)
             else:
                 stride = 1
-            xplt = allx[::stride]
+            xplt = allfx[::stride]
             yplt = ally[::stride]
+            fxplt = allx[::stride]
             fplt = yfitall[::stride]
             yran = [np.nanmin(ally), np.nanmax(ally)]
             p = figure(
@@ -782,7 +800,7 @@ class MakeMasterFlat(BaseImg):
                 plot_height=self.config.instrument.plot_height)
             p.circle(xplt, yplt, size=1, line_alpha=0., fill_color='black',
                      legend_label='Data')
-            p.line(xplt, fplt, line_color='red', legend_label='Fit',
+            p.line(fxplt, fplt, line_color='red', legend_label='Fit',
                    line_width=2)
             p.line([minrwave, minrwave], yran, line_color='orange',
                    legend_label='Cor lim')
