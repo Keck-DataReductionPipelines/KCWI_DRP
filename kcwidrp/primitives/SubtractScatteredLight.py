@@ -53,9 +53,15 @@ class SubtractScatteredLight(BasePrimitive):
             xvals = np.arange(len(yvals), dtype=np.float)
             # filter window
             fwin = 151
+            scat = savgol_filter(yvals, fwin, 3)
+            signal_to_noise = np.mean(scat) / np.nanstd(yvals - scat)
+            if signal_to_noise < 25.:
+                fwin = 303
+                scat = savgol_filter(yvals, fwin, 3)
+                signal_to_noise = np.mean(scat) / np.nanstd(yvals - scat)
             self.logger.info("Smoothing scattered light with window of %d px"
                              % fwin)
-            scat = savgol_filter(yvals, fwin, 3)
+            self.logger.info("Mean signal to noise = %.2f" % signal_to_noise)
             if self.config.instrument.plot_level >= 1:
                 # output filename stub
                 scfnam = "scat_%05d_%s_%s_%s" % \
