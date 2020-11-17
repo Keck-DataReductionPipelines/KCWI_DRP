@@ -108,6 +108,8 @@ class MakeMasterSky(BaseImg):
         posmap = kcwi_fits_reader(
             os.path.join(os.path.dirname(self.action.args.name), 'redux',
                          pof))[0]
+        posmax = np.nanmax(posmap.data)
+        posbuf = int(10. / self.action.args.xbinsize)
 
         # wavelength region
         wavegood0 = wavemap.header['WAVGOOD0']
@@ -146,10 +148,28 @@ class MakeMasterSky(BaseImg):
         finiteflux = np.isfinite(self.action.args.ccddata.data.flat)
 
         # get un-masked points mapped to exposed regions on CCD
-        q = [i for i, v in enumerate(slicemap.data.flat)
-             if 0 <= v <= 23 and posmap.data.flat[i] >= 0 and
-             waveall0 <= wavemap.data.flat[i] <= waveall1 and
-             finiteflux[i] and not binary_mask.flat[i]]
+        # handle dichroic bad region
+        if self.action.args.dich:
+            if self.action.args.camera == 0:    # Blue
+                q = [i for i, v in enumerate(slicemap.data.flat)
+                     if 0 <= v <= 23 and
+                     posbuf < posmap.data.flat[i] < (posmax - posbuf) and
+                     waveall0 <= wavemap.data.flat[i] <= waveall1 and
+                     not (v > 20 and wavemap.data.flat[i] > 5600.) and
+                     finiteflux[i] and not binary_mask.flat[i]]
+            else:                               # Red
+                q = [i for i, v in enumerate(slicemap.data.flat)
+                     if 0 <= v <= 23 and
+                     posbuf < posmap.data.flat[i] < (posmax - posbuf) and
+                     waveall0 <= wavemap.data.flat[i] <= waveall1 and
+                     not (v > 20 and wavemap.data.flat[i] < 5600.) and
+                     finiteflux[i] and not binary_mask.flat[i]]
+        else:
+            q = [i for i, v in enumerate(slicemap.data.flat)
+                 if 0 <= v <= 23 and
+                 posbuf < posmap.data.flat[i] < (posmax - posbuf) and
+                 waveall0 <= wavemap.data.flat[i] <= waveall1 and
+                 finiteflux[i] and not binary_mask.flat[i]]
 
         # get all points mapped to exposed regions on the CCD (for output)
         qo = [i for i, v in enumerate(slicemap.data.flat)
