@@ -242,7 +242,10 @@ class MakeCube(BasePrimitive):
                     rastr = ''
                     decstr = ''
             if len(rastr) > 0 and len(decstr) > 0:
-                coord = SkyCoord(rastr, decstr, unit=(u.hourangle, u.deg))
+                try:
+                    coord = SkyCoord(rastr, decstr, unit=(u.hourangle, u.deg))
+                except ValueError:
+                    coord = None
             else:
                 coord = None
             # Get rotator position
