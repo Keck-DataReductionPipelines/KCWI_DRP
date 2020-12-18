@@ -335,6 +335,10 @@ class MakeInvsens(BasePrimitive):
                 for il, bl in enumerate(blines):
                     if wall0 < bl < wall1:
                         p.line([bl, bl], yran, line_color='orange')
+                        p.line([bl-bwids[il], bl-bwids[il]], yran,
+                               line_color='orange', line_dash='dashed')
+                        p.line([bl + bwids[il], bl + bwids[il]], yran,
+                               line_color='orange', line_dash='dashed')
                 set_plot_lims(p, xlim=[wall0, wall1], ylim=yran)
                 bokeh_plot(p, self.context.bokeh_session)
                 qstr = input("New lines? <float> [<float>] ... (A), "
