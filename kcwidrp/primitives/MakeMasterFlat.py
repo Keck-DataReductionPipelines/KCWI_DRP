@@ -408,6 +408,7 @@ class MakeMasterFlat(BaseImg):
                     for pk in peaks:
                         p.line([pk, pk], ylim)
                     bokeh_plot(p, self.context.bokeh_session)
+                    print("Please indicate the integer pixel value of the peak")
                     ipk = int(input("Peak? <int>: "))
                 else:
                     ipk = peaks[0]
