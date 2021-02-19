@@ -8,6 +8,7 @@ import numpy as np
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 import os
 import logging
+import pkg_resources
 
 logger = logging.getLogger('KCWI')
 
@@ -638,6 +639,11 @@ def read_table(input_dir=None, file_name=None):
 
 def kcwi_fits_writer(ccddata, table=None, output_file=None, output_dir=None,
                      suffix=None):
+    
+    if "kcwidrp version=" not in ccddata.header["HISTORY"]:
+        version = pkg_resources.get_distribution('kcwidrp').version
+        ccddata.header["HISTORY"] = f"kcwidrp version={version}"
+    
     out_file = os.path.join(output_dir, os.path.basename(output_file))
     if suffix is not None:
         (main_name, extension) = os.path.splitext(out_file)
