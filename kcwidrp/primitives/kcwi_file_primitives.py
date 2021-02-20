@@ -522,6 +522,8 @@ class ingest_file(BasePrimitive):
         out_args.map_ccd = self.map_ccd()
         # CALIBRATION LAMP
         out_args.calibration_lamp = self.calibration_lamp()
+        # TTIME
+        out_args.ttime = self.get_keyword('TTIME')
         # Are we already in proctab?
         out_args.in_proctab = self.context.proctab.in_proctab(
             frame=out_args.ccddata)
