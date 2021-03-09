@@ -2,7 +2,6 @@ import os
 
 import numpy as np
 from scipy.interpolate import interp1d
-from astropy.nddata import CCDData
 from astropy.coordinates import SkyCoord, EarthLocation
 
 from keckdrpframework.primitives.base_primitive import BasePrimitive
