@@ -232,6 +232,9 @@ class Kcwi_pipeline(BasePipeline):
                                       "object_flux_calibrate"),
         "object_flux_calibrate":     ("FluxCalibrate",
                                       "flux_calibration_started",
+                                      "object_barycentric"),
+        "object_barycentric":        ("BarycentricCorrection",
+                                      "barycentric_correction_started",
                                       None),
         # NOD AND SHUFFLE OBJECT PROCESSING
         "process_nandshuff":         ("ProcessObject",
