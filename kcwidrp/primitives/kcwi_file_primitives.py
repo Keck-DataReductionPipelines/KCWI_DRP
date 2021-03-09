@@ -8,6 +8,8 @@ import numpy as np
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 import os
 import logging
+import pkg_resources
+import subprocess
 
 logger = logging.getLogger('KCWI')
 
@@ -638,6 +640,39 @@ def read_table(input_dir=None, file_name=None):
 
 def kcwi_fits_writer(ccddata, table=None, output_file=None, output_dir=None,
                      suffix=None):
+    
+    # Determine if the version info is already in the header
+    contains_version = False
+    for h in ccddata.header["HISTORY"]:
+        if "kcwidrp version" in h:
+            contains_version = True
+
+    if not contains_version:
+        # Add setup.py version number to header
+        version = pkg_resources.get_distribution('kcwidrp').version
+        ccddata.header.add_history(f"kcwidrp version={version}")
+
+        # Get string filepath to .git dir, relative to this primitive
+        primitive_loc = os.path.dirname(os.path.abspath(__file__))
+        git_loc = primitive_loc[:-18] + ".git"
+
+        # Gather the version information
+        git1 = subprocess.run(["git", "--git-dir", git_loc, "describe",
+                                 "--tags", "--long"], capture_output=True)
+        git2 = subprocess.run(["git", "--git-dir", git_loc, "log", "-1",
+                                 "--format=%cd"], capture_output=True)
+        
+        # If all went well, save to the header
+        if not bool(git1.stderr) and not bool(git2.stderr):
+            git_v = git1.stdout.decode('utf-8')[:-1]
+            git_d = git2.stdout.decode('utf-8')[:-1]
+            ccddata.header.add_history(f"git version={git_v}")
+            ccddata.header.add_history(f"git date={git_d}")
+        else:
+            logger.warn("Unable to determine git version:")
+            logger.warn(f"git describe: {git1.stderr.decode('utf-8')[:-1]}")
+            logger.warn(f"git log: {git2.stderr.decode('utf-8')[:-1]}")
+    
     out_file = os.path.join(output_dir, os.path.basename(output_file))
     if suffix is not None:
         (main_name, extension) = os.path.splitext(out_file)
