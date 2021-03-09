@@ -20,7 +20,7 @@ class AirToVacConversion(BasePrimitive):
 
     def _perform(self):
 
-        if self.config.instrument.vacuum:
+        if self.config.instrument.air_to_vacuum:
             self.logger.info("Performing Air to Vacuum Conversion")
             ofn = self.action.args.ccddata.header['OFNAME']
             objfn = ofn.split('.')[0] + '_icubed.fits'
@@ -64,7 +64,7 @@ class AirToVacConversion(BasePrimitive):
             self.logger.warn("FITS already in vacuum wavelength.")
             return
 
-        wave_air = self.get_wav_axis(hdu.header)
+        wave_air = self.get_wav_axis(hdu.header) * u.nm
         wave_vac = self.a2v_conversion(wave_air)
 
         # resample to uniform grid

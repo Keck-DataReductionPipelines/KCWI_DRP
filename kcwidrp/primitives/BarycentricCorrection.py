@@ -20,6 +20,17 @@ class BarycentricCorrection(BasePrimitive):
 
     def _perform(self):
 
+        correction_mode = self.config.instrument.radial_velocity_correction
+        options = ["none", "barycentric", "heliocentric"]
+
+        if not bool([el for el in options if el in correction_mode]):
+            self.logger.error('Bad config option for radial_velocity_correction\
+                , options are ["none", "heliocentric", "barycentric"]')
+
+        if "none" in correction_mode:
+            self.logger.info("Skipping radial velocity correction")
+            return self.action.args
+        
         self.logger.info("Performing Barycentric Correction")
 
         ofn = self.action.args.ccddata.header['OFNAME']
@@ -29,7 +40,7 @@ class BarycentricCorrection(BasePrimitive):
             self.config.instrument.output_directory, objfn)
         if os.path.exists(full_path):
             obj = kcwi_fits_reader(full_path)[0]
-            obj = self.heliocentric(obj)
+            obj = self.heliocentric(obj, correction_mode)
             kcwi_fits_writer(obj,
                             table=self.action.args.table,
                             output_file=objfn,
@@ -43,7 +54,7 @@ class BarycentricCorrection(BasePrimitive):
         
         return self.action.args
 
-    def heliocentric(self, obj, mask=False, resample=True, vcorr=None):
+    def heliocentric(self, obj, correction_mode, mask=False, resample=True, vcorr=None):
         """Apply heliocentric correction to the cubes. 
         *Note that this only works for KCWI data because the location of the Keck 
         Observatory is hard-coded in the function.*
@@ -77,7 +88,8 @@ class BarycentricCorrection(BasePrimitive):
             >>> hdu_new = heliocentric(hdu_old, resample=False)
         """
 
-        barycentric = self.config.instrument.barycentric
+        barycentric = ("barycentric" in correction_mode)
+
         cube = np.nan_to_num(obj.data,
                             nan=0, posinf=0, neginf=0)
 
