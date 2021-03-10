@@ -46,7 +46,7 @@ class AirToVacConversion(BasePrimitive):
         self.logger.info("Already in air wavelengths.")
         return self.action.args
 
-    def air2vac(self, hdu, mask=False):
+    def air2vac(self, obj, mask=False):
         """Covert wavelengths in a cube from standard air to vacuum.
 
         Args:
@@ -58,14 +58,16 @@ class AirToVacConversion(BasePrimitive):
             *Return type matches type of fits_in argument. 
         """
 
-        cube = np.nan_to_num(hdu.data, nan=0, posinf=0, neginf=0)
+        cube = np.nan_to_num(obj.data, nan=0, posinf=0, neginf=0)
 
-        if hdu.header['CTYPE3'] == 'WAVE':
+        if obj.header['CTYPE3'] == 'WAVE':
             self.logger.warn("FITS already in vacuum wavelength.")
             return
 
-        wave_air = self.get_wav_axis(hdu.header) * u.nm
+        wave_air = self.get_wav_axis(obj.header) * u.AA
         wave_vac = self.a2v_conversion(wave_air)
+        print("After conversion")
+        print(wave_vac)
 
         # resample to uniform grid
         cube_new = np.zeros_like(cube)
@@ -106,9 +108,9 @@ class AirToVacConversion(BasePrimitive):
 
                 cube_new[:, j, i] = spec_new
 
-        hdu.header['CTYPE3'] = 'WAVE'
-        hdu.data = cube_new
-        return hdu
+        obj.header['CTYPE3'] = 'WAVE'
+        obj.data = cube_new
+        return obj
 
     def a2v_conversion(self, wave):
         """ Convert air-based wavelengths to vacuum
@@ -119,7 +121,7 @@ class AirToVacConversion(BasePrimitive):
         Parameters
         ----------
         wave: Quantity array
-            Wavelengths 
+            Wavelengths
         Returns
         -------
         wave: Quantity array
@@ -128,6 +130,8 @@ class AirToVacConversion(BasePrimitive):
         # Convert to AA
         wave = wave.to(u.AA)
         wavelength = wave.value
+        print("in AA:")
+        print(wavelength)
 
         # Standard conversion format
         sigma_sq = (1.e4/wavelength)**2. #wavenumber squared
@@ -155,19 +159,6 @@ class AirToVacConversion(BasePrimitive):
         Returns:
             numpy.ndarray: Wavelength axis for this data.
 
-        Examples:
-
-            If you wanted to plot your spectrum vs. wavelength in matplotlib:
-
-            >>> import matplotlib.pyplot as plt
-            >>> from cwitools import cubes
-            >>> from astropy.io import fits
-            >>> spec,header = fits.getdata("myspectrum.fits",header=True)
-            >>> wav_axis = cubes.get_wav_axis(header)
-            >>> fig,ax = plt.subplots(1,1)
-            >>> ax.plot(wav_axis,spec)
-            >>> fig.show()
-
         """
 
         #Select the appropriate axis.
@@ -186,7 +177,7 @@ class AirToVacConversion(BasePrimitive):
                 break
 
         #No wavelength axis
-        if flag == False:
+        if flag is False:
             self.logger.error("Header must contain a wavelength/velocity axis.")
 
         #Get keywords defining wavelength axis
