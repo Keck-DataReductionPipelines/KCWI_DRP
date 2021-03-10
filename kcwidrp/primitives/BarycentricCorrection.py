@@ -34,7 +34,7 @@ class BarycentricCorrection(BasePrimitive):
         self.logger.info("Performing Barycentric Correction")
 
         ofn = self.action.args.ccddata.header['OFNAME']
-        objfn = ofn.split('.')[0] + '_icubed.fits'
+        objfn = ofn.split('.')[0] + '_icube.fits'
         full_path = os.path.join(
             os.path.dirname(self.action.args.name),
             self.config.instrument.output_directory, objfn)

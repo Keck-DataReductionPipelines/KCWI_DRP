@@ -23,7 +23,7 @@ class AirToVacConversion(BasePrimitive):
         if self.config.instrument.air_to_vacuum:
             self.logger.info("Performing Air to Vacuum Conversion")
             ofn = self.action.args.ccddata.header['OFNAME']
-            objfn = ofn.split('.')[0] + '_icubed.fits'
+            objfn = ofn.split('.')[0] + '_icube.fits'
             full_path = os.path.join(
                 os.path.dirname(self.action.args.name),
                 self.config.instrument.output_directory, objfn)
