@@ -3,6 +3,7 @@ import os
 import numpy as np
 from scipy.interpolate import interp1d
 from astropy import units as u
+from astropy.coordinates import SkyCoord, EarthLocation
 
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer, \
