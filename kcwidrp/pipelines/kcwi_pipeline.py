@@ -223,7 +223,7 @@ class Kcwi_pipeline(BasePipeline):
                                       "object_make_cube"),
         "object_make_cube":          ("MakeCube",
                                       "making_cube_started",
-                                      "object_barycentric"),
+                                      "object_wavelengthcorr"),
         "object_wavelengthcorr":     ("WavelengthCorrections",
                                       "wavelength_correction_started",
                                       "object_correct_dar"),
@@ -235,7 +235,7 @@ class Kcwi_pipeline(BasePipeline):
                                       "object_flux_calibrate"),
         "object_flux_calibrate":     ("FluxCalibrate",
                                       "flux_calibration_started",
-                                      "object_barycentric"),
+                                      None),
         # NOD AND SHUFFLE OBJECT PROCESSING
         "process_nandshuff":         ("ProcessObject",
                                       "nandshuff_processing_started",
