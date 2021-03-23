@@ -655,7 +655,6 @@ def kcwi_fits_writer(ccddata, table=None, output_file=None, output_dir=None,
         # Get string filepath to .git dir, relative to this primitive
         primitive_loc = os.path.dirname(os.path.abspath(__file__))
         git_loc = primitive_loc[:-18] + ".git"
-        print(git_loc)
 
         # Attempt to gather git version information
         git1 = subprocess.run(["git", "--git-dir", git_loc, "describe",
