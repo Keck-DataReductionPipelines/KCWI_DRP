@@ -30,51 +30,36 @@ class WavelengthCorrections(BasePrimitive):
             self.logger.error('Bad config option for radial_velocity_correction\
                 , options are ["none", "heliocentric", "barycentric"]')
             return self.action.args
+        
+        suffix = 'icube' # Can be ammended to handle ocube files
+        obj = self.locate_object_file(suffix)
 
-        # Open the data cube file
-        # ofn = self.action.args.ccddata.header['OFNAME']
-        # objfn = ofn.split('.')[0] + '_icube.fits'
-        # full_path = os.path.join(
-        #     os.path.dirname(self.action.args.name),
-        #     self.config.instrument.output_directory, objfn)
-        # if os.path.exists(full_path):
-        #     obj = kcwi_fits_reader(full_path)[0]
-        # else:
-        #     self.logger.error(f'Unable to read file {objfn}')
-        #     return self.action.args
+        if "none" in correction_mode:
+            self.logger.info("Skipping radial velocity correction")
+        
+        else:
+            self.logger.info(f"Performing {correction_mode} correction")
+            obj = self.heliocentric(obj, correction_mode)
+        
+        if self.config.instrument.air_to_vacuum:
+            self.logger.info("Performing Air to Vacuum Conversion")
+            obj = self.air2vac(obj)
+        
+        log_string = WavelengthCorrections.__module__
+        obj.header['HISTORY'] = log_string
+        
+        kcwi_fits_writer(obj,
+                        table=self.action.args.table,
+                        output_file=self.action.args.name,
+                        output_dir=self.config.instrument.output_directory,
+                        suffix=f'{suffix}w')
+        self.context.proctab.update_proctab(frame=self.action.args.ccddata,
+                                            suffix=f'_{suffix}w')
+        self.context.proctab.write_proctab()
 
-        # if "none" in correction_mode:
-        #     self.logger.info("Skipping radial velocity correction")
+        # Unsure here: Is this right? it seems to make DAR happy
+        self.action.args.ccddata = obj
         
-        # else:
-        #     self.logger.info(f"Performing {correction_mode} correction")
-        #     obj = self.heliocentric(obj, correction_mode)
-        
-        # if self.config.instrument.air_to_vacuum:
-        #     self.logger.info("Performing Air to Vacuum Conversion")
-        #     obj = self.air2vac(obj)
-
-        # # Add history header and save file
-        # log_string = WavelengthCorrections.__module__
-        # obj.header['HISTORY'] = log_string
-        
-        # kcwi_fits_writer(obj,
-        #                 table=self.action.args.table,
-        #                 output_file=objfn,
-        #                 output_dir=self.config.instrument.output_directory,
-        #                 suffix="icubew")
-        # self.context.proctab.update_proctab(frame=self.action.args.ccddata,
-        #                                     suffix="_icubew")
-        # self.context.proctab.write_proctab()
-        
-        if not self.correct_image('icube', correction_mode):
-            self.logger.warn('Error while applying wavelength calibration to \
-                               icube file')
-        
-        # if not self.correct_image('ocube', correction_mode):
-        #     self.logger.warn('Error while applying wavelength calibration to \
-        #                        ocube file')
-
         return self.action.args
 
     def air2vac(self, obj, mask=False):
@@ -324,46 +309,16 @@ class WavelengthCorrections(BasePrimitive):
         #Calculate and return
         return np.array([wav0 + (i - pix0) * dwav for i in range(nwav)])
     
-    def correct_image(self, suffix, correction_mode):
+    def locate_object_file(self, suffix):
         ofn = self.action.args.ccddata.header['OFNAME']
         objfn = ofn.split('.')[0] + f'_{suffix}.fits'
         full_path = os.path.join(
             os.path.dirname(self.action.args.name),
             self.config.instrument.output_directory, objfn)
         if os.path.exists(full_path):
-            self.logger.info(f"Correcting {objfn}")
-            obj = kcwi_fits_reader(full_path)[0]
+            return kcwi_fits_reader(full_path)[0]
         else:
             self.logger.error(f'Unable to read file {objfn}')
             return None
-
-        if "none" in correction_mode:
-            self.logger.info("Skipping radial velocity correction")
-        
-        else:
-            self.logger.info(f"Performing {correction_mode} correction")
-            obj = self.heliocentric(obj, correction_mode)
-        
-        if self.config.instrument.air_to_vacuum:
-            self.logger.info("Performing Air to Vacuum Conversion")
-            obj = self.air2vac(obj)
-
-        # Add history header and save file
-        log_string = WavelengthCorrections.__module__
-        obj.header['HISTORY'] = log_string
-        
-        kcwi_fits_writer(obj,
-                        table=self.action.args.table,
-                        output_file=self.action.args.name,
-                        output_dir=self.config.instrument.output_directory,
-                        suffix=f'{suffix}w')
-        self.context.proctab.update_proctab(frame=self.action.args.ccddata,
-                                            suffix=f'_{suffix}w')
-        self.context.proctab.write_proctab()
-
-        if suffix == 'icube':
-            self.action.args.ccddata = obj
-
-        return True
 
     
