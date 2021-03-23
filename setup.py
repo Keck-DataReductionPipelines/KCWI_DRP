@@ -48,5 +48,6 @@ setup(name=NAME,
                                 'data/extin/*', 'data/stds/*']},
       scripts=scripts,
       entry_points=entry_points,
-      install_requires=['ccdproc', 'bokeh', 'numpy', 'scipy', 'astropy']
+      install_requires=['ccdproc', 'bokeh', 'numpy', 'scipy', 'astropy'],
+      python_requires="=3.7"
       )
