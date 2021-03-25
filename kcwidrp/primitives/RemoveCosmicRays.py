@@ -3,12 +3,6 @@ from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer
 
 import numpy as np
 
-try:
-    import _lacosmicx
-except ImportError:
-    print("Please install lacosmicx from github.com/cmccully/lacosmicx.")
-    quit()
-
 
 class RemoveCosmicRays(BasePrimitive):
     """Remove cosmic rays and generate a flag image recording their location"""
@@ -16,6 +10,12 @@ class RemoveCosmicRays(BasePrimitive):
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
         self.logger = context.pipeline_logger
+
+        try:
+            import _lacosmicx
+        except ImportError:
+            self.logger.error("Please install lacosmicx from github.com/cmccully/lacosmicx.")
+            quit()
 
     def _perform(self):
         # TODO: implement parameter options from kcwi_stage1.pro
