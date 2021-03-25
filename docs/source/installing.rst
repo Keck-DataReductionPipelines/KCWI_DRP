@@ -9,7 +9,16 @@ Installing Dependencies
 =======================
 
 We highly recommend that you use Anaconda for the majority
-of these installations.
+of these installations. An environment.yml file is provided
+`here <https://github.com/MNBrod/KCWI_DRP/blob/deploy_pip/environment.yml>`_
+which contains all but one of the required packages. To create the conda
+environment, download the environment file and run
+
+.. code-block:: bash
+
+    conda env create -f environment.yml
+
+This will create a conda environment called :code:`kcwidrptest`
 
 Detailed installation instructions are presented below:
 
