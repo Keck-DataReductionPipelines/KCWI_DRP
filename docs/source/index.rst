@@ -62,6 +62,7 @@ Developers
    :maxdepth: 1
 
    updating_docs
+   building
 
 
 Indices and tables
