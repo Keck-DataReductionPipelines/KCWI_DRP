@@ -9,24 +9,39 @@ Installing Dependencies
 =======================
 
 We highly recommend that you use Anaconda for the majority
-of these installations. An environment.yml file is provided
+of these installations. 
+
+Detailed installation instructions are presented below:
+
+Installing with environment.yml
+-------------------------------
+An environment.yml file is provided
 `here <https://github.com/MNBrod/KCWI_DRP/blob/deploy_pip/environment.yml>`_
-which contains all but one of the required packages. To create the conda
+which contains the majority of the required dependencies. To create the conda
 environment, download the environment file and run
 
 .. code-block:: bash
 
     conda env create -f environment.yml
+    conda activate kcwidrp
 
-This will create a conda environment called :code:`kcwidrptest`
+This creates an environment called kcwidrp that contains most of the required 
+dependencies. 
 
-Detailed installation instructions are presented below:
+To finalize the installation, gather `LACosmicX <https://github.com/cmccully/lacosmicx>`_, which
+provides cosmic ray rejection:
 
-Python Dependencies
+.. code-block:: bash
+
+   git clone https://github.com/cmccully/lacosmicx.git
+   cd lacosmicx
+   python setup.py install
+
+Installing Manually
 -------------------
 
-* `python <http://www.python.org>`_ version 3.6 or later
-* Python packages
+This pipeline currently runs on `python <http://www.python.org>`_ 3.7.
+Instructions for installing the other dependencies are below:
 
 .. code-block:: bash
 
@@ -39,6 +54,8 @@ Python Dependencies
    conda install cython
    conda install pandas
    pip install ref_index
+   pip install keckdrpframework
+   pip install kcwidrp
 
 * `LACosmicX <https://github.com/cmccully/lacosmicx>`_
 
@@ -48,20 +65,17 @@ Python Dependencies
    cd lacosmicx
    python setup.py install
 
-* `Keck DRP Framework <https://github.com/Keck-DataReductionPipelines/KeckDRPFramework>`_
+Installing for Development
+--------------------------
+
+If you want to alter the pipeline, you can install it directly from source by
+skipping :code:`pip install kcwidrp` during the requirements section above, and
+instead running:
 
 .. code-block:: bash
 
-   git clone https://github.com/Keck-DataReductionPipelines/KeckDRPFramework.git
-   cd KeckDRPFramework
-   python setup.py install (or develop)
-
-* `KCWI DRP <https://github.com/Keck-DataReductionPipelines/KCWI_DRP>`_
-
-.. code-block:: bash
-
-   git clone https://github.com/Keck-DataReductionPipelines/KCWI_DRP.git
-   cd KCWI_DRP
-   python setup.py install (or develop)
+    git clone https://github.com/Keck-DataReductionPipelines/KCWI_DRP.git
+    cd KCWI_DRP
+    python setup.py develop
 
 
