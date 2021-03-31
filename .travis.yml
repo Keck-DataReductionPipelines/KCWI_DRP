@@ -14,9 +14,9 @@ install:
   - conda config --set always_yes yes --set changeps1 no
   - conda update -q conda
   - conda info -a
-  
+
   - conda env create -f environment.yml
-  - conda activate kcwidrptest
+  - source activate kcwidrptest
   - pip install .
   # - pip install Cython
   # - pip install -r requirements.txt -c constraints.txt
