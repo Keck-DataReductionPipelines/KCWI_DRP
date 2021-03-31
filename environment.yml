@@ -1,0 +1,25 @@
+name: kcwidrptest
+channels:
+  - conda-forge
+  - astropy
+dependencies:
+  - python=3.7
+  - numpy
+  - pyerfa
+  - bokeh
+  - selenium
+  - geckodriver
+  - firefox
+  - phantomjs
+  - astropy 
+  - ccdproc 
+  - pyregion
+  - psutil
+  - requests
+  - pytest
+  - cython
+  - pandas
+  - pip
+  - pip:
+    - ref_index
+    - keckdrpframework
