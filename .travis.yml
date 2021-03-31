@@ -7,8 +7,11 @@ before_install:
   - "export PYTHONPATH=$PYTHONPATH:$(pwd)"
 
 install:
-  - pip install Cython
-  - pip install -r requirements.txt -c constraints.txt
+  - conda env create -f environment.yml
+  - conda activate kcwidrptest
+  - pip install .
+  # - pip install Cython
+  # - pip install -r requirements.txt -c constraints.txt
 
 script:
   - python setup.py install
