@@ -44,6 +44,7 @@ Follow the documentation in this section to reduce KCWI data.
    quickstart
    configuration
    start_up
+   sky_subtraction
 
 
 More information
