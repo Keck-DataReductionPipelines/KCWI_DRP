@@ -31,5 +31,4 @@ install:
   # - pip install -r requirements.txt -c constraints.txt
 
 script:
-  - python setup.py install
   - pytest
