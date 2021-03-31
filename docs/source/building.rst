@@ -9,8 +9,8 @@ Pip
 ---
 
 In order to upload to pip, you will need access to a PyPI account with
-owndership status for the kcwidrp project. For access to the KeckDRPS account,
-ask `Luca <lrizzi@keck.hawaii.edu>`_ or `Max <mbrodheim@keck.hawaii.edu>`_.
+owndership status for the kcwidrp project. For access to the KeckDRPs account,
+ask `Max <mbrodheim@keck.hawaii.edu>`_ or `Luca <lrizzi@keck.hawaii.edu>`_.
 
 After your pull request is merged into master, download the changes:
 
@@ -35,16 +35,16 @@ Then, after ensuring the dist directory is empty:
     #If all went well with the test, upload to the permanent PyPI
     twine upload dist/*
 
-Conda
------
+..
+    Conda
+    -----
+    .. code-block:: bash
 
-.. code-block:: bash
+        conda update conda
+        conda install conda-build anaconda-client
 
-    conda update conda
-    conda install conda-build anaconda-client
+        conda-build conda_build_files
+        conda build conda_build_files --output
 
-    conda-build conda_build_files
-    conda build conda_build_files --output
-
-    anaconda login
-    anaconda upload PATH-FROM-OUTPUT
+        anaconda login
+        anaconda upload PATH-FROM-OUTPUT
