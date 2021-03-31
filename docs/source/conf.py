@@ -21,7 +21,7 @@ import kcwidrp.primitives
 
 project = 'Keck Cosmic Web Imager DRP'
 copyright = '2020, Don Neill, KCWI Team, Luca Rizzi, Max Brodheim'
-author = 'Don Neill, KCWI Team, Luca Rizzi'
+author = 'Don Neill, KCWI Team, Luca Rizzi, Max Brodheim'
 #sys.path.append(os.path.abspath('./docs/'))
 
 # The full version, including alpha/beta/rc tags
