@@ -2,8 +2,7 @@
 Installing KCWI_DRP
 ===================
 
-This document describes how to install KCWI_DRP.
-Both for users and developers.
+This document describes how to install KCWI_DRP, for both users and developers.
 
 Installing Dependencies
 =======================
