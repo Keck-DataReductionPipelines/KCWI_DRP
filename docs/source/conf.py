@@ -20,12 +20,12 @@ import kcwidrp.primitives
 # -- Project information -----------------------------------------------------
 
 project = 'Keck Cosmic Web Imager DRP'
-copyright = '2020, Don Neill, KCWI Team, Luca Rizzi'
+copyright = '2020, Don Neill, KCWI Team, Luca Rizzi, Max Brodheim'
 author = 'Don Neill, KCWI Team, Luca Rizzi'
 #sys.path.append(os.path.abspath('./docs/'))
 
 # The full version, including alpha/beta/rc tags
-release = '0.1'
+release = '1.0'
 
 
 # -- General configuration ---------------------------------------------------
@@ -34,7 +34,7 @@ release = '0.1'
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = ['sphinx.ext.autodoc',
-    'sphinx.ext.napoleon',
+              'sphinx.ext.napoleon',
               'sphinx.ext.autodoc',
               'sphinx.ext.viewcode'
 ]
