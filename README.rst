@@ -2,10 +2,13 @@
 Keck Cosmic Web Images Data Reduction Pipeline
 ==============================================
 
-This pipeline is in development and not ready for production.  It uses the KeckDRPFramework and will be a complete port of the IDL
-pipeline to python.  For now use the IDL pipeline (KcwiDRP).
+This pipeline is the official DRP for the Keck Cosmic Web Imager at the W. M. 
+Keck Observatory. It is built on the 
+`KeckDRPFramework <https://github.com/Keck-DataReductionPipelines/KeckDRPFramework>`_,
+and is a port of the old 
+`IDL pipeline <https://github.com/Keck-DataReductionPipelines/KcwiDRP>`_. 
 
-03-Jan-2020
+01-Apr-2021
 
 Documentation
 -------------
@@ -34,10 +37,8 @@ Dependencies
 ------------
 
 Please see 'Installing KCWIDRP' in the documentation above for details about
-dependencies and how to satisfy them.
+dependencies and how to satisfy them. 
 
-Also:
 
-USE THE MASTER BRANCH of the KeckDRPFramework
 
-Luca, Don October 13, 2020
+Developed by Luca Rizzi, Don Neill, Max Brodheim (04/2021)
