@@ -1,4 +1,4 @@
-name: kcwidrptest
+name: kcwidrp
 channels:
   - conda-forge
   - astropy

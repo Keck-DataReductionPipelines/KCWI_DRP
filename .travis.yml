@@ -21,7 +21,7 @@ install:
   # Create the new environment
   - conda env create -f environment.yml
   # Swap to new env
-  - source activate kcwidrptest
+  - source activate kcwidrp
   # Install the new build. Does NOT use "pip install kcwidrp" so that we get new
   # changes
   - pip install .
