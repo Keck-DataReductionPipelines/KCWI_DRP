@@ -45,6 +45,7 @@ Follow the documentation in this section to reduce KCWI data.
    configuration
    start_up
    sky_subtraction
+   help
 
 
 More information
