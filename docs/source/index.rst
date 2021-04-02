@@ -21,15 +21,15 @@ What this version provides
 --------------------------
 
 * Simplified installation via pip and conda environment
-* Vacuum to air and heliocentry or barycentric correction (the algorithms used here are courtesy of Yuguang Chen at Caltech)
+* Vacuum to air and heliocentric or barycentric correction (the algorithms used here are courtesy of Yuguang Chen at Caltech)
 * Ability of using KOA file names or original file names
 * Better provenance and traceability of DRP versions and execution steps in the headers
 * Versatile sky subtraction modes including using external sky frames and ability of masking regions
 * Formal support system via GitHub issues
   
-The pipeline is available for use at WMKO. We are in the process of automatic the execution and ingestion of the reduced data into KOA.
+The pipeline is available for use at WMKO. We are in the process of automating the execution and ingestion of the reduced data into KOA.
 
-For older versions, see :ref:`_versions`.
+For older versions, see :doc:`versions`.
 
 
 Users
@@ -46,6 +46,7 @@ Follow the documentation in this section to reduce KCWI data.
    start_up
    sky_subtraction
    help
+   versions
 
 
 More information
