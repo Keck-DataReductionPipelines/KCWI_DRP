@@ -6,31 +6,31 @@
 Keck Cosmic Web Imager DRP's
 ============================
 
-KCWI_DRP is a Python based data reduction pipeline (DRP) developed by the KCWI team at Caltech in
+KCWI_DRP is a the official data reduction pipeline (DRP) for the Keck Cosmic Web Imager.
+This DRP has been developed by the KCWI team at Caltech in
 collaboration with the W. M. Keck Observatory Scientific Software Group.
-While the algorithms and the reduction steps are based on the previous IDL pipeline (KDERP),
-this pipeline uses a new frame-by-frame, event-driven approach, and relies on the Keck DRP Framework (provide link)
 
-Release 0.1
+Release 1.0
 ===========
+
+We are happy to announce the first official release of the KCWI pipeline. 
+This pipeline is based entirely on the glorious IDL pipeline developed by the KCWI team at Caltech and it is 
+the only pipeline supported by the W. M. Keck Observatory.
 
 What this version provides
 --------------------------
 
-* First end-to-end version including all the reduction step of the IDL pipeline
-* Three execution modes
+* Simplified installation via pip and conda environment
+* Vacuum to air and heliocentry or barycentric correction (the algorithms used here are courtesy of Yuguang Chen at Caltech)
+* Ability of using KOA file names or original file names
+* Better provenance and traceability of DRP versions and execution steps in the headers
+* Versatile sky subtraction modes including using external sky frames and ability of masking regions
+* Formal support system via GitHub issues
+  
+The pipeline is available for use at WMKO. We are in the process of automatic the execution and ingestion of the reduced data into KOA.
 
-   * Reduce all files in a directory in the order in which they appear
-   * Reduce all files after grouping them by file type and in the correct order
-   * Monitor a directory for new files and reduce them as they appear
+For older versions, see :ref:`_versions`.
 
-* Multi-threading for CPU intensive tasks such as wavelength calibration
-* Multi-processing for large datasets
-
-What this version is missing
-----------------------------
-
-What are we working on?
 
 Users
 =====
