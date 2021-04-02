@@ -61,6 +61,13 @@ More information
 Developers
 ==========
 
+The DRP was developed in collaboration between:
+
+* Don Neill, Matt Matuszewki, Chris Martin and the KCWI Team at Caltech
+* Luca Rizzi, Max Brodheim at W. M. Keck Observatory
+
+Maintenance and support of the DRP are provided as part of the Data Services Initiative (PI: John O'Meara), in collaboration with the National Aeronautics and Space Administration.
+
 .. toctree::
    :maxdepth: 1
 

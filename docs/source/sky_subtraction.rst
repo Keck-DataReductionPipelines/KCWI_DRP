@@ -22,6 +22,9 @@ Building a mask file
 
 To build a mask file based on ``ds9`` regions, use the script ``kcwi_masksky_ds9.py`` contained in the ``scripts`` directory.
 
+This script uses the ``_intf.fits`` files which are generated as part of the first execution of the pipeline. You should run the pipeline first and verify the quality  
+of the sky subtraction. If you are not satisfied with the sky subtraction, use the procedure described here and run the pipeline again.
+
 To start, display the ``_intf.fits`` frame on ``ds9`` and create regions around areas of the frame that you would like to exclude. 
 Save the regions to a file and run the kcwi_mask_sky command indicating the file name (``_intf.fits``) and the region file. 
 This will produce a mask file that can be added to the ``kcwi.sky`` file. 
