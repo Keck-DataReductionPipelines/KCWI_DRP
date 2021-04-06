@@ -45,6 +45,7 @@ Follow the documentation in this section to reduce KCWI data.
    configuration
    start_up
    sky_subtraction
+   data_products
    help
    versions
 
@@ -72,7 +73,7 @@ Maintenance and support of the DRP are provided as part of the Data Services Ini
    :maxdepth: 1
 
    updating_docs
-   building
+   development
 
 
 Indices and tables
