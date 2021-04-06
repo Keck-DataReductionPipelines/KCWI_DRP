@@ -1,26 +1,25 @@
 name: kcwidrp
+channels:
+  - conda-forge
+  - astropy
 dependencies:
   - python=3.7
-  - scikit-image~=0.16.2
-  - astropy~=4.0 
-  - astropy::ccdproc~=2.1.0 
-  - numpy~=1.20
-  - scipy~=1.4.1
+  - numpy
   - pyerfa
-  - bokeh~=2.0.0
-  - psutil~=5.7.0
-  - pandas~=1.0.3
-  - matplotlib~=3.1.3
-  - conda-forge::selenium
-  - conda-forge::geckodriver
-  - conda-forge::firefox
-  - conda-forge::phantomjs
-  - astropy::pyregion
+  - bokeh
+  - selenium
+  - geckodriver
+  - firefox
+  - phantomjs
+  - astropy 
+  - ccdproc 
+  - pyregion
+  - psutil
   - requests
-  - pytest~=5.4.1
+  - pytest
   - cython
-  - setuptools~=46.1.1
+  - pandas
   - pip
   - pip:
-    - ref_index~=1.0
+    - ref_index
     - keckdrpframework
