@@ -15,7 +15,7 @@ Detailed installation instructions are presented below:
 Installing with environment.yml
 -------------------------------
 An environment.yml file is provided
-`here <https://github.com/MNBrod/KCWI_DRP/blob/deploy_pip/environment.yml>`_
+`here <https://github.com/Keck-DataReductionPipelines/KCWI_DRP/blob/master/environment.yml>`_
 which contains the majority of the required dependencies. To create the conda
 environment, download the environment file and run
 
@@ -23,6 +23,7 @@ environment, download the environment file and run
 
     conda env create -f environment.yml
     conda activate kcwidrp
+    pip install kcwidrp
 
 This creates an environment called kcwidrp that contains most of the required 
 dependencies. 
@@ -76,5 +77,3 @@ instead running:
     git clone https://github.com/Keck-DataReductionPipelines/KCWI_DRP.git
     cd KCWI_DRP
     python setup.py develop
-
-
