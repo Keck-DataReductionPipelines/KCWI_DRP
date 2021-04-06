@@ -309,8 +309,8 @@ class Kcwi_pipeline(BasePipeline):
             self.logger.warn("Pushing noop to queue")
             context.push_event("noop", action.args)
         elif "BIAS" in action.args.imtype:
-            if action.args.ttime is not 0:
-                logger.warn("BIAS frame with exposure time > 0. Discarding.")
+            if action.args.ttime > 0:
+                logger.warn(f"BIAS frame with exposure time = {action.args.ttime} > 0. Discarding.")
                 return
             bias_args = action.args
             bias_args.groupid = groupid
