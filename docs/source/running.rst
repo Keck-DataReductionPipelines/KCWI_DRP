@@ -1,3 +1,5 @@
+.. _running: 
+
 ====================
 Running the pipeline
 ====================
@@ -31,7 +33,7 @@ For example, if the file you are trying to reduce is a science frame, the wavele
 
 Reducing a single file is a good way to re-reduce a target for which the pipeline didn't do a good job. An example case would be 
 the sky subtraction: if you realize that the sky subtraction is not correct, and you modify the sky subtraction using an external file, then you can rerun 
-the pipeline just on the trouble file. 
+the pipeline just on the trouble file. In this case it is advisable to use the ``clobber=True`` option.
 
 The following option can be used to modify the behaviour of the DRP when processing files
 in a directory:
