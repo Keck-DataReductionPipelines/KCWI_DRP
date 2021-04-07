@@ -524,6 +524,8 @@ class ingest_file(BasePrimitive):
         out_args.map_ccd = self.map_ccd()
         # CALIBRATION LAMP
         out_args.calibration_lamp = self.calibration_lamp()
+        # TTIME
+        out_args.ttime = self.get_keyword('TTIME')
         # Are we already in proctab?
         out_args.in_proctab = self.context.proctab.in_proctab(
             frame=out_args.ccddata)
@@ -656,7 +658,7 @@ def kcwi_fits_writer(ccddata, table=None, output_file=None, output_dir=None,
         primitive_loc = os.path.dirname(os.path.abspath(__file__))
         git_loc = primitive_loc[:-18] + ".git"
 
-        # Gather the version information
+        # Attempt to gather git version information
         git1 = subprocess.run(["git", "--git-dir", git_loc, "describe",
                                  "--tags", "--long"], capture_output=True)
         git2 = subprocess.run(["git", "--git-dir", git_loc, "log", "-1",
@@ -669,9 +671,7 @@ def kcwi_fits_writer(ccddata, table=None, output_file=None, output_dir=None,
             ccddata.header.add_history(f"git version={git_v}")
             ccddata.header.add_history(f"git date={git_d}")
         else:
-            logger.warn("Unable to determine git version:")
-            logger.warn(f"git describe: {git1.stderr.decode('utf-8')[:-1]}")
-            logger.warn(f"git log: {git2.stderr.decode('utf-8')[:-1]}")
+            logger.debug("Package not installed from a git repo, skipping")
     
     out_file = os.path.join(output_dir, os.path.basename(output_file))
     if suffix is not None:
