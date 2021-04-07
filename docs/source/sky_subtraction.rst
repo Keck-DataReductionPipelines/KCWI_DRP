@@ -29,4 +29,16 @@ To start, display the ``_intf.fits`` frame on ``ds9`` and create regions around 
 Save the regions to a file and run the kcwi_mask_sky command indicating the file name (``_intf.fits``) and the region file. 
 This will produce a mask file that can be added to the ``kcwi.sky`` file. 
 
+Re-run the reduction of this file
+---------------------------------
+
+Rather than re-run the entire pipeline, it is possible to run it only on the file that needs a better sky subtraction.
+
+The instructions are listed in :doc:`running`. In summary, you will need to 
+specify just one file, the one for which you want to improve the sky subtraction 
+and make sure that ``clobber`` is set to True in the config file.
+
+``reduce_kcwi -f myfile.fits``
+
+
 
