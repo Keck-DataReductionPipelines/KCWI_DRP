@@ -43,7 +43,7 @@ Follow the documentation in this section to reduce KCWI data.
    installing
    quickstart
    configuration
-   start_up
+   running
    sky_subtraction
    data_products
    help
