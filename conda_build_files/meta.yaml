@@ -8,14 +8,13 @@ requirements:
   host:
     - python=3.7
     - pip
-    - cython
-    - numpy~=1.19
   run:
     - python
+
+build:
+  script: python -m pip install .
   
 source:
-  - git_url: https://github.com/cmccully/lacosmicx.git
-    folder: lacosmicx
   - url: https://files.pythonhosted.org/packages/8f/ef/0d18d8d7c172420b3211f960961599acb7ec481b85f661810afed2813573/kcwidrp-0.0.1.dev0.tar.gz
     sha256: 48f61517e153706bacc3691eb47b660fbc4d0a3a7efc910421325b7d91103acb
     md5: 52a8acc239d17fc49c79f9bb6fd32d26

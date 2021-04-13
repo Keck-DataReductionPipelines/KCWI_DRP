@@ -2,6 +2,7 @@ from keckdrpframework.primitives.base_primitive import BasePrimitive
 from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer
 
 import numpy as np
+from astroscrappy import detect_cosmics
 
 
 class RemoveCosmicRays(BasePrimitive):
@@ -10,12 +11,6 @@ class RemoveCosmicRays(BasePrimitive):
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
         self.logger = context.pipeline_logger
-
-        try:
-            import _lacosmicx
-        except ImportError:
-            self.logger.error("Please install lacosmicx from github.com/cmccully/lacosmicx.")
-            quit()
 
     def _perform(self):
         # TODO: implement parameter options from kcwi_stage1.pro
@@ -51,7 +46,7 @@ class RemoveCosmicRays(BasePrimitive):
                 if self.action.args.ccddata.header['TTIME'] < 300.:
                     sigclip = 10.
 
-            mask, clean = _lacosmicx.lacosmicx(
+            mask, clean = detect_cosmics(
                 self.action.args.ccddata.data, gain=1.0, readnoise=read_noise,
                 psffwhm=self.config.instrument.CRR_PSFFWHM,
                 sigclip=sigclip,
@@ -63,20 +58,20 @@ class RemoveCosmicRays(BasePrimitive):
                 sepmed=self.config.instrument.CRR_SEPMED,
                 cleantype=self.config.instrument.CRR_CLEANTYPE)
 
-            self.logger.info("LA CosmicX: cleaned cosmic rays")
-            header['history'] = "LA CosmicX: cleaned cosmic rays"
+            self.logger.info("Astroscrappy: cleaned cosmic rays")
+            header['history'] = "Astroscrappy: cleaned cosmic rays"
             header['history'] = \
-                "LA CosmicX params: sigclip=%5.2f sigfrac=%5.2f " \
+                "Astroscrappy params: sigclip=%5.2f sigfrac=%5.2f " \
                 "objlim=%5.2f" % (
                 self.config.instrument.CRR_SIGCLIP,
                 self.config.instrument.CRR_SIGFRAC,
                 self.config.instrument.CRR_OBJLIM)
             header['history'] = \
-                "LA CosmicX params: fsmode=%s psfmodel=%s psffwhm=%5.2f" % (
+                "Astroscrappy params: fsmode=%s psfmodel=%s psffwhm=%5.2f" % (
                 self.config.instrument.CRR_FSMODE,
                 self.config.instrument.CRR_PSFMODEL,
                 self.config.instrument.CRR_PSFFWHM)
-            header['history'] = "LA CosmicX params: sepmed=%s minexptime=%f" % (
+            header['history'] = "Astroscrappy params: sepmed=%s minexptime=%f" % (
                 self.config.instrument.CRR_SEPMED,
                 self.config.instrument.CRR_MINEXPTIME)
             # header['history'] = "LA CosmicX run on %s" % time.strftime("%c")
@@ -96,10 +91,10 @@ class RemoveCosmicRays(BasePrimitive):
             header['NCRCLEAN'] = (n_crs, "number of cosmic ray pixels")
 
         else:
-            self.logger.info("LA CosmicX: exptime < minexptime=%.1f" %
+            self.logger.info("Astroscrappy: exptime < minexptime=%.1f" %
                              self.config.instrument.CRR_MINEXPTIME)
             header['history'] = \
-                "LA CosmicX: exptime < minexptime=%.1f" % \
+                "Astroscrappy: exptime < minexptime=%.1f" % \
                 self.config.instrument.CRR_MINEXPTIME
             header[key] = (False, keycom)
             header['NCRCLEAN'] = (0, "number of cosmic ray pixels")
