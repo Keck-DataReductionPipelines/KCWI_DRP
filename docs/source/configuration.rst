@@ -4,10 +4,17 @@ Configuration Parameters
 
 A number of reduction parameters can be changed using entries in the configuration file.
 
-The master copy of the configuration file is in the installation directory, in
-``kcwidrp/config/kcwi.cfg``.  This file can be modified in place or copied in another
-directory (the ``-c`` option of the main reduction script is used to specify the
-configuration file).
+If you installed the pipeline with ``pip``, the configuration file will not be
+easy to find, since it will be stored with installed ``pip`` packages. If you 
+need to modify the configuration, we advise that you download a copy of the 
+`config file <https://github.com/Keck-DataReductionPipelines/KCWI_DRP/blob/master/kcwidrp/configs/kcwi.cfg>`_,
+saving it to some easy to remember location, and using the ``-c`` option to point
+to that file.
+
+If you installed the package via ``git``, the master copy of the configuration
+file is in the installation directory, in ``kcwidrp/config/kcwi.cfg``.  This
+file can be modified in place or copied in another directory (the ``-c`` option
+of the main reduction script is used to specify the configuration file).
 
 The configuration file contains a number of parameters connected to the structure of the files
 and to the specifications of the instrument, e.g. the number of continuum bars.
