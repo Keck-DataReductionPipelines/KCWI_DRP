@@ -28,14 +28,6 @@ environment, download the environment file and run
 This creates an environment called kcwidrp that contains most of the required 
 dependencies. 
 
-To finalize the installation, gather `LACosmicX <https://github.com/cmccully/lacosmicx>`_, which
-provides cosmic ray rejection:
-
-.. code-block:: bash
-
-   git clone https://github.com/cmccully/lacosmicx.git
-   cd lacosmicx
-   python setup.py install
 
 Installing Manually
 -------------------
@@ -57,13 +49,6 @@ Instructions for installing the other dependencies are below:
    pip install keckdrpframework
    pip install kcwidrp
 
-* `LACosmicX <https://github.com/cmccully/lacosmicx>`_
-
-.. code-block:: bash
-
-   git clone https://github.com/cmccully/lacosmicx.git
-   cd lacosmicx
-   python setup.py install
 
 Installing for Development
 --------------------------
