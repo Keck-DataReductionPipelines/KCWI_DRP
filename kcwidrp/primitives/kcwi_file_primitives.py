@@ -699,6 +699,7 @@ def strip_fname(filename):
     strip = filename.split('.fits')[0]
     return strip
 
-def get_master_name(tab, filename, target_type):
-    res = Path(strip_fname(tab['filename'][0]) + '_' + \
+def get_master_name(tab, target_type, loc=0):
+    res = Path(strip_fname(tab['filename'][loc]) + '_' + \
                      target_type.lower() + ".fits").name
+    return res
