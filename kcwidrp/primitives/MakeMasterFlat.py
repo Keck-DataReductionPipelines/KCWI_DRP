@@ -93,14 +93,14 @@ class MakeMasterFlat(BaseImg):
         # Slice map image
         slf = mroot + '_slicemap.fits'
         self.logger.info("Reading image: %s" % slf)
-        slicemap = kcwi_fits_reader(
+        slicemap = kcwi_fits_reader(os.path.join(
             self.config.instrument.cwd, 'redux',
                          slf))[0]
 
         # Position map image
         pof = mroot + '_posmap.fits'
         self.logger.info("Reading image: %s" % pof)
-        posmap = kcwi_fits_reader(
+        posmap = kcwi_fits_reader(os.path.join(
             self.config.instrument.cwd, 'redux',
                          pof))[0]
 
@@ -108,7 +108,7 @@ class MakeMasterFlat(BaseImg):
         stname = stack_list[0].split('.')[0] + '_' + insuff + '.fits'
 
         self.logger.info("Reading image: %s" % stname)
-        stacked = kcwi_fits_reader(
+        stacked = kcwi_fits_reader(os.path.join(
             self.config.instrument.cwd, 'redux',
                          stname))[0]
 
