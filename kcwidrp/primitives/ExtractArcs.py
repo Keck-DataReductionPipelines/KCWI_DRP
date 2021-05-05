@@ -1,6 +1,7 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from kcwidrp.primitives.kcwi_file_primitives import read_table
 from kcwidrp.core.bokeh_plotting import bokeh_plot
+from kcwidrp.primitives.kcwi_file_primitives import strip_fname, get_master_name
 
 import numpy as np
 import os
@@ -32,7 +33,7 @@ class ExtractArcs(BasePrimitive):
                          len(contbars_in_proctable))
         if len(contbars_in_proctable) > 0:
             self.action.args.original_filename = contbars_in_proctable[
-                'OFNAME'][0].split('.')[0] + "_trace.fits"
+                'filename'][0].split('.')[0] + "_trace.fits"
             return True
         else:
             self.action.args.original_filename = None
@@ -67,7 +68,7 @@ class ExtractArcs(BasePrimitive):
         self.action.args.contbar_image_number = self.context.trace['CBARSNO']
         self.action.args.contbar_image = self.context.trace['CBARSFL']
         self.action.args.arc_number = self.action.args.ccddata.header['FRAMENO']
-        self.action.args.arc_image = self.action.args.ccddata.header['OFNAME']
+        self.action.args.arc_image = self.action.args.ccddata.header['filename']
 
         self.action.args.source_control_points = trace['src']
         self.action.args.destination_control_points = trace['dst']

@@ -1,6 +1,6 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer, \
-    kcwi_fits_reader
+    kcwi_fits_reader, strip_fname
 
 import time
 import os
@@ -106,9 +106,10 @@ class MakeCube(BasePrimitive):
             return self.action.args
 
         self.logger.info("%d arc frames found" % len(tab))
-        ofname = tab['OFNAME'][0]
-        geom_file = os.path.join(self.config.instrument.output_directory,
-                                 ofname.split('.')[0] + '_geom.pkl')
+        ofn = strip_fname(tab['filename'][0]) + "_geom.pkl"
+        geom_file = os.path.join(self.config.instrument.cwd,
+                                 self.config.instrument.output_directory,
+                                 ofn)
         if os.path.exists(geom_file):
             self.logger.info("Reading %s" % geom_file)
             with open(geom_file, 'rb') as ifile:
@@ -134,19 +135,19 @@ class MakeCube(BasePrimitive):
             sky = None
             data_sky = None
             if self.action.args.nasmask and self.action.args.numopen > 1:
-                ofn = self.action.args.ccddata.header['OFNAME']
+                ofn = self.action.args.name
 
-                objfn = ofn.split('.')[0] + '_objf.fits'
+                objfn = strip_fname(ofn) + '_objf.fits'
                 full_path = os.path.join(
-                    os.path.dirname(self.action.args.name),
+                    self.config.instrument.cwd,
                     self.config.instrument.output_directory, objfn)
                 if os.path.exists(full_path):
                     obj = kcwi_fits_reader(full_path)[0]
                     data_obj = obj.data
 
-                skyfn = ofn.split('.')[0] + '_skyf.fits'
+                skyfn = strip_fname(ofn) + '_skyf.fits'
                 full_path = os.path.join(
-                    os.path.dirname(self.action.args.name),
+                    self.config.instrument.cwd,
                     self.config.instrument.output_directory, skyfn)
                 if os.path.exists(full_path):
                     sky = kcwi_fits_reader(full_path)[0]
@@ -155,10 +156,10 @@ class MakeCube(BasePrimitive):
             dew = None
             data_dew = None
             if 'ARCLAMP' in self.action.args.imtype:
-                ofn = self.action.args.ccddata.header['OFNAME']
-                dewfn = ofn.split('.')[0] + '_delmap.fits'
+                ofn = self.action.args.name
+                dewfn = strip_fname(ofn) + '_delmap.fits'
                 full_path = os.path.join(
-                    os.path.dirname(self.action.args.name),
+                    self.config.instrument.cwd,
                     self.config.instrument.output_directory, dewfn)
                 if os.path.exists(full_path):
                     dew = kcwi_fits_reader(full_path)[0]

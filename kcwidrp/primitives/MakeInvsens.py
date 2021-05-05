@@ -4,7 +4,7 @@ from kcwidrp.core.kcwi_correct_extin import kcwi_correct_extin
 from kcwidrp.core.kcwi_get_std import kcwi_get_std
 from kcwidrp.core.kcwi_plotting import set_plot_lims, save_plot
 from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer, \
-    kcwi_fits_reader
+    kcwi_fits_reader, strip_fname
 
 from bokeh.plotting import figure, ColumnDataSource
 from scipy.signal import find_peaks
@@ -49,10 +49,12 @@ class MakeInvsens(BasePrimitive):
                 # check pre condition
                 if self.action.args.stdfile is not None:
                     # does file already exist?
-                    ofn = self.action.args.ccddata.header['OFNAME']
-                    msname = ofn.split('.fits')[0] + '_invsens.fits'
+                    ofn = self.action.args.name
+                    msname = strip_fname(ofn) + '_invsens.fits'
                     rdir = self.config.instrument.output_directory
-                    invsensf = os.path.join(rdir, msname)
+                    invsensf = os.path.join(self.config.instrument.cwd,
+                                            rdir,
+                                            msname)
                     if os.path.exists(invsensf):
                         self.logger.warning("Master cal already exists: %s" %
                                             invsensf)
@@ -153,10 +155,10 @@ class MakeInvsens(BasePrimitive):
         self.logger.info("Std lices: max, sl0, sl1, spatial cntrd: "
                          "%d, %d, %d, %.2f" % (mxsl, sl0, sl1, cy))
         # get dwave spectrum
-        ofn = self.action.args.ccddata.header['OFNAME']
-        delfn = ofn.split('.')[0] + '_dcubed.fits'
+        ofn = self.action.args.name
+        delfn = strip_fname(ofn) + '_dcubed.fits'
         full_path = os.path.join(
-            os.path.dirname(self.action.args.name),
+            self.config.instrument.cwd,
             self.config.instrument.output_directory, delfn)
         if os.path.exists(full_path):
             dew = kcwi_fits_reader(full_path)[0]
@@ -627,9 +629,9 @@ class MakeInvsens(BasePrimitive):
         hdr['CRPIX1'] = (crpixw, 'Wavelength reference pixel')
         hdr['CDELT1'] = (dw, 'Wavelength Angstroms per pixel')
 
-        ofn = self.action.args.ccddata.header['OFNAME']
-        invsname = ofn.split('.fits')[0] + '_' + suffix + '.fits'
-        eaname = ofn.split('.fits')[0] + '_ea.fits'
+        ofn = self.action.args.name
+        invsname = strip_fname(ofn) + '_' + suffix + '.fits'
+        eaname = strip_fname(ofn) + '_ea.fits'
 
         # set units
         invsens_u = u.erg / (u.angstrom * u.cm ** 2 * u.s * u.electron)

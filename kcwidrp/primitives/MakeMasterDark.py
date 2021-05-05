@@ -1,6 +1,6 @@
 from keckdrpframework.primitives.base_img import BaseImg
 from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_reader, \
-    kcwi_fits_writer
+    kcwi_fits_writer, strip_fname, get_master_name
 
 import os
 import ccdproc
@@ -39,9 +39,9 @@ class MakeMasterDark(BaseImg):
         method = 'average'
         suffix = args.new_type.lower()
 
-        combine_list = list(self.combine_list['OFNAME'])
+        combine_list = list(self.combine_list['filename'])
         # get master dark output name
-        mdname = combine_list[0].split('.fits')[0] + '_' + suffix + '.fits'
+        mdname = strip_fname(combine_list[0]) + '_' + suffix + '.fits'
         stack = []
         stackf = []
         for dark in combine_list:

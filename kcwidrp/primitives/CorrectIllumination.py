@@ -1,6 +1,6 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_reader, \
-    kcwi_fits_writer
+    kcwi_fits_writer, get_master_name, strip_fname
 
 import os
 
@@ -49,8 +49,7 @@ class CorrectIllumination(BasePrimitive):
         self.logger.info("pre condition got %d %s flats, expected 1"
                          % (len(tab), target_type))
         if precondition:
-            self.action.args.master_flat = tab['OFNAME'][0].split('.')[0] + \
-                                           '_' + target_type.lower() + ".fits"
+            self.action.args.master_flat = get_master_name(tab, target_type)
         return precondition
 
     def _perform(self):
@@ -79,9 +78,9 @@ class CorrectIllumination(BasePrimitive):
 
             # check for obj, sky observations
             if self.action.args.nasmask and self.action.args.numopen > 1:
-                ofn = self.action.args.ccddata.header['OFNAME']
+                ofn = self.action.args.name
 
-                objfn = ofn.split('.')[0] + '_obj.fits'
+                objfn = strip_fname(ofn) + '_obj.fits'
                 full_path = os.path.join(
                     os.path.dirname(self.action.args.name),
                     self.config.instrument.output_directory, objfn)

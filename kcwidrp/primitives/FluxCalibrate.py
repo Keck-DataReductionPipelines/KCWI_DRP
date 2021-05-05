@@ -1,6 +1,6 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer, \
-    kcwi_fits_reader
+    kcwi_fits_reader, get_master_name, strip_fname
 from kcwidrp.core.kcwi_correct_extin import kcwi_correct_extin
 
 import os
@@ -34,8 +34,7 @@ class FluxCalibrate(BasePrimitive):
             self.action.args.invsname = None
             return False
         else:
-            self.action.args.invsname = tab['OFNAME'][0].split('.')[0] + '_' + \
-                target_type.lower() + ".fits"
+            self.action.args.invsname = get_master_name(tab, target_type) + ".fits"
             return True
 
     def _perform(self):
@@ -102,11 +101,11 @@ class FluxCalibrate(BasePrimitive):
 
             # check for obj, sky cubes
             if self.action.args.nasmask and self.action.args.numopen > 1:
-                ofn = self.action.args.ccddata.header['OFNAME']
+                ofn = self.action.args.name
                 # obj cube
-                objfn = ofn.split('.')[0] + '_ocubed.fits'
+                objfn = strip_fname(ofn) + '_ocubed.fits'
                 full_path = os.path.join(
-                    os.path.dirname(self.action.args.name),
+                    self.config.instrument.cwd,
                     self.config.instrument.output_directory, objfn)
                 if os.path.exists(full_path):
                     obj = kcwi_fits_reader(full_path)[0]
@@ -115,9 +114,9 @@ class FluxCalibrate(BasePrimitive):
                         for ix in range(sz[1]):
                             obj.data[:, ix, isl] *= mscal
                 # sky cube
-                skyfn = ofn.split('.')[0] + '_scubed.fits'
+                skyfn = strip_fname(ofn) + '_scubed.fits'
                 full_path = os.path.join(
-                    os.path.dirname(self.action.args.name),
+                    self.config.instrument.cwd,
                     self.config.instrument.output_directory, skyfn)
                 if os.path.exists(full_path):
                     sky = kcwi_fits_reader(full_path)[0]
