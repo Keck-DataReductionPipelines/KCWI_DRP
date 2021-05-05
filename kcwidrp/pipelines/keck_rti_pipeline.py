@@ -235,7 +235,10 @@ class Kcwi_pipeline(BasePipeline):
                                       "object_flux_calibrate"),
         "object_flux_calibrate":     ("FluxCalibrate",
                                       "flux_calibration_started",
-                                      None),
+                                      "alert_rti"),
+        "alert_rti":                 ("SendHTTP",
+                                      "http_started",
+                                      None)
         # NOD AND SHUFFLE OBJECT PROCESSING
         "process_nandshuff":         ("ProcessObject",
                                       "nandshuff_processing_started",
