@@ -127,6 +127,9 @@ def main():
 
     # END HANDLING OF CONFIGURATION FILES ##########
 
+    # Add current working directory to config info
+    kcwi_config.cwd = os.getcwd()
+
     # check for the output directory
     check_directory(kcwi_config.output_directory)
 
