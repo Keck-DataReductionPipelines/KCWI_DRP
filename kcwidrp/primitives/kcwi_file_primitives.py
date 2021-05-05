@@ -10,6 +10,7 @@ import os
 import logging
 import pkg_resources
 import subprocess
+from pathlib import Path
 
 logger = logging.getLogger('KCWI')
 
@@ -697,3 +698,7 @@ def strip_fname(filename):
         return
     strip = filename.split('.fits')[0]
     return strip
+
+def get_master_name(tab, filename, target_type):
+    res = Path(strip_fname(tab['filename'][0]) + '_' + \
+                     target_type.lower() + ".fits").name
