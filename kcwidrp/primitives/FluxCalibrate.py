@@ -56,7 +56,7 @@ class FluxCalibrate(BasePrimitive):
             # read in master calibration (inverse sensitivity)
             invsname = self.action.args.invsname
             self.logger.info("Reading invsens: %s" % invsname)
-            hdul = pf.open(os.path.join(os.path.dirname(self.action.args.name),
+            hdul = pf.open(os.path.join(self.config.instrument.cwd,
                                         'redux', invsname))
             mcal = hdul[0].data[1, :]
             mchdr = hdul[0].header
