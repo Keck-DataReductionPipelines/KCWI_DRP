@@ -696,7 +696,7 @@ def strip_fname(filename):
     if not filename:
         logger.error(f"Failed to strip file {filename}")
         return
-    strip = filename.split('.fits')[0]
+    strip = Path(filename).stem
     return strip
 
 def get_master_name(tab, target_type, loc=0):
