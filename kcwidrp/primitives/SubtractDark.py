@@ -28,7 +28,7 @@ class SubtractDark(BasePrimitive):
             mdname = get_master_name(tab, target_type)
             print("*************** READING IMAGE: %s" % mdname)
             mdark = kcwi_fits_reader(
-                os.path.join(os.path.dirname(self.action.args.name), 'redux',
+                os.path.join(self.config.instrument.cwd, 'redux',
                              mdname))[0]
             # scale by exposure time
             fac = 1.0

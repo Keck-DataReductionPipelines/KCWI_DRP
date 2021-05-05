@@ -142,7 +142,7 @@ class TraceBars(BasePrimitive):
             write_table(table=[src, dst, barid, slid],
                         names=('src', 'dst', 'barid', 'slid'),
                         output_dir=os.path.join(
-                            os.path.dirname(self.action.args.name),
+                            self.config.instrument.cwd,
                             self.config.instrument.output_directory),
                         output_name=ofname,
                         clobber=self.config.instrument.clobber,

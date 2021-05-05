@@ -86,28 +86,25 @@ class MakeMasterSky(BaseImg):
             self.logger.error("Geometry not solved!")
             return self.action.args
 
-        groot = split_fname(tab['filename'][0])
+        groot = strip_fname(tab['filename'][0])
 
         # Wavelength map image
         wmf = groot + '_wavemap.fits'
         self.logger.info("Reading image: %s" % wmf)
-        wavemap = kcwi_fits_reader(
-            self.config.instrument.cwd, 'redux',
-                         wmf))[0]
+        wavemap = kcwi_fits_reader(os.path.join(
+            self.config.instrument.cwd, 'redux', wmf))[0]
 
         # Slice map image
         slf = groot + '_slicemap.fits'
         self.logger.info("Reading image: %s" % slf)
-        slicemap = kcwi_fits_reader(
-            self.config.instrument.cwd, 'redux',
-                         slf))[0]
+        slicemap = kcwi_fits_reader(os.path.join(
+            self.config.instrument.cwd, 'redux', slf))[0]
 
         # Position map image
         pof = groot + '_posmap.fits'
         self.logger.info("Reading image: %s" % pof)
-        posmap = kcwi_fits_reader(
-            self.config.instruemnt.cwd, 'redux',
-                         pof))[0]
+        posmap = kcwi_fits_reader(os.path.join(
+            self.config.instrument.cwd, 'redux', pof))[0]
         posmax = np.nanmax(posmap.data)
         posbuf = int(10. / self.action.args.xbinsize)
 

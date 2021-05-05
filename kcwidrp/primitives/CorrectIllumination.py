@@ -64,7 +64,7 @@ class CorrectIllumination(BasePrimitive):
         self.logger.info("Correcting Illumination")
         if self.action.args.master_flat:
             mflat = kcwi_fits_reader(
-                os.path.join(os.path.dirname(self.action.args.name),
+                os.path.join(self.config.instrument.cwd,
                              self.config.instrument.output_directory,
                              self.action.args.master_flat))[0]
 
@@ -82,7 +82,7 @@ class CorrectIllumination(BasePrimitive):
 
                 objfn = strip_fname(ofn) + '_obj.fits'
                 full_path = os.path.join(
-                    os.path.dirname(self.action.args.name),
+                    self.config.instrument.cwd,
                     self.config.instrument.output_directory, objfn)
                 if os.path.exists(full_path):
                     obj = kcwi_fits_reader(full_path)[0]
@@ -97,7 +97,7 @@ class CorrectIllumination(BasePrimitive):
 
                 skyfn = ofn.split('.')[0] + '_sky.fits'
                 full_path = os.path.join(
-                    os.path.dirname(self.action.args.name),
+                    self.config.instrument.cwd,
                     self.config.instrument.output_directory, skyfn)
                 if os.path.exists(full_path):
                     sky = kcwi_fits_reader(full_path)[0]

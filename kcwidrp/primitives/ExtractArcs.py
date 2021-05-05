@@ -55,7 +55,7 @@ class ExtractArcs(BasePrimitive):
             trace = self.context.trace
         else:
             trace = read_table(
-                input_dir=os.path.join(os.path.dirname(self.action.args.name),
+                input_dir=os.path.join(self.config.instrument.cwd,
                                        self.config.instrument.output_directory),
                 file_name=original_filename)
             self.context.trace = {}
@@ -68,7 +68,7 @@ class ExtractArcs(BasePrimitive):
         self.action.args.contbar_image_number = self.context.trace['CBARSNO']
         self.action.args.contbar_image = self.context.trace['CBARSFL']
         self.action.args.arc_number = self.action.args.ccddata.header['FRAMENO']
-        self.action.args.arc_image = self.action.args.ccddata.header['filename']
+        self.action.args.arc_image = self.action.args.ccddata.header['OFNAME']
 
         self.action.args.source_control_points = trace['src']
         self.action.args.destination_control_points = trace['dst']

@@ -58,8 +58,10 @@ class StackFlats(BaseImg):
         stackf = []
         for flat in combine_list:
             # get flat intensity (int) image file name in redux directory
-            stackf.append(flat.split('.fits')[0] + '_intd.fits')
-            flatfn = os.path.join(self.action.args.in_directory, stackf[-1])
+            stackf.append(strip_fname(flat) + '_intd.fits')
+            flatfn = os.path.join(self.config.instrument.cwd,
+                                  self.config.instrument.output_directory,
+                                stackf[-1])
             # using [0] gets just the image data
             stack.append(kcwi_fits_reader(flatfn)[0])
 

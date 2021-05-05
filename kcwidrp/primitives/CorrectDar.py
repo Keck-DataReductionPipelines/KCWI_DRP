@@ -200,7 +200,7 @@ class CorrectDar(BasePrimitive):
         if stdfile is not None:
             afn = self.action.args.ccddata.header['ARCFL']
 
-            delfn = strip_fname(ofn) + '_dcube.fits'
+            delfn = strip_fname(afn) + '_dcube.fits'
             full_path = os.path.join(
                 self.config.instrument.cwd,
                 self.config.instrument.output_directory, delfn)

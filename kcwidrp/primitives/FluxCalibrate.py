@@ -34,7 +34,7 @@ class FluxCalibrate(BasePrimitive):
             self.action.args.invsname = None
             return False
         else:
-            self.action.args.invsname = get_master_name(tab, target_type) + ".fits"
+            self.action.args.invsname = get_master_name(tab, target_type)
             return True
 
     def _perform(self):
