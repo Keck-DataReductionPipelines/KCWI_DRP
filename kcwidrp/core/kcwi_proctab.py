@@ -60,8 +60,7 @@ class Proctab:
 
     def update_proctab(self, frame, suffix='raw', newtype=None, filename=""):
         if filename == "":
-            print("?#?#?#?#?#?#?#?#?#?#?#?##?#?#?#?#?#?")
-            print(f"No filename given for {frame.header['OFNAME']}")
+            self.log.error(f"No filename given for {frame.header['OFNAME']}")
         if frame is not None and self.proctab is not None:
             stages = {'RAW': 0,
                       'mbias': 1,
@@ -135,8 +134,7 @@ class Proctab:
         self.proctab = unique(self.proctab, keys=['CID', 'FRAMENO', 'TYPE'],
                               keep='last')
         self.proctab.sort('FRAMENO')
-        print("!!!!!!!!!!!!!!!!!!!!!")
-        print(f"Updated with {frame.header['OFNAME']} and {filename}")
+        self.log.info(f"proctable updated with {frame.header['OFNAME']} and {filename}")
 
     def n_proctab(self, frame, target_type=None, target_group=None,
                   nearest=False, return_ofname=True):
