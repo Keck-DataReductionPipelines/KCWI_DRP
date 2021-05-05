@@ -49,9 +49,9 @@ class MakeMasterBias(BaseImg):
         method = 'average'
         suffix = self.action.args.new_type.lower()
 
-        combine_list = list(self.combine_list['OFNAME'])
+        combine_list = list(self.combine_list['filename'])
         # get master bias output name
-        mbname = combine_list[0].split('.fits')[0] + '_' + suffix + '.fits'
+        mbname = combine_list[-1].split('.fits')[0] + '_' + suffix + '.fits'
         stack = []
         stackf = []
         for bias in combine_list:
