@@ -13,20 +13,31 @@ class SendHTTP(BasePrimitive):
         BasePrimitive.__init__(self, action, context)
         self.logger = context.pipeline_logger
     
+    def _pre_condition(self):
+        self.user = self.config.instrument.rti_user
+        self.pw = self.config.instrument.rti_pass
+        if self.user == '' or self.pw == '':
+            self.logger.error("Username or password is not set for RTI access")
+            return False
+        return True
+
     def _perform(self):
 
-        if not self.action.args.koaid:
+        if not self.action.args.ccddata.header['KOAID']:
             self.logger.error(f"Encountered a file with no KOA ID: {self.action.args.name}")
             return self.action.args
         
         self.logger.info(f"Alerting RTI that {self.action.args.name} is ready for ingestion")
 
-        url = self.config.instrument.rtiurl
+        data_directory = os.path.join(self.config.instrument.cwd,
+                                      self.config.instrument.output_directory)
+
+        url = self.config.instrument.rti_url
         data = {
             'instrument': 'KCWI',
-            'koaid': self.action.args.koaid,
+            'koaid': self.action.args.ccddata.header['KOAID'],
             'ingesttype': 'lev2',
-            'datadir': str(self.config.instrument.output_directory),
+            'datadir': str(data_directory),
             'start': str(self.action.args.ingest_time),
             'reingest': True,
             'testonly': True,
@@ -53,7 +64,10 @@ class SendHTTP(BasePrimitive):
     def post_url(self, url, data):
         try:
             self.logger.info(f"Posting to RTI with KOAID {data['koaid']}")
-            post = requests.post(url, data = data)
+            post = requests.post(url, data = data, auth=(
+                                                        self.user,
+                                                        self.pw
+                                                        ))
         except requests.exceptions.RequestException as e:
             self.logger.error(f"Error caught while posting to {url}:")
             self.logger.error(e)
