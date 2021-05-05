@@ -1,6 +1,6 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_reader, \
-    kcwi_fits_writer
+    kcwi_fits_writer, get_master_name
 import os
 
 
@@ -24,7 +24,7 @@ class SubtractSky(BasePrimitive):
             skyproc = f.readlines()
             f.close()
             # is our file in the list?
-            ofn = self.action.args.ccddata.header['OFNAME']
+            ofn = self.action.args.name
             for row in skyproc:
                 if ofn in row.split()[0]:
                     skyfile = row.split()[1]
@@ -72,14 +72,14 @@ class SubtractSky(BasePrimitive):
             self.logger.info("%d master sky frames found" % len(tab))
 
             if len(tab) > 0:
-                skyfile = tab['OFNAME'][0]
+                skyfile = tab['filename'][0]
 
-        msname = skyfile.split('.')[0] + '_' + target_type.lower() + ".fits"
-        if os.path.exists(os.path.join(os.path.dirname(self.action.args.name),
+        msname = strip_fname(skyfile) + '_' + target_type.lower() + ".fits"
+        if os.path.exists(os.path.join(self.config.instrument.cwd,
                                        'redux', msname)):
             self.logger.info("Reading image: %s" % msname)
             msky = kcwi_fits_reader(
-                os.path.join(os.path.dirname(self.action.args.name), 'redux',
+                os.path.join(self.config.instrument.cwd, 'redux',
                              msname))[0]
 
             # scale the sky?

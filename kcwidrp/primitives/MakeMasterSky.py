@@ -1,6 +1,6 @@
 from keckdrpframework.primitives.base_img import BaseImg
 from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_reader, \
-    kcwi_fits_writer
+    kcwi_fits_writer, strip_fname, get_master_name
 from kcwidrp.core.bokeh_plotting import bokeh_plot
 from kcwidrp.core.kcwi_plotting import save_plot
 from kcwidrp.core.bspline import Bspline
@@ -27,7 +27,7 @@ class MakeMasterSky(BaseImg):
         self.logger.info("Checking precondition for MakeMasterSky")
 
         suffix = self.action.args.new_type.lower()
-        ofn = self.action.args.ccddata.header['OFNAME']
+        ofn = self.action.args.name
         rdir = self.config.instrument.output_directory
 
         skyfile = None
@@ -86,27 +86,27 @@ class MakeMasterSky(BaseImg):
             self.logger.error("Geometry not solved!")
             return self.action.args
 
-        groot = tab['OFNAME'][0].split('.fits')[0]
+        groot = split_fname(tab['filename'][0])
 
         # Wavelength map image
         wmf = groot + '_wavemap.fits'
         self.logger.info("Reading image: %s" % wmf)
         wavemap = kcwi_fits_reader(
-            os.path.join(os.path.dirname(self.action.args.name), 'redux',
+            self.config.instrument.cwd, 'redux',
                          wmf))[0]
 
         # Slice map image
         slf = groot + '_slicemap.fits'
         self.logger.info("Reading image: %s" % slf)
         slicemap = kcwi_fits_reader(
-            os.path.join(os.path.dirname(self.action.args.name), 'redux',
+            self.config.instrument.cwd, 'redux',
                          slf))[0]
 
         # Position map image
         pof = groot + '_posmap.fits'
         self.logger.info("Reading image: %s" % pof)
         posmap = kcwi_fits_reader(
-            os.path.join(os.path.dirname(self.action.args.name), 'redux',
+            self.config.instruemnt.cwd, 'redux',
                          pof))[0]
         posmax = np.nanmax(posmap.data)
         posbuf = int(10. / self.action.args.xbinsize)
@@ -284,8 +284,8 @@ class MakeMasterSky(BaseImg):
         self.action.args.ccddata.data = sky
 
         # get master sky output name
-        ofn = self.action.args.ccddata.header['OFNAME']
-        msname = ofn.split('.fits')[0] + '_' + suffix + '.fits'
+        ofn = self.action.args.name
+        msname = strip_fname(ofn) + '_' + suffix + '.fits'
 
         log_string = MakeMasterSky.__module__
         self.action.args.ccddata.header['IMTYPE'] = self.action.args.new_type

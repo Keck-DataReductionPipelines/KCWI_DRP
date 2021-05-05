@@ -1,6 +1,6 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_reader, \
-    kcwi_fits_writer
+    kcwi_fits_writer, strip_fname
 
 import numpy as np
 import os
@@ -38,7 +38,7 @@ class NandshuffSubtractSky(BasePrimitive):
         target_type = 'SKY'
 
         # get header values
-        ofn = self.action.args.ccddata.header['OFNAME']
+        ofn = self.action.args.name
         shrows = self.action.args.ccddata.header['SHUFROWS']
         nshfup = self.action.args.ccddata.header['NSHFUP']
         nshfdn = self.action.args.ccddata.header['NSHFDN']
@@ -172,12 +172,12 @@ class NandshuffSubtractSky(BasePrimitive):
         self.action.args.ccddata.header['HISTORY'] = log_string
 
         # write out sky image
-        msname = ofn.split('.')[0] + '_' + target_type.lower() + '.fits'
+        msname = strip_fname(ofn) + '_' + target_type.lower() + '.fits'
         out_sky = CCDData(sky, meta=skyhdr, unit=u_out)
         kcwi_fits_writer(out_sky, output_file=msname,
                          output_dir=self.config.instrument.output_directory)
         # write out object image
-        obname = ofn.split('.')[0] + '_obj.fits'
+        obname = strip_fname(ofn) + '_obj.fits'
         out_obj = CCDData(obj, meta=objhdr, unit=u_out)
         kcwi_fits_writer(out_obj, output_file=obname,
                          output_dir=self.config.instrument.output_directory)

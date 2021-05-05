@@ -1,6 +1,6 @@
 from keckdrpframework.primitives.base_img import BaseImg
 from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_reader, \
-    kcwi_fits_writer
+    kcwi_fits_writer, strip_fname
 
 import os
 import ccdproc
@@ -51,9 +51,9 @@ class StackFlats(BaseImg):
 
         self.logger.info("Stacking flats using method %s" % method)
 
-        combine_list = list(self.combine_list['OFNAME'])
+        combine_list = list(self.combine_list['filename'])
         # get flat stack output name
-        stname = combine_list[0].split('.fits')[0] + '_' + suffix + '.fits'
+        stname = strip_fname(combine_list[0]) + '_' + suffix + '.fits'
         stack = []
         stackf = []
         for flat in combine_list:

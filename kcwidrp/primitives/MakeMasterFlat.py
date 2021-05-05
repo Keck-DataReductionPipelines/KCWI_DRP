@@ -1,6 +1,6 @@
 from keckdrpframework.primitives.base_img import BaseImg
 from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_reader, \
-    kcwi_fits_writer
+    kcwi_fits_writer, strip_fname, get_master_name
 from kcwidrp.core.kcwi_plotting import get_plot_lims
 from kcwidrp.core.bokeh_plotting import bokeh_plot
 from kcwidrp.core.kcwi_plotting import save_plot
@@ -67,7 +67,7 @@ class MakeMasterFlat(BaseImg):
         suffix = self.action.args.new_type.lower()
         insuff = self.action.args.stack_type.lower()
 
-        stack_list = list(self.stack_list['OFNAME'])
+        stack_list = list(self.stack_list['filename'])
 
         if len(stack_list) <= 0:
             self.logger.warning("No flats found!")
@@ -81,27 +81,27 @@ class MakeMasterFlat(BaseImg):
             self.logger.error("Geometry not solved!")
             return self.action.args
 
-        mroot = tab['OFNAME'][0].split('.fits')[0]
+        mroot = strip_fname(tab['filename'])
 
         # Wavelength map image
         wmf = mroot + '_wavemap.fits'
         self.logger.info("Reading image: %s" % wmf)
         wavemap = kcwi_fits_reader(
-            os.path.join(os.path.dirname(self.action.args.name), 'redux',
+            os.path.join(self.config.instrument.cwd, 'redux',
                          wmf))[0]
 
         # Slice map image
         slf = mroot + '_slicemap.fits'
         self.logger.info("Reading image: %s" % slf)
         slicemap = kcwi_fits_reader(
-            os.path.join(os.path.dirname(self.action.args.name), 'redux',
+            self.config.instrument.cwd, 'redux',
                          slf))[0]
 
         # Position map image
         pof = mroot + '_posmap.fits'
         self.logger.info("Reading image: %s" % pof)
         posmap = kcwi_fits_reader(
-            os.path.join(os.path.dirname(self.action.args.name), 'redux',
+            self.config.instrument.cwd, 'redux',
                          pof))[0]
 
         # Read in stacked flat image
@@ -109,7 +109,7 @@ class MakeMasterFlat(BaseImg):
 
         self.logger.info("Reading image: %s" % stname)
         stacked = kcwi_fits_reader(
-            os.path.join(os.path.dirname(self.action.args.name), 'redux',
+            self.config.instrument.cwd, 'redux',
                          stname))[0]
 
         # get type of flat
