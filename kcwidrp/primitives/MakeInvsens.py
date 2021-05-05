@@ -639,14 +639,16 @@ class MakeInvsens(BasePrimitive):
         kcwi_fits_writer(out_invsens, output_file=invsname,
                          output_dir=self.config.instrument.output_directory)
         self.context.proctab.update_proctab(frame=out_invsens, suffix=suffix,
-                                            newtype='INVSENS', filename=self.action.args.name)
+                                            newtype='INVSENS',
+                                            filename=self.action.args.name)
         # output effective area
         ea_u = u.cm ** 2 / u.angstrom
         out_ea = CCDData(np.asarray([earea, fearea]), meta=hdr, unit=ea_u)
         kcwi_fits_writer(out_ea, output_file=eaname,
                          output_dir=self.config.instrument.output_directory)
         self.context.proctab.update_proctab(frame=out_ea, suffix='ea',
-                                            newtype='EAREA', filename=self.action.args.name)
+                                            newtype='EAREA',
+                                            filename=self.action.args.name)
 
         return self.action.args
     # END: class MakeInvsens()

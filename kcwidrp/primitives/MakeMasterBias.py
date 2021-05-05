@@ -26,7 +26,8 @@ class MakeMasterBias(BaseImg):
         """
         # Add to proctab
         self.context.proctab.update_proctab(frame=self.action.args.ccddata,
-                                            suffix='RAW', filename=self.action.args.name)
+                                            suffix='RAW',
+                                            filename=self.action.args.name)
         self.context.proctab.write_proctab()
         # Get bias count
         self.logger.info("Checking precondition for MakeMasterBias")

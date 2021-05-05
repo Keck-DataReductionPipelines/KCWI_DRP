@@ -125,7 +125,8 @@ class CorrectIllumination(BasePrimitive):
                          output_dir=self.config.instrument.output_directory,
                          suffix="intf")
         self.context.proctab.update_proctab(frame=self.action.args.ccddata,
-                                            suffix="intf", filename=self.action.args.name)
+                                            suffix="intf",
+                                            filename=self.action.args.name)
         self.context.proctab.write_proctab()
 
         # check for obj, sky images

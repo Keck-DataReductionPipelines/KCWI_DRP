@@ -285,7 +285,8 @@ class CorrectDar(BasePrimitive):
                          output_dir=self.config.instrument.output_directory,
                          suffix="icubed")
         self.context.proctab.update_proctab(frame=self.action.args.ccddata,
-                                            suffix="icubed", filename=self.action.args.name)
+                                            suffix="icubed",
+                                            filename=self.action.args.name)
         self.context.proctab.write_proctab()
 
         # check for sky, obj cube
