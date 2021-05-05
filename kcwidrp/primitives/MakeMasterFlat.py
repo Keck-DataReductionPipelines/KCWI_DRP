@@ -861,7 +861,8 @@ class MakeMasterFlat(BaseImg):
         kcwi_fits_writer(stacked, output_file=mfname,
                          output_dir=self.config.instrument.output_directory)
         self.context.proctab.update_proctab(frame=stacked, suffix=suffix,
-                                            newtype=self.action.args.new_type)
+                                            newtype=self.action.args.new_type,
+                                            filename=self.action.args.name)
         self.context.proctab.write_proctab()
 
         self.logger.info(log_string)

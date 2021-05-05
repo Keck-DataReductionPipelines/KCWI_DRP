@@ -193,7 +193,8 @@ class NandshuffSubtractSky(BasePrimitive):
                          output_dir=self.config.instrument.output_directory,
                          suffix="intk")
         self.context.proctab.update_proctab(frame=self.action.args.ccddata,
-                                            suffix="intk")
+                                            suffix="intk",
+                                            filename=self.action.args.name)
         self.context.proctab.write_proctab()
 
         self.logger.info(log_string)

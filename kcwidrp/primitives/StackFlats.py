@@ -81,7 +81,8 @@ class StackFlats(BaseImg):
                          output_dir=self.config.instrument.output_directory)
 
         self.context.proctab.update_proctab(frame=stacked, suffix=suffix,
-                                            newtype=self.action.args.stack_type)
+                                            newtype=self.action.args.stack_type,
+                                            filename=self.action.args.name)
         self.context.proctab.write_proctab()
 
         self.logger.info(log_string)

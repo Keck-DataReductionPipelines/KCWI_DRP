@@ -154,7 +154,7 @@ class FluxCalibrate(BasePrimitive):
                          output_dir=self.config.instrument.output_directory,
                          suffix="icubes")
         self.context.proctab.update_proctab(frame=self.action.args.ccddata,
-                                            suffix="icubes")
+                                            suffix="icubes", filename=self.action.args.name)
         self.context.proctab.write_proctab()
 
         # check for sky, obj cube

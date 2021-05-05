@@ -88,7 +88,8 @@ class RectifyImage(BasePrimitive):
                          output_dir=self.config.instrument.output_directory,
                          suffix="int")
         self.context.proctab.update_proctab(frame=self.action.args.ccddata,
-                                            suffix="int")
+                                            suffix="int", 
+                                            filename=self.action.args.name)
         self.context.proctab.write_proctab()
         return self.action.args
     # END: class RectifyImage()

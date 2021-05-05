@@ -54,7 +54,8 @@ class WavelengthCorrections(BasePrimitive):
                         output_dir=self.config.instrument.output_directory,
                         suffix=f'{suffix}w')
         self.context.proctab.update_proctab(frame=self.action.args.ccddata,
-                                            suffix=f'_{suffix}w')
+                                            suffix=f'_{suffix}w',
+                                            filename=self.action.args.name)
         self.context.proctab.write_proctab()
 
         # Unsure here: Is this right? it seems to make DAR happy

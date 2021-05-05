@@ -416,7 +416,7 @@ class MakeCube(BasePrimitive):
                              output_dir=self.config.instrument.output_directory,
                              suffix="icube")
             self.context.proctab.update_proctab(frame=self.action.args.ccddata,
-                                                suffix="icube")
+                                                suffix="icube", filename=self.action.args.name)
             self.context.proctab.write_proctab()
 
             # check for obj, sky outputs

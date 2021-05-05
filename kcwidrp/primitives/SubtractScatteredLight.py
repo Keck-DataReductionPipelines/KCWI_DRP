@@ -105,7 +105,8 @@ class SubtractScatteredLight(BasePrimitive):
                          output_dir=self.config.instrument.output_directory,
                          suffix="intd")
         self.context.proctab.update_proctab(frame=self.action.args.ccddata,
-                                            suffix="intd")
+                                            suffix="intd", 
+                                            filename=self.action.args.name)
         self.context.proctab.write_proctab()
 
         return self.action.args

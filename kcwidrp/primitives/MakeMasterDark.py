@@ -69,7 +69,8 @@ class MakeMasterDark(BaseImg):
         kcwi_fits_writer(stacked, output_file=mdname,
                          output_dir=self.config.instrument.output_directory)
         self.context.proctab.update_proctab(frame=stacked, suffix=suffix,
-                                            newtype=args.new_type)
+                                            newtype=args.new_type,
+                                            filename=self.action.args.name)
         self.context.proctab.write_proctab()
         return self.action.args
     # END: class StackDarks()

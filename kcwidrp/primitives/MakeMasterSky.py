@@ -310,7 +310,8 @@ class MakeMasterSky(BaseImg):
                          output_dir=self.config.instrument.output_directory)
         self.context.proctab.update_proctab(frame=self.action.args.ccddata,
                                             suffix=suffix,
-                                            newtype=self.action.args.new_type)
+                                            newtype=self.action.args.new_type,
+                                            filename=self.action.args.name)
         self.context.proctab.write_proctab()
 
         # restore original image
