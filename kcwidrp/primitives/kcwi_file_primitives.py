@@ -690,3 +690,10 @@ def kcwi_fits_writer(ccddata, table=None, output_file=None, output_dir=None,
     # log
     logger.info(">>> Saving %d hdus to %s" % (len(hdus_to_save), out_file))
     hdus_to_save.writeto(out_file, overwrite=True)
+
+def strip_fname(filename):
+    if not filename:
+        logger.error(f"Failed to strip file {filename}")
+        return
+    strip = filename.split('.fits')[0]
+    return strip
