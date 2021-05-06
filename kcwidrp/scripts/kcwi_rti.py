@@ -177,6 +177,7 @@ def main():
     framework.context.proctab.read_proctab(tfil=args.proctab)
 
     framework.logger.info("Framework initialized")
+    framework.logger.info(f"RTI url is {framework.config.instrument.rti_url}")
 
     # add a start_bokeh event to the processing queue,
     # if requested by the configuration parameters
