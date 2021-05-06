@@ -10,7 +10,7 @@ from kcwidrp.primitives.kcwi_file_primitives import *
 from kcwidrp.core.kcwi_proctab import Proctab
 
 
-class Kcwi_pipeline(BasePipeline):
+class Keck_RTI_Pipeline(BasePipeline):
     """
     Pipeline to process KCWI data
 
