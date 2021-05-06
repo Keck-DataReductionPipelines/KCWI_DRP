@@ -105,7 +105,7 @@ class MakeMasterFlat(BaseImg):
                          pof))[0]
 
         # Read in stacked flat image
-        stname = stack_list[0].split('.')[0] + '_' + insuff + '.fits'
+        stname = strip_fname(stack_list[-1]) + '_' + insuff + '.fits'
 
         self.logger.info("Reading image: %s" % stname)
         stacked = kcwi_fits_reader(os.path.join(
