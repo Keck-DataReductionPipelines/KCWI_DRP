@@ -1,7 +1,7 @@
 """
 KCWI
 
-@author: lrizzi
+@author: lrizzi, mbrodheim
 """
 
 from keckdrpframework.pipelines.base_pipeline import BasePipeline
@@ -9,6 +9,7 @@ from keckdrpframework.models.processing_context import ProcessingContext
 from kcwidrp.primitives.kcwi_file_primitives import *
 from kcwidrp.core.kcwi_proctab import Proctab
 
+from datetime import datetime
 
 class Keck_RTI_Pipeline(BasePipeline):
     """
@@ -303,6 +304,9 @@ class Keck_RTI_Pipeline(BasePipeline):
                              action.args.imtype)
         except:
             return
+        
+        # Record the time of ingestion for RTI metrics
+        action.args.ingest_time = datetime.utcnow()
 
         groupid = action.args.groupid
         self.logger.info("******* GROUPID is %s " % action.args.groupid)
