@@ -55,11 +55,11 @@ class SendHTTP(BasePrimitive):
                 self.logger.error(f"Waiting {t} seconds to attempt again... ({attempts}/{limit})")
                 time.sleep(t)
             else:
-                break
-
-
-        self.logger.info(f"Post returned status code {post.status_code}")
-
+                self.logger.info(f"Post returned status code {res.status_code}")
+                return self.action.args
+        
+        self.logger.error(f"Post attempted {limit} times and got no response.")
+        self.logger.error("Aborting.")
         return self.action.args
     
     def get_url(self, url, data):
