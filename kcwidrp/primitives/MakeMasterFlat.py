@@ -81,7 +81,7 @@ class MakeMasterFlat(BaseImg):
             self.logger.error("Geometry not solved!")
             return self.action.args
 
-        mroot = strip_fname(tab['filename'])
+        mroot = strip_fname(tab['filename'][0])
 
         # Wavelength map image
         wmf = mroot + '_wavemap.fits'
