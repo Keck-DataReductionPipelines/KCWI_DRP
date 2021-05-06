@@ -64,11 +64,11 @@ class SendHTTP(BasePrimitive):
     
     def get_url(self, url, data):
         try:
-            self.logger.info(f"GET to RTI with KOAID {data['koaid']}")
             res = requests.get(url, params = data, auth=(
                                                         self.user,
                                                         self.pw
                                                         ))
+            self.logger.info(f"Sending {res.request.url}")
         except requests.exceptions.RequestException as e:
             self.logger.error(f"Error caught while posting to {url}:")
             self.logger.error(e)
