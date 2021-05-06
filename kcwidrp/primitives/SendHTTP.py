@@ -37,12 +37,12 @@ class SendHTTP(BasePrimitive):
         data = {
             'instrument': 'KCWI',
             'koaid': self.action.args.ccddata.header['KOAID'],
-            'ingesttype': 'lev2',
+            'ingesttype': self.config.instrument.rti_ingesttype,
             'datadir': str(data_directory),
             'start': str(self.action.args.ingest_time),
-            'reingest': True,
-            'testonly': True,
-            'dev': True
+            'reingest': self.config.instrument.reingest,
+            'testonly': self.config.instrument.testonly,
+            'dev': self.config.instrument.dev
         }
         
         attempts = 0
