@@ -95,7 +95,7 @@ class CorrectIllumination(BasePrimitive):
                 else:
                     obj = None
 
-                skyfn = ofn.split('.')[0] + '_sky.fits'
+                skyfn = strip_fname(ofn) + '_sky.fits'
                 full_path = os.path.join(
                     self.config.instrument.cwd,
                     self.config.instrument.output_directory, skyfn)

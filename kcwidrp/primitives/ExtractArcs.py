@@ -32,8 +32,8 @@ class ExtractArcs(BasePrimitive):
         self.logger.info("%d continuum bars frames found" %
                          len(contbars_in_proctable))
         if len(contbars_in_proctable) > 0:
-            self.action.args.original_filename = contbars_in_proctable[
-                'filename'][0].split('.')[0] + "_trace.fits"
+            self.action.args.original_filename = strip_fname(
+                contbars_in_proctable['filename'][0])+ "_trace.fits"
             return True
         else:
             self.action.args.original_filename = None
