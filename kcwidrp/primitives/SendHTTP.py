@@ -40,9 +40,9 @@ class SendHTTP(BasePrimitive):
             'ingesttype': self.config.instrument.rti_ingesttype,
             'datadir': str(data_directory),
             'start': str(self.action.args.ingest_time),
-            'reingest': self.config.instrument.reingest,
-            'testonly': self.config.instrument.testonly,
-            'dev': self.config.instrument.dev
+            'reingest': self.config.instrument.rti_reingest,
+            'testonly': self.config.instrument.rti_testonly,
+            'dev': self.config.instrument.rti_dev
         }
         
         attempts = 0
