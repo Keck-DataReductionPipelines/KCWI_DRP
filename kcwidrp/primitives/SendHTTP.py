@@ -27,10 +27,10 @@ class SendHTTP(BasePrimitive):
             self.logger.error(f"Encountered a file with no KOA ID: {self.action.args.name}")
             return self.action.args
         
-        self.logger.info(f"Alerting RTI that {self.action.args.name} is ready for ingestion")
-
         data_directory = os.path.join(self.config.instrument.cwd,
                                       self.config.instrument.output_directory)
+        
+        self.logger.info(f"Alerting RTI that {strip_fname(self.action.args.name)} is ready for ingestion")
 
         url = self.config.instrument.rti_url
         data = {
@@ -61,10 +61,10 @@ class SendHTTP(BasePrimitive):
 
         return self.action.args
     
-    def post_url(self, url, data):
+    def get_url(self, url, data):
         try:
-            self.logger.info(f"Posting to RTI with KOAID {data['koaid']}")
-            post = requests.post(url, data = data, auth=(
+            self.logger.info(f"GET to RTI with KOAID {data['koaid']}")
+            res = requests.get(url, params = data, auth=(
                                                         self.user,
                                                         self.pw
                                                         ))
@@ -72,4 +72,4 @@ class SendHTTP(BasePrimitive):
             self.logger.error(f"Error caught while posting to {url}:")
             self.logger.error(e)
             return None
-        return post
+        return res
