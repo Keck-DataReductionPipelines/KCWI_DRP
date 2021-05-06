@@ -239,7 +239,7 @@ class Keck_RTI_Pipeline(BasePipeline):
                                       "alert_rti"),
         "alert_rti":                 ("SendHTTP",
                                       "http_started",
-                                      None)
+                                      None),
         # NOD AND SHUFFLE OBJECT PROCESSING
         "process_nandshuff":         ("ProcessObject",
                                       "nandshuff_processing_started",
