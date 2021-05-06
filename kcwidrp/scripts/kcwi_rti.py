@@ -132,7 +132,7 @@ def main():
     check_directory(kcwi_config.output_directory)
 
     try:
-        framework = Framework(Kcwi_pipeline, framework_config_fullpath)
+        framework = Framework(Keck_RTI_Pipeline, framework_config_fullpath)
         # add this line ONLY if you are using a local logging config file
         logging.config.fileConfig(framework_logcfg_fullpath)
         framework.config.instrument = kcwi_config
