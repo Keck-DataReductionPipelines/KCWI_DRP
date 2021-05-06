@@ -53,7 +53,7 @@ class StackFlats(BaseImg):
 
         combine_list = list(self.combine_list['filename'])
         # get flat stack output name
-        stname = strip_fname(combine_list[0]) + '_' + suffix + '.fits'
+        stname = strip_fname(combine_list[-1]) + '_' + suffix + '.fits'
         stack = []
         stackf = []
         for flat in combine_list:
