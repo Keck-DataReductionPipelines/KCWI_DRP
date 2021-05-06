@@ -47,8 +47,8 @@ class SendHTTP(BasePrimitive):
         attempts = 0
         limit = self.config.instrument.rti_attempts
         while attempts < limit:
-            post = self.post_url(url, data)
-            if post is None:
+            res = self.get_url(url, data)
+            if res is None:
                 t = self.config.instrument.rti_retry_time
                 attempts += 1
                 self.logger.error(f"Waiting {t} seconds to attempt again... ({attempts}/{limit})")
