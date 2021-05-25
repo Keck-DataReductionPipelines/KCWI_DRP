@@ -703,3 +703,14 @@ def get_master_name(tab, target_type, loc=0):
     res = Path(strip_fname(tab['filename'][loc]) + '_' + \
                      target_type.lower() + ".fits").name
     return res
+
+def master_bias_name(ccddata, target_type='MBIAS'):
+    # Delivers a mbias filename that is unique for each CCD configuration
+    # Any KCWI frame with a shared CCD configuration can use the same bias
+    name = target_type.lower() + '_' + ccddata.header['CCDCFG'] + '.fits'
+    return name
+
+def master_cal_name(ccddata, target_type):
+    # Delivers a name that is unqie across an observing block
+    name = target_type.lower() + '_' + ccddata.header['STATEID'] + '.fits'
+    return name
