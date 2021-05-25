@@ -1,6 +1,6 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_reader, \
-    get_master_name
+    master_bias_name
 
 import os
 
@@ -26,7 +26,8 @@ class SubtractBias(BasePrimitive):
         self.logger.info("%d master bias frames found" % len(tab))
 
         if len(tab) > 0:
-            mbname = get_master_name(tab, target_type)
+            # mbname = get_master_name(tab, target_type)
+            mbname = master_bias_name(self.action.args.ccddata)
             self.logger.info("Reading image: %s" % mbname)
             mbias = kcwi_fits_reader(
                 os.path.join(self.context.config.instrument.cwd, 'redux',
