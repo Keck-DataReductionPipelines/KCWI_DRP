@@ -710,7 +710,7 @@ def master_bias_name(ccddata, target_type='MBIAS'):
     name = target_type.lower() + '_' + ccddata.header['CCDCFG'] + '.fits'
     return name
 
-def master_cal_name(ccddata, target_type):
+def master_flat_name(ccddata, target_type):
     # Delivers a name that is unqie across an observing block
     name = target_type.lower() + '_' + ccddata.header['STATEID'] + '.fits'
     return name
