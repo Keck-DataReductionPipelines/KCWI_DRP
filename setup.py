@@ -31,8 +31,9 @@ scripts = []
 entry_points = {
     'console_scripts': [
         "reduce_kcwi = kcwidrp.scripts.reduce_kcwi:main",
-        "kcwi_masksky_ds9 = kcwidrp.scripts.kcwi_masksky_ds9:main"
-        "smart_reduce_kcwi = kcwidrp.scripts.smart_reduce_kcwi:main"
+        "kcwi_masksky_ds9 = kcwidrp.scripts.kcwi_masksky_ds9:main",
+        "smart_reduce_kcwi = kcwidrp.scripts.smart_reduce_kcwi:main",
+        "start_kcwi_rti = kcwidrp.scripts.kcwi_rti:main"
     ]}
 
 setup(name=NAME,

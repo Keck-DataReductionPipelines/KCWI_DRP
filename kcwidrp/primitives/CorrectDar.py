@@ -1,7 +1,7 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from kcwidrp.core.kcwi_get_std import kcwi_get_std
 from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer, \
-    kcwi_fits_reader
+    kcwi_fits_reader, strip_fname
 
 import numpy as np
 from scipy.ndimage import shift
@@ -167,11 +167,11 @@ class CorrectDar(BasePrimitive):
         output_obj = None
         output_sky = None
         if self.action.args.nasmask and self.action.args.numopen > 1:
-            ofn = self.action.args.ccddata.header['OFNAME']
+            ofn = self.action.args.name
 
-            objfn = ofn.split('.')[0] + '_ocube.fits'
+            objfn = strip_fname(ofn) + '_ocube.fits'
             full_path = os.path.join(
-                os.path.dirname(self.action.args.name),
+                self.config.instrument.cwd,
                 self.config.instrument.output_directory, objfn)
             if os.path.exists(full_path):
                 obj = kcwi_fits_reader(full_path)[0]
@@ -181,9 +181,9 @@ class CorrectDar(BasePrimitive):
                 output_obj[:, padding_y:(padding_y + image_size[1]),
                            padding_x:(padding_x + image_size[2])] = obj.data
 
-            skyfn = ofn.split('.')[0] + '_scube.fits'
+            skyfn = strip_fname(ofn) + '_scube.fits'
             full_path = os.path.join(
-                os.path.dirname(self.action.args.name),
+                self.config.instrument.cwd,
                 self.config.instrument.output_directory, skyfn)
             if os.path.exists(full_path):
                 sky = kcwi_fits_reader(full_path)[0]
@@ -200,9 +200,9 @@ class CorrectDar(BasePrimitive):
         if stdfile is not None:
             afn = self.action.args.ccddata.header['ARCFL']
 
-            delfn = afn.split('.')[0] + '_dcube.fits'
+            delfn = strip_fname(afn) + '_dcube.fits'
             full_path = os.path.join(
-                os.path.dirname(self.action.args.name),
+                self.config.instrument.cwd,
                 self.config.instrument.output_directory, delfn)
             if os.path.exists(full_path):
                 dew = kcwi_fits_reader(full_path)[0]
@@ -285,7 +285,8 @@ class CorrectDar(BasePrimitive):
                          output_dir=self.config.instrument.output_directory,
                          suffix="icubed")
         self.context.proctab.update_proctab(frame=self.action.args.ccddata,
-                                            suffix="icubed")
+                                            suffix="icubed",
+                                            filename=self.action.args.name)
         self.context.proctab.write_proctab()
 
         # check for sky, obj cube

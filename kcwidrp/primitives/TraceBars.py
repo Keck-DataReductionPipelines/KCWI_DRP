@@ -1,5 +1,5 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
-from kcwidrp.primitives.kcwi_file_primitives import write_table
+from kcwidrp.primitives.kcwi_file_primitives import write_table, strip_fname
 from kcwidrp.core.bokeh_plotting import bokeh_plot
 from kcwidrp.core.kcwi_plotting import save_plot
 
@@ -137,12 +137,12 @@ class TraceBars(BasePrimitive):
             # in this line we pass the trace information to an argument
             # instead of writing it to a table
             self.context.trace = trace
-            ofname = self.action.args.contbar_image.split('.')[0] + \
+            ofname = strip_fname(self.action.args.contbar_image) + \
                 "_trace.fits"
             write_table(table=[src, dst, barid, slid],
                         names=('src', 'dst', 'barid', 'slid'),
                         output_dir=os.path.join(
-                            os.path.dirname(self.action.args.name),
+                            self.config.instrument.cwd,
                             self.config.instrument.output_directory),
                         output_name=ofname,
                         clobber=self.config.instrument.clobber,

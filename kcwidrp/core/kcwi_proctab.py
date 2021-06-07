@@ -12,10 +12,10 @@ class Proctab:
     def new_proctab(self):
         cnames = ('FRAMENO', 'CID', 'DID', 'TYPE', 'GRPID', 'TTIME', 'CAM',
                   'IFU', 'GRAT', 'GANG', 'CWAVE', 'BIN', 'FILT', 'MJD',
-                  'STAGE', 'SUFF', 'OFNAME', 'TARGNAME')
+                  'STAGE', 'SUFF', 'OFNAME', 'TARGNAME', 'filename')
         dtypes = ('int32', 'S24', 'int64', 'S9', 'S12', 'float64', 'S4',
                   'S6', 'S5', 'float64', 'float64', 'S4', 'S5', 'float64',
-                  'int32', 'S5', 'S25', 'S25')
+                  'int32', 'S5', 'S25', 'S25', 'S25')
         meta = {'KCWI DRP PROC TABLE': 'new table'}
         self.proctab = Table(names=cnames, dtype=dtypes, meta=meta)
         # prevent string column truncation
@@ -30,7 +30,7 @@ class Proctab:
             self.proctab.dtypes = ('int32', 'S24', 'int64', 'S9', 'S12',
                                    'float64', 'S4', 'S6', 'S5', 'float64',
                                    'float64', 'S4', 'S5', 'float64', 'int32',
-                                   'S5', 'S25', 'S25')
+                                   'S5', 'S25', 'S25', 'S25')
         else:
             self.log.info("proc table file not found: %s" % tfil)
             self.new_proctab()
@@ -58,7 +58,9 @@ class Proctab:
         else:
             self.log.info("no proc table to write")
 
-    def update_proctab(self, frame, suffix='raw', newtype=None):
+    def update_proctab(self, frame, suffix='raw', newtype=None, filename=""):
+        if filename == "":
+            self.log.error(f"No filename given for {frame.header['OFNAME']}")
         if frame is not None and self.proctab is not None:
             stages = {'RAW': 0,
                       'mbias': 1,
@@ -123,7 +125,8 @@ class Proctab:
                        stage,
                        suffix,
                        frame.header['OFNAME'],
-                       trgnm]
+                       trgnm,
+                       filename]
         else:
             new_row = None
         # print("Attempting to add %s" % str(new_row))
@@ -131,9 +134,10 @@ class Proctab:
         self.proctab = unique(self.proctab, keys=['CID', 'FRAMENO', 'TYPE'],
                               keep='last')
         self.proctab.sort('FRAMENO')
+        self.log.info(f"proctable updated with {frame.header['OFNAME']} and {filename}")
 
     def n_proctab(self, frame, target_type=None, target_group=None,
-                  nearest=False):
+                  nearest=False, return_ofname=True):
         self.frame = frame
         if target_type is not None and self.proctab is not None:
             self.log.info('Looking for %s frames' % target_type)

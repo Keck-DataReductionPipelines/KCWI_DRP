@@ -7,7 +7,8 @@ from astropy.coordinates import SkyCoord, EarthLocation
 
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer, \
-                                                    kcwi_fits_reader
+                                                    kcwi_fits_reader, \
+                                                    strip_fname
 
 
 class WavelengthCorrections(BasePrimitive):
@@ -54,7 +55,8 @@ class WavelengthCorrections(BasePrimitive):
                         output_dir=self.config.instrument.output_directory,
                         suffix=f'{suffix}w')
         self.context.proctab.update_proctab(frame=self.action.args.ccddata,
-                                            suffix=f'_{suffix}w')
+                                            suffix=f'_{suffix}w',
+                                            filename=self.action.args.name)
         self.context.proctab.write_proctab()
 
         # Unsure here: Is this right? it seems to make DAR happy
@@ -310,10 +312,10 @@ class WavelengthCorrections(BasePrimitive):
         return np.array([wav0 + (i - pix0) * dwav for i in range(nwav)])
     
     def locate_object_file(self, suffix):
-        ofn = self.action.args.ccddata.header['OFNAME']
-        objfn = ofn.split('.')[0] + f'_{suffix}.fits'
+        ofn = self.action.args.name
+        objfn = strip_fname(ofn) + f'_{suffix}.fits'
         full_path = os.path.join(
-            os.path.dirname(self.action.args.name),
+            self.config.instrument.cwd,
             self.config.instrument.output_directory, objfn)
         if os.path.exists(full_path):
             return kcwi_fits_reader(full_path)[0]

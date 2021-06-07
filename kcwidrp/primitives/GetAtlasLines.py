@@ -401,7 +401,7 @@ class GetAtlasLines(BasePrimitive):
              self.action.args.illum, self.action.args.grating,
              self.action.args.ifuname)
         # output directory
-        output_dir = os.path.join(os.path.dirname(self.action.args.name),
+        output_dir = os.path.join(self.config.instrument.cwd,
                                   self.config.instrument.output_directory)
         # write out final atlas line list
         atlines = np.array([refws, refas])

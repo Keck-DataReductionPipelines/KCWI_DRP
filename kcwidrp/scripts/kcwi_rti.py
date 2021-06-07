@@ -1,9 +1,7 @@
 """
-Created on Jul 19, 2019
+Created on May 05, 2021
 
-Test Fits to PNG pipeline with HTTP server.
-
-@author: skwok
+@author: skwok, mbrodheim
 """
 
 from keckdrpframework.core.framework import Framework
@@ -20,7 +18,7 @@ import traceback
 import os
 import pkg_resources
 
-from kcwidrp.pipelines.kcwi_pipeline import Kcwi_pipeline
+from kcwidrp.pipelines.keck_rti_pipeline import Keck_RTI_Pipeline
 from kcwidrp.core.kcwi_proctab import Proctab
 import logging.config
 
@@ -117,7 +115,7 @@ def main():
     # add kcwi specific config files # make changes here to allow this file
     # to be loaded from the command line
     if args.kcwi_config_file is None:
-        kcwi_config_file = 'configs/kcwi.cfg'
+        kcwi_config_file = 'configs/kcwi_koarti.cfg'
         kcwi_config_fullpath = pkg_resources.resource_filename(
             pkg, kcwi_config_file)
         kcwi_config = ConfigClass(kcwi_config_fullpath, default_section='KCWI')
@@ -134,7 +132,7 @@ def main():
     check_directory(kcwi_config.output_directory)
 
     try:
-        framework = Framework(Kcwi_pipeline, framework_config_fullpath)
+        framework = Framework(Keck_RTI_Pipeline, framework_config_fullpath)
         # add this line ONLY if you are using a local logging config file
         logging.config.fileConfig(framework_logcfg_fullpath)
         framework.config.instrument = kcwi_config
@@ -179,6 +177,7 @@ def main():
     framework.context.proctab.read_proctab(tfil=args.proctab)
 
     framework.logger.info("Framework initialized")
+    framework.logger.info(f"RTI url is {framework.config.instrument.rti_url}")
 
     # add a start_bokeh event to the processing queue,
     # if requested by the configuration parameters

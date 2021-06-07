@@ -1,5 +1,6 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
-from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_reader
+from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_reader, \
+        get_master_name
 import os
 
 
@@ -24,11 +25,10 @@ class SubtractDark(BasePrimitive):
         self.logger.info("%d master dark frames found" % len(tab))
 
         if len(tab) > 0:
-            mdname = tab['OFNAME'][0].split('.')[0] + '_' + \
-                     target_type.lower() + ".fits"
+            mdname = get_master_name(tab, target_type)
             print("*************** READING IMAGE: %s" % mdname)
             mdark = kcwi_fits_reader(
-                os.path.join(os.path.dirname(self.action.args.name), 'redux',
+                os.path.join(self.config.instrument.cwd, 'redux',
                              mdname))[0]
             # scale by exposure time
             fac = 1.0

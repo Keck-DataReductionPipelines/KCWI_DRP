@@ -1,7 +1,7 @@
 from keckdrpframework.models.arguments import Arguments
 from keckdrpframework.primitives.base_img import BaseImg
 from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_reader, \
-    kcwi_fits_writer, parse_imsec
+    kcwi_fits_writer, master_bias_name, parse_imsec
 from kcwidrp.core.bokeh_plotting import bokeh_plot
 from kcwidrp.core.kcwi_plotting import save_plot
 
@@ -26,7 +26,8 @@ class MakeMasterBias(BaseImg):
         """
         # Add to proctab
         self.context.proctab.update_proctab(frame=self.action.args.ccddata,
-                                            suffix='RAW')
+                                            suffix='RAW',
+                                            filename=self.action.args.name)
         self.context.proctab.write_proctab()
         # Get bias count
         self.logger.info("Checking precondition for MakeMasterBias")
@@ -48,9 +49,12 @@ class MakeMasterBias(BaseImg):
         method = 'average'
         suffix = self.action.args.new_type.lower()
 
-        combine_list = list(self.combine_list['OFNAME'])
+        combine_list = list(self.combine_list['filename'])
         # get master bias output name
-        mbname = combine_list[0].split('.fits')[0] + '_' + suffix + '.fits'
+        # mbname = combine_list[-1].split('.fits')[0] + '_' + suffix + '.fits'
+        mbname = master_bias_name(self.action.args.ccddata)
+        print(f"Using mbname {mbname}")
+    
         stack = []
         stackf = []
         for bias in combine_list:
@@ -132,7 +136,8 @@ class MakeMasterBias(BaseImg):
         kcwi_fits_writer(stacked, output_file=mbname,
                          output_dir=self.config.instrument.output_directory)
         self.context.proctab.update_proctab(frame=stacked, suffix=suffix,
-                                            newtype=self.action.args.new_type)
+                                            newtype=self.action.args.new_type,
+                                            filename=self.action.args.name)
         self.context.proctab.write_proctab()
         return Arguments(name=mbname)
     # END: class ProcessBias()

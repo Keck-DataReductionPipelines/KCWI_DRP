@@ -10,6 +10,7 @@ import os
 import logging
 import pkg_resources
 import subprocess
+from pathlib import Path
 
 logger = logging.getLogger('KCWI')
 
@@ -690,3 +691,26 @@ def kcwi_fits_writer(ccddata, table=None, output_file=None, output_dir=None,
     # log
     logger.info(">>> Saving %d hdus to %s" % (len(hdus_to_save), out_file))
     hdus_to_save.writeto(out_file, overwrite=True)
+
+def strip_fname(filename):
+    if not filename:
+        logger.error(f"Failed to strip file {filename}")
+        return
+    strip = Path(filename).stem
+    return strip
+
+def get_master_name(tab, target_type, loc=0):
+    res = Path(strip_fname(tab['filename'][loc]) + '_' + \
+                     target_type.lower() + ".fits").name
+    return res
+
+def master_bias_name(ccddata, target_type='MBIAS'):
+    # Delivers a mbias filename that is unique for each CCD configuration
+    # Any KCWI frame with a shared CCD configuration can use the same bias
+    name = target_type.lower() + '_' + ccddata.header['CCDCFG'] + '.fits'
+    return name
+
+def master_flat_name(ccddata, target_type):
+    # Delivers a name that is unqie across an observing block
+    name = target_type.lower() + '_' + ccddata.header['STATEID'] + '.fits'
+    return name

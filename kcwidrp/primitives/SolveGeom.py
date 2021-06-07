@@ -1,5 +1,5 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
-
+from kcwidrp.primitives.kcwi_file_primitives import strip_fname
 import os
 import numpy as np
 from skimage import transform as tf
@@ -178,10 +178,10 @@ class SolveGeom(BasePrimitive):
             dichroic_fraction = 1.
 
         # Package geometry data
-        ofname = self.action.args.ccddata.header['OFNAME']
+        ofname = self.action.args.name
         self.action.args.geometry_file = os.path.join(
             self.config.instrument.output_directory,
-            ofname.split('.')[0] + '_geom.pkl')
+            strip_fname(ofname) + '_geom.pkl')
         if os.path.exists(self.action.args.geometry_file):
             self.logger.error("Geometry file already exists: %s" %
                               self.action.args.geometry_file)

@@ -1,6 +1,6 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_reader, \
-    kcwi_fits_writer
+    kcwi_fits_writer, get_master_name, strip_fname
 
 import os
 
@@ -49,8 +49,7 @@ class CorrectIllumination(BasePrimitive):
         self.logger.info("pre condition got %d %s flats, expected 1"
                          % (len(tab), target_type))
         if precondition:
-            self.action.args.master_flat = tab['OFNAME'][0].split('.')[0] + \
-                                           '_' + target_type.lower() + ".fits"
+            self.action.args.master_flat = get_master_name(tab, target_type)
         return precondition
 
     def _perform(self):
@@ -65,7 +64,7 @@ class CorrectIllumination(BasePrimitive):
         self.logger.info("Correcting Illumination")
         if self.action.args.master_flat:
             mflat = kcwi_fits_reader(
-                os.path.join(os.path.dirname(self.action.args.name),
+                os.path.join(self.config.instrument.cwd,
                              self.config.instrument.output_directory,
                              self.action.args.master_flat))[0]
 
@@ -79,11 +78,11 @@ class CorrectIllumination(BasePrimitive):
 
             # check for obj, sky observations
             if self.action.args.nasmask and self.action.args.numopen > 1:
-                ofn = self.action.args.ccddata.header['OFNAME']
+                ofn = self.action.args.name
 
-                objfn = ofn.split('.')[0] + '_obj.fits'
+                objfn = strip_fname(ofn) + '_obj.fits'
                 full_path = os.path.join(
-                    os.path.dirname(self.action.args.name),
+                    self.config.instrument.cwd,
                     self.config.instrument.output_directory, objfn)
                 if os.path.exists(full_path):
                     obj = kcwi_fits_reader(full_path)[0]
@@ -96,9 +95,9 @@ class CorrectIllumination(BasePrimitive):
                 else:
                     obj = None
 
-                skyfn = ofn.split('.')[0] + '_sky.fits'
+                skyfn = strip_fname(ofn) + '_sky.fits'
                 full_path = os.path.join(
-                    os.path.dirname(self.action.args.name),
+                    self.config.instrument.cwd,
                     self.config.instrument.output_directory, skyfn)
                 if os.path.exists(full_path):
                     sky = kcwi_fits_reader(full_path)[0]
@@ -125,7 +124,8 @@ class CorrectIllumination(BasePrimitive):
                          output_dir=self.config.instrument.output_directory,
                          suffix="intf")
         self.context.proctab.update_proctab(frame=self.action.args.ccddata,
-                                            suffix="intf")
+                                            suffix="intf",
+                                            filename=self.action.args.name)
         self.context.proctab.write_proctab()
 
         # check for obj, sky images
