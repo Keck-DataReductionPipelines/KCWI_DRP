@@ -455,6 +455,9 @@ class ingest_file(BasePrimitive):
         self.logger.info(
             "------------------- Ingesting file %s -------------------" %
             self.action.args.name)
+
+        self.action.event._recurrent = True
+
         self.name = self.action.args.name
         out_args = Arguments()
 
@@ -472,6 +475,14 @@ class ingest_file(BasePrimitive):
         if imtype is None:
             fname = os.path.basename(self.action.args.name)
             self.logger.warn(f"Unknown IMTYPE {fname}")
+            self.action.event._reccurent = False
+
+        if self.check_if_file_can_be_processed(imtype) is False:
+            self.logger.warn("Object frame cannot be reduced. Rescheduling")
+            self.action.new_event = None
+            return None
+        else:
+            self.action.event._recurrent = False
 
         out_args.name = self.action.args.name
         out_args.imtype = imtype
@@ -544,6 +555,45 @@ class ingest_file(BasePrimitive):
             if self._post_condition():
                 self.output = output
         return self.output
+
+    def check_if_file_can_be_processed(self, imtype):
+        # bias frames
+        bias_frames = self.context.proctab.n_proctab(frame=self.ccddata, target_type='MBIAS', nearest=True)
+        # continuum bars
+        contbars_frames = self.context.proctab.n_proctab(frame=self.ccddata, target_type='CONTBARS', nearest=True)
+        # master flats
+        masterflat_frames = self.context.proctab.n_proctab(frame=self.ccddata, target_type='MFLAT', nearest=True)
+        # inverse sensitivity
+        inverse_sensitivity_frames = self.context.proctab.n_proctab(frame=self.ccddata, target_type='INVSENS', nearest=True)
+        # arclamp
+        arclamp_frames = self.context.proctab.n_proctab(frame=self.ccddata, target_type='ARCLAMP', nearest=True)
+
+        if imtype == 'OBJECT':
+            if len(bias_frames) > 0 and len(masterflat_frames) > 0:
+                return True
+            else:
+                self.logger.warn("Cannot reduce OBJECT frame. Missing master bias or flat. Rescheduling for later.")
+                return False
+
+        if imtype == 'ARCLAMP':
+            if (len(contbars_frames)) > 0:
+                return True
+            else:
+                self.logger.warn("Cannot reduce ARCLAMP frame. Missing continuum bars. Rescheduling for later.")
+                return False
+
+        if imtype == 'FLATLAMP':
+            if len(bias_frames) > 0:
+                return True
+            else:
+                self.logger.warn("Cannot reduce FLATLAMP frame. Missing master bias. Rescheduling for later.")
+                return False
+
+
+
+
+
+        return True
 
 
 def kcwi_fits_reader(file):
