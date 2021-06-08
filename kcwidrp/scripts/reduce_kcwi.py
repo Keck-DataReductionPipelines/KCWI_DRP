@@ -94,7 +94,7 @@ def main():
     def process(in_subset):
         for in_frame in in_subset.index:
             arguments = Arguments(name=in_frame)
-            framework.append_event('next_file', arguments)
+            framework.append_event('next_file', arguments, recurrent=True)
 
     args = _parse_arguments(sys.argv)
 
