@@ -1,11 +1,17 @@
 .idea
 *.log
 *.egg-info
+*.egg
 *.pyc
 *__pycache__*
+<<<<<<< HEAD
 <<<<<<< HEAD
 /build
 *.egg
 =======
 docs/build
 >>>>>>> First commit of documentation
+=======
+docs/build
+build/
+>>>>>>> add all build files to gitignore
