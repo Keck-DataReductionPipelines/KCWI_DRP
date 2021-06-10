@@ -74,6 +74,7 @@ Maintenance and support of the DRP are provided as part of the Data Services Ini
 
    updating_docs
    development
+   issues
 
 
 Indices and tables
