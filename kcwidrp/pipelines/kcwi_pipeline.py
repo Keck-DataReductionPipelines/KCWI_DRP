@@ -296,22 +296,24 @@ class Kcwi_pipeline(BasePipeline):
 
     def action_planner(self, action, context):
         try:
-            self.logger.info("******* FILE TYPE DETERMINED AS %s" %
+            self.context.pipeline_logger.info("******* FILE TYPE DETERMINED AS %s" %
                              action.args.imtype)
         except:
-            return
+            self.context.pipeline_logger.warn("******* FILE TYPE is NOT determined. No processing is possible.")
+            return False
 
         groupid = action.args.groupid
-        self.logger.info("******* GROUPID is %s " % action.args.groupid)
+        self.context.pipeline_logger.info("******* GROUPID is %s " % action.args.groupid)
+        self.context.pipeline_logger.info("******* STATEID is %s (%s) " % (action.args.ccddata.header["STATENAM"], action.args.ccddata.header["STATEID"]))
         if action.args.in_proctab:
-            self.logger.warn("Already processed (already in proctab)")
+            self.context.pipeline_logger.warn("Already processed (already in proctab)")
         if action.args.in_proctab and not context.config.instrument.clobber:
-            self.logger.warn("Pushing noop to queue")
+            self.context.pipeline_logger.warn("Pushing noop to queue")
             context.push_event("noop", action.args)
         elif "BIAS" in action.args.imtype:
             if action.args.ttime > 0:
-                logger.warn(f"BIAS frame with exposure time = {action.args.ttime} > 0. Discarding.")
-                return
+                self.context.pipeline_logger.warn(f"BIAS frame with exposure time = {action.args.ttime} > 0. Discarding.")
+                return False
             bias_args = action.args
             bias_args.groupid = groupid
             bias_args.want_type = "BIAS"
@@ -369,6 +371,7 @@ class Kcwi_pipeline(BasePipeline):
                 object_args = action.args
                 object_args.new_type = "SKY"
                 context.push_event("process_object", object_args)
+        return True
 
 
 if __name__ == "__main__":
