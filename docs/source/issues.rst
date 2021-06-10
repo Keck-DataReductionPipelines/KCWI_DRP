@@ -25,7 +25,8 @@ These instructions assume you are using :code:`conda` to manage your environment
 
 #. If you installed the pipeline with :code:`pip`, uninstall with 
    :code:`pip uninstall kcwidrp`
-#. Install the pipeline following the Installing for Development instructions.
+#. Install the pipeline following the Installing for Development instructions on
+   the :doc:`installing` page.
 #. Open :code:`KCWI_DRP/kcwidrp/core/kcwi_plotting.py` in a text editor
 
 #. Add the following import at the top of the file: ::
