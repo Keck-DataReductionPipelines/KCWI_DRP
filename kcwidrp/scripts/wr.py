@@ -125,14 +125,43 @@ if __name__ == '__main__':
         print("Usage - wr <fspec>")
     else:
         configs = []
+        bias = []
+        cflat = []
+        dflat = []
+        tflat = []
         for ifl in sys.argv[1:]:
             logstr, cfgstr = get_log_string(ifl, batch=True)
             print(logstr)
             if cfgstr:
                 configs.append(cfgstr)
+            if 'BIAS' in logstr:
+                bias.append(ifl)
+            if 'FLATLAMP' in logstr:
+                cflat.append(ifl)
+            if 'DOMEFLAT' in logstr:
+                dflat.append(ifl)
+            if 'TWIFLAT' in logstr:
+                tflat.append(ifl)
 
         # Unique configs
         uconfigs = sorted(set(configs))
         print("Number of unique configurations = %d" % len(uconfigs))
         for c in uconfigs:
             print(c)
+
+        if len(bias) > 0:
+            with open('bias.txt', 'a') as ofil:
+                for b in bias:
+                    ofil.write(b + '\n')
+        if len(cflat) > 0:
+            with open('cflat.txt', 'a') as ofil:
+                for c in cflat:
+                    ofil.write(c + '\n')
+        if len(dflat) > 0:
+            with open('dflat.txt', 'a') as ofil:
+                for d in dflat:
+                    ofil.write(d + '\n')
+        if len(tflat) > 0:
+            with open('tflat.txt', 'a') as ofil:
+                for t in tflat:
+                    ofil.write(t + '\n')
