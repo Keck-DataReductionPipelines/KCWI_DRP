@@ -26,7 +26,7 @@ class ExtractArcs(BasePrimitive):
         self.action.args.slice_id = None
 
     def _pre_condition(self):
-        contbars_in_proctable = self.context.proctab.n_proctab(
+        contbars_in_proctable = self.context.proctab.search_proctab(
             frame=self.action.args.ccddata, target_type='CONTBARS',
             nearest=True)
         self.logger.info("%d continuum bars frames found" %

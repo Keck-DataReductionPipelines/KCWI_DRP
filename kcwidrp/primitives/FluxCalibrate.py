@@ -25,7 +25,7 @@ class FluxCalibrate(BasePrimitive):
         """
         self.logger.info("Checking precondition for FluxCalibrate")
         target_type = 'INVSENS'
-        tab = self.context.proctab.n_proctab(frame=self.action.args.ccddata,
+        tab = self.context.proctab.search_proctab(frame=self.action.args.ccddata,
                                              target_type=target_type,
                                              nearest=True)
         self.logger.info("pre condition got %d invsens files, expected >= 1"
@@ -46,7 +46,7 @@ class FluxCalibrate(BasePrimitive):
         sky = None
 
         self.logger.info("Calibrating object flux")
-        tab = self.context.proctab.n_proctab(frame=self.action.args.ccddata,
+        tab = self.context.proctab.search_proctab(frame=self.action.args.ccddata,
                                              target_type=target_type,
                                              nearest=True)
         self.logger.info("%d invsens files found" % len(tab))

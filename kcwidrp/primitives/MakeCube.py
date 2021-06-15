@@ -95,7 +95,7 @@ class MakeCube(BasePrimitive):
             do_inter = False
         self.logger.info("Generating data cube")
         # Find and read geometry transformation
-        tab = self.context.proctab.n_proctab(frame=self.action.args.ccddata,
+        tab = self.context.proctab.search_proctab(frame=self.action.args.ccddata,
                                              target_type='ARCLAMP',
                                              nearest=True)
         if not len(tab):

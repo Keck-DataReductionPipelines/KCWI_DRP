@@ -35,7 +35,7 @@ class MakeMasterFlat(BaseImg):
         """
         # get list of master flats
         self.logger.info("Checking precondition for MakeMasterFlat")
-        tab = self.context.proctab.n_proctab(
+        tab = self.context.proctab.search_proctab(
             frame=self.action.args.ccddata,
             target_type=self.action.args.new_type, nearest=True)
         if len(tab) > 0:
@@ -46,7 +46,7 @@ class MakeMasterFlat(BaseImg):
         else:
             self.logger.info("No %s master flat found, proceeding." %
                              self.action.args.new_type)
-            self.stack_list = self.context.proctab.n_proctab(
+            self.stack_list = self.context.proctab.search_proctab(
                 frame=self.action.args.ccddata,
                 target_type=self.action.args.stack_type,
                 target_group=self.action.args.groupid)
@@ -74,7 +74,7 @@ class MakeMasterFlat(BaseImg):
             return self.action.args
 
         # get root for maps
-        tab = self.context.proctab.n_proctab(
+        tab = self.context.proctab.search_proctab(
             frame=self.action.args.ccddata, target_type='ARCLAMP',
             target_group=self.action.args.groupid)
         if len(tab) <= 0:

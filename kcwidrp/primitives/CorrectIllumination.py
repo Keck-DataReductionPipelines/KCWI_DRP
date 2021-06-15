@@ -21,19 +21,19 @@ class CorrectIllumination(BasePrimitive):
         self.logger.info("Checking precondition for CorrectIllumination")
         # first check for internal flat
         target_type = 'MFLAT'
-        tab = self.context.proctab.n_proctab(frame=self.action.args.ccddata,
+        tab = self.context.proctab.search_proctab(frame=self.action.args.ccddata,
                                              target_type=target_type,
                                              nearest=True)
         if len(tab) <= 0:
             # next look for twilight flat
             target_type = 'MTWIF'
-            tab = self.context.proctab.n_proctab(frame=self.action.args.ccddata,
+            tab = self.context.proctab.search_proctab(frame=self.action.args.ccddata,
                                                  target_type=target_type,
                                                  nearest=True)
             if len(tab) <= 0:
                 # finally look for dome flat
                 target_type = 'MDOME'
-                tab = self.context.proctab.n_proctab(
+                tab = self.context.proctab.search_proctab(
                     frame=self.action.args.ccddata,
                     target_type=target_type,
                     nearest=True)

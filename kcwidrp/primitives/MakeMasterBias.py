@@ -31,7 +31,7 @@ class MakeMasterBias(BaseImg):
         self.context.proctab.write_proctab()
         # Get bias count
         self.logger.info("Checking precondition for MakeMasterBias")
-        self.combine_list = self.context.proctab.n_proctab(
+        self.combine_list = self.context.proctab.search_proctab(
             frame=self.action.args.ccddata, target_type='BIAS',
             target_group=self.action.args.groupid)
         self.logger.info(f"pre condition got {len(self.combine_list)},"

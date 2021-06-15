@@ -20,7 +20,7 @@ class StackFlats(BaseImg):
         """
         # get list of input flats
         self.logger.info("Checking precondition for StackFlats")
-        self.stacked_list = self.context.proctab.n_proctab(
+        self.stacked_list = self.context.proctab.search_proctab(
             frame=self.action.args.ccddata,
             target_type=self.action.args.stack_type,
             target_group=self.action.args.groupid)
@@ -29,7 +29,7 @@ class StackFlats(BaseImg):
                              f" stacked flats, expecting 0")
             return False
         else:
-            self.combine_list = self.context.proctab.n_proctab(
+            self.combine_list = self.context.proctab.search_proctab(
                 frame=self.action.args.ccddata,
                 target_type=self.action.args.want_type,
                 target_group=self.action.args.groupid)
