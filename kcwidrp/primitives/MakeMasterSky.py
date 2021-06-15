@@ -79,7 +79,7 @@ class MakeMasterSky(BaseImg):
         suffix = self.action.args.new_type.lower()
 
         # get root for maps
-        tab = self.context.proctab.n_proctab(
+        tab = self.context.proctab.search_proctab(
             frame=self.action.args.ccddata, target_type='ARCLAMP',
             target_group=self.action.args.groupid)
         if len(tab) <= 0:

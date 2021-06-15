@@ -136,22 +136,26 @@ class Proctab:
         self.proctab.sort('FRAMENO')
         self.log.info(f"proctable updated with {frame.header['OFNAME']} and {filename}")
 
-    def n_proctab(self, frame, target_type=None, target_group=None,
+    def search_proctab(self, frame, target_type=None, target_group=None,
                   nearest=False, return_ofname=True):
         self.frame = frame
         if target_type is not None and self.proctab is not None:
             self.log.info('Looking for %s frames' % target_type)
             # get relevant camera (blue or red)
+            self.log.info('Camera is %s' % self.frame.header['CAMERA'])
             tab = self.proctab[(self.proctab['CAM'] ==
                                 self.frame.header['CAMERA'].strip())]
             # get target type images
             tab = tab[(self.proctab['TYPE'] == target_type)]
+            self.log.info('Target type is %s' % target_type)
             # BIASES must have the same CCDCFG
             if 'BIAS' in target_type:
                 self.log.info('Looking for frames with CCDCFG = %s' %
                               self.frame.header['CCDCFG'])
                 tab = tab[(tab['DID'] == int(self.frame.header['CCDCFG']))]
                 if target_group is not None:
+                    self.log.info('Looking for frames with GRPID = %s' %
+                                  target_group)
                     tab = tab[(tab['GRPID'] == target_group)]
             # raw DARKS must have the same CCDCFG and TTIME
             elif target_type == 'DARK':
@@ -161,6 +165,8 @@ class Proctab:
                 tab = tab[tab['DID'] == int(self.frame.header['CCDCFG'])]
                 tab = tab[tab['TTIME'] == float(self.frame.header['TTIME'])]
                 if target_group is not None:
+                    self.log.info('Looking for frames with GRPID = %s' %
+                                  target_group)
                     tab = tab[tab['GRPID'] == target_group]
             # MDARKS must have the same CCDCFG, will be scaled to match TTIME
             elif target_type == 'MDARK':
@@ -168,6 +174,8 @@ class Proctab:
                               self.frame.header['CCDCFG'])
                 tab = tab[(tab['DID'] == int(self.frame.header['CCDCFG']))]
             else:
+                self.log.info('Looking for frames with STATEID = %s (%s)' %
+                              (self.frame.header['STATEID'], self.frame.header['STATENAM']))
                 tab = tab[(tab['CID'] == self.frame.header['STATEID'])]
             # Check if nearest entry is requested
             if nearest and len(tab) > 1:
