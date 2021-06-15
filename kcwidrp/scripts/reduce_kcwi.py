@@ -238,7 +238,7 @@ def main():
         data_set.data_table.drop(ccdclear_frames, inplace=True)
 
         # processing
-        imtypes = ['BIAS', 'CONTBARS', 'ARCLAMP', 'FLATLAMP', 'OBJECT']
+        imtypes = ['BIAS', 'CONTBARS', 'ARCLAMP', 'FLATLAMP', 'DOMEFLAT', 'TWIFLAT', 'OBJECT']
 
         for imtype in imtypes:
             subset = data_set.data_table[
