@@ -571,8 +571,7 @@ class ingest_file(BasePrimitive):
         if imtype == 'OBJECT':
             if len(bias_frames) > 0 \
                 and len(masterflat_frames) > 0 \
-                and len(arclamp_frames) > 0 \
-                and len(contbars_frames) > 0:
+                and len(arclamp_frames) > 0:
                 return True
             else:
                 self.logger.warn("Cannot reduce OBJECT frame. Missing bias, flat, or contbars. Rescheduling for later.")
