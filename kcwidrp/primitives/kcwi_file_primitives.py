@@ -558,18 +558,21 @@ class ingest_file(BasePrimitive):
 
     def check_if_file_can_be_processed(self, imtype):
         # bias frames
-        bias_frames = self.context.proctab.n_proctab(frame=self.ccddata, target_type='MBIAS', nearest=True)
+        bias_frames = self.context.proctab.search_proctab(frame=self.ccddata, target_type='MBIAS', nearest=True)
         # continuum bars
-        contbars_frames = self.context.proctab.n_proctab(frame=self.ccddata, target_type='CONTBARS', nearest=True)
+        contbars_frames = self.context.proctab.search_proctab(frame=self.ccddata, target_type='CONTBARS', nearest=True)
         # master flats
-        masterflat_frames = self.context.proctab.n_proctab(frame=self.ccddata, target_type='MFLAT', nearest=True)
+        masterflat_frames = self.context.proctab.search_proctab(frame=self.ccddata, target_type='MFLAT', nearest=True)
         # inverse sensitivity
-        inverse_sensitivity_frames = self.context.proctab.n_proctab(frame=self.ccddata, target_type='INVSENS', nearest=True)
+        inverse_sensitivity_frames = self.context.proctab.search_proctab(frame=self.ccddata, target_type='INVSENS', nearest=True)
         # arclamp
-        arclamp_frames = self.context.proctab.n_proctab(frame=self.ccddata, target_type='ARCLAMP', nearest=True)
+        arclamp_frames = self.context.proctab.search_proctab(frame=self.ccddata, target_type='ARCLAMP', nearest=True)
 
         if imtype == 'OBJECT':
-            if len(bias_frames) > 0 and len(masterflat_frames) > 0:
+            if len(bias_frames) > 0 \
+                and len(masterflat_frames) > 0 \
+                and len(arclamp_frames) > 0 \
+                and len(contbars_frames) > 0:
                 return True
             else:
                 self.logger.warn("Cannot reduce OBJECT frame. Missing master bias or flat. Rescheduling for later.")
@@ -582,14 +585,12 @@ class ingest_file(BasePrimitive):
                 self.logger.warn("Cannot reduce ARCLAMP frame. Missing continuum bars. Rescheduling for later.")
                 return False
 
-        if imtype == 'FLATLAMP':
+        if imtype in ['FLATLAMP', 'TWIFLAT', 'DOMEFLAT']:
             if len(bias_frames) > 0:
                 return True
             else:
-                self.logger.warn("Cannot reduce FLATLAMP frame. Missing master bias. Rescheduling for later.")
+                self.logger.warn(f"Cannot reduce {imtype} frame. Missing master bias. Rescheduling for later.")
                 return False
-
-
 
 
 
