@@ -6,11 +6,13 @@ Test Fits to PNG pipeline with HTTP server.
 @author: skwok
 """
 
+import enum
 from keckdrpframework.core.framework import Framework
 from keckdrpframework.config.framework_config import ConfigClass
 from keckdrpframework.models.arguments import Arguments
 from keckdrpframework.utils.drpf_logger import getLogger
 from kcwidrp.core.bokeh_plotting import check_running_process
+from kcwidrp.core.kcwi_get_std import is_file_kcwi_std
 
 import subprocess
 import time
@@ -91,8 +93,13 @@ def check_directory(directory):
 
 def main():
 
-    def process(in_subset):
+    def process_subset(in_subset):
         for in_frame in in_subset.index:
+            arguments = Arguments(name=in_frame)
+            framework.append_event('next_file', arguments, recurrent=True)
+    
+    def process_list(in_list):
+        for in_frame in in_list:
             arguments = Arguments(name=in_frame)
             framework.append_event('next_file', arguments, recurrent=True)
 
@@ -243,10 +250,21 @@ def main():
         for imtype in imtypes:
             subset = data_set.data_table[
                 framework.context.data_set.data_table.IMTYPE == imtype]
-            process(subset)
+            if 'OBJECT' in imtype: # Ensure that standards are processed first
+                object_order = []
+                standard_order = []
+                for frame in subset.index:
+                    if is_file_kcwi_std(frame, logger=framework.context.logger):
+                        standard_order.append(frame)
+                    else:
+                        object_order.append(frame)
+                order = standard_order + object_order # Standards first
+                process_list(order)
+            else:
+                process_subset(subset)
 
-    framework.start(args.queue_manager_only, args.ingest_data_only,
-                    args.wait_for_event, args.continuous)
+    # framework.start(args.queue_manager_only, args.ingest_data_only,
+    #                 args.wait_for_event, args.continuous)
 
 
 if __name__ == "__main__":
