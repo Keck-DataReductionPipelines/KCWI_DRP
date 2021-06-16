@@ -575,7 +575,7 @@ class ingest_file(BasePrimitive):
                 and len(contbars_frames) > 0:
                 return True
             else:
-                self.logger.warn("Cannot reduce OBJECT frame. Missing master bias or flat. Rescheduling for later.")
+                self.logger.warn("Cannot reduce OBJECT frame. Missing bias, flat, or contbars. Rescheduling for later.")
                 return False
 
         if imtype == 'ARCLAMP':
