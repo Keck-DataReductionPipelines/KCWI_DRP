@@ -263,8 +263,8 @@ def main():
             else:
                 process_subset(subset)
 
-    # framework.start(args.queue_manager_only, args.ingest_data_only,
-    #                 args.wait_for_event, args.continuous)
+    framework.start(args.queue_manager_only, args.ingest_data_only,
+                    args.wait_for_event, args.continuous)
 
 
 if __name__ == "__main__":
