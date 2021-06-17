@@ -575,9 +575,9 @@ class ingest_file(BasePrimitive):
                 return True
             else:
                 self.logger.warn("Cannot reduce OBJECT frame. Rescheduling for later. Found:")
-                self.logger.warn(f"\tMBIAS: {bias_frames}")
-                self.logger.warn(f"\tMFLAT: {masterflat_frames}")
-                self.logger.warn(f"\tARCLAMP: {arclamp_frames}")
+                self.logger.warn(f"\tMBIAS: {len(bias_frames)}")
+                self.logger.warn(f"\tMFLAT: {len(masterflat_frames)}")
+                self.logger.warn(f"\tARCLAMP: {len(arclamp_frames)}")
                 return False
 
         if imtype == 'ARCLAMP':
