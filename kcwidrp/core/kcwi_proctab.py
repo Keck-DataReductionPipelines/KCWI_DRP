@@ -179,16 +179,16 @@ class Proctab:
                 tab = tab[(tab['CID'] == self.frame.header['STATEID'])]
             # Check if nearest entry is requested
             if nearest and len(tab) > 1:
-                tfno = self.frame.header['FRAMENO']
+                tfno = self.frame.header['MJD']
                 minoff = 99999
                 trow = None
                 for row in tab:
-                    off = abs(row['FRAMENO'] - tfno)
+                    off = abs(row['MJD'] - tfno)
                     if off < minoff:
                         minoff = off
                         trow = row
                 if trow is not None:
-                    tab = tab[(tab['FRAMENO'] == trow['FRAMENO'])]
+                    tab = tab[(tab['MJD'] == trow['MJD'])]
         else:
             if target_type is None:
                 self.log.warning("No target for proctab")
@@ -202,8 +202,8 @@ class Proctab:
         # get relevant camera (blue or red)
         tab = self.proctab[(self.proctab['CAM'] ==
                             self.frame.header['CAMERA'].strip())]
-        imno_list = tab['FRAMENO']
-        if self.frame.header['FRAMENO'] in imno_list:
+        imno_list = tab['MJD']
+        if self.frame.header['MJD'] in imno_list:
             return True
         else:
             return False
