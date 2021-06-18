@@ -17,7 +17,7 @@ metadata = dict(conf.items("metadata"))
 options = dict(conf.items("options"))
 
 NAME = 'kcwidrp'
-VERSION = '1.0'
+VERSION = '1.0.1'
 RELEASE = 'dev' not in VERSION
 AUTHOR = metadata["author"]
 AUTHOR_EMAIL = metadata["author_email"]
