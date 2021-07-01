@@ -129,6 +129,10 @@ def main():
         # kcwi_config_fullpath = os.path.abspath(args.kcwi_config_file)
         kcwi_config = ConfigClass(args.kcwi_config_file, default_section='KCWI')
 
+    rti_config_file = "configs/rti.cfg"
+    rti_config_fullpath = pkg_resources.resource_filename(pkg, rti_config_file)
+    rti_config = ConfigClass(rti_config_fullpath, default_section='RTI')
+    print(rti_config.rti_user)
     # END HANDLING OF CONFIGURATION FILES ##########
 
     # Add current working directory to config info
@@ -142,6 +146,7 @@ def main():
         # add this line ONLY if you are using a local logging config file
         logging.config.fileConfig(framework_logcfg_fullpath)
         framework.config.instrument = kcwi_config
+        framework.config.rti = rti_config
     except Exception as e:
         print("Failed to initialize framework, exiting ...", e)
         traceback.print_exc()
@@ -183,7 +188,7 @@ def main():
     framework.context.proctab.read_proctab(tfil=args.proctab)
 
     framework.logger.info("Framework initialized")
-    framework.logger.info(f"RTI url is {framework.config.instrument.rti_url}")
+    framework.logger.info(f"RTI url is {framework.config.rti.rti_url}")
 
     # add a start_bokeh event to the processing queue,
     # if requested by the configuration parameters

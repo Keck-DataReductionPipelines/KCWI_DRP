@@ -15,8 +15,8 @@ class SendHTTP(BasePrimitive):
         self.logger = context.pipeline_logger
     
     def _pre_condition(self):
-        self.user = self.config.instrument.rti_user
-        self.pw = self.config.instrument.rti_pass
+        self.user = self.config.rti.rti_user
+        self.pw = self.config.rti.rti_pass
         if self.user == '' or self.pw == '':
             self.logger.error("Username or password is not set for RTI access")
             return False
@@ -28,29 +28,29 @@ class SendHTTP(BasePrimitive):
             self.logger.error(f"Encountered a file with no KOA ID: {self.action.args.name}")
             return self.action.args
         
-        data_directory = os.path.join(self.config.instrument.cwd,
-                                      self.config.instrument.output_directory)
+        data_directory = os.path.join(self.config.rti.cwd,
+                                      self.config.rti.output_directory)
         
         self.logger.info(f"Alerting RTI that {strip_fname(self.action.args.name)} is ready for ingestion")
 
-        url = self.config.instrument.rti_url
+        url = self.config.rti.rti_url
         data = {
             'instrument': 'KCWI',
             'koaid': self.action.args.ccddata.header['KOAID'],
-            'ingesttype': self.config.instrument.rti_ingesttype,
+            'ingesttype': self.config.rti.rti_ingesttype,
             'datadir': str(data_directory),
             'start': str(self.action.args.ingest_time),
-            'reingest': self.config.instrument.rti_reingest,
-            'testonly': self.config.instrument.rti_testonly,
-            'dev': self.config.instrument.rti_dev
+            'reingest': self.config.rti.rti_reingest,
+            'testonly': self.config.rti.rti_testonly,
+            'dev': self.config.rti.rti_dev
         }
         
         attempts = 0
-        limit = self.config.instrument.rti_attempts
+        limit = self.config.rti.rti_attempts
         while attempts < limit:
             res = self.get_url(url, data)
             if res is None:
-                t = self.config.instrument.rti_retry_time
+                t = self.config.rti.rti_retry_time
                 attempts += 1
                 self.logger.error(f"Waiting {t} seconds to attempt again... ({attempts}/{limit})")
                 time.sleep(t)
