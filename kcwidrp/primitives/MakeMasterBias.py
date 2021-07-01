@@ -53,7 +53,6 @@ class MakeMasterBias(BaseImg):
         # get master bias output name
         # mbname = combine_list[-1].split('.fits')[0] + '_' + suffix + '.fits'
         mbname = master_bias_name(self.action.args.ccddata)
-        print(f"Using mbname {mbname}")
     
         stack = []
         stackf = []
