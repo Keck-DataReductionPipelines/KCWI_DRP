@@ -132,7 +132,6 @@ def main():
     rti_config_file = "configs/rti.cfg"
     rti_config_fullpath = pkg_resources.resource_filename(pkg, rti_config_file)
     rti_config = ConfigClass(rti_config_fullpath, default_section='RTI')
-    print(rti_config.rti_user)
     # END HANDLING OF CONFIGURATION FILES ##########
 
     # Add current working directory to config info
