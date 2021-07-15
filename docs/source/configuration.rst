@@ -129,3 +129,12 @@ Cosmic rays rejection parameters
 These parameters are used to control the CRR algorithms. See the documentation in
 `astroscrappy <https://astroscrappy.readthedocs.io/en/latest/index.html>`_ for details (PROVIDE LINK)
 
+Wavelength correction parameters:
+---------------------------------
+
+The ``radial_velocity_correction`` parameter controls what reference frame to use for
+radial velocity corrections. The options are ``heliocentric``, ``barycentric``,
+or ``none``
+
+The ``air_to_vacuum`` parameter controls if the pipeline should convert
+to vacuum wavelengths from air wavelengths.
