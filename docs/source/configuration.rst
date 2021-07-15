@@ -127,5 +127,5 @@ Cosmic rays rejection parameters
  CRR_NITER = 4
 
 These parameters are used to control the CRR algorithms. See the documentation in
-LACOSMICX for details (PROVIDE LINK)
+`astroscrappy <https://astroscrappy.readthedocs.io/en/latest/index.html>`_ for details (PROVIDE LINK)
 
