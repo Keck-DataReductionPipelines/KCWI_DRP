@@ -74,7 +74,7 @@ class StackFlats(BaseImg):
         stacked = ccdproc.combine(stack, method=method, sigma_clip=True,
                                   sigma_clip_low_thresh=None,
                                   sigma_clip_high_thresh=2.0)
-        stacked.mask = stacked.mask & mask
+        # stacked.mask = stacked.mask & mask
         stacked.header['IMTYPE'] = self.action.args.stack_type
         stacked.header['NSTACK'] = (len(combine_list),
                                     'number of images stacked')
