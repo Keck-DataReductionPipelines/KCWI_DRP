@@ -66,15 +66,16 @@ class StackFlats(BaseImg):
                                 stackf[-1])
             # using [0] gets just the image data
             f = kcwi_fits_reader(flatfn)[0]
-            # Set mask to None to prevent ccdproc.combine from masking
+            # Save a mask to add to the stack later
             mask = np.copy(f.mask)
+            # Set mask to None to prevent ccdproc.combine from masking
             f.mask = None
             stack.append(f)
 
         stacked = ccdproc.combine(stack, method=method, sigma_clip=True,
                                   sigma_clip_low_thresh=None,
                                   sigma_clip_high_thresh=2.0)
-        # stacked.mask = stacked.mask & mask
+        stacked.mask = mask
         stacked.header['IMTYPE'] = self.action.args.stack_type
         stacked.header['NSTACK'] = (len(combine_list),
                                     'number of images stacked')
