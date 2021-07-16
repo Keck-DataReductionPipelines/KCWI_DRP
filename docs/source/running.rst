@@ -41,7 +41,7 @@ in a directory:
 ``--groups``  This options forces the DRP to group the files by image type and then processes
 them in the correct order so that master calibrations are produced before processing
 science images, regardless of the order in which the files appear on disk or are specified
-in the input list.
+in the input list. This is also accessible with the ``-g`` flag.
 
 Running individual steps
 ------------------------
@@ -54,9 +54,9 @@ If you know what you are doing, you can in principle create individual file list
 Example:
 
 Create a file containing bias frames and call it ``bias.lst``.
-You can can run 
+You can can run
 
-.. code-block: shell
+.. code-block:: shell
 
    reduce_kcwi -l bias.lst
 
@@ -76,7 +76,8 @@ ingested and processed. To start the DRP in this mode use:
 
    reduce_kcwi -d /home/mydata -i kb*.fits -m
 
-The ``-i kb*.fits`` is the filter used to recognize the correct files. If it is not specified
+The ``-i KB*.fits`` (or ``-i kb*.fits`` if you are using OFNAME files)
+is the filter used to recognize the correct files. If it is not specified
 the pipeline will ingest all files appearing in a directory, and might fail if those files
 are not KCWI frames.
 
