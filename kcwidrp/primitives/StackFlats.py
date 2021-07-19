@@ -75,13 +75,16 @@ class StackFlats(BaseImg):
         stacked = ccdproc.combine(stack, method=method, sigma_clip=True,
                                   sigma_clip_low_thresh=None,
                                   sigma_clip_high_thresh=2.0)
-        name = strip_fname(combine_list[-1]) + '_intd.fits'
-        path = os.path.join(self.config.instrument.cwd,
-                                  self.config.instrument.output_directory,
-                                name)
-        last_flat = kcwi_fits_reader(path)[0]
 
+        # Get the BPM out of one of the flats (bpm is the same for all flats)
+        # and add it to the stacked flat as the stack's mask
+        last_flat_name = strip_fname(combine_list[-1]) + '_intd.fits'
+        last_flat_path = os.path.join(self.config.instrument.cwd,
+                                  self.config.instrument.output_directory,
+                                last_flat_name)
+        last_flat = kcwi_fits_reader(last_flat_path)[0]
         stacked.mask = last_flat.mask
+        
         stacked.header['IMTYPE'] = self.action.args.stack_type
         stacked.header['NSTACK'] = (len(combine_list),
                                     'number of images stacked')
