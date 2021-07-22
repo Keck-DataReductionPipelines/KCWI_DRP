@@ -1,0 +1,17 @@
+1.0.0:
+	-Release
+1.0.1:
+	-Added filter to remove bias frames with expime > 0 (bad focus images)
+	-Config file adjusted to allow fits files of any name
+	-Conda env file now explicitly describes channels to be used
+	-Implemented astroscrappy for ccr, instead of lacosmicx
+	-Added pipeline and script for running the DRP in real time at Keck
+	-Changed logging to print more information about what files are being read when
+	-Change ccdproc source to conda-forge to get latest version
+	-Integrate TWIFLAT and DOMEFLAT frames into group mode
+	-Enable recurring events option, allowing unordered files to be processed (sometimes)
+1.0.2:
+	-Changed headers in mflat and mbias to only store file names, not whole paths
+	-Enabled -i CLI option
+	-Fixed bug where bad pixels would cause entire slices to be masked, instead of single pixels
+	-Added changelog
