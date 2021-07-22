@@ -66,8 +66,6 @@ class StackFlats(BaseImg):
                                 stackf[-1])
             # using [0] gets just the image data
             f = kcwi_fits_reader(flatfn)[0]
-            # Save a mask to add to the stack later
-            mask = np.copy(f.mask)
             # Set mask to None to prevent ccdproc.combine from masking
             f.mask = None
             stack.append(f)
@@ -76,7 +74,7 @@ class StackFlats(BaseImg):
                                   sigma_clip_low_thresh=None,
                                   sigma_clip_high_thresh=2.0)
 
-        # Get the BPM out of one of the flats (bpm is the same for all flats)
+        # Get the BPM out of one of the flats (bpm is the same for all)
         # and add it to the stacked flat as the stack's mask
         last_flat_name = strip_fname(combine_list[-1]) + '_intd.fits'
         last_flat_path = os.path.join(self.config.instrument.cwd,
