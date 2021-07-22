@@ -53,8 +53,8 @@ def _parse_arguments(in_args: list) -> argparse.Namespace:
 
     # in this case, we are loading an entire directory,
     # and ingesting all the files in that directory
-    parser.add_argument('-i', '--infiles', dest="infiles", help="Input files",
-                        nargs="*")
+    parser.add_argument('-i', '--infiles', dest="infiles",
+                        help="Input files, or pattern to match", nargs="?")
     parser.add_argument('-d', '--directory', dest="dirname", type=str,
                         help="Input directory", nargs='?', default=None)
     # after ingesting the files,
@@ -153,6 +153,9 @@ def main():
                                                   name="KCWI")
     framework.logger = getLogger(framework_logcfg_fullpath,
                                  name="DRPF")
+
+    if args.infiles is not None:
+        framework.config.file_type = args.infiles
 
     # check for taperfrac argument
     if args.taperfrac:
