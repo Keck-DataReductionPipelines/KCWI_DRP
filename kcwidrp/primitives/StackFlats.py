@@ -4,6 +4,7 @@ from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_reader, \
 
 import os
 import ccdproc
+import numpy as np
 
 
 class StackFlats(BaseImg):
@@ -56,6 +57,7 @@ class StackFlats(BaseImg):
         stname = strip_fname(combine_list[-1]) + '_' + suffix + '.fits'
         stack = []
         stackf = []
+        mask = None
         for flat in combine_list:
             # get flat intensity (int) image file name in redux directory
             stackf.append(strip_fname(flat) + '_intd.fits')
@@ -63,11 +65,24 @@ class StackFlats(BaseImg):
                                   self.config.instrument.output_directory,
                                 stackf[-1])
             # using [0] gets just the image data
-            stack.append(kcwi_fits_reader(flatfn)[0])
+            f = kcwi_fits_reader(flatfn)[0]
+            # Set mask to None to prevent ccdproc.combine from masking
+            f.mask = None
+            stack.append(f)
 
         stacked = ccdproc.combine(stack, method=method, sigma_clip=True,
                                   sigma_clip_low_thresh=None,
                                   sigma_clip_high_thresh=2.0)
+
+        # Get the BPM out of one of the flats (bpm is the same for all)
+        # and add it to the stacked flat as the stack's mask
+        last_flat_name = strip_fname(combine_list[-1]) + '_intd.fits'
+        last_flat_path = os.path.join(self.config.instrument.cwd,
+                                  self.config.instrument.output_directory,
+                                last_flat_name)
+        last_flat = kcwi_fits_reader(last_flat_path)[0]
+        stacked.mask = last_flat.mask
+        
         stacked.header['IMTYPE'] = self.action.args.stack_type
         stacked.header['NSTACK'] = (len(combine_list),
                                     'number of images stacked')
