@@ -155,7 +155,6 @@ def main():
                                  name="DRPF")
 
     if args.infiles is not None:
-        print(args.infiles)
         framework.config.file_type = args.infiles
 
     # check for taperfrac argument
