@@ -281,7 +281,8 @@ class MakeMasterSky(BaseImg):
         self.action.args.ccddata.data = sky
 
         # get master sky output name
-        ofn = self.action.args.name
+        ofn_full = self.action.args.name
+        ofn = os.path.basename(ofn_full)
         msname = strip_fname(ofn) + '_' + suffix + '.fits'
 
         log_string = MakeMasterSky.__module__

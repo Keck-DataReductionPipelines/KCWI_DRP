@@ -10,6 +10,7 @@ import ccdproc
 import numpy as np
 from scipy.stats import sigmaclip
 import time
+import os
 
 
 class MakeMasterBias(BaseImg):
@@ -69,7 +70,8 @@ class MakeMasterBias(BaseImg):
                                     'number of images stacked')
         stacked.header['STCKMETH'] = (method, 'method used for stacking')
         for ii, fname in enumerate(stackf):
-            stacked.header['STACKF%d' % (ii + 1)] = (fname, "stack input file")
+            fname_base = os.path.basename(fname)
+            stacked.header['STACKF%d' % (ii + 1)] = (fname_base, "stack input file")
 
         # for readnoise stats use 2nd and 3rd bias
         diff = stack[1].data.astype(np.float32) - \
