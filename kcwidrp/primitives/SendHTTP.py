@@ -29,7 +29,7 @@ class SendHTTP(BasePrimitive):
             return self.action.args
         
         data_directory = os.path.join(self.config.rti.cwd,
-                                      self.config.rti.output_directory)
+                                      self.config.instrument.output_directory)
         
         self.logger.info(f"Alerting RTI that {strip_fname(self.action.args.name)} is ready for ingestion")
 
