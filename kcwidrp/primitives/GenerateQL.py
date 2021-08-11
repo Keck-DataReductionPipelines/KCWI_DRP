@@ -49,7 +49,7 @@ class GenerateQL(BasePrimitive):
             save_plot(p, filename=ql_name)
             
         
-        return True
+        return self.action.args
     
     def _remove_plot_features(self, p):
         """Removes axis and toolbar from an input figure object
