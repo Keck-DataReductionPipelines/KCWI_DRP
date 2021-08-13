@@ -32,11 +32,11 @@ def set_plot_lims(fig, xlim=None, ylim=None):
         fig.y_range.end = ylim[1]
 
 
-def save_plot(fig, filename=None):
+def save_plot(fig, filename=None, height=None, width=None):
     if filename is None:
         fnam = os.path.join('plots', 'kcwi_drp_plot.png')
     else:
         fnam = os.path.join('plots', filename)
-    export_png(fig, filename=fnam)
+    export_png(fig, filename=fnam, width=width, height=height)
 
     logger.info(">>> Saving to %s" % fnam)

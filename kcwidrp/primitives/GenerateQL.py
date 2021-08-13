@@ -44,9 +44,9 @@ class GenerateQL(BasePrimitive):
             
             p = figure(plot_width=w, plot_height=h)
             p = self._remove_plot_features(p)
-            p.image([flattened_list], x=0, y=0, dw=w, dh=h,
+            p.image([flattened_list], x=0, y=0,
                                 level="image")
-            save_plot(p, filename=ql_name)
+            save_plot(p, filename=ql_name, width=w*20, height=h*20)
             
         
         return self.action.args
