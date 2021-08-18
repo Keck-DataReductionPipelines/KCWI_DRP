@@ -62,4 +62,35 @@ These instructions assume you are using :code:`conda` to manage your environment
 
         python setup.py install
 
+Massive Slowdown When Calculating Central Dispersion
+====================================================
 
+This issue does not throw an error, but can be identified by the logs as it
+happens. The logs will look something like ::
+
+    2021-06-08 18:49:51:KCWI:INFO: Using TAPERFRAC = 0.200
+    Bar#:   4, Cdisp: 0.2392
+    Bar#:   0, Cdisp: 0.2391
+    Bar#:   8, Cdisp: 0.2393
+    Bar#:  12, Cdisp: 0.2393
+    ...
+    Bar#: 119, Cdisp: 0.2397
+
+This step typically takes anywhere from 30 seconds to several minutes, depending
+on the resources availible to your computer. However, sometimes this step takes
+upwards of 20 minutes, even on a powerful machine. This appears to be caused by
+a conflict in thread allocation between various packages used by the pipeline,
+although the specifics remain unknown. 
+
+To fix the issue, you need to specify how threads are allocated directly. This
+can be done directly from the command line by typing the following lines into
+your terminal:
+
+.. code-block:: bash
+
+    export MKL_NUM_THREADS=16
+    export NUMEXPR_NUM_THREADS=1
+    export OMP_NUM_THREADS=1
+
+This will not persist between terminal sessions, so you should add it to your
+:code:`.bashrc` file.
