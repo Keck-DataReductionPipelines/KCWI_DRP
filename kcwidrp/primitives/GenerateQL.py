@@ -6,6 +6,7 @@ author: mbrodheim
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from kcwidrp.core.kcwi_plotting import save_plot
 from bokeh.plotting import figure
+from bokeh.palettes import gray
 
 import numpy as np
 from pathlib import Path
@@ -24,29 +25,44 @@ class GenerateQL(BasePrimitive):
         }
 
     def _perform(self):
+        """
+        Generates a quicklook frame using the method in rti.ql_method
+        """
 
-        data = self.action.args.ccddata
+        # Indices get rid of DAR padding pixels
+        top = -self.config.rti.DAR_top
+        bottom = self.config.rti.DAR_bottom
+        left = self.config.rti.DAR_left
+        right = -self.config.rti.DAR_right
+
+        data = self.action.args.ccddata.data[:,bottom:top,left:right]
+        method = self.config.rti.ql_method
         
-        for method in self.ql_methods:
-            self.logger.info(f"Generating {method} quicklook frame")
-            # Collapse the image into 2D with the given method
-            flattened = self.ql_methods[method](data)
-            # Bias the image to get rid of negative values (so we can get a png)
-            flattened_biased = flattened + np.min(flattened)
-            # Convert to python list object for bokeh
-            flattened_list = flattened_biased.tolist()
+        self.logger.info(f"Generating {method} quicklook frame")
+        # Collapse the image into 2D with the given method
+        flattened = self.ql_methods[method](data)
+        # Stretch the contrast
+        min = np.min(flattened)
+        max = np.max(flattened)
+        zeroed = flattened - min
+        normalized = zeroed / (max - min)
+        scaled = np.array(normalized * 255, dtype=np.uint8)
 
-            ql_name = "ql_" + Path(self.action.args.name).stem + \
-                        "_" + method + ".png"
-            # Image dimensions
-            w = np.shape(flattened)[1]
-            h = np.shape(flattened)[0]
-            
-            p = figure(plot_width=w, plot_height=h)
-            p = self._remove_plot_features(p)
-            p.image([flattened_list], x=0, y=0,
-                                level="image")
-            save_plot(p, filename=ql_name, width=w*20, height=h*20)
+        # Convert to python list object for bokeh
+        flattened_list = scaled.tolist()
+
+        ql_name = "ql_" + Path(self.action.args.name).stem + "_" + method
+
+        # Image dimensions
+        w = np.shape(flattened)[1]
+        h = np.shape(flattened)[0]
+        
+        p = figure(plot_width=w, plot_height=h)
+        p = self._remove_plot_features(p)
+        p.image([flattened_list], x=0, y=0,
+                            level="image", dh=h*10, dw=w*10,
+                            palette=gray(256))
+        save_plot(p, filename=ql_name + ".png", width=w*20, height=h*20)
             
         
         return self.action.args
