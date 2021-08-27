@@ -34,6 +34,7 @@ class GenerateQL(BasePrimitive):
         bottom = self.config.rti.DAR_bottom
         left = self.config.rti.DAR_left
         right = -self.config.rti.DAR_right
+        scale_factor = self.config.rti.ql_scale
 
         data = self.action.args.ccddata.data[:,bottom:top,left:right]
         method = self.config.rti.ql_method
@@ -44,9 +45,9 @@ class GenerateQL(BasePrimitive):
         # Stretch the contrast
         min = np.min(flattened)
         max = np.max(flattened)
-        zeroed = flattened - min
-        normalized = zeroed / (max - min)
-        scaled = np.array(normalized * 255, dtype=np.uint8)
+        zeroed = flattened - min # Set lowest pixel value to 0
+        normalized = zeroed / (max - min) # Make every pixel fall between 0-1
+        scaled = np.array(normalized * 255, dtype=np.uint8) # cast to uint8
 
         # Convert to python list object for bokeh
         flattened_list = scaled.tolist()
@@ -54,15 +55,15 @@ class GenerateQL(BasePrimitive):
         ql_name = "ql_" + Path(self.action.args.name).stem + "_" + method
 
         # Image dimensions
-        w = np.shape(flattened)[1]
-        h = np.shape(flattened)[0]
+        w = scaled.shape[1] * scale_factor
+        h = scaled.shape[0] * scale_factor
         
         p = figure(plot_width=w, plot_height=h)
         p = self._remove_plot_features(p)
         p.image([flattened_list], x=0, y=0,
-                            level="image", dh=h*10, dw=w*10,
+                            level="image", dh=1, dw=1,
                             palette=gray(256))
-        save_plot(p, filename=ql_name + ".png", width=w*20, height=h*20)
+        save_plot(p, filename=ql_name + ".png", width=w*10, height=h*10)
             
         
         return self.action.args
