@@ -78,6 +78,8 @@ def _parse_arguments(in_args: list) -> argparse.Namespace:
     parser.add_argument("-p", "--proctab", dest='proctab', help='Proctab file',
                         default='kcwi.proc')
 
+    parser.add_argument("--rti-level", dest="rti_lev", help="[lev1, lev2]")
+
     out_args = parser.parse_args(in_args[1:])
     return out_args
 
@@ -132,6 +134,8 @@ def main():
     rti_config_file = "configs/rti.cfg"
     rti_config_fullpath = pkg_resources.resource_filename(pkg, rti_config_file)
     rti_config = ConfigClass(rti_config_fullpath, default_section='RTI')
+    if args.rti_lev is not None:
+        rti_config.rti_ingesttype = args.rti_lev
     # END HANDLING OF CONFIGURATION FILES ##########
 
     # Add current working directory to config info
