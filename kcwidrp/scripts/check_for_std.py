@@ -2,7 +2,6 @@
 ones exist in the standard star list
 """
 
-from astropy.io import fits
 import argparse
 import sys
 
