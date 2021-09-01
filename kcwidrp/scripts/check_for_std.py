@@ -15,7 +15,7 @@ def parse_arguments(in_args: list) -> argparse.Namespace:
     parser = argparse.ArgumentParser(prog=f"{in_args[0]}",
                                      description=description)
 
-    parser.add_argument("infiles", nargs="*", help="Files to be checked")
+    parser.add_argument("infiles", nargs="+", help="Files to be checked")
 
     out_args = parser.parse_args(in_args[1:])
     return out_args
