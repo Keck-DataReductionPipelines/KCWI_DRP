@@ -1,5 +1,5 @@
 ==============================================
-Keck Cosmic Web Images Data Reduction Pipeline
+Keck Cosmic Web Imager Data Reduction Pipeline
 ==============================================
 
 This pipeline is the official DRP for the Keck Cosmic Web Imager at the W. M. 
