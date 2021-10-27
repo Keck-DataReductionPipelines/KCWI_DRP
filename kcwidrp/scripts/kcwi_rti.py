@@ -10,6 +10,7 @@ from keckdrpframework.models.arguments import Arguments
 from keckdrpframework.utils.drpf_logger import getLogger
 from kcwidrp.core.bokeh_plotting import check_running_process
 from kcwidrp.core.kcwi_get_std import is_file_kcwi_std
+from kcwidrp.core.notify_complete import send_api_complete
 
 import subprocess
 import time
@@ -18,6 +19,9 @@ import sys
 import traceback
 import os
 import pkg_resources
+import types
+import psutil
+import getpass
 
 from kcwidrp.pipelines.keck_rti_pipeline import Keck_RTI_Pipeline
 from kcwidrp.core.kcwi_proctab import Proctab
@@ -73,6 +77,8 @@ def _parse_arguments(in_args: list) -> argparse.Namespace:
     parser.add_argument("-s", "--start_queue_manager_only",
                         dest="queue_manager_only", action="store_true",
                         help="Starts queue manager only, no processing",)
+    parser.add_argument("--rti-level", dest="rti_lev", type=str,
+                        choices=['lev1', 'lev2'], help="[lev1, lev2]")
 
     # kcwi specific parameter
     parser.add_argument("-p", "--proctab", dest='proctab', help='Proctab file',
@@ -88,6 +94,30 @@ def check_directory(directory):
         print("Directory %s has been created" % directory)
 
 
+def stop_processes(extra_process, logger):
+    current_user = getpass.getuser()
+
+    if not extra_process:
+        logger.info('No extra processes defined to stop.')
+        return
+
+    extra_process = extra_process.split(',')
+
+    for proc in psutil.process_iter():
+        pinfo = proc.as_dict(attrs=['name', 'username', 'pid', 'cmdline'])
+
+        if pinfo['username'] != current_user:
+            continue
+
+        for cmd in pinfo['cmdline']:
+            for process in extra_process:
+                if process in cmd:
+                    logger.info(f"Terminating process: {pinfo['cmdline']}, "
+                                f"pid: {pinfo['pid']}")
+                    p = psutil.Process(pinfo['pid'])
+                    p.terminate()
+
+
 def main():
 
     def process_subset(in_subset):
@@ -99,6 +129,28 @@ def main():
         for in_frame in in_list:
             arguments = Arguments(name=in_frame)
             framework.append_event('next_file', arguments, recurrent=True)
+
+    def _on_exit(_, exit_status):
+        data_date = None
+        if rti_config.rti_ingesttype == 'lev2':
+            for direct in kcwi_config.cwd.split('/'):
+                try:
+                    data_date = int(direct)
+                    assert len(str(data_date)) == 8
+                except (ValueError, AssertionError):
+                    pass
+
+            if data_date:
+                result = send_api_complete(rti_config, data_date, framework.logger)
+                framework.logger.info(f"Complete status sent to koa_status table, "
+                                      f"with result {result}")
+            else:
+                framework.logger.error("Could not determine the date to send "
+                                       "the complete status to koa")
+
+        stop_processes(rti_config.extra_process, framework.logger)
+
+        os._exit(exit_status)
 
     args = _parse_arguments(sys.argv)
 
@@ -131,7 +183,13 @@ def main():
 
     rti_config_file = "configs/rti.cfg"
     rti_config_fullpath = pkg_resources.resource_filename(pkg, rti_config_file)
-    rti_config = ConfigClass(rti_config_fullpath, default_section='RTI')
+
+    dfault_section = f'RTI_LEVEL{kcwi_config.level}'
+
+    rti_config = ConfigClass(rti_config_fullpath, default_section=dfault_section)
+    if args.rti_lev is not None:
+        rti_config.rti_ingesttype = args.rti_lev
+
     # END HANDLING OF CONFIGURATION FILES ##########
 
     # Add current working directory to config info
@@ -150,6 +208,7 @@ def main():
         print("Failed to initialize framework, exiting ...", e)
         traceback.print_exc()
         sys.exit(1)
+
     framework.context.pipeline_logger = getLogger(framework_logcfg_fullpath,
                                                   name="KCWI")
     framework.logger = getLogger(framework_logcfg_fullpath,
@@ -254,7 +313,8 @@ def main():
 
         for imtype in imtypes:
             subset = data_set.data_table[
-                framework.context.data_set.data_table.IMTYPE == imtype]
+                    framework.context.data_set.data_table.IMTYPE == imtype]
+
             if 'OBJECT' in imtype: # Ensure that standards are processed first
                 object_order = []
                 standard_order = []
@@ -268,6 +328,7 @@ def main():
             else:
                 process_subset(subset)
 
+    framework.on_exit = types.MethodType(_on_exit, framework)
     framework.start(args.queue_manager_only, args.ingest_data_only,
                     args.wait_for_event, args.continuous)
 
