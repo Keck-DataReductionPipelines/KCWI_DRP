@@ -84,6 +84,8 @@ def _parse_arguments(in_args: list) -> argparse.Namespace:
     parser.add_argument("-p", "--proctab", dest='proctab', help='Proctab file',
                         default='kcwi.proc')
 
+    parser.add_argument("--rti-level", dest="rti_lev", help="[lev1, lev2]")
+
     out_args = parser.parse_args(in_args[1:])
     return out_args
 
