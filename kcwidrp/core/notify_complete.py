@@ -7,6 +7,12 @@ def rti_config_data(config):
     user = config.rti_user
     pw = config.rti_pass,
 
+    if type(pw) == tuple:
+        try:
+            pw = pw[0]
+        except IndexError:
+            pw = ''
+
     return url, user, pw
 
 
