@@ -274,9 +274,10 @@ class SolveArcs(BasePrimitive):
             # iteratively remove outliers
             it = 0
 
-            # avoid infinite loop due to floating point comparison w/isclose
+            # avoid floating point comparison errors w/isclose
+            tolerance = self.config.instrument.arc_eq_tolerance
             while (max_resid > 2.5 * wsig and it < 25 and
-                   not math.isclose(max_resid, 2.5 * wsig, abs_tol=0.0001)):
+                   not math.isclose(max_resid, 2.5 * wsig, abs_tol=tolerance)):
                 arc_dat = []    # arc line pixel values
                 arc_fdat = []   # arc line flux data
                 at_dat = []     # atlas line wavelength values
