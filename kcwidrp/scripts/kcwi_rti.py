@@ -10,7 +10,7 @@ from keckdrpframework.models.arguments import Arguments
 from keckdrpframework.utils.drpf_logger import getLogger
 from kcwidrp.core.bokeh_plotting import check_running_process
 from kcwidrp.core.kcwi_get_std import is_file_kcwi_std
-from kcwidrp.core.notify_complete import send_api_complete
+from kcwidrp.core.notify_api import send_data_api
 
 import subprocess
 import time
@@ -37,6 +37,8 @@ def _parse_arguments(in_args: list) -> argparse.Namespace:
                                      description=description)
     parser.add_argument('-c', '--config', dest="kcwi_config_file", type=str,
                         help="KCWI configuration file", default=None)
+    parser.add_argument('-r', '--rti_config', dest="rti_config_file", type=str,
+                        help="KCWI RTI configuration file", default=None)
     parser.add_argument('-f', '--frames', nargs='*', type=str,
                         help='input image files (full path, list ok)',
                         default=None)
@@ -116,7 +118,9 @@ def main():
                                    "the complete status to koa")
             return
 
-        result = send_api_complete(rti_config, data_date, framework.logger)
+        data = {'instrument': 'KCWI', 'utdate': data_date, 'ingesttype': 'lev2'}
+
+        result = send_data_api(data, rti_config, framework.logger)
         framework.logger.info(f"Complete status sent to koa_status table, "
                               f"with result {result}")
 
@@ -140,22 +144,27 @@ def main():
 
     # add kcwi specific config files # make changes here to allow this file
     # to be loaded from the command line
-    if args.kcwi_config_file is None:
+    if not args.kcwi_config_file:
         kcwi_config_file = 'configs/kcwi_koarti.cfg'
         kcwi_config_fullpath = pkg_resources.resource_filename(
             pkg, kcwi_config_file)
-        kcwi_config = ConfigClass(kcwi_config_fullpath, default_section='KCWI')
     else:
-        # kcwi_config_fullpath = os.path.abspath(args.kcwi_config_file)
-        kcwi_config = ConfigClass(args.kcwi_config_file, default_section='KCWI')
+        kcwi_config_fullpath = args.kcwi_config_file
 
-    rti_config_file = "configs/rti.cfg"
-    rti_config_fullpath = pkg_resources.resource_filename(pkg, rti_config_file)
+    kcwi_config = ConfigClass(kcwi_config_fullpath, default_section='KCWI')
+
+    # RTI specific configuration file
+    if not args.rti_config_file:
+        rti_config_file = "configs/rti.cfg"
+        rti_config_fullpath = pkg_resources.resource_filename(
+            pkg, rti_config_file)
+    else:
+        rti_config_fullpath = args.rti_config_file
 
     dfault_section = f'RTI_LEVEL{kcwi_config.level}'
-
     rti_config = ConfigClass(rti_config_fullpath, default_section=dfault_section)
-    if args.rti_lev is not None:
+
+    if args.rti_lev:
         rti_config.rti_ingesttype = args.rti_lev
 
     # END HANDLING OF CONFIGURATION FILES ##########

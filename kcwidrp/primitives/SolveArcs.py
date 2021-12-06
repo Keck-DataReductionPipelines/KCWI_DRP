@@ -273,8 +273,10 @@ class SolveArcs(BasePrimitive):
             rej_rsd_flux = []   # rejected line fluxes
             # iteratively remove outliers
             it = 0
+
+            # avoid infinite loop due to floating point comparison w/isclose
             while (max_resid > 2.5 * wsig and it < 25 and
-                   not math.isclose(max_resid, 2.5 * wsig, abs_tol=0.01)):
+                   not math.isclose(max_resid, 2.5 * wsig, abs_tol=0.0001)):
                 arc_dat = []    # arc line pixel values
                 arc_fdat = []   # arc line flux data
                 at_dat = []     # atlas line wavelength values

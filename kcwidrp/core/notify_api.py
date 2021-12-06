@@ -16,19 +16,13 @@ def rti_config_data(config):
     return url, user, pw
 
 
-def send_api_complete(config, utdate, logger):
-
-    data = {
-        'instrument': 'KCWI',
-        'utdate': utdate,
-        'ingesttype': 'lev2'
-    }
+def send_data_api(data, config, logger):
 
     url, user, pw = rti_config_data(config)
 
     try:
         res = requests.get(url, params=data, auth=(user, pw))
-        logger.info(f"Sending Complete Status {res.request.url}")
+        logger.info(f"Sending {data} to {res.request.url}")
     except requests.exceptions.RequestException as e:
         logger.error(f"Error caught while posting to {url}:")
         logger.error(e)
