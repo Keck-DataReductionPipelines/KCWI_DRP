@@ -13,6 +13,7 @@ from scipy.stats import sigmaclip
 from bokeh.plotting import figure
 from bokeh.models import Range1d, LinearAxis
 import time
+import math
 
 
 class SolveArcs(BasePrimitive):
@@ -245,6 +246,7 @@ class SolveArcs(BasePrimitive):
             self.logger.info("Fitting wavelength solution starting with %d "
                              "lines after rejecting %d lines" %
                              (len(arc_pix_dat), nrej))
+
             # Fit wavelengths
             # Get poly order
             if self.action.args.dichroic_fraction <= 0.6:
@@ -271,7 +273,11 @@ class SolveArcs(BasePrimitive):
             rej_rsd_flux = []   # rejected line fluxes
             # iteratively remove outliers
             it = 0
-            while max_resid > 2.5 * wsig and it < 25:
+
+            # avoid floating point comparison errors w/isclose
+            tolerance = self.config.instrument.arc_eq_tolerance
+            while (max_resid > 2.5 * wsig and it < 25 and
+                   not math.isclose(max_resid, 2.5 * wsig, abs_tol=tolerance)):
                 arc_dat = []    # arc line pixel values
                 arc_fdat = []   # arc line flux data
                 at_dat = []     # atlas line wavelength values

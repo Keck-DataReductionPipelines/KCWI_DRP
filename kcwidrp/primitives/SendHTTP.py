@@ -13,7 +13,7 @@ class SendHTTP(BasePrimitive):
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
         self.logger = context.pipeline_logger
-    
+
     def _pre_condition(self):
         self.user = self.config.rti.rti_user
         self.pw = self.config.rti.rti_pass
@@ -44,7 +44,6 @@ class SendHTTP(BasePrimitive):
             'testonly': self.config.rti.rti_testonly,
             'dev': self.config.rti.rti_dev
         }
-        
         attempts = 0
         limit = self.config.rti.rti_attempts
         while attempts < limit:
