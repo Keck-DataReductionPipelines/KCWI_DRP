@@ -13,7 +13,7 @@ class SendHTTP(BasePrimitive):
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
         self.logger = context.pipeline_logger
-    
+
     def _pre_condition(self):
         self.user = self.config.rti.rti_user
         self.pw = self.config.rti.rti_pass
@@ -28,8 +28,8 @@ class SendHTTP(BasePrimitive):
             self.logger.error(f"Encountered a file with no KOA ID: {self.action.args.name}")
             return self.action.args
         
-        data_directory = os.path.join(self.config.rti.cwd,
-                                      self.config.rti.output_directory)
+        data_directory = os.path.join(self.config.instrument.cwd,
+                                      self.config.instrument.output_directory)
         
         self.logger.info(f"Alerting RTI that {strip_fname(self.action.args.name)} is ready for ingestion")
 
@@ -44,7 +44,6 @@ class SendHTTP(BasePrimitive):
             'testonly': self.config.rti.rti_testonly,
             'dev': self.config.rti.rti_dev
         }
-        
         attempts = 0
         limit = self.config.rti.rti_attempts
         while attempts < limit:
