@@ -448,6 +448,10 @@ class ingest_file(BasePrimitive):
         return bsec, dsec, tsec, direc
 
     def _perform(self):
+        # if self.context.data_set is None:
+        #    self.context.data_set = DataSet(None, self.logger, self.config,
+        #    self.context.event_queue)
+        # self.context.data_set.append_item(self.action.args.name)
         self.logger.info(
             "------------------- Ingesting file %s -------------------" %
             self.action.args.name)
@@ -473,17 +477,10 @@ class ingest_file(BasePrimitive):
             self.logger.warn(f"Unknown IMTYPE {fname}")
             self.action.event._reccurent = False
 
-        if not self.check_if_file_can_be_processed(imtype):
+        if self.check_if_file_can_be_processed(imtype) is False:
+            # self.logger.warn("Object frame cannot be reduced. Rescheduling")
             self.action.new_event = None
-
-            # don't reschedule in group mode,  all files processed in order.
-            try:
-                self.action.event._recurrent = self.action.args.reschedule
-            except AttributeError:
-                pass
-
             return None
-
         else:
             self.action.event._recurrent = False
 
@@ -596,6 +593,8 @@ class ingest_file(BasePrimitive):
             else:
                 self.logger.warn(f"Cannot reduce {imtype} frame. Missing master bias. Rescheduling for later.")
                 return False
+
+
 
         return True
 
