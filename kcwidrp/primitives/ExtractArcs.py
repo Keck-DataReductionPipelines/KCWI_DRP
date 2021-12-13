@@ -109,27 +109,14 @@ class ExtractArcs(BasePrimitive):
                 xv = []
                 yv = []
                 for i in range(sectors):
-                    try:
-                        mi = np.nanargmin(arc[50+i*div:50+(i+1)*div])
-                    except ValueError:
-                        self.logger.warn("slice is all NaN,  indices")
-                        mi = 0
-
-                    try:
-                        mn = np.nanmin(arc[50 + i * div:50 + (i + 1) * div])
-                    except RuntimeWarning:
-                        self.logger.warn("slice is all NaN,  setting to 0")
-                        mn = 0
-
+                    mi = np.nanargmin(arc[50+i*div:50+(i+1)*div])
+                    mn = np.nanmin(arc[50+i*div:50+(i+1)*div])
                     xv.append(mi+50+i*div)
                     yv.append(mn)
-
                 # fit minima to model background
                 res = np.polyfit(xv, yv, 3)
                 xp = np.arange(len(arc))
-
                 bkg = np.polyval(res, xp)   # resulting model
-
                 # plot if requested
                 if do_plot:
                     p = figure(title=self.action.args.plotlabel + "ARC # %d" %
@@ -148,7 +135,6 @@ class ExtractArcs(BasePrimitive):
                 arc -= bkg
                 # add to arcs list
                 arcs.append(arc)
-
         # Did we get the correct number of arcs?
         if len(arcs) == self.config.instrument.NBARS:
             self.logger.info("Extracted %d arcs" % len(arcs))

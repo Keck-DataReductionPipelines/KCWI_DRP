@@ -20,13 +20,11 @@ class MakeMasterDark(BaseImg):
         """
         # get list of dark frames
         self.logger.info("Checking precondition for stack_darks")
-        self.combine_list = self.context.proctab.search_proctab(
+        self.combine_list = self.context.proctab.n_proctab(
             frame=self.action.args.ccddata, target_type='DARK',
             target_group=self.action.args.groupid)
-
         self.logger.info(f"pre condition got {len(self.combine_list)},"
                          f" expecting {self.action.args.min_files}")
-
         # do we meet the criterion?
         if len(self.combine_list) >= self.action.args.min_files:
             return True
