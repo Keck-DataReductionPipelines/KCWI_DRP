@@ -335,7 +335,7 @@ def process_group_mode(framework, args):
         framework.start(args.queue_manager_only, args.ingest_data_only,
                         args.wait_for_event, args.continuous)
 
-    def process_by_expt(exptimes, imtype, binning):
+    def process_by_expt(exptimes):
         for expt in exptimes:
             subset = data_set.data_table[
                 (framework.context.data_set.data_table.IMTYPE == imtype)
