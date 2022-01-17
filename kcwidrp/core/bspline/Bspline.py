@@ -431,8 +431,6 @@ class Bspline(object):
         if nbkpt <= 2*self.nord:
             return -2
 
-        # TODO I am not sure of this one
-        # hmm = err[np.unique(err / self.npoly)] / self.npoly
         try:
             hmm = err[np.unique(err/self.npoly)]/self.npoly
         except IndexError:
