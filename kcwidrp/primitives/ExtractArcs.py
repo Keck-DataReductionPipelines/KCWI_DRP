@@ -32,7 +32,6 @@ class ExtractArcs(BasePrimitive):
         self.logger.info("%d continuum bars frames found" %
                          len(contbars_in_proctable))
 
-        # this just reads the first CONTBAR filename found
         if len(contbars_in_proctable) > 0:
             self.action.args.original_filename = strip_fname(
                 contbars_in_proctable['filename'][0])+ "_trace.fits"
