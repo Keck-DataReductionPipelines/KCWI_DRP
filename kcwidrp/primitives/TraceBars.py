@@ -160,7 +160,11 @@ class TraceBars(BasePrimitive):
                                       self.action.args.contbar_image_number,
                                       "Cont. bars image number"),
                                   'CBARSFL': (self.action.args.contbar_image,
-                                              "Cont. bars image")})
+                                              "Cont. bars image"),
+                                  'STATEID': (self.action.args.ccddata.header["STATEID"],
+                                              "CONTBAR STATEID")
+                                  }
+                        )
 
             if self.config.instrument.saveintims:
                 from kcwidrp.primitives.kcwi_file_primitives import \

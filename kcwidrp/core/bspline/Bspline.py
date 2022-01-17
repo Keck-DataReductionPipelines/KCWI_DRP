@@ -430,17 +430,27 @@ class Bspline(object):
         nbkpt = self.mask.sum()
         if nbkpt <= 2*self.nord:
             return -2
-        hmm = err[np.unique(err/self.npoly)]/self.npoly
+
+        # TODO I am not sure of this one
+        # hmm = err[np.unique(err / self.npoly)] / self.npoly
+        try:
+            hmm = err[np.unique(err/self.npoly)]/self.npoly
+        except IndexError:
+            hmm = np.unique(err)/self.npoly
+
         n = nbkpt - self.nord
         if np.any(hmm >= n):
             return -2
         test = np.zeros(nbkpt, dtype='bool')
-        for jj in range(-np.ceil(self.nord/2.0), int(self.nord/2.0)):
+
+        for jj in range(int(-np.ceil(self.nord/2.0)), int(self.nord/2.0)):
             foo = np.where((hmm+jj) > 0, hmm+jj, np.zeros(hmm.shape,
                                                           dtype=hmm.dtype))
             inside = np.where((foo+self.nord) < n-1, foo+self.nord,
                               np.zeros(hmm.shape, dtype=hmm.dtype)+n-1)
+
             test[inside] = True
+
         if test.any():
             reality = self.mask[test]
             if self.mask[reality].any():
@@ -591,6 +601,10 @@ def cholesky_band(ndl, mininf=0.0):
         # Figure out where the error is.
         #
         lower = ndl.copy()
+
+        # correct the dimension for setting equal to ll below
+        lower = lower[:, 0:n]
+
         kn = bw - 1
         spot = np.arange(kn, dtype='i4') + 1
         for j in range(n):
