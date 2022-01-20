@@ -41,14 +41,23 @@ class MakeMasterDark(BaseImg):
         method = 'average'
         suffix = args.new_type.lower()
 
+        # read from and write to the output directory
+        output_dir = os.path.join(self.config.instrument.cwd,
+                                  self.config.instrument.output_directory)
+
         combine_list = list(self.combine_list['filename'])
+
         # get master dark output name
-        mdname = strip_fname(combine_list[0]) + '_' + suffix + '.fits'
+        mdname = strip_fname(self.action.args.name) + '_' + suffix + '.fits'
+
         stack = []
         stackf = []
+
         for dark in combine_list:
+
             # get dark intensity (int) image file name in redux directory
-            stackf.append(dark.split('.fits')[0] + '_int.fits')
+            stackf.append(output_dir + "/" + strip_fname(dark) + '_int.fits')
+
             darkfn = os.path.join(args.in_directory, stackf[-1])
             # using [0] gets just the image data
             stack.append(kcwi_fits_reader(darkfn)[0])
@@ -69,7 +78,8 @@ class MakeMasterDark(BaseImg):
         self.logger.info(log_string)
 
         kcwi_fits_writer(stacked, output_file=mdname,
-                         output_dir=self.config.instrument.output_directory)
+                         output_dir=output_dir)
+
         self.context.proctab.update_proctab(frame=stacked, suffix=suffix,
                                             newtype=args.new_type,
                                             filename=self.action.args.name)

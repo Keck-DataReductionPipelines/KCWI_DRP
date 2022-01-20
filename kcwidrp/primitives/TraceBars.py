@@ -139,6 +139,12 @@ class TraceBars(BasePrimitive):
             self.context.trace = trace
             ofname = strip_fname(self.action.args.contbar_image) + \
                 "_trace.fits"
+
+            if 'STATEID' in self.action.args.ccddata.header:
+                stateid = self.action.args.ccddata.header["STATEID"]
+            else:
+                stateid = 0
+
             write_table(table=[src, dst, barid, slid],
                         names=('src', 'dst', 'barid', 'slid'),
                         output_dir=os.path.join(
@@ -161,8 +167,7 @@ class TraceBars(BasePrimitive):
                                       "Cont. bars image number"),
                                   'CBARSFL': (self.action.args.contbar_image,
                                               "Cont. bars image"),
-                                  'STATEID': (self.action.args.ccddata.header["STATEID"],
-                                              "CONTBAR STATEID")
+                                  'STATEID': (stateid, "CONTBAR STATEID")
                                   }
                         )
 
