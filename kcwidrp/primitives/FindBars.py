@@ -143,8 +143,8 @@ class FindBars(BasePrimitive):
         # store image info
         self.action.args.contbar_image_number = \
             self.action.args.ccddata.header['FRAMENO']
-        self.action.args.contbar_image = \
-            self.action.args.ccddata.header['OFNAME']
+
+        self.action.args.contbar_image = self.action.args.name
 
         log_string = FindBars.__module__
         self.action.args.ccddata.header['HISTORY'] = log_string

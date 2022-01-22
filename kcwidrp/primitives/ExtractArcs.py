@@ -31,6 +31,7 @@ class ExtractArcs(BasePrimitive):
             nearest=True)
         self.logger.info("%d continuum bars frames found" %
                          len(contbars_in_proctable))
+
         if len(contbars_in_proctable) > 0:
             self.action.args.original_filename = strip_fname(
                 contbars_in_proctable['filename'][0])+ "_trace.fits"
@@ -49,18 +50,15 @@ class ExtractArcs(BasePrimitive):
         # All is ready
         original_filename = self.action.args.original_filename
         self.logger.info("Trace table found: %s" % original_filename)
-        # trace = read_table(tab=tab, indir='redux', suffix='trace')
-        # Find  and read control points from continuum bars
-        if hasattr(self.context, 'trace'):
-            trace = self.context.trace
-        else:
-            trace = read_table(
-                input_dir=os.path.join(self.config.instrument.cwd,
-                                       self.config.instrument.output_directory),
-                file_name=original_filename)
-            self.context.trace = {}
-            for key in trace.meta.keys():
-                self.context.trace[key] = trace.meta[key]
+        # Read the trace table produced by the CONTBAR files,
+        # there may be more than one.
+        trace = read_table(
+            input_dir=os.path.join(self.config.instrument.cwd,
+                                   self.config.instrument.output_directory),
+            file_name=original_filename)
+        self.context.trace = {}
+        for key in trace.meta.keys():
+            self.context.trace[key] = trace.meta[key]
         middle_row = self.context.trace['MIDROW']
         window = self.context.trace['WINDOW']
         self.action.args.reference_bar_separation = self.context.trace[
