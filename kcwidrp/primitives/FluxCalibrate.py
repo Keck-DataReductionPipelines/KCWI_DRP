@@ -97,7 +97,7 @@ class FluxCalibrate(BasePrimitive):
                 for ix in range(sz[1]):
                     self.action.args.ccddata.data[:, ix, isl] *= mscal
                     self.action.args.ccddata.uncertainty.array[:, ix, isl] *= \
-                        mscal ** 2
+                        mscal
 
             # check for obj, sky cubes
             if self.action.args.nasmask and self.action.args.numopen > 1:
