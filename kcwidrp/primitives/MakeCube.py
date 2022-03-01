@@ -29,7 +29,7 @@ def make_cube_helper(argument):
     xl1 = argument['geom']['xl1'][slice_number]
     # slice data
     slice_img = argument['img'][:, xl0:xl1]
-    slice_var = argument['std'][:, xl0:xl1]
+    slice_unc = argument['std'][:, xl0:xl1]
     slice_msk = argument['msk'][:, xl0:xl1]
     slice_flg = argument['flg'][:, xl0:xl1]
     if 'obj' in argument:
@@ -47,7 +47,7 @@ def make_cube_helper(argument):
     # do the warping
     warped = tf.warp(slice_img, tform, order=3,
                      output_shape=(ysize, xsize))
-    varped = tf.warp(slice_var, tform, order=3,
+    uarped = tf.warp(slice_unc, tform, order=3,
                      output_shape=(ysize, xsize))
     marped = tf.warp(slice_msk, tform, order=3,
                      output_shape=(ysize, xsize))
@@ -72,7 +72,7 @@ def make_cube_helper(argument):
     else:
         darped = None
 
-    return argument['slice_number'], warped, varped, marped, farped, \
+    return argument['slice_number'], warped, uarped, marped, farped, \
         oarped, sarped, darped
 
 
@@ -95,9 +95,9 @@ class MakeCube(BasePrimitive):
             do_inter = False
         self.logger.info("Generating data cube")
         # Find and read geometry transformation
-        tab = self.context.proctab.search_proctab(frame=self.action.args.ccddata,
-                                             target_type='ARCLAMP',
-                                             nearest=True)
+        tab = self.context.proctab.search_proctab(
+            frame=self.action.args.ccddata, target_type='ARCLAMP',
+            nearest=True)
         if not len(tab):
             self.logger.error("No reference geometry, cannot make cube!")
             self.action.args.ccddata.header['GEOMCOR'] = (False,
@@ -118,7 +118,7 @@ class MakeCube(BasePrimitive):
             xsize = geom['xsize']
             ysize = geom['ysize']
             out_cube = np.zeros((ysize, xsize, 24), dtype=np.float64)
-            out_vube = np.zeros((ysize, xsize, 24), dtype=np.float64)
+            out_uube = np.zeros((ysize, xsize, 24), dtype=np.float64)
             out_mube = np.zeros((ysize, xsize, 24), dtype=np.uint8)
             out_fube = np.zeros((ysize, xsize, 24), dtype=np.uint8)
             out_oube = np.zeros((ysize, xsize, 24), dtype=np.float64)
@@ -194,7 +194,7 @@ class MakeCube(BasePrimitive):
             for partial_cube in results:
                 slice_number = partial_cube[0]
                 out_cube[:, :, slice_number] = partial_cube[1]
-                out_vube[:, :, slice_number] = partial_cube[2]
+                out_uube[:, :, slice_number] = partial_cube[2]
                 out_mube[:, :, slice_number] = partial_cube[3]
                 out_fube[:, :, slice_number] = partial_cube[4]
                 if obj is not None:
@@ -406,7 +406,7 @@ class MakeCube(BasePrimitive):
             # write out cube
             self.action.args.ccddata.header['HISTORY'] = log_string
             self.action.args.ccddata.data = out_cube
-            self.action.args.ccddata.uncertainty.array = out_vube
+            self.action.args.ccddata.uncertainty.array = out_uube
             self.action.args.ccddata.mask = out_mube
             self.action.args.ccddata.flags = out_fube
 

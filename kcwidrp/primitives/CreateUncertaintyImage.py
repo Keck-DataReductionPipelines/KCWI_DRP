@@ -20,7 +20,7 @@ class CreateUncertaintyImage(BasePrimitive):
         key = 'UNCSTD'
         keycom = 'stddev uncertainty created?'
 
-        self.logger.info("Create uncertainty image")
+        self.logger.info("Create StdDev uncertainty image")
         # start with Poisson noise
         self.action.args.ccddata.uncertainty = StdDevUncertainty(
             np.sqrt(np.abs(self.action.args.ccddata.data)), copy=True)
@@ -51,7 +51,7 @@ class CreateUncertaintyImage(BasePrimitive):
         if self.action.args.ccddata.mask is None:
             self.action.args.ccddata.mask = np.zeros(
                 self.action.args.ccddata.data.shape, dtype=np.uint8)
-        # document variance image creation
+        # document StdDev image creation
         self.action.args.ccddata.header[key] = (True, keycom)
 
         log_string = CreateUncertaintyImage.__module__
