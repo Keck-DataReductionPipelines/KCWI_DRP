@@ -560,8 +560,6 @@ class ingest_file(BasePrimitive):
     def check_if_file_can_be_processed(self, imtype):
         # bias frames
         bias_frames = self.context.proctab.search_proctab(frame=self.ccddata, target_type='MBIAS', nearest=True)
-        if imtype == 'BIAS':
-            return True
         # continuum bars
         contbars_frames = self.context.proctab.search_proctab(frame=self.ccddata, target_type='CONTBARS', nearest=True)
         # master flats
@@ -637,6 +635,8 @@ def kcwi_fits_reader(file):
         table = None
     # prepare for floating point
     ccddata.data = ccddata.data.astype(np.float64)
+    # Fix red headers
+    fix_red_header(ccddata)
     # Check for CCDCFG keyword
     if 'CCDCFG' not in ccddata.header:
         ccdcfg = ccddata.header['CCDSUM'].replace(" ", "")
@@ -651,8 +651,6 @@ def kcwi_fits_reader(file):
             if ccddata.uncertainty:
                 ccddata.uncertainty.unit = ccddata.header['BUNIT']
             # print("setting image units to " + ccddata.header['BUNIT'])
-
-    fix_red_header(ccddata)
 
     logger.info("<<< read %d imgs and %d tables out of %d hdus in %s" %
                 (read_imgs, read_tabs, len(hdul), file))
@@ -794,6 +792,8 @@ def fix_red_header(ccddata):
         ccddata.header['GAINMUL'] = 1
         # Add CCDMODE
         ccddata.header['CCDMODE'] = 0
+        # Add RGRATNAM
+        ccddata.header['RGRATNAM'] = 'RL'
         # Add AMPMNUM
         # TODO: map AMPMODE to AMPMNUM
         ccddata.header['AMPMNUM'] = 0
