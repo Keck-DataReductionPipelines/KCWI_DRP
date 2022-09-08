@@ -4,6 +4,7 @@ from astropy.nddata import CCDData
 from astropy.table import Table
 # from astropy import units as u
 import numpy as np
+from datetime import datetime
 
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 import os
@@ -64,7 +65,7 @@ class ingest_file(BasePrimitive):
         return keyval
 
     def camera(self):
-        camera = self.get_keyword('CAMERA')
+        camera = self.get_keyword('CAMERA').upper()
         if 'BLUE' in camera:
             return 0
         elif 'RED' in camera:
@@ -400,7 +401,7 @@ class ingest_file(BasePrimitive):
             list: (bool) y-direction, x-direction, True if forward, else False
         """
 
-        namps = int(self.get_keyword('NVIDINP'))
+        namps = self.namps()    # int(self.get_keyword('NVIDINP'))
         # TODO: check namps
         # section lists
         bsec = []
@@ -512,7 +513,7 @@ class ingest_file(BasePrimitive):
         # DELTA WAVE OUT
         out_args.dwout = self.delta_wave_out()
         # NAMPS
-        out_args.namps = int(self.get_keyword('NVIDINP'))
+        out_args.namps = self.namps()
         # NASMASK
         out_args.nasmask = self.nasmask()
         # SHUFROWS
@@ -559,6 +560,8 @@ class ingest_file(BasePrimitive):
     def check_if_file_can_be_processed(self, imtype):
         # bias frames
         bias_frames = self.context.proctab.search_proctab(frame=self.ccddata, target_type='MBIAS', nearest=True)
+        if imtype == 'BIAS':
+            return True
         # continuum bars
         contbars_frames = self.context.proctab.search_proctab(frame=self.ccddata, target_type='CONTBARS', nearest=True)
         # master flats
@@ -648,6 +651,8 @@ def kcwi_fits_reader(file):
             if ccddata.uncertainty:
                 ccddata.uncertainty.unit = ccddata.header['BUNIT']
             # print("setting image units to " + ccddata.header['BUNIT'])
+
+    fix_red_header(ccddata)
 
     logger.info("<<< read %d imgs and %d tables out of %d hdus in %s" %
                 (read_imgs, read_tabs, len(hdul), file))
@@ -767,3 +772,41 @@ def master_flat_name(ccddata, target_type):
     # Delivers a name that is unqie across an observing block
     name = target_type.lower() + '_' + ccddata.header['STATEID'] + '.fits'
     return name
+
+
+def fix_red_header(ccddata):
+    # are we red?
+    if 'RED' in ccddata.header['CAMERA'].upper():
+        # Fix red headers during Caltech AIT
+        # Add DCS keywords
+        ccddata.header['TARGNAME'] = ccddata.header['OBJECT']
+        dateend = ccddata.header['DATE-END']
+        de = datetime.fromisoformat(dateend)
+        day_frac = de.hour / 24. + de.minute / 1440. + de.second / 86400.
+        jd = datetime.date(de).toordinal() + day_frac + 1721424.5
+        mjd = jd - 2400000.5
+        ccddata.header['MJD'] = mjd
+        ccddata.header['RCWAVE'] = 7000.
+        # Add NVIDINP
+        nvidinp = ccddata.header['TAPLINES']
+        ccddata.header['NVIDINP'] = nvidinp
+        # Add GAINMUL
+        ccddata.header['GAINMUL'] = 1
+        # Add CCDMODE
+        ccddata.header['CCDMODE'] = 0
+        # Add AMPMNUM
+        # TODO: map AMPMODE to AMPMNUM
+        ccddata.header['AMPMNUM'] = 0
+        # fix zero-bias and add GAINn keywords
+        st = ['T', 'D', 'B', 'C', 'A']
+        for i in range(nvidinp, 0, -1):
+            gain_key = 'GAIN%d' % i
+            ccddata.header[gain_key] = 1.0
+            for t in st:
+                new_key = t + 'SEC%d' % i
+                old_key = t + 'SEC%d' % (i - 1)
+                # print(new_key, old_key, ccddata.header[old_key])
+                ccddata.header[new_key] = ccddata.header[old_key]
+        for t in st:
+            old_key = t + 'SEC0'
+            del ccddata.header[old_key]

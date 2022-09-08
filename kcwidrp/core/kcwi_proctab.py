@@ -89,7 +89,7 @@ class Proctab:
             #    dto = self.frame.header['DATE-OBS']
             #    fno = self.frame.header['FRAMENO']
             #    self.frame.header['GROUPID'] = "%s-%s" % (dto, fno)
-            cam = frame.header['CAMERA']
+            cam = frame.header['CAMERA'].upper()
             if 'BLUE' in cam:
                 grnam = frame.header['BGRATNAM']
                 grang = frame.header['BGRANGLE']
@@ -144,7 +144,7 @@ class Proctab:
             # get relevant camera (blue or red)
             self.log.info('Camera is %s' % self.frame.header['CAMERA'])
             tab = self.proctab[(self.proctab['CAM'] ==
-                                self.frame.header['CAMERA'].strip())]
+                                self.frame.header['CAMERA'].upper().strip())]
             # get target type images
             tab = tab[(self.proctab['TYPE'] == target_type)]
             self.log.info('Target type is %s' % target_type)
@@ -201,7 +201,7 @@ class Proctab:
         self.frame = frame
         # get relevant camera (blue or red)
         tab = self.proctab[(self.proctab['CAM'] ==
-                            self.frame.header['CAMERA'].strip())]
+                            self.frame.header['CAMERA'].upper().strip())]
         imno_list = tab['MJD']
         if self.frame.header['MJD'] in imno_list:
             return True

@@ -12,7 +12,7 @@ def get_log_string(ifile, batch=False):
     header = ff[0].header
     header['FNAME'] = ifile
     if 'CAMERA' in header:
-        if 'RED' in header['CAMERA']:
+        if 'RED' in header['CAMERA'].upper():
             if 'OFNAME' not in header:
                 header['OFNAME'] = ifile
             if 'AMPMODE' not in header:
