@@ -138,6 +138,11 @@ class ingest_file(BasePrimitive):
                 return 5.0
             else:
                 return 14.0
+        else:
+            if 'BIAS' in self.imtype():
+                return 0.
+            else:
+                raise ValueError("unable to determine atlas sigma: GRATING undefined")
 
     def rho(self):
         if 'BH1' in self.grating():
@@ -212,8 +217,12 @@ class ingest_file(BasePrimitive):
         elif 'RL' in self.grating():
             rez = rw / 800.
         else:
-            raise ValueError("unable to compute atlas resolution: "
-                             "grating undefined")
+            # Resolution not needed for biases
+            if 'BIAS' in self.imtype():
+                rez = 0.
+            else:
+                raise ValueError("unable to compute atlas resolution: "
+                                 "grating undefined")
         # Adjust for slicer
         if self.ifunum() == 2:  # Medium slicer
             rez /= 2.
@@ -238,8 +247,12 @@ class ingest_file(BasePrimitive):
         elif 'RL' in self.grating():
             dw = 0.5 * float(self.ybinsize())
         else:
-            raise ValueError("unable to compute output delta lambda: "
-                             "grating undefined")
+            # Delta wave not needed for biases
+            if 'BIAS' in self.imtype():
+                dw = 0.
+            else:
+                raise ValueError("unable to compute output delta lambda: "
+                                 "grating undefined")
         return dw
 
     def namps(self):
@@ -558,18 +571,14 @@ class ingest_file(BasePrimitive):
         return self.output
 
     def check_if_file_can_be_processed(self, imtype):
-        # bias frames
-        bias_frames = self.context.proctab.search_proctab(frame=self.ccddata, target_type='MBIAS', nearest=True)
-        # continuum bars
-        contbars_frames = self.context.proctab.search_proctab(frame=self.ccddata, target_type='CONTBARS', nearest=True)
-        # master flats
-        masterflat_frames = self.context.proctab.search_proctab(frame=self.ccddata, target_type='MFLAT', nearest=True)
-        # inverse sensitivity
-        inverse_sensitivity_frames = self.context.proctab.search_proctab(frame=self.ccddata, target_type='INVSENS', nearest=True)
-        # arclamp
-        arclamp_frames = self.context.proctab.search_proctab(frame=self.ccddata, target_type='ARCLAMP', nearest=True)
 
         if imtype == 'OBJECT':
+            # bias frames
+            bias_frames = self.context.proctab.search_proctab(frame=self.ccddata, target_type='MBIAS', nearest=True)
+            # master flats
+            masterflat_frames = self.context.proctab.search_proctab(frame=self.ccddata, target_type='MFLAT', nearest=True)
+            # arclamp
+            arclamp_frames = self.context.proctab.search_proctab(frame=self.ccddata, target_type='ARCLAMP', nearest=True)
             if len(bias_frames) > 0 \
                 and len(masterflat_frames) > 0 \
                 and len(arclamp_frames) > 0:
@@ -582,6 +591,8 @@ class ingest_file(BasePrimitive):
                 return False
 
         if imtype == 'ARCLAMP':
+            # continuum bars
+            contbars_frames = self.context.proctab.search_proctab(frame=self.ccddata, target_type='CONTBARS', nearest=True)
             if (len(contbars_frames)) > 0:
                 return True
             else:
@@ -589,13 +600,13 @@ class ingest_file(BasePrimitive):
                 return False
 
         if imtype in ['FLATLAMP', 'TWIFLAT', 'DOMEFLAT']:
+            # bias frames
+            bias_frames = self.context.proctab.search_proctab(frame=self.ccddata, target_type='MBIAS', nearest=True)
             if len(bias_frames) > 0:
                 return True
             else:
                 self.logger.warn(f"Cannot reduce {imtype} frame. Missing master bias. Rescheduling for later.")
                 return False
-
-
 
         return True
 
@@ -784,21 +795,18 @@ def fix_red_header(ccddata):
         jd = datetime.date(de).toordinal() + day_frac + 1721424.5
         mjd = jd - 2400000.5
         ccddata.header['MJD'] = mjd
-        ccddata.header['RCWAVE'] = 7000.
         # Add NVIDINP
-        nvidinp = ccddata.header['TAPLINES']
-        ccddata.header['NVIDINP'] = nvidinp
+        ccddata.header['NVIDINP'] = ccddata.header['TAPLINES']
         # Add GAINMUL
         ccddata.header['GAINMUL'] = 1
         # Add CCDMODE
         ccddata.header['CCDMODE'] = 0
-        # Add RGRATNAM
-        ccddata.header['RGRATNAM'] = 'RL'
         # Add AMPMNUM
         # TODO: map AMPMODE to AMPMNUM
         ccddata.header['AMPMNUM'] = 0
         # fix zero-bias and add GAINn keywords
         st = ['T', 'D', 'B', 'C', 'A']
+        nvidinp = ccddata.header['NVIDINP']
         for i in range(nvidinp, 0, -1):
             gain_key = 'GAIN%d' % i
             ccddata.header[gain_key] = 1.0
