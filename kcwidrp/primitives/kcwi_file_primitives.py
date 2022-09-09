@@ -395,12 +395,12 @@ class ingest_file(BasePrimitive):
         Tsec accounts for trimming the image according to Dsec.
 
         Amps are assumed to be organized as follows:
-
-        (0,ny)	--------- (nx,ny)
-                | 3 | 4 |
-                ---------
-                | 1 | 2 |
-        (0,0)	--------- (nx, 0)
+                  BLUE                          RED
+        (0,ny)	--------- (nx,ny)    (0,ny)  --------- (nx,ny)
+                | 2 | 3 |                    | 0 | 2 |
+                ---------                    ---------
+                | 0 | 1 |                    | 1 | 3 |
+        (0,0)	--------- (nx, 0)     (0,0)  --------- (nx, 0)
 
         Args:
         -----
@@ -416,6 +416,7 @@ class ingest_file(BasePrimitive):
 
         namps = self.namps()    # int(self.get_keyword('NVIDINP'))
         # TODO: check namps
+        camera = self.get_keyword('CAMERA')
         # section lists
         bsec = []
         dsec = []
@@ -430,26 +431,64 @@ class ingest_file(BasePrimitive):
             sec, rfor = parse_imsec(section)
             dsec.append(sec)
             direc.append(rfor)
-            if i == 0:
-                y0 = 0
-                y1 = sec[1] - sec[0]
-                x0 = 0
-                x1 = sec[3] - sec[2]
-            elif i == 1:
-                y0 = 0
-                y1 = sec[1] - sec[0]
-                x0 = tsec[0][3] + 1
-                x1 = x0 + sec[3] - sec[2]
-            elif i == 2:
-                y0 = tsec[0][1] + 1
-                y1 = y0 + sec[1] - sec[0]
-                x0 = 0
-                x1 = sec[3] - sec[2]
-            elif i == 3:
-                y0 = tsec[0][1] + 1
-                y1 = y0 + sec[1] - sec[0]
-                x0 = tsec[0][3] + 1
-                x1 = x0 + sec[3] - sec[2]
+            if 'BLUE' in camera:
+                if i == 0:
+                    y0 = 0
+                    y1 = sec[1] - sec[0]
+                    x0 = 0
+                    x1 = sec[3] - sec[2]
+                elif i == 1:
+                    y0 = 0
+                    y1 = sec[1] - sec[0]
+                    x0 = tsec[0][3] + 1
+                    x1 = x0 + sec[3] - sec[2]
+                elif i == 2:
+                    y0 = tsec[0][1] + 1
+                    y1 = y0 + sec[1] - sec[0]
+                    x0 = 0
+                    x1 = sec[3] - sec[2]
+                elif i == 3:
+                    y0 = tsec[0][1] + 1
+                    y1 = y0 + sec[1] - sec[0]
+                    x0 = tsec[0][3] + 1
+                    x1 = x0 + sec[3] - sec[2]
+                else:
+                    # should not get here
+                    y0 = -1
+                    y1 = -1
+                    x0 = -1
+                    x1 = -1
+                    # self.log.info("ERROR - bad amp number: %d" % i)
+            elif 'RED' in camera:
+                section = self.get_keyword('CSEC%d' % (i + 1))
+                sec, rfor = parse_imsec(section)
+                if i == 0:
+                    y0 = sec[0]
+                    y1 = y0 + sec[1] - sec[0]
+                    x0 = 0
+                    x1 = sec[3] - sec[2]
+                elif i == 1:
+                    y0 = 0
+                    y1 = sec[1] - sec[0]
+                    x0 = 0
+                    x1 = sec[3] - sec[2]
+                elif i == 2:
+                    y0 = sec[0]
+                    y1 = y0 + sec[1] - sec[0]
+                    x0 = sec[2]
+                    x1 = x0 + sec[3] - sec[2]
+                elif i == 3:
+                    y0 = 0
+                    y1 = sec[1] - sec[0]
+                    x0 = sec[2]
+                    x1 = x0 + sec[3] - sec[2]
+                else:
+                    # should not get here
+                    y0 = -1
+                    y1 = -1
+                    x0 = -1
+                    x1 = -1
+                    # self.log.info("ERROR - bad amp number: %d" % i)
             else:
                 # should not get here
                 y0 = -1
@@ -579,9 +618,10 @@ class ingest_file(BasePrimitive):
             masterflat_frames = self.context.proctab.search_proctab(frame=self.ccddata, target_type='MFLAT', nearest=True)
             # arclamp
             arclamp_frames = self.context.proctab.search_proctab(frame=self.ccddata, target_type='ARCLAMP', nearest=True)
-            if len(bias_frames) > 0 \
+            if len(bias_frames) > 0:
+                '''\
                 and len(masterflat_frames) > 0 \
-                and len(arclamp_frames) > 0:
+                and len(arclamp_frames) > 0:'''
                 return True
             else:
                 self.logger.warn("Cannot reduce OBJECT frame. Rescheduling for later. Found:")
@@ -805,16 +845,18 @@ def fix_red_header(ccddata):
         # TODO: map AMPMODE to AMPMNUM
         ccddata.header['AMPMNUM'] = 0
         # fix zero-bias and add GAINn keywords
-        st = ['T', 'D', 'B', 'C', 'A']
-        nvidinp = ccddata.header['NVIDINP']
-        for i in range(nvidinp, 0, -1):
-            gain_key = 'GAIN%d' % i
-            ccddata.header[gain_key] = 1.0
+        # do we need to fix?
+        if 'TSEC0' in ccddata.header:
+            st = ['T', 'D', 'B', 'C', 'A']
+            nvidinp = ccddata.header['NVIDINP']
+            for i in range(nvidinp, 0, -1):
+                gain_key = 'GAIN%d' % i
+                ccddata.header[gain_key] = 1.0
+                for t in st:
+                    new_key = t + 'SEC%d' % i
+                    old_key = t + 'SEC%d' % (i - 1)
+                    # print(new_key, old_key, ccddata.header[old_key])
+                    ccddata.header[new_key] = ccddata.header[old_key]
             for t in st:
-                new_key = t + 'SEC%d' % i
-                old_key = t + 'SEC%d' % (i - 1)
-                # print(new_key, old_key, ccddata.header[old_key])
-                ccddata.header[new_key] = ccddata.header[old_key]
-        for t in st:
-            old_key = t + 'SEC0'
-            del ccddata.header[old_key]
+                old_key = t + 'SEC0'
+                del ccddata.header[old_key]
