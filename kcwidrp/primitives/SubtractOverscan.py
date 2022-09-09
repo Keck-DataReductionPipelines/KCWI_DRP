@@ -2,7 +2,7 @@ from keckdrpframework.primitives.base_primitive import BasePrimitive
 from kcwidrp.core.bokeh_plotting import bokeh_plot
 
 from bokeh.plotting import figure
-# from bokeh.layouts import gridplot
+from bokeh.layouts import gridplot
 import numpy as np
 import math
 import time
@@ -30,7 +30,7 @@ class SubtractOverscan(BasePrimitive):
         # is it performed?
         performed = False
         # loop over amps
-        # plts = []   # plots for each amp
+        plts = []   # plots for each amp
 
         for ia in range(namps):
             # get gain
@@ -66,7 +66,7 @@ class SubtractOverscan(BasePrimitive):
                 if self.config.instrument.plot_level >= 1:
                     x = np.arange(len(osvec))
                     p = figure(title=self.action.args.plotlabel +
-                               'OSCAN amp %d' % (ia+1),
+                               'OSCAN [%d:%d, %d:%d] amp %d' % (x0, x1, y0, y1, ia+1),
                                x_axis_label='overscan px',
                                y_axis_label='counts',
                                plot_width=self.config.instrument.plot_width,
@@ -75,7 +75,7 @@ class SubtractOverscan(BasePrimitive):
                     p.line(x, osfit, line_color='red', line_width=3,
                            legend_label="Fit")
                     bokeh_plot(p, self.context.bokeh_session)
-                    # plts.append(p)
+                    plts.append(p)
                     if self.config.instrument.plot_level >= 2:
                         input("Next? <cr>: ")
                     else:
@@ -87,15 +87,15 @@ class SubtractOverscan(BasePrimitive):
                 performed = True
             else:
                 self.logger.info("not enough overscan px to fit amp %d")
-        # if self.config.instrument.plot_level >= 1 and len(plts) > 0:
-        #    bokeh_plot(gridplot(plts, ncols=(2 if namps > 2 else 1),
-        #                        plot_width=500, plot_height=300,
-        #                        toolbar_location=None),
-        #                        self.context.bokeh_session)
-        #    if self.config.instrument.plot_level >= 2:
-        #        input("Next? <cr>: ")
-        #    else:
-        #        time.sleep(self.config.instrument.plot_pause)
+        if self.config.instrument.plot_level >= 1 and len(plts) > 0:
+            bokeh_plot(gridplot(plts, ncols=(2 if namps > 2 else 1),
+                                plot_width=500, plot_height=300,
+                                toolbar_location=None),
+                                self.context.bokeh_session)
+            if self.config.instrument.plot_level >= 2:
+                input("Next? <cr>: ")
+            else:
+                time.sleep(self.config.instrument.plot_pause)
 
         self.action.args.ccddata.header[key] = (performed, keycom)
 
