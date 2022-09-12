@@ -21,10 +21,12 @@ def parse_imsec(section=None):
     xfor = True
     yfor = True
 
-    p1 = int(section[1:-1].split(',')[0].split(':')[0])
-    p2 = int(section[1:-1].split(',')[0].split(':')[1])
-    p3 = int(section[1:-1].split(',')[1].split(':')[0])
-    p4 = int(section[1:-1].split(',')[1].split(':')[1])
+    xsec = section[1:-1].split(',')[0]
+    ysec = section[1:-1].split(',')[1]
+    p1 = int(xsec.split(':')[0])
+    p2 = int(xsec.split(':')[1])
+    p3 = int(ysec.split(':')[0])
+    p4 = int(ysec.split(':')[1])
     # tests for individual axes
     if p1 > p2:
         x0 = p2 - 1
@@ -40,6 +42,11 @@ def parse_imsec(section=None):
     else:
         y0 = p3 - 1
         y1 = p4 - 1
+    # verify read direction
+    if xsec.count(':') == 2 and xfor:
+        xfor = False
+    if ysec.count(':') == 2 and yfor:
+        yfor = False
     # package output
     sec = (y0, y1, x0, x1)
     rfor = (yfor, xfor)
@@ -430,8 +437,8 @@ class ingest_file(BasePrimitive):
             section = self.get_keyword('DSEC%d' % (i + 1))
             sec, rfor = parse_imsec(section)
             dsec.append(sec)
-            direc.append(rfor)
             if 'BLUE' in camera:
+                direc.append(rfor)
                 if i == 0:
                     y0 = 0
                     y1 = sec[1] - sec[0]
@@ -462,6 +469,7 @@ class ingest_file(BasePrimitive):
             elif 'RED' in camera:
                 section = self.get_keyword('CSEC%d' % (i + 1))
                 sec, rfor = parse_imsec(section)
+                direc.append(rfor)
                 if i == 0:
                     y0 = sec[0]
                     y1 = y0 + sec[1] - sec[0]
