@@ -1,5 +1,6 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from kcwidrp.core.bokeh_plotting import bokeh_plot
+from kcwidrp.core.kcwi_plotting import save_plot
 
 from bokeh.plotting import figure
 from bokeh.layouts import gridplot
@@ -24,6 +25,7 @@ class SubtractOverscan(BasePrimitive):
             porder = 2
         else:
             porder = 7
+        frameno = self.action.args.ccddata.header['FRAMENO']
         # header keyword to update
         key = 'OSCANSUB'
         keycom = 'Overscan subtracted?'
@@ -47,17 +49,23 @@ class SubtractOverscan(BasePrimitive):
                 nsam = x1 - x0
                 xx = np.arange(len(osvec), dtype=np.float)
                 # fit it, avoiding first 50 px
-                if direc[ia]:
+                if direc[ia][0]:
                     # forward read skips first 50 px
                     oscoef = np.polyfit(xx[50:], osvec[50:], porder)
+                    # generate fitted overscan vector for full range
+                    osfit = np.polyval(oscoef, xx)
+                    # calculate residuals
+                    resid = (osvec[50:] - osfit[50:]) * math.sqrt(nsam) * gain / 1.414
                 else:
                     # reverse read skips last 50 px
                     oscoef = np.polyfit(xx[:-50], osvec[:-50], porder)
-                # generate fitted overscan vector for full range
-                osfit = np.polyval(oscoef, xx)
-                # calculate residuals
-                resid = (osvec - osfit) * math.sqrt(nsam) * gain / 1.414
+                    # generate fitted overscan vector for full range
+                    osfit = np.polyval(oscoef, xx)
+                    # calculate residuals
+                    resid = (osvec[:-50] - osfit[:-50]) * math.sqrt(nsam) * gain / 1.414
+
                 sdrs = float("%.3f" % np.std(resid))
+                self.logger.info("Img # %05d, Amp %d [%d:%d, %d:%d]" % (frameno, ia+1, x0, x1, y0, y1))
                 self.logger.info("Amp%d Read noise from oscan in e-: %.3f" %
                                  ((ia + 1), sdrs))
                 self.action.args.ccddata.header['OSCNRN%d' % (ia + 1)] = \
@@ -65,8 +73,8 @@ class SubtractOverscan(BasePrimitive):
 
                 if self.config.instrument.plot_level >= 1:
                     x = np.arange(len(osvec))
-                    p = figure(title=self.action.args.plotlabel +
-                               'OSCAN [%d:%d, %d:%d] amp %d' % (x0, x1, y0, y1, ia+1),
+                    p = figure(title='Img # %05d OSCAN [%d:%d, %d:%d] amp %d, noise: %.3f e-/px' %
+                                     (frameno, x0, x1, y0, y1, ia+1, sdrs),
                                x_axis_label='overscan px',
                                y_axis_label='counts',
                                plot_width=self.config.instrument.plot_width,
@@ -91,7 +99,11 @@ class SubtractOverscan(BasePrimitive):
             bokeh_plot(gridplot(plts, ncols=(2 if namps > 2 else 1),
                                 plot_width=500, plot_height=300,
                                 toolbar_location=None),
-                                self.context.bokeh_session)
+                       self.context.bokeh_session)
+            save_plot(gridplot(plts, ncols=(2 if namps > 2 else 1),
+                               plot_width=500, plot_height=300,
+                               toolbar_location=None),
+                      filename="oscan_%05d.png" % frameno)
             if self.config.instrument.plot_level >= 2:
                 input("Next? <cr>: ")
             else:
