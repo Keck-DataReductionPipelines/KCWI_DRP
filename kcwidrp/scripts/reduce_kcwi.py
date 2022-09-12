@@ -177,7 +177,8 @@ def main():
     # start the bokeh server is requested by the configuration parameters
     if framework.config.instrument.enable_bokeh is True:
         if check_running_process(process='bokeh') is False:
-            subprocess.Popen('bokeh serve', shell=True)
+            with open("bokeh_output.txt", "wb") as out:
+                subprocess.Popen('bokeh serve', shell=True, stderr=out, stdout=out)
             # --session-ids=unsigned --session-token-expiration=86400',
             # shell=True)
             time.sleep(5)
