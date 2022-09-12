@@ -18,7 +18,19 @@ class WavelengthCorrections(BasePrimitive):
         self.logger = context.pipeline_logger
 
     def _pre_condition(self):
-        return True
+        """
+        Checks if we can correct wavelengths based on the processing table
+        :return:
+        """
+        self.logger.info("Checking precondition for WavelengthCorrections")
+        precondition = False
+        suffix = 'icube'
+        obj = self.locate_object_file(suffix)
+        if obj:
+            precondition = True
+        else:
+            self.logger.error("Precondition for WavelengthCorrections failed!")
+        return precondition
 
     def _perform(self):
 
