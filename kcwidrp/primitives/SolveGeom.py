@@ -187,33 +187,33 @@ class SolveGeom(BasePrimitive):
                               self.action.args.geometry_file)
         else:
             geom = {
-                "geom_file": self.action.args.geometry_file,
-                "xsize": xsize, "ysize": ysize,
-                "pxscl": pxscl, "slscl": slscl,
-                "cbarsno": self.action.args.contbar_image_number,
-                "cbarsfl": self.action.args.contbar_image,
-                "arcno": self.action.args.arc_number,
-                "arcfl": self.action.args.arc_image,
-                "barsep": self.action.args.reference_bar_separation,
-                "bar0": self.action.args.x0out,
-                "waveall0": self.action.args.waveall0,
-                "waveall1": self.action.args.waveall1,
-                "wavegood0": self.action.args.wavegood0,
-                "wavegood1": self.action.args.wavegood1,
-                "wavemid": self.action.args.wavemid,
-                "wavensall0": self.action.args.wavensall0,
-                "wavensall1": self.action.args.wavensall1,
-                "wavensgood0": self.action.args.wavensgood0,
-                "wavensgood1": self.action.args.wavensgood1,
-                "wavensmid": self.action.args.wavensmid,
-                "dich_frac": dichroic_fraction,
-                "dwout": dwout,
-                "wave0out": self.action.args.wave0out,
-                "wave1out": self.action.args.wave1out,
-                "avwvsig": self.action.args.av_bar_sig,
-                "sdwvsig": self.action.args.st_bar_sig,
-                "xl0": xl0_out, "xl1": xl1_out,
-                "tform": tform_list, "invtf": invtf_list
+                "geom_file": self.action.args.geometry_file,            # output save file for geom struct
+                "xsize": xsize, "ysize": ysize,                         # xy size of image
+                "pxscl": pxscl, "slscl": slscl,                         # degrees per unbinned spatial and slice pixel
+                "cbarsno": self.action.args.contbar_image_number,       # cont bars image number
+                "cbarsfl": self.action.args.contbar_image,              # cont bars image name
+                "arcno": self.action.args.arc_number,                   # arc image number
+                "arcfl": self.action.args.arc_image,                    # arc image name
+                "barsep": self.action.args.reference_bar_separation,    # reference delta x between bars (pix)
+                "bar0": self.action.args.x0out,                         # output spatial zeropoint (unbinned pix)
+                "waveall0": self.action.args.waveall0,                  # low wavelength that includes all data
+                "waveall1": self.action.args.waveall1,                  # high wavelength that includes all data
+                "wavegood0": self.action.args.wavegood0,                # low wavelength that includes good data
+                "wavegood1": self.action.args.wavegood1,                # high wavelength that includes good data
+                "wavemid": self.action.args.wavemid,                    # wavelength of the middle of the range
+                "wavensall0": self.action.args.wavensall0,              # low wavelength that includes all masked data
+                "wavensall1": self.action.args.wavensall1,              # high wavelength that includes all masked data
+                "wavensgood0": self.action.args.wavensgood0,            # low wavelength that includes good masked data
+                "wavensgood1": self.action.args.wavensgood1,            # high wavelength that includes good masked data
+                "wavensmid": self.action.args.wavensmid,                # wavelength of the middle of the masked range
+                "dich_frac": dichroic_fraction,                         # fraction of wavelength range impacted by dichroic
+                "dwout": dwout,                                         # output disperson (Ang/pix)
+                "wave0out": self.action.args.wave0out,                  # output wavelength zeropoint
+                "wave1out": self.action.args.wave1out,                  # output ending wavelength
+                "avwvsig": self.action.args.av_bar_sig,                 # average bar wavelength sigma (Ang)
+                "sdwvsig": self.action.args.st_bar_sig,                 # standard deviation of bar sigmas (Ang)
+                "xl0": xl0_out, "xl1": xl1_out,                         # slice spatial limits
+                "tform": tform_list, "invtf": invtf_list                # transform and inverse transforms for each slice
             }
             with open(self.action.args.geometry_file, 'wb') as ofile:
                 pickle.dump(geom, ofile)
