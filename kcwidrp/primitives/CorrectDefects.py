@@ -45,9 +45,9 @@ class CorrectDefects(BasePrimitive):
             for index, row in defect_table.iterrows():
                 # Get coords and adjust for python zero bias
                 x0 = row['X0'] - 1
-                x1 = row['X1']
+                x1 = row['X1'] - 1
                 y0 = row['Y0'] - 1
-                y1 = row['Y1']
+                y1 = row['Y1'] - 1
                 # Loop over y range
                 for by in range(y0, y1):
                     # sample on low side of bad area
