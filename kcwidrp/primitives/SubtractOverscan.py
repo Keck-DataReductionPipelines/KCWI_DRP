@@ -1,6 +1,7 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from kcwidrp.core.bokeh_plotting import bokeh_plot
 from kcwidrp.core.kcwi_plotting import save_plot
+from kcwidrp.core.bokeh_plotting import bokeh_clear
 
 from bokeh.plotting import figure
 from bokeh.layouts import gridplot
@@ -108,6 +109,7 @@ class SubtractOverscan(BasePrimitive):
                 input("Next? <cr>: ")
             else:
                 time.sleep(self.config.instrument.plot_pause)
+            bokeh_clear(self.context.bokeh_session)
 
         self.action.args.ccddata.header[key] = (performed, keycom)
 
