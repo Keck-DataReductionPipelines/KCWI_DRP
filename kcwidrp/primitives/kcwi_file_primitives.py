@@ -661,7 +661,7 @@ class ingest_file(BasePrimitive):
 
 def kcwi_fits_reader(file):
     """A reader for KeckData objects.
-    Currently this is a separate function, but should probably be
+    Currently, this is a separate function, but should probably be
     registered as a reader similar to fits_ccddata_reader.
     Arguments:
     file -- The filename (or pathlib.Path) of the FITS file to open.
