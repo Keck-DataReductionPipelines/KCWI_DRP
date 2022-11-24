@@ -826,7 +826,7 @@ def master_bias_name(ccddata, target_type='MBIAS'):
     return name
 
 def master_flat_name(ccddata, target_type):
-    # Delivers a name that is unqie across an observing block
+    # Delivers a name that is unique across an observing block
     name = target_type.lower() + '_' + ccddata.header['STATEID'] + '.fits'
     return name
 
@@ -848,10 +848,34 @@ def fix_red_header(ccddata):
         # Add GAINMUL
         ccddata.header['GAINMUL'] = 1
         # Add CCDMODE
-        ccddata.header['CCDMODE'] = 0
+        if 'CDSSPEED' in ccddata.header:
+            ccddata.header['CCDMODE'] = ccddata.header['CDSSPEED']
+        else:
+            ccddata.header['CCDMODE'] = 0
         # Add AMPMNUM
-        # TODO: map AMPMODE to AMPMNUM
-        ccddata.header['AMPMNUM'] = 0
+        if 'AMPMODE' in ccddata.header:
+            ampmode = ccddata.header['AMPMODE']
+            if ampmode == 'L2U2L1U1':
+                ampnum = 0
+            elif ampmode == 'L2U2':
+                ampnum = 1
+            elif ampmode == 'L1U1':
+                ampnum = 2
+            elif ampmode == 'L2L1':
+                ampnum = 3
+            elif ampmode == 'U2U1':
+                ampnum = 4
+            elif ampmode == 'L2':
+                ampnum = 5
+            elif ampmode == 'U2':
+                ampnum = 6
+            elif ampmode == 'L1':
+                ampnum = 7
+            elif ampmode == 'U1':
+                ampnum = 8
+            else:
+                ampnum = 0
+            ccddata.header['AMPMNUM'] = ampnum
         # fix zero-bias and add GAINn keywords
         # do we need to fix?
         if 'TSEC0' in ccddata.header:
