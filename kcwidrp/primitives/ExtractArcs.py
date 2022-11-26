@@ -87,14 +87,38 @@ class ExtractArcs(BasePrimitive):
                 sind = np.argsort(yp)
                 yps = yp[sind]
                 xps = xp[sind]
-                c, stats = P.polyfit(yps, xps, full=True)
+                c, stats = P.polyfit(yps, xps, deg=3, full=True)
                 arc = []
+                bkg = []
                 for iy in range(self.action.args.ccddata.header['NAXIS2']):
                     xv = int(P.polyval(iy, c))
-                    yy = self.action.args.ccddata.data[iy: (xv - window):(xv + window + 1)]
-                    yy -= np.nanmin(yy)
-                    arc.append(np.nansum(yy))
-                arcs.append(np.asarray(arc, dtype=np.float))
+                    yy = self.action.args.ccddata.data[
+                         iy, (xv - window):(xv + window + 1)]
+                    nyy = len(yy)
+                    if nyy > 0:
+                        bkg.append(np.nanmin(yy) * float(nyy))
+                        arc.append(np.nansum(yy))
+                    else:
+                        bkg.append(0.)
+                        arc.append(0.)
+                if do_plot:
+                    xp = np.arange(len(arc))
+                    p = figure(title=self.action.args.plotlabel + "ARC # %d" %
+                                     len(arcs),
+                               x_axis_label="Y CCD Pixel",
+                               y_axis_label="Flux",
+                               plot_width=self.config.instrument.plot_width,
+                               plot_height=self.config.instrument.plot_height)
+                    p.line(xp, arc, legend_label='Arc', color='blue')
+                    p.line(xp, bkg, legend_label='Bkg', color='red')
+                    bokeh_plot(p, self.context.bokeh_session)
+                    q = input("Next? <cr>, q to quit: ")
+                    if 'Q' in q.upper():
+                        do_plot = False
+                arc = np.asarray(arc, dtype=float)
+                bkg = np.asarray(bkg, dtype=float)
+                arc -= bkg
+                arcs.append(arc)
         else:
             transformation = tf.estimate_transform(
                 'polynomial', self.action.args.source_control_points,

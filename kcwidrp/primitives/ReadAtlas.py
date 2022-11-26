@@ -53,8 +53,13 @@ class ReadAtlas(BasePrimitive):
         if 'BL' in self.action.args.grating or 'RL' in self.action.args.grating:
             minow = int(len(obsarc)/5)
             maxow = int(4.*len(obsarc)/5)
-        minwav = obswav[minow]
-        maxwav = obswav[maxow]
+        if self.context.prelim_disp > 0:
+            minwav = obswav[minow]
+            maxwav = obswav[maxow]
+        else:
+            minwav = obswav[maxow]
+            maxwav = obswav[minow]
+        print("min, max wav: ", minwav, maxwav)
         # Check for dichroic
         if self.action.args.dich:
             obs_extent = maxow - minow
