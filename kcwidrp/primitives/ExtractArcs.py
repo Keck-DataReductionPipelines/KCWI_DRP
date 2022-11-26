@@ -4,6 +4,7 @@ from kcwidrp.core.bokeh_plotting import bokeh_plot
 from kcwidrp.primitives.kcwi_file_primitives import strip_fname, get_master_name
 
 import numpy as np
+from numpy.polynomial import polynomial as P
 import os
 from skimage import transform as tf
 from bokeh.plotting import figure
@@ -76,65 +77,84 @@ class ExtractArcs(BasePrimitive):
         self.action.args.slice_id = trace['slid']
 
         self.logger.info("Fitting spatial control points")
-        transformation = tf.estimate_transform(
-            'polynomial', self.action.args.source_control_points,
-            self.action.args.destination_control_points, order=3)
 
-        self.logger.info("Transforming arc image")
-        warped_image = tf.warp(self.action.args.ccddata.data, transformation)
-        # Write warped arcs if requested
-        if self.config.instrument.saveintims:
-            from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer
-            # write out warped image
-            self.action.args.ccddata.data = warped_image
-            kcwi_fits_writer(self.action.args.ccddata,
-                             table=self.action.args.table,
-                             output_file=self.action.args.name,
-                             output_dir=self.config.instrument.output_directory,
-                             suffix="warped")
-            self.logger.info("Transformed arcs produced")
-        # extract arcs
-        self.logger.info("Extracting arcs")
-        arcs = []
-        # sectors for bkgnd subtraction
-        sectors = 16
-        for xyi, xy in enumerate(self.action.args.source_control_points):
-            if xy[1] == middle_row:
-                xi = int(xy[0]+0.5)
-                arc = np.median(
-                    warped_image[:, (xi - window):(xi + window + 1)], axis=1)
-                # divide spectrum into sectors
-                div = int((len(arc)-100) / sectors)
-                # get minimum for each sector
-                xv = []
-                yv = []
-                for i in range(sectors):
-                    mi = np.nanargmin(arc[50+i*div:50+(i+1)*div])
-                    mn = np.nanmin(arc[50+i*div:50+(i+1)*div])
-                    xv.append(mi+50+i*div)
-                    yv.append(mn)
-                # fit minima to model background
-                res = np.polyfit(xv, yv, 3)
-                xp = np.arange(len(arc))
-                bkg = np.polyval(res, xp)   # resulting model
-                # plot if requested
-                if do_plot:
-                    p = figure(title=self.action.args.plotlabel + "ARC # %d" %
-                               len(arcs),
-                               x_axis_label="Y CCD Pixel",
-                               y_axis_label="Flux",
-                               plot_width=self.config.instrument.plot_width,
-                               plot_height=self.config.instrument.plot_height)
-                    p.line(xp, arc, legend_label='Arc', color='blue')
-                    p.line(xp, bkg, legend_label='Bkg', color='red')
-                    bokeh_plot(p, self.context.bokeh_session)
-                    q = input("Next? <cr>, q to quit: ")
-                    if 'Q' in q.upper():
-                        do_plot = False
-                # subtract model background
-                arc -= bkg
-                # add to arcs list
-                arcs.append(arc)
+        if self.config.instrument.NBARS < 60:
+            arcs = []
+            for ib in range(self.config.instrument.NBARS):
+                bind = np.where(trace['barid'] == ib)
+                xp = trace['dst'][bind][:, 0]
+                yp = trace['dst'][bind][:, 1]
+                sind = np.argsort(yp)
+                yps = yp[sind]
+                xps = xp[sind]
+                c, stats = P.polyfit(yps, xps, full=True)
+                arc = []
+                for iy in range(self.action.args.ccddata.header['NAXIS2']):
+                    xv = int(P.polyval(iy, c))
+                    yy = self.action.args.ccddata.data[iy: (xv - window):(xv + window + 1)]
+                    yy -= np.nanmin(yy)
+                    arc.append(np.nansum(yy))
+                arcs.append(np.asarray(arc, dtype=np.float))
+        else:
+            transformation = tf.estimate_transform(
+                'polynomial', self.action.args.source_control_points,
+                self.action.args.destination_control_points, order=3)
+
+            self.logger.info("Transforming arc image")
+            warped_image = tf.warp(self.action.args.ccddata.data, transformation)
+            # Write warped arcs if requested
+            if self.config.instrument.saveintims:
+                from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer
+                # write out warped image
+                self.action.args.ccddata.data = warped_image
+                kcwi_fits_writer(self.action.args.ccddata,
+                                 table=self.action.args.table,
+                                 output_file=self.action.args.name,
+                                 output_dir=self.config.instrument.output_directory,
+                                 suffix="warped")
+                self.logger.info("Transformed arcs produced")
+            # extract arcs
+            self.logger.info("Extracting arcs")
+            arcs = []
+            # sectors for bkgnd subtraction
+            sectors = 16
+            for xyi, xy in enumerate(self.action.args.source_control_points):
+                if xy[1] == middle_row:
+                    xi = int(xy[0]+0.5)
+                    arc = np.median(
+                        warped_image[:, (xi - window):(xi + window + 1)], axis=1)
+                    # divide spectrum into sectors
+                    div = int((len(arc)-100) / sectors)
+                    # get minimum for each sector
+                    xv = []
+                    yv = []
+                    for i in range(sectors):
+                        mi = np.nanargmin(arc[50+i*div:50+(i+1)*div])
+                        mn = np.nanmin(arc[50+i*div:50+(i+1)*div])
+                        xv.append(mi+50+i*div)
+                        yv.append(mn)
+                    # fit minima to model background
+                    res = np.polyfit(xv, yv, 3)
+                    xp = np.arange(len(arc))
+                    bkg = np.polyval(res, xp)   # resulting model
+                    # plot if requested
+                    if do_plot:
+                        p = figure(title=self.action.args.plotlabel + "ARC # %d" %
+                                   len(arcs),
+                                   x_axis_label="Y CCD Pixel",
+                                   y_axis_label="Flux",
+                                   plot_width=self.config.instrument.plot_width,
+                                   plot_height=self.config.instrument.plot_height)
+                        p.line(xp, arc, legend_label='Arc', color='blue')
+                        p.line(xp, bkg, legend_label='Bkg', color='red')
+                        bokeh_plot(p, self.context.bokeh_session)
+                        q = input("Next? <cr>, q to quit: ")
+                        if 'Q' in q.upper():
+                            do_plot = False
+                    # subtract model background
+                    arc -= bkg
+                    # add to arcs list
+                    arcs.append(arc)
         # Did we get the correct number of arcs?
         if len(arcs) == self.config.instrument.NBARS:
             self.logger.info("Extracted %d arcs" % len(arcs))
