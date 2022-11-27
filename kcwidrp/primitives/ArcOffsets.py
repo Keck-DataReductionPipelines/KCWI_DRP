@@ -26,6 +26,7 @@ class ArcOffsets(BasePrimitive):
 
     def _perform(self):
         self.logger.info("Finding inter-bar offsets")
+        nbars = self.config.instrument.NBARS
         arcs = self.context.arcs
         if arcs is not None:
             # Do we plot?
@@ -86,8 +87,8 @@ class ArcOffsets(BasePrimitive):
                            y_axis_label="Wave offset (px)",
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height)
-                p.diamond(list(range(120)), offsets, size=8)
-                xlim = [-1, 120]
+                p.diamond(list(range(nbars)), offsets, size=8)
+                xlim = [-1, nbars]
                 ylim = get_plot_lims(offsets)
                 p.xgrid.grid_line_color = None
                 oplot_slices(p, ylim)

@@ -393,7 +393,7 @@ class SolveArcs(BasePrimitive):
                         next_bar_to_plot = ib + 1
 
         # Plot final results
-
+        nbars = self.config.instrument.NBARS
         # plot output name stub
         pfname = "arc_%05d_%s_%s_%s_tf%02d" % (
             self.action.args.ccddata.header['FRAMENO'],
@@ -416,8 +416,8 @@ class SolveArcs(BasePrimitive):
                 coef = []
                 for c in self.action.args.fincoeff:
                     coef.append(c[ic])
-                p.diamond(list(range(120)), coef, size=8)
-                xlim = [-1, 120]
+                p.diamond(list(range(nbars)), coef, size=8)
+                xlim = [-1, nbars]
                 ylim = get_plot_lims(coef)
                 p.xgrid.grid_line_color = None
                 oplot_slices(p, ylim)
@@ -440,8 +440,8 @@ class SolveArcs(BasePrimitive):
                    y_axis_label="N Lines",
                    plot_width=self.config.instrument.plot_width,
                    plot_height=self.config.instrument.plot_height)
-        p.diamond(list(range(120)), bar_nls, size=8)
-        xlim = [-1, 120]
+        p.diamond(list(range(nbars)), bar_nls, size=8)
+        xlim = [-1, nbars]
         ylim = get_plot_lims(bar_nls)
         self.logger.info("<N Lines> = %.1f +- %.1f" %
                          (self.action.args.av_bar_nls,
@@ -483,8 +483,8 @@ class SolveArcs(BasePrimitive):
         p = figure(title=ptitle, x_axis_label="Bar #", y_axis_label="RMS (A)",
                    plot_width=self.config.instrument.plot_width,
                    plot_height=self.config.instrument.plot_height)
-        p.diamond(list(range(120)), bar_sig, size=8)
-        xlim = [-1, 120]
+        p.diamond(list(range(nbars)), bar_sig, size=8)
+        xlim = [-1, nbars]
         ylim = get_plot_lims(bar_sig)
         p.line(xlim, [self.action.args.av_bar_sig,
                       self.action.args.av_bar_sig], color='red')

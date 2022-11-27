@@ -104,6 +104,7 @@ class TraceBars(BasePrimitive):
             src = np.column_stack((xo, yo))
             if do_plot:
                 # output filename stub
+                nbars = self.config.instrument.NBARS
                 trcfnam = "bars_%05d_%s_%s_%s" % \
                           (self.action.args.ccddata.header['FRAMENO'],
                            self.action.args.illum, self.action.args.grating,
@@ -116,7 +117,7 @@ class TraceBars(BasePrimitive):
                            plot_height=self.config.instrument.plot_height)
                 p.scatter(xi, yi, marker='x', size=2, color='blue')
                 p.scatter(self.action.args.middle_centers,
-                          [self.action.args.middle_row]*120, color='red')
+                          [self.action.args.middle_row]*nbars, color='red')
                 bokeh_plot(p, self.context.bokeh_session)
                 if self.config.instrument.plot_level >= 2:
                     input("Next? <cr>: ")

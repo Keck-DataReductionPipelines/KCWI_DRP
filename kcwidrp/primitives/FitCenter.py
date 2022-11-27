@@ -322,6 +322,7 @@ class FitCenter(BasePrimitive):
         self.action.args.twkcoeff = twkcoeff
         # Plot results
         if self.config.instrument.plot_level >= 1:
+            nbars = self.config.instrument.NBARS
             # Plot central wavelength
             p = figure(title=self.action.args.plotlabel + "CENTRAL VALUES",
                        x_axis_label="Bar #",
@@ -330,9 +331,9 @@ class FitCenter(BasePrimitive):
                        plot_height=self.config.instrument.plot_height)
             x = range(len(centwave))
             p.scatter(x, centwave, marker='x', legend_label='bar wave')
-            p.line([0, 120], [self.action.args.cwave, self.action.args.cwave],
+            p.line([0, nbars], [self.action.args.cwave, self.action.args.cwave],
                    color='red', legend_label='CWAVE')
-            xlim = [-1, 120]
+            xlim = [-1, nbars]
             ylim = get_plot_lims(centwave)
             p.xgrid.grid_line_color = None
             oplot_slices(p, ylim)
@@ -351,7 +352,7 @@ class FitCenter(BasePrimitive):
                        plot_height=self.config.instrument.plot_height)
             x = range(len(centdisp))
             p.scatter(x, centdisp, marker='x', legend_label='bar disp')
-            p.line([0, 120], [self.context.prelim_disp,
+            p.line([0, nbars], [self.context.prelim_disp,
                               self.context.prelim_disp], color='red',
                    legend_label='Calc Disp')
             xlim = [-2, 121]
