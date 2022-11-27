@@ -102,23 +102,24 @@ class ExtractArcs(BasePrimitive):
                     else:
                         bkg.append(0.)
                         arc.append(0.)
+                arc = np.asarray(arc, dtype=float)
+                bkg = np.asarray(bkg, dtype=float)
+                bkgf = savgol_filter(bkg, 51, 5)
                 if do_plot:
                     xp = np.arange(len(arc))
                     p = figure(title=self.action.args.plotlabel + "ARC # %d" %
-                                     len(arcs),
+                               len(arcs),
                                x_axis_label="Y CCD Pixel",
                                y_axis_label="Flux",
                                plot_width=self.config.instrument.plot_width,
                                plot_height=self.config.instrument.plot_height)
                     p.line(xp, arc, legend_label='Arc', color='blue')
                     p.line(xp, bkg, legend_label='Bkg', color='red')
+                    p.line(xp, bkgf, legend_label='BkgFit', color='green')
                     bokeh_plot(p, self.context.bokeh_session)
                     q = input("Next? <cr>, q to quit: ")
                     if 'Q' in q.upper():
                         do_plot = False
-                arc = np.asarray(arc, dtype=float)
-                bkg = np.asarray(bkg, dtype=float)
-                bkgf = savgol_filter(bkg, 51, 5)
                 arc -= bkgf
                 arcs.append(arc)
         else:
