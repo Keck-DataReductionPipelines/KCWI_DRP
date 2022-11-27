@@ -355,7 +355,7 @@ class FitCenter(BasePrimitive):
             p.line([0, nbars], [self.context.prelim_disp,
                               self.context.prelim_disp], color='red',
                    legend_label='Calc Disp')
-            xlim = [-2, 121]
+            xlim = [-2, nbars+1]
             ylim = get_plot_lims(centdisp)
             p.xgrid.grid_line_color = None
             oplot_slices(p, ylim)
