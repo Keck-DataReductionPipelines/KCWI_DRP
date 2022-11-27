@@ -137,13 +137,21 @@ class FindBars(BasePrimitive):
         # calculate reference delta x based on refbar
         self.action.args.reference_delta_x = 0.
         try:
-            for ib in range(reference_bar-1, reference_bar+3):
-                self.action.args.reference_delta_x += \
-                    (middle_centers[ib] - middle_centers[ib-1])
+            if (reference_bar-1) > 0 and (reference_bar+3) < self.config.instrument.NBARS:
+                for ib in range(reference_bar-1, reference_bar+3):
+                    self.action.args.reference_delta_x += \
+                        (middle_centers[ib] - middle_centers[ib-1])
+                ndiv = 4.
+            else:
+                for ib in range(reference_bar, reference_bar+1):
+                    self.action.args.reference_delta_x += \
+                        (middle_centers[ib] - middle_centers[ib-1])
+                ndiv = 2.
         except IndexError:
             self.logger.warning("Not enough bars per slice to determine ref x sep")
-            self.action.args.reference_delta_x = 4.
-        self.action.args.reference_delta_x /= 4.
+            self.action.args.reference_delta_x = 1.
+            ndiv = 1.
+        self.action.args.reference_delta_x /= ndiv
         # store image info
         self.action.args.contbar_image_number = \
             self.action.args.ccddata.header['FRAMENO']
