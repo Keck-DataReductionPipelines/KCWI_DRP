@@ -353,7 +353,7 @@ class FitCenter(BasePrimitive):
             x = range(len(centdisp))
             p.scatter(x, centdisp, marker='x', legend_label='bar disp')
             p.line([0, nbars], [self.context.prelim_disp,
-                              self.context.prelim_disp], color='red',
+                                self.context.prelim_disp], color='red',
                    legend_label='Calc Disp')
             xlim = [-2, nbars+1]
             ylim = get_plot_lims(centdisp)
