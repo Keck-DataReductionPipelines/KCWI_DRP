@@ -5,6 +5,7 @@ from kcwidrp.primitives.kcwi_file_primitives import strip_fname, get_master_name
 
 import numpy as np
 from numpy.polynomial import polynomial as P
+from scipy.signal import savgol_filter
 import os
 from skimage import transform as tf
 from bokeh.plotting import figure
@@ -117,7 +118,8 @@ class ExtractArcs(BasePrimitive):
                         do_plot = False
                 arc = np.asarray(arc, dtype=float)
                 bkg = np.asarray(bkg, dtype=float)
-                arc -= bkg
+                bkgf = savgol_filter(bkg, 51, 5)
+                arc -= bkgf
                 arcs.append(arc)
         else:
             transformation = tf.estimate_transform(
