@@ -159,23 +159,23 @@ class ingest_file(BasePrimitive):
         elif 'BH3' in self.grating():
             return 2.800
         elif 'RH1' in self.grating():
-            return 2.420
+            return 2.360
         elif 'RH2' in self.grating():
-            return 2.068    # kcwi_sim_kcrm value is 2.030
+            return 2.020
         elif 'RH3' in self.grating():
-            return 1.705
+            return 1.735
         elif 'RH4' in self.grating():
-            return 1.435
+            return 1.490
         elif 'BM' in self.grating():
             return 1.900
         elif 'RM1' in self.grating():
-            return 1.220
+            return 1.300
         elif 'RM2' in self.grating():
-            return 0.921
+            return 0.945
         elif 'BL' in self.grating():
             return 0.870
         elif 'RL' in self.grating():
-            return 0.514
+            return 0.530
         else:
             return None
 
