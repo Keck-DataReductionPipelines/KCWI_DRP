@@ -852,6 +852,8 @@ def fix_red_header(ccddata):
             ccddata.header['CCDMODE'] = ccddata.header['CDSSPEED']
         else:
             ccddata.header['CCDMODE'] = 0
+        amp_dict = {'L1': 0, 'L2': 1, 'U1': 2, 'U2': 3}
+        amplist = []
         # Add AMPMNUM
         if 'AMPMODE' in ccddata.header:
             ampmode = ccddata.header['AMPMODE']
@@ -876,19 +878,24 @@ def fix_red_header(ccddata):
             else:
                 ampnum = 0
             ccddata.header['AMPMNUM'] = ampnum
+            for k in amp_dict.keys():
+                if k in ampmode:
+                    amplist.append(amp_dict[k])
+
         # fix zero-bias and add GAINn keywords
-        # do we need to fix?
-        if 'TSEC0' in ccddata.header:
-            st = ['T', 'D', 'B', 'C', 'A']
-            nvidinp = ccddata.header['NVIDINP']
-            for i in range(nvidinp, 0, -1):
-                gain_key = 'GAIN%d' % i
-                ccddata.header[gain_key] = 1.0
-                for t in st:
-                    new_key = t + 'SEC%d' % i
-                    old_key = t + 'SEC%d' % (i - 1)
-                    # print(new_key, old_key, ccddata.header[old_key])
-                    ccddata.header[new_key] = ccddata.header[old_key]
+        st = ['T', 'D', 'B', 'C', 'A']
+        nvidinp = ccddata.header['NVIDINP']
+        if nvidinp != len(amplist):
+            print("Warning: number of amps not equal to NVIDINP!")
+
+        new_secs = {}
+        for i in range(1, len(amplist)+1):
+            gain_key = 'GAIN%d' % i
+            ccddata.header[gain_key] = 1.0
             for t in st:
-                old_key = t + 'SEC0'
+                new_key = t + 'SEC%d' % i
+                old_key = t + 'SEC%d' % amplist[(i - 1)]
+                new_secs[new_key] = ccddata.header[old_key]
                 del ccddata.header[old_key]
+        for k in new_secs.keys():
+            ccddata.header[k] = new_secs[k]
