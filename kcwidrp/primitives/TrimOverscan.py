@@ -15,17 +15,22 @@ class TrimOverscan(BasePrimitive):
 
         # parameters
         # image sections for each amp
-        bsec, dsec, tsec, direc = self.action.args.map_ccd
-        namps = len(bsec)
+        bsec, dsec, tsec, direc, amps = self.action.args.map_ccd
+        print(bsec)
+        print(dsec)
+        print(tsec)
+        print(direc)
+        namps = len(amps)
         # header keyword to update
         key = 'OSCANTRM'
         keycom = 'Overscan trimmed?'
         # get output image dimensions
         max_sec = max(tsec)
+        print(max_sec)
         # create new blank image
         new = np.zeros((max_sec[1]+1, max_sec[3]+1), dtype=np.float32)
         # loop over amps
-        for ia in range(namps):
+        for ia in amps:
             # input range indices
             yi0 = dsec[ia][0]
             yi1 = dsec[ia][1] + 1
@@ -44,12 +49,12 @@ class TrimOverscan(BasePrimitive):
             sec += "%d," % xo1
             sec += "%d:" % (yo0+1)
             sec += "%d]" % yo1
-            self.action.args.ccddata.header['ATSEC%d' % (ia+1)] = sec
+            self.action.args.ccddata.header['ATSEC%d' % ia] = sec
             # remove obsolete sections
-            self.action.args.ccddata.header.pop('ASEC%d' % (ia + 1))
-            self.action.args.ccddata.header.pop('BSEC%d' % (ia + 1))
-            self.action.args.ccddata.header.pop('DSEC%d' % (ia + 1))
-            self.action.args.ccddata.header.pop('CSEC%d' % (ia + 1))
+            self.action.args.ccddata.header.pop('ASEC%d' % ia)
+            self.action.args.ccddata.header.pop('BSEC%d' % ia)
+            self.action.args.ccddata.header.pop('DSEC%d' % ia)
+            self.action.args.ccddata.header.pop('CSEC%d' % ia)
         # update with new image
         self.action.args.ccddata.data = new
         self.action.args.ccddata.header['NAXIS1'] = max_sec[3] + 1

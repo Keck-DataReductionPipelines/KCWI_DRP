@@ -19,8 +19,8 @@ class SubtractOverscan(BasePrimitive):
 
     def _perform(self):
         # image sections for each amp
-        bsec, dsec, tsec, direc = self.action.args.map_ccd
-        namps = len(bsec)
+        bsec, dsec, tsec, direc, amps = self.action.args.map_ccd
+        namps = len(amps)
         # polynomial fit order
         if namps == 4:
             porder = 2
@@ -35,9 +35,9 @@ class SubtractOverscan(BasePrimitive):
         # loop over amps
         plts = []   # plots for each amp
 
-        for ia in range(namps):
+        for ia in amps:
             # get gain
-            gain = self.action.args.ccddata.header['GAIN%d' % (ia + 1)]
+            gain = self.action.args.ccddata.header['GAIN%d' % ia]
             # check if we have enough data to fit
             if (bsec[ia][3] - bsec[ia][2]) > self.config.instrument.minoscanpix:
                 # pull out an overscan vector

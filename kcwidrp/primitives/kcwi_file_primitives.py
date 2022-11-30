@@ -15,6 +15,8 @@ from pathlib import Path
 
 logger = logging.getLogger('KCWI')
 
+amp_dict = {'L1': 0, 'L2': 1, 'U1': 2, 'U2': 3}
+amp_gain = {'L1': 1.54, 'L2': 1.55, 'U1': 1.61, 'U2': 1.49}
 
 def parse_imsec(section=None):
 
@@ -424,71 +426,43 @@ class ingest_file(BasePrimitive):
         namps = self.namps()    # int(self.get_keyword('NVIDINP'))
         # TODO: check namps
         camera = self.get_keyword('CAMERA')
+        ampmode = self.get_keyword('AMPMODE')
         # section lists
         bsec = []
         dsec = []
         tsec = []
         direc = []
-        # loop over amps
-        for i in range(namps):
-            section = self.get_keyword('BSEC%d' % (i + 1))
-            sec, rfor = parse_imsec(section)
-            bsec.append(sec)
-            section = self.get_keyword('DSEC%d' % (i + 1))
-            sec, rfor = parse_imsec(section)
-            dsec.append(sec)
-            if 'BLUE' in camera:
-                direc.append(rfor)
-                if i == 0:
-                    y0 = 0
-                    y1 = sec[1] - sec[0]
-                    x0 = 0
-                    x1 = sec[3] - sec[2]
-                elif i == 1:
-                    y0 = 0
-                    y1 = sec[1] - sec[0]
-                    x0 = tsec[0][3] + 1
-                    x1 = x0 + sec[3] - sec[2]
-                elif i == 2:
-                    y0 = tsec[0][1] + 1
-                    y1 = y0 + sec[1] - sec[0]
-                    x0 = 0
-                    x1 = sec[3] - sec[2]
-                elif i == 3:
-                    y0 = tsec[0][1] + 1
-                    y1 = y0 + sec[1] - sec[0]
-                    x0 = tsec[0][3] + 1
-                    x1 = x0 + sec[3] - sec[2]
-                else:
-                    # should not get here
-                    y0 = -1
-                    y1 = -1
-                    x0 = -1
-                    x1 = -1
-                    # self.log.info("ERROR - bad amp number: %d" % i)
-            elif 'RED' in camera:
-                section = self.get_keyword('CSEC%d' % (i + 1))
+        amps = []
+        if 'BLUE' in camera:
+            # loop over amps
+            for i in range(namps):
+                amps.append(i+1)
+                section = self.get_keyword('BSEC%d' % (i + 1))
                 sec, rfor = parse_imsec(section)
+                bsec.append(sec)
+                section = self.get_keyword('DSEC%d' % (i + 1))
+                sec, rfor = parse_imsec(section)
+                dsec.append(sec)
                 direc.append(rfor)
                 if i == 0:
-                    y0 = sec[0]
-                    y1 = y0 + sec[1] - sec[0]
+                    y0 = 0
+                    y1 = sec[1] - sec[0]
                     x0 = 0
                     x1 = sec[3] - sec[2]
                 elif i == 1:
                     y0 = 0
                     y1 = sec[1] - sec[0]
+                    x0 = tsec[0][3] + 1
+                    x1 = x0 + sec[3] - sec[2]
+                elif i == 2:
+                    y0 = tsec[0][1] + 1
+                    y1 = y0 + sec[1] - sec[0]
                     x0 = 0
                     x1 = sec[3] - sec[2]
-                elif i == 2:
-                    y0 = sec[0]
-                    y1 = y0 + sec[1] - sec[0]
-                    x0 = sec[2]
-                    x1 = x0 + sec[3] - sec[2]
                 elif i == 3:
-                    y0 = 0
-                    y1 = sec[1] - sec[0]
-                    x0 = sec[2]
+                    y0 = tsec[0][1] + 1
+                    y1 = y0 + sec[1] - sec[0]
+                    x0 = tsec[0][3] + 1
                     x1 = x0 + sec[3] - sec[2]
                 else:
                     # should not get here
@@ -497,16 +471,34 @@ class ingest_file(BasePrimitive):
                     x0 = -1
                     x1 = -1
                     # self.log.info("ERROR - bad amp number: %d" % i)
-            else:
-                # should not get here
-                y0 = -1
-                y1 = -1
-                x0 = -1
-                x1 = -1
-                # self.log.info("ERROR - bad amp number: %d" % i)
-            tsec.append((y0, y1, x0, x1))
+                tsec.append((y0, y1, x0, x1))
+        elif 'RED' in camera:
+            amp_count = 0
+            for amp in amp_dict.keys():
+                if amp in ampmode:
+                    amp_count += 1
+                    i = amp_dict[amp]
+                    amps.append(i)
+                    section = self.get_keyword('BSEC%d' % i)
+                    sec, rfor = parse_imsec(section)
+                    bsec.append(sec)
+                    section = self.get_keyword('DSEC%d' % i)
+                    sec, rfor = parse_imsec(section)
+                    dsec.append(sec)
+                    direc.append(rfor)
+                    section = self.get_keyword('CSEC%d' % i)
+                    sec, rfor = parse_imsec(section)
+                    direc.append(rfor)
+                    tsec.append(sec)
+                else:
+                    bsec.append((0, 0, 0, 0))
+                    dsec.append((0, 0, 0, 0))
+                    direc.append((True, True))
+                    tsec.append((0, 0, 0, 0))
+            if amp_count != namps:
+                self.logger.warning("Didn't get all the amps: %d", amp_count)
 
-        return bsec, dsec, tsec, direc
+        return bsec, dsec, tsec, direc, amps
 
     def _perform(self):
         # if self.context.data_set is None:
@@ -852,8 +844,6 @@ def fix_red_header(ccddata):
             ccddata.header['CCDMODE'] = ccddata.header['CDSSPEED']
         else:
             ccddata.header['CCDMODE'] = 0
-        amp_dict = {'L1': 0, 'L2': 1, 'U1': 2, 'U2': 3}
-        amplist = []
         # Add AMPMNUM
         if 'AMPMODE' in ccddata.header:
             ampmode = ccddata.header['AMPMODE']
@@ -878,24 +868,9 @@ def fix_red_header(ccddata):
             else:
                 ampnum = 0
             ccddata.header['AMPMNUM'] = ampnum
-            for k in amp_dict.keys():
-                if k in ampmode:
-                    amplist.append(amp_dict[k])
 
-        # fix zero-bias and add GAINn keywords
-        st = ['T', 'D', 'B', 'C', 'A']
-        nvidinp = ccddata.header['NVIDINP']
-        if nvidinp != len(amplist):
-            print("Warning: number of amps not equal to NVIDINP!")
-
-        new_secs = {}
-        for i in range(1, len(amplist)+1):
-            gain_key = 'GAIN%d' % i
-            ccddata.header[gain_key] = 1.0
-            for t in st:
-                new_key = t + 'SEC%d' % i
-                old_key = t + 'SEC%d' % amplist[(i - 1)]
-                new_secs[new_key] = ccddata.header[old_key]
-                del ccddata.header[old_key]
-        for k in new_secs.keys():
-            ccddata.header[k] = new_secs[k]
+            for amp in amp_dict.keys():
+                if amp in ampmode:
+                    gkey = 'GAIN%d' % amp_dict[amp]
+                    gain = amp_gain[amp]
+                    ccddata.header[gkey] = gain
