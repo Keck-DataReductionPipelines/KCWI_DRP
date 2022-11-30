@@ -16,17 +16,11 @@ class TrimOverscan(BasePrimitive):
         # parameters
         # image sections for each amp
         bsec, dsec, tsec, direc, amps = self.action.args.map_ccd
-        print(bsec)
-        print(dsec)
-        print(tsec)
-        print(direc)
-        namps = len(amps)
         # header keyword to update
         key = 'OSCANTRM'
         keycom = 'Overscan trimmed?'
         # get output image dimensions
         max_sec = max(tsec)
-        print(max_sec)
         # create new blank image
         new = np.zeros((max_sec[1]+1, max_sec[3]+1), dtype=np.float32)
         # loop over amps

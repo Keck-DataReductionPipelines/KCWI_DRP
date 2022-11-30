@@ -18,6 +18,8 @@ class CorrectGain(BasePrimitive):
         number_of_amplifiers = self.action.args.namps
         bsec, dsec, tsec, direc, amps = self.action.args.map_ccd
         namps = len(amps)
+        if namps != number_of_amplifiers:
+            self.logger.warning("Amp count disagreement!")
         for amplifier in amps:
             # get amp section
             section = self.action.args.ccddata.header['ATSEC%d' %

@@ -26,8 +26,12 @@ class CreateUncertaintyImage(BasePrimitive):
             np.sqrt(np.abs(self.action.args.ccddata.data)), copy=True)
         # add readnoise, if known
         if 'BIASRN1' in self.action.args.ccddata.header:
+            bsec, dsec, tsec, direc, amps = self.action.args.map_ccd
             number_of_amplifiers = self.action.args.ccddata.header['NVIDINP']
-            for amplifier in range(number_of_amplifiers):
+            namps = len(amps)
+            if namps != number_of_amplifiers:
+                self.logger.warning("Amp count disagreement!")
+            for amplifier in amps:
                 # get amp parameters
                 bias_readnoise = self.action.args.ccddata.header[
                     'BIASRN%d' % (amplifier + 1)]
