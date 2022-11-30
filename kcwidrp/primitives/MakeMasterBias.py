@@ -55,6 +55,7 @@ class MakeMasterBias(BaseImg):
         # mbname = combine_list[-1].split('.fits')[0] + '_' + suffix + '.fits'
         mbname = strip_fname(combine_list[-1]) + '_' + suffix + '.fits'
         # mbname = master_bias_name(self.action.args.ccddata)
+        bsec, dsec, tsec, direc, amps = self.action.args.map_ccd
     
         stack = []
         stackf = []
@@ -78,11 +79,13 @@ class MakeMasterBias(BaseImg):
         diff = stack[1].data.astype(np.float32) - \
             stack[2].data.astype(np.float32)
         namps = stack[1].header['NVIDINP']
-        for ia in range(namps):
+        if len(amps) != namps:
+            self.logger.warning("Amp count disagreement!")
+        for ia in amps:
             # get gain
-            gain = stacked.header['GAIN%d' % (ia + 1)]
+            gain = stacked.header['GAIN%d' % ia]
             # get amp section
-            sec, rfor = parse_imsec(stacked.header['DSEC%d' % (ia + 1)])
+            sec, rfor = parse_imsec(stacked.header['DSEC%d' % ia])
             noise = diff[sec[0]:(sec[1]+1), sec[2]:(sec[3]+1)]
             noise = np.reshape(noise, noise.shape[0]*noise.shape[1]) * \
                 gain / 1.414
@@ -90,13 +93,13 @@ class MakeMasterBias(BaseImg):
             c, low, upp = sigmaclip(noise, low=3.5, high=3.5)
             bias_rn = c.std()
             self.logger.info("Amp%d read noise from bias in e-: %.3f" %
-                             ((ia + 1), bias_rn))
-            stacked.header['BIASRN%d' % (ia + 1)] = \
+                             (ia, bias_rn))
+            stacked.header['BIASRN%d' % ia] = \
                 (float("%.3f" % bias_rn), "RN in e- from bias")
             if self.config.instrument.plot_level >= 1:
                 # output filename stub
                 biasfnam = "bias_%05d_amp%d_rdnoise" % \
-                          (self.action.args.ccddata.header['FRAMENO'], ia+1)
+                          (self.action.args.ccddata.header['FRAMENO'], ia)
                 plabel = '[ Img # %d' % self.action.args.ccddata.header[
                     'FRAMENO']
                 plabel += ' (Bias)'
@@ -112,7 +115,7 @@ class MakeMasterBias(BaseImg):
                 x = np.linspace(low, upp, 500)
                 pdf = np.max(hist)*np.exp(-x**2/(2.*bias_rn**2))
                 p = figure(title=plabel+'BIAS NOISE amp %d = %.3f' %
-                           (ia+1, bias_rn),
+                           (ia, bias_rn),
                            x_axis_label='e-', y_axis_label='N',
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height)

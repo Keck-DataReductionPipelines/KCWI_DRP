@@ -43,12 +43,17 @@ class TrimOverscan(BasePrimitive):
             sec += "%d," % xo1
             sec += "%d:" % (yo0+1)
             sec += "%d]" % yo1
-            self.action.args.ccddata.header['ATSEC%d' % ia] = sec
+            self.action.args.ccddata.header[
+                'ATSEC%d' % ia] = (sec, "Amp section in trimmed image")
             # remove obsolete sections
             self.action.args.ccddata.header.pop('ASEC%d' % ia)
             self.action.args.ccddata.header.pop('BSEC%d' % ia)
             self.action.args.ccddata.header.pop('DSEC%d' % ia)
             self.action.args.ccddata.header.pop('CSEC%d' % ia)
+            # only in RED images
+            t_key = 'TSEC%d' % ia
+            if t_key in self.action.args.ccddata.header:
+                self.action.args.ccddata.header.pop(t_key)
         # update with new image
         self.action.args.ccddata.data = new
         self.action.args.ccddata.header['NAXIS1'] = max_sec[3] + 1

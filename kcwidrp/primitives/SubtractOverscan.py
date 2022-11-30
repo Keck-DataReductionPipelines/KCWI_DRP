@@ -66,16 +66,16 @@ class SubtractOverscan(BasePrimitive):
                     resid = (osvec[:-50] - osfit[:-50]) * math.sqrt(nsam) * gain / 1.414
 
                 sdrs = float("%.3f" % np.std(resid))
-                self.logger.info("Img # %05d, Amp %d [%d:%d, %d:%d]" % (frameno, ia+1, x0, x1, y0, y1))
+                self.logger.info("Img # %05d, Amp %d [%d:%d, %d:%d]" % (frameno, ia, x0, x1, y0, y1))
                 self.logger.info("Amp%d Read noise from oscan in e-: %.3f" %
-                                 ((ia + 1), sdrs))
-                self.action.args.ccddata.header['OSCNRN%d' % (ia + 1)] = \
-                    (sdrs, "amp%d RN in e- from oscan" % (ia + 1))
+                                 (ia, sdrs))
+                self.action.args.ccddata.header['OSCNRN%d' % ia] = \
+                    (sdrs, "amp%d RN in e- from oscan" % ia)
 
                 if self.config.instrument.plot_level >= 1:
                     x = np.arange(len(osvec))
                     p = figure(title='Img # %05d OSCAN [%d:%d, %d:%d] amp %d, noise: %.3f e-/px' %
-                                     (frameno, x0, x1, y0, y1, ia+1, sdrs),
+                                     (frameno, x0, x1, y0, y1, ia, sdrs),
                                x_axis_label='overscan px',
                                y_axis_label='counts',
                                plot_width=self.config.instrument.plot_width,

@@ -21,8 +21,8 @@ class SubtractBias(BasePrimitive):
 
         self.logger.info("Subtracting master bias")
         tab = self.context.proctab.search_proctab(frame=self.action.args.ccddata,
-                                             target_type=target_type,
-                                             nearest=True)
+                                                  target_type=target_type,
+                                                  nearest=True)
         self.logger.info("%d master bias frames found" % len(tab))
 
         if len(tab) > 0:
@@ -35,12 +35,15 @@ class SubtractBias(BasePrimitive):
 
             # do the subtraction
             self.action.args.ccddata.data -= mbias.data
+            bsec, dsec, tsec, direc, amps = self.action.args.map_ccd
 
             # transfer bias read noise
             namps = self.action.args.ccddata.header['NVIDINP']
-            for ia in range(namps):
-                self.action.args.ccddata.header['BIASRN%d' % (ia + 1)] = \
-                    mbias.header['BIASRN%d' % (ia + 1)]
+            if len(amps) != namps:
+                self.logger.warning("Amp count disagreement!")
+            for ia in amps:
+                self.action.args.ccddata.header['BIASRN%d' % ia] = \
+                    mbias.header['BIASRN%d' % ia]
 
             self.action.args.ccddata.header[key] = (True, keycom)
             self.action.args.ccddata.header['MBFILE'] = (mbname,
