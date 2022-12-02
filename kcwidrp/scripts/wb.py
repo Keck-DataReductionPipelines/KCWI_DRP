@@ -1,5 +1,9 @@
 #!/usr/bin/env python
-from astropy.io import fits as pf
+import sys
+if sys.version_info[0] > 2:
+    from astropy.io import fits as pf
+else:
+    import pyfits as pf
 
 
 def get_log_string(ifile, batch=False):
@@ -7,12 +11,13 @@ def get_log_string(ifile, batch=False):
         ff = pf.open(ifile)
     except IOError:
         print("***ERROR*** empty or corrupt fits file: %s" % ifile)
-        quit()
+        return None, None
 
     header = ff[0].header
     header['FNAME'] = ifile
     if 'CAMERA' in header:
         if 'BLUE' in header['CAMERA'].upper():
+            is_bias = False
             if 'OFNAME' not in header:
                 header['OFNAME'] = ifile
             if 'AMPMODE' not in header:
@@ -69,6 +74,8 @@ def get_log_string(ifile, batch=False):
                 header['EXPTIME'] = header['TELAPSE']
             else:
                 header['EXPTIME'] = header['XPOSURE']
+            if header['EXPTIME'] <= 0.:
+                is_bias = True
             header['ILLUME'] = '-'
             if header['LMP0STAT'] == 1:
                 if header['LMP0SHST'] == 1:
@@ -86,6 +93,9 @@ def get_log_string(ifile, batch=False):
                     header['ILLUME'] = 'DOME'
                     if not batch:
                         header['OBJECT'] = 'DOME'
+            if 'BIAS' in header['IMTYPE']:
+                if not is_bias:
+                    header['IMTYPE'] = 'DARK'
             if not batch:
                 if 'object' not in header['CALTYPE']:
                     header['OBJECT'] = header['OBJECT'] + header['ILLUME']
@@ -97,7 +107,7 @@ def get_log_string(ifile, batch=False):
                           "(%(BARTANG)5.1f/%(BNASNAM)4s/%(BFOCMM)6.3f) %(AIRMASS)5.3f: %(IMTYPE)7s/" \
                           "%(ILLUME)6s/%(OBJECT)s" % header
             except:
-                lstring = "%28s : ?" % ifile
+                lstring = "%19s : ?" % ifile
 
             if header['EXPTIME'] <= 0.0:
                 cstr = "%(BINNING)3s:%(AMPMODE)3s:%(CCDMODE)1d:%(GAINMUL)2d:BIAS" % \
@@ -110,12 +120,16 @@ def get_log_string(ifile, batch=False):
                     cstr = "%(BINNING)3s:%(BGRATNAM)s:%(IFUNAM)s:%(BCWAVE).1f:" \
                            "%(EXPTIME)6.1f:%(OBJECT)s" % header
         else:
-            lstring = ifile + ' FPC image'
+            lstring = "%19s : NOT a BLUE image!" % ifile
             cstr = None
 
-        return lstring, cstr
     else:
-        print("ERROR - Camera can not be determined.")
+        if not batch:
+            print("ERROR - Camera can not be determined.")
+        lstring = "%19s : No CAMERA keyword!" % ifile
+        cstr = None
+
+    return lstring, cstr
 
 
 if __name__ == '__main__':
@@ -150,18 +164,18 @@ if __name__ == '__main__':
             print(c)
 
         if len(bias) > 0:
-            with open('bias.txt', 'a') as ofil:
+            with open('bias.txt', 'w') as ofil:
                 for b in bias:
                     ofil.write(b + '\n')
         if len(cflat) > 0:
-            with open('cflat.txt', 'a') as ofil:
+            with open('cflat.txt', 'w') as ofil:
                 for c in cflat:
                     ofil.write(c + '\n')
         if len(dflat) > 0:
-            with open('dflat.txt', 'a') as ofil:
+            with open('dflat.txt', 'w') as ofil:
                 for d in dflat:
                     ofil.write(d + '\n')
         if len(tflat) > 0:
-            with open('tflat.txt', 'a') as ofil:
+            with open('tflat.txt', 'w') as ofil:
                 for t in tflat:
                     ofil.write(t + '\n')
