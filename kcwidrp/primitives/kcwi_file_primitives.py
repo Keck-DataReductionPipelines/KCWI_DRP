@@ -15,8 +15,9 @@ from pathlib import Path
 
 logger = logging.getLogger('KCWI')
 
-amp_dict = {'L1': 0, 'L2': 1, 'U1': 2, 'U2': 3}
-amp_gain = {'L1': 1.54, 'L2': 1.55, 'U1': 1.61, 'U2': 1.49}
+red_amp_dict = {'L1': 0, 'L2': 1, 'U1': 2, 'U2': 3}
+red_amp_gain = {'L1': 1.54, 'L2': 1.55, 'U1': 1.61, 'U2': 1.49}
+
 
 def parse_imsec(section=None):
 
@@ -436,11 +437,12 @@ class ingest_file(BasePrimitive):
         if 'BLUE' in camera:
             # loop over amps
             for i in range(namps):
-                amps.append(i+1)
-                section = self.get_keyword('BSEC%d' % (i + 1))
+                ia = i + 1
+                amps.append(ia)
+                section = self.get_keyword('BSEC%d' % ia)
                 sec, rfor = parse_imsec(section)
                 bsec.append(sec)
-                section = self.get_keyword('DSEC%d' % (i + 1))
+                section = self.get_keyword('DSEC%d' % ia)
                 sec, rfor = parse_imsec(section)
                 dsec.append(sec)
                 direc.append(rfor)
@@ -474,10 +476,10 @@ class ingest_file(BasePrimitive):
                 tsec.append((y0, y1, x0, x1))
         elif 'RED' in camera:
             amp_count = 0
-            for amp in amp_dict.keys():
+            for amp in red_amp_dict.keys():
                 if amp in ampmode:
                     amp_count += 1
-                    i = amp_dict[amp]
+                    i = red_amp_dict[amp]
                     amps.append(i)
                     section = self.get_keyword('BSEC%d' % i)
                     sec, rfor = parse_imsec(section)
@@ -768,9 +770,9 @@ def kcwi_fits_writer(ccddata, table=None, output_file=None, output_dir=None,
 
         # Attempt to gather git version information
         git1 = subprocess.run(["git", "--git-dir", git_loc, "describe",
-                                 "--tags", "--long"], capture_output=True)
+                               "--tags", "--long"], capture_output=True)
         git2 = subprocess.run(["git", "--git-dir", git_loc, "log", "-1",
-                                 "--format=%cd"], capture_output=True)
+                               "--format=%cd"], capture_output=True)
         
         # If all went well, save to the header
         if not bool(git1.stderr) and not bool(git2.stderr):
@@ -799,6 +801,7 @@ def kcwi_fits_writer(ccddata, table=None, output_file=None, output_dir=None,
     logger.info(">>> Saving %d hdus to %s" % (len(hdus_to_save), out_file))
     hdus_to_save.writeto(out_file, overwrite=True)
 
+
 def strip_fname(filename):
     if not filename:
         logger.error(f"Failed to strip file {filename}")
@@ -806,16 +809,19 @@ def strip_fname(filename):
     strip = Path(filename).stem
     return strip
 
+
 def get_master_name(tab, target_type, loc=0):
-    res = Path(strip_fname(tab['filename'][loc]) + '_' + \
-                     target_type.lower() + ".fits").name
+    res = Path(strip_fname(tab['filename'][loc]) + '_' +
+               target_type.lower() + ".fits").name
     return res
+
 
 def master_bias_name(ccddata, target_type='MBIAS'):
     # Delivers a mbias filename that is unique for each CCD configuration
     # Any KCWI frame with a shared CCD configuration can use the same bias
     name = target_type.lower() + '_' + ccddata.header['CCDCFG'] + '.fits'
     return name
+
 
 def master_flat_name(ccddata, target_type):
     # Delivers a name that is unique across an observing block
@@ -869,8 +875,8 @@ def fix_red_header(ccddata):
                 ampnum = 0
             ccddata.header['AMPMNUM'] = ampnum
 
-            for amp in amp_dict.keys():
+            for amp in red_amp_dict.keys():
                 if amp in ampmode:
-                    gkey = 'GAIN%d' % amp_dict[amp]
-                    gain = amp_gain[amp]
+                    gkey = 'GAIN%d' % red_amp_dict[amp]
+                    gain = red_amp_gain[amp]
                     ccddata.header[gkey] = gain
