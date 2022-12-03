@@ -79,6 +79,7 @@ class ExtractArcs(BasePrimitive):
 
         self.logger.info("Fitting spatial control points")
 
+        # This is strictly for AIT data!
         if self.config.instrument.NBARS < 60:
             arcs = []
             for ib in range(self.config.instrument.NBARS):
