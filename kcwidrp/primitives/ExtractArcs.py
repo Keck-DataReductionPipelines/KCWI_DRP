@@ -1,5 +1,5 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
-from kcwidrp.primitives.kcwi_file_primitives import read_table
+from kcwidrp.primitives.kcwi_file_primitives import read_table, kcwi_fits_reader
 from kcwidrp.core.bokeh_plotting import bokeh_plot
 from kcwidrp.primitives.kcwi_file_primitives import strip_fname, get_master_name
 
@@ -81,7 +81,9 @@ class ExtractArcs(BasePrimitive):
 
         # This is strictly for AIT data!
         if self.config.instrument.NBARS < 60:
+            barim, bartab = kcwi_fits_reader(self.action.args.contbar_image)
             arcs = []
+            bars = []
             for ib in range(self.config.instrument.NBARS):
                 bind = np.where(trace['barid'] == ib)
                 xp = trace['dst'][bind][:, 0]
@@ -91,21 +93,31 @@ class ExtractArcs(BasePrimitive):
                 xps = xp[sind]
                 c, stats = P.polyfit(yps, xps, deg=3, full=True)
                 arc = []
+                bar = []
                 bkg = []
+                bbkg = []
                 for iy in range(self.action.args.ccddata.header['NAXIS2']):
                     xv = int(P.polyval(iy, c))
                     yy = self.action.args.ccddata.data[
                          iy, (xv - window):(xv + window + 1)]
+                    byy = barim.data[iy, (xv - window):(xv + window + 1)]
                     nyy = len(yy)
                     if nyy > 0:
                         bkg.append(np.nanmin(yy) * float(nyy))
+                        bbkg.append(np.nanmin(byy) * float(nyy))
                         arc.append(np.nansum(yy))
+                        bar.append(np.nansum(byy))
                     else:
                         bkg.append(0.)
+                        bbkg.append(0.)
                         arc.append(0.)
+                        bar.append(0.)
                 arc = np.asarray(arc, dtype=float)
+                bar = np.asarray(bar, dtype=float)
                 bkg = np.asarray(bkg, dtype=float)
+                bbkg = np.asarray(bbkg, dtype=float)
                 bkgf = savgol_filter(bkg, 51, 5)
+                bbkgf = savgol_filter(bbkg, 51, 5)
                 if do_plot:
                     xp = np.arange(len(arc))
                     p = figure(title=self.action.args.plotlabel + "ARC # %d" %
@@ -122,7 +134,9 @@ class ExtractArcs(BasePrimitive):
                     if 'Q' in q.upper():
                         do_plot = False
                 arc -= bkgf
+                bar -= bbkgf
                 arcs.append(arc)
+                bars.append(bar)
         else:
             transformation = tf.estimate_transform(
                 'polynomial', self.action.args.source_control_points,
@@ -144,6 +158,7 @@ class ExtractArcs(BasePrimitive):
             # extract arcs
             self.logger.info("Extracting arcs")
             arcs = []
+            bars = []
             # sectors for bkgnd subtraction
             sectors = 16
             for xyi, xy in enumerate(self.action.args.source_control_points):
@@ -187,6 +202,8 @@ class ExtractArcs(BasePrimitive):
         if len(arcs) == self.config.instrument.NBARS:
             self.logger.info("Extracted %d arcs" % len(arcs))
             self.context.arcs = arcs
+            if self.config.instrument.NBARS < 60:
+                self.context.bars = bars
         else:
             self.logger.error("Did not extract %d arcs, extracted %d" %
                               (self.config.instrument.NBARS, len(arcs)))
