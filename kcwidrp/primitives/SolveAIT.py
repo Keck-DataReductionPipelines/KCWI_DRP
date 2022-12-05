@@ -93,10 +93,10 @@ class SolveAIT(BasePrimitive):
                          (self.action.args.waveall0, self.action.args.waveall1))
         self.logger.info("WAVE   MID: %.2f" % self.action.args.wavemid)
         # Start setting up slice transforms
-        self.action.args.x0out = \
-            int(self.action.args.reference_bar_separation / 2.) + 1
-        self.refoutx = np.arange(0, 5) * \
-            self.action.args.reference_bar_separation + self.action.args.x0out
+        # self.action.args.x0out = \
+        #     int(self.action.args.reference_bar_separation / 2.) + 1
+        # self.refoutx = np.arange(0, 5) * \
+        #     self.action.args.reference_bar_separation + self.action.args.x0out
         # Variables for output control points
         srcw = []
         # Loop over source control points
@@ -110,7 +110,8 @@ class SolveAIT(BasePrimitive):
         # Use extremes to define output size
         ysize = int((self.action.args.waveall1 - self.action.args.wave0out)
                     / dwout)
-        xsize = int(5. * self.action.args.reference_bar_separation) + 1
+        # xsize = int(5. * self.action.args.reference_bar_separation) + 1
+        xsize = self.config.instrument.NBARS
         self.logger.info("Output slices will be %d x %d px" % (xsize, ysize))
         # Now loop over slices and get relevant control points for each slice
         # Output variables
@@ -118,8 +119,8 @@ class SolveAIT(BasePrimitive):
         xl1_out = []
         tform_list = []
         invtf_list = []
-        # Loop over 24 slices
-        for isl in range(0, 24):
+        # Loop over AIT traces
+        for isl in range(0, xsize):
             # Get control points
             xw = []
             yw = []
