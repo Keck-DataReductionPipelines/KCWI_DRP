@@ -16,6 +16,7 @@ class RectifyImage(BasePrimitive):
         # Header keyword to update
         key = 'IMGRECT'
         keycom = 'Image rectified?'
+        did_rectify = False
 
         # get amp mode
         ampmode = self.action.args.ccddata.header['AMPMODE'].strip().upper()
@@ -38,6 +39,7 @@ class RectifyImage(BasePrimitive):
                 self.action.args.ccddata.flags = newflags
             else:
                 self.logger.info("No flags data to rectify")
+            did_rectify = True
         elif '__D' in ampmode or '__F' in ampmode:
             newimg = np.fliplr(self.action.args.ccddata.data)
             self.action.args.ccddata.data = newimg
@@ -56,6 +58,7 @@ class RectifyImage(BasePrimitive):
                 self.action.args.ccddata.flags = newflags
             else:
                 self.logger.info("No flags data to rectify")
+            did_rectify = True
         elif '__A' in ampmode or '__H' in ampmode or 'TUP' in ampmode:
             newimg = np.flipud(self.action.args.ccddata.data)
             self.action.args.ccddata.data = newimg
@@ -74,8 +77,15 @@ class RectifyImage(BasePrimitive):
                 self.action.args.ccddata.flags = newflags
             else:
                 self.logger.info("No flags data to rectify")
+            did_rectify = True
+        else:
+            if 'RED' in self.action.args.ccddata.header['CAMERA'].upper():
+                self.logger.info("Red images are already rectified")
+                did_rectify = True
+            else:
+                self.logger.warning("Unknown amp mode: %s", ampmode)
 
-        self.action.args.ccddata.header[key] = (True, keycom)
+        self.action.args.ccddata.header[key] = (did_rectify, keycom)
 
         log_string = RectifyImage.__module__
         self.action.args.ccddata.header['HISTORY'] = log_string
