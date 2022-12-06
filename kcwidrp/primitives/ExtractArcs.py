@@ -81,7 +81,10 @@ class ExtractArcs(BasePrimitive):
 
         # This is strictly for AIT data!
         if self.config.instrument.NBARS < 60:
-            barim, bartab = kcwi_fits_reader(self.action.args.contbar_image)
+            # get trimmed bars image so geometry is consistent
+            barsfn = self.action.args.contbar_image.split('.fits')[0] + '_int.fits'
+            barim, bartab = kcwi_fits_reader(
+                os.path.join(self.config.instrument.output_directory, barsfn))
             arcs = []
             bars = []
             for ib in range(self.config.instrument.NBARS):
@@ -95,7 +98,6 @@ class ExtractArcs(BasePrimitive):
                 arc = []
                 bar = []
                 bkg = []
-                bbkg = []
                 for iy in range(self.action.args.ccddata.header['NAXIS2']):
                     xv = int(P.polyval(iy, c))
                     yy = self.action.args.ccddata.data[
@@ -104,20 +106,16 @@ class ExtractArcs(BasePrimitive):
                     nyy = len(yy)
                     if nyy > 0:
                         bkg.append(np.nanmin(yy) * float(nyy))
-                        bbkg.append(np.nanmin(byy) * float(nyy))
                         arc.append(np.nansum(yy))
                         bar.append(np.nansum(byy))
                     else:
                         bkg.append(0.)
-                        bbkg.append(0.)
                         arc.append(0.)
                         bar.append(0.)
                 arc = np.asarray(arc, dtype=float)
                 bar = np.asarray(bar, dtype=float)
                 bkg = np.asarray(bkg, dtype=float)
-                bbkg = np.asarray(bbkg, dtype=float)
                 bkgf = savgol_filter(bkg, 51, 5)
-                bbkgf = savgol_filter(bbkg, 51, 5)
                 if do_plot:
                     xp = np.arange(len(arc))
                     p = figure(title=self.action.args.plotlabel + "ARC # %d" %
@@ -134,7 +132,6 @@ class ExtractArcs(BasePrimitive):
                     if 'Q' in q.upper():
                         do_plot = False
                 arc -= bkgf
-                bar -= bbkgf
                 arcs.append(arc)
                 bars.append(bar)
         else:
