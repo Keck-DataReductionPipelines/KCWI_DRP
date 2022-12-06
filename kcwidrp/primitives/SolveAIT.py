@@ -1,10 +1,10 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from kcwidrp.primitives.kcwi_file_primitives import strip_fname
 from kcwidrp.core.bokeh_plotting import bokeh_plot
+from kcwidrp.core.kcwi_plotting import set_plot_lims, save_plot
 import os
 import numpy as np
 from scipy.interpolate import interpolate
-import pickle
 from bokeh.plotting import figure
 from astropy.io import fits as pf
 
@@ -30,7 +30,7 @@ class SolveAIT(BasePrimitive):
 
         log_string = SolveAIT.__module__
 
-        do_plot = (self.config.instrument.plot_level >= 3)
+        do_plot = (self.config.instrument.plot_level >= 1)
 
         # Get some geometry constraints
         goody0 = 0
@@ -105,15 +105,14 @@ class SolveAIT(BasePrimitive):
         ysize = int((self.action.args.waveall1 - self.action.args.wave0out)
                     / dwout)
         yout = np.arange(ysize) * dwout + self.action.args.wave0out
-        print(len(yout), np.nanmin(yout), np.nanmax(yout))
-        xsize = self.config.instrument.NBARS * 2
+        xsize = self.config.instrument.NBARS * 2 + 1
         self.logger.info("Output spectra will be %d x %d px" % (xsize, ysize))
         specout = np.zeros((ysize, xsize), dtype=float)
-        # Loop over AIT traces
-        for isl in range(0, self.config.instrument.NBARS):
-            fc = self.action.args.fincoeff[isl]
-            arc = self.context.arcs[isl]
-            bar = self.context.bars[isl]
+        # Loop over AIT bar traces
+        for ib in range(0, self.config.instrument.NBARS):
+            fc = self.action.args.fincoeff[ib]
+            arc = self.context.arcs[ib]
+            bar = self.context.bars[ib]
             xwv = np.polyval(fc, np.arange(len(arc)))
             arcint = interpolate.interp1d(xwv, arc, kind='cubic',
                                           bounds_error=False,
@@ -123,23 +122,39 @@ class SolveAIT(BasePrimitive):
                                           fill_value='extrapolate')
             arcout = arcint(yout)
             barout = barint(yout)
-            specout[:, isl] = arcout[:]
-            specout[:, isl + self.config.instrument.NBARS] = barout[:]
+            specout[:, ib] = arcout[:]
+            specout[:, ib + self.config.instrument.NBARS] = barout[:]
             if do_plot:
-                p = figure(title=self.action.args.plotlabel + "ARC # %d" %
-                           (isl + 1),
+                # plot output name stub
+                pfname = "arc_%05d_%s_%s_%s_tf%02d" % (
+                    self.action.args.ccddata.header['FRAMENO'],
+                    self.action.args.illum, self.action.args.grating,
+                    self.action.args.ifuname, int(100 * self.config.instrument.TAPERFRAC))
+                wall0 = self.action.args.waveall0
+                wall1 = self.action.args.waveall1
+                wgoo0 = self.action.args.wavegood0
+                wgoo1 = self.action.args.wavegood1
+                yran = [np.nanmin([np.nanmin(arcout[50:-50]),
+                                   np.nanmin(barout[50:-50])]),
+                        np.nanmax([np.nanmax(arcout[50:-50]),
+                                   np.nanmax(barout[50:-50])])]
+                p = figure(title=self.action.args.plotlabel + "ARC # %d" % ib,
                            x_axis_label="Wavelength",
                            y_axis_label="Flux",
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height)
-                p.line(xwv, arc, legend_label='Arc Data', color='blue')
-                p.line(xwv, bar, legend_label='Bar Data', color='red')
-                p.line(yout, arcout, legend_label='Arc Int', color='purple')
-                p.line(yout, barout, legend_label='Bar Int', color='orange')
+                p.line(yout, arcout, legend_label='Arc', color='blue')
+                p.line(yout, barout, legend_label='Bar', color='red')
+                p.line([wgoo0, wgoo0], yran, legend_label='Good WLs', color='green')
+                p.line([wgoo1, wgoo1], yran, color='green')
+                p.line([wall0, wall0], yran, legend_label='All WLs', color='orange')
+                p.line([wall1, wall1], yran, color='orange')
+                set_plot_lims(p, xlim=[wall0, wall1], ylim=yran)
                 bokeh_plot(p, self.context.bokeh_session)
-                q = input("Next? <cr>, q to quit: ")
-                if 'Q' in q.upper():
-                    do_plot = False
+                save_plot(p, filename=pfname + '_bar%d.png' % ib)
+                if self.config.instrument.plot_level >= 2:
+                    q = input("Next? <cr>: ")
+        specout[:, -1] = yout[:]
 
         # Pixel scales
         pxscl = self.config.instrument.PIXSCALE * self.action.args.xbinsize
