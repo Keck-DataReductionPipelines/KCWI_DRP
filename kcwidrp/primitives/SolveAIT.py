@@ -1,9 +1,12 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from kcwidrp.primitives.kcwi_file_primitives import strip_fname
+from kcwidrp.core.bokeh_plotting import bokeh_plot
 import os
 import numpy as np
-from skimage import transform as tf
+from scipy.interpolate import interpolate
 import pickle
+from bokeh.plotting import figure
+from astropy.io import fits as pf
 
 
 class SolveAIT(BasePrimitive):
@@ -23,7 +26,11 @@ class SolveAIT(BasePrimitive):
         self.logger = context.pipeline_logger
 
     def _perform(self):
-        self.logger.info("Solving overall geometry")
+        self.logger.info("Writing out AIT spectra")
+
+        log_string = SolveAIT.__module__
+
+        do_plot = (self.config.instrument.plot_level >= 3)
 
         # Get some geometry constraints
         goody0 = 0
@@ -61,6 +68,7 @@ class SolveAIT(BasePrimitive):
             trimw1 = y0max
         # Calculate output wavelengths
         dwout = self.action.args.dwout
+        self.logger.info("Output Delta WAVE: %.3f", dwout)
         ndels = int((trimw0 - self.config.instrument.WAVEFID) / dwout)
         self.action.args.wave0out = \
             self.config.instrument.WAVEFID + float(ndels) * dwout
@@ -92,77 +100,47 @@ class SolveAIT(BasePrimitive):
         self.logger.info("WAVE   ALL: %.2f - %.2f" %
                          (self.action.args.waveall0, self.action.args.waveall1))
         self.logger.info("WAVE   MID: %.2f" % self.action.args.wavemid)
-        # Start setting up slice transforms
-        # self.action.args.x0out = \
-        #     int(self.action.args.reference_bar_separation / 2.) + 1
-        # self.refoutx = np.arange(0, 5) * \
-        #     self.action.args.reference_bar_separation + self.action.args.x0out
-        # Variables for output control points
-        srcw = []
-        # Loop over source control points
-        for ixy, xy in enumerate(self.action.args.source_control_points):
-            # Calculate y wavelength
-            yw = float(np.polyval(
-                self.action.args.fincoeff[self.action.args.bar_id[ixy]], xy[1]))
-            # Convert to output pixels
-            yw = (yw - self.action.args.wave0out) / dwout
-            srcw.append([xy[0], yw])
+
         # Use extremes to define output size
         ysize = int((self.action.args.waveall1 - self.action.args.wave0out)
                     / dwout)
-        # xsize = int(5. * self.action.args.reference_bar_separation) + 1
-        xsize = self.config.instrument.NBARS
-        self.logger.info("Output slices will be %d x %d px" % (xsize, ysize))
-        # Now loop over slices and get relevant control points for each slice
-        # Output variables
-        xl0_out = []
-        xl1_out = []
-        tform_list = []
-        invtf_list = []
+        yout = np.arange(ysize) * dwout + self.action.args.wave0out
+        print(len(yout), np.nanmin(yout), np.nanmax(yout))
+        xsize = self.config.instrument.NBARS * 2
+        self.logger.info("Output spectra will be %d x %d px" % (xsize, ysize))
+        specout = np.zeros((ysize, xsize), dtype=float)
         # Loop over AIT traces
-        for isl in range(0, xsize):
-            # Get control points
-            xw = []
-            yw = []
-            xi = []
-            yi = []
-            # Loop over all control points
-            for ixy, xy in enumerate(srcw):
-                # Only use the ones for this slice
-                if self.action.args.slice_id[ixy] == isl:
-                    # Index in to reference output x array
-                    ib = self.action.args.bar_id[ixy] % 5
-                    # Geometrically corrected control points
-                    xw.append(self.refoutx[ib])
-                    yw.append(xy[1])
-                    # Input control points
-                    xi.append(self.action.args.destination_control_points[
-                                  ixy][0])
-                    yi.append(self.action.args.destination_control_points[
-                                  ixy][1])
-            # get image limits
-            xl0 = int(min(xi) - self.action.args.reference_bar_separation)
-            if xl0 < 0:
-                xl0 = 0
-            xl1 = int(max(xi) + self.action.args.reference_bar_separation)
-            if xl1 > (self.action.args.ccddata.data.shape[0] - 1):
-                xl1 = self.action.args.ccddata.data.shape[0] - 1
-            # Store for output
-            xl0_out.append(xl0)
-            xl1_out.append(xl1)
-            self.logger.info("Slice %d arc image x limits: %d - %d" %
-                             (isl, xl0, xl1))
-            # adjust control points
-            xit = [x - float(xl0) for x in xi]
-            # fit transform
-            dst = np.column_stack((xit, yi))
-            src = np.column_stack((xw, yw))
-            self.logger.info("Fitting wavelength and spatial control points")
-            tform = tf.estimate_transform('polynomial', src, dst, order=3)
-            invtf = tf.estimate_transform('polynomial', dst, src, order=3)
-            # Store for output
-            tform_list.append(tform)
-            invtf_list.append(invtf)
+        for isl in range(0, self.config.instrument.NBARS):
+            fc = self.action.args.fincoeff[isl]
+            arc = self.context.arcs[isl]
+            bar = self.context.bars[isl]
+            xwv = np.polyval(fc, np.arange(len(arc)))
+            arcint = interpolate.interp1d(xwv, arc, kind='cubic',
+                                          bounds_error=False,
+                                          fill_value='extrapolate')
+            barint = interpolate.interp1d(xwv, bar, kind='cubic',
+                                          bounds_error=False,
+                                          fill_value='extrapolate')
+            arcout = arcint(yout)
+            barout = barint(yout)
+            specout[:, isl] = arcout[:]
+            specout[:, isl + self.config.instrument.NBARS] = barout[:]
+            if do_plot:
+                p = figure(title=self.action.args.plotlabel + "ARC # %d" %
+                           (isl + 1),
+                           x_axis_label="Wavelength",
+                           y_axis_label="Flux",
+                           plot_width=self.config.instrument.plot_width,
+                           plot_height=self.config.instrument.plot_height)
+                p.line(xwv, arc, legend_label='Arc Data', color='blue')
+                p.line(xwv, bar, legend_label='Bar Data', color='red')
+                p.line(yout, arcout, legend_label='Arc Int', color='purple')
+                p.line(yout, barout, legend_label='Bar Int', color='orange')
+                bokeh_plot(p, self.context.bokeh_session)
+                q = input("Next? <cr>, q to quit: ")
+                if 'Q' in q.upper():
+                    do_plot = False
+
         # Pixel scales
         pxscl = self.config.instrument.PIXSCALE * self.action.args.xbinsize
         ifunum = self.action.args.ifunum
@@ -172,58 +150,117 @@ class SolveAIT(BasePrimitive):
             slscl = self.config.instrument.SLICESCALE / 4.0
         else:
             slscl = self.config.instrument.SLICESCALE
+
+        # Update header
+        # Geometry corrected?
+        self.action.args.ccddata.header['GEOMCOR'] = (
+            True, 'Geometry corrected?')
+        #
+        # Spatial geometry
+        # self.action.args.ccddata.header['BARSEP'] = (
+        #    self.action.args.barsep, 'separation of bars (binned pix)')
+        # self.action.args.ccddata.header['BAR0'] = (
+        #    self.action.args.bar0, 'first bar pixel position')
+        # Wavelength ranges
+        if self.action.args.nasmask:
+            self.action.args.ccddata.header['WAVALL0'] = (
+                self.action.args.wavensall0, 'Low inclusive wavelength')
+            self.action.args.ccddata.header['WAVALL1'] = (
+                self.action.args.wavensall1, 'High inclusive wavelength')
+            self.action.args.ccddata.header['WAVGOOD0'] = (
+                self.action.args.wavensgood0, 'Low good wavelength')
+            self.action.args.ccddata.header['WAVGOOD1'] = (
+                self.action.args.wavensgood1, 'High good wavelength')
+            self.action.args.ccddata.header['WAVMID'] = (
+                self.action.args.wavensmid, 'middle wavelength')
+        else:
+            self.action.args.ccddata.header['WAVALL0'] = (
+                self.action.args.waveall0, 'Low inclusive wavelength')
+            self.action.args.ccddata.header['WAVALL1'] = (
+                self.action.args.waveall1, 'High inclusive wavelength')
+            self.action.args.ccddata.header['WAVGOOD0'] = (
+                self.action.args.wavegood0, 'Low good wavelength')
+            self.action.args.ccddata.header['WAVGOOD1'] = (
+                self.action.args.wavegood1, 'High good wavelength')
+            self.action.args.ccddata.header['WAVMID'] = (
+                self.action.args.wavemid, 'middle wavelength')
         # Dichroic fraction
         try:
-            dichroic_fraction = self.action.args.dichroic_fraction
+            dichroic_fraction = self.action.args.dich_frac
         except AttributeError:
             dichroic_fraction = 1.
+        self.action.args.ccddata.header['DICHFRAC'] = (
+            dichroic_fraction, 'Dichroic Fraction')
+        # Wavelength fit statistics
+        self.action.args.ccddata.header['AVWVSIG'] = (
+            self.action.args.av_bar_sig, 'Avg. bar wave sigma (Ang)')
+        self.action.args.ccddata.header['SDWVSIG'] = (
+            self.action.args.st_bar_sig, 'Stdev. var wave sigma (Ang)')
+        # Pixel scales
+        self.action.args.ccddata.header['PXSCL'] = (
+            pxscl, 'Pixel scale along slice (deg)')
+        self.action.args.ccddata.header['SLSCL'] = (
+            slscl, 'Pixel scale perp. to slices (deg)')
+        # Geometry origins
+        self.action.args.ccddata.header['CBARSNO'] = (
+            self.action.args.contbar_image_number,
+            'Continuum bars image number')
+        self.action.args.ccddata.header['CBARSFL'] = (
+            self.action.args.contbar_image, 'Continuum bars image filename')
+        self.action.args.ccddata.header['ARCNO'] = (
+            self.action.args.arc_number, 'Arc image number')
+        self.action.args.ccddata.header['ARCFL'] = (
+            self.action.args.arc_image, 'Arc image filename')
+        # self.action.args.ccddata.header['GEOMFL'] = (
+        #     geom_file.split('/')[-1], 'Geometry file')
+        # WCS
+        # self.action.args.ccddata.header['IFUPA'] = (
+        #     skypa, 'IFU position angle (degrees)')
+        # self.action.args.ccddata.header['IFUROFF'] = (
+        #    self.config.instrument.ROTOFF, 'IFU-SKYPA offset (degrees)')
+        self.action.args.ccddata.header['WCSDIM'] = (
+            2, 'number of dimensions in WCS')
+        self.action.args.ccddata.header['WCSNAME'] = 'KCRM_AIT'
+        self.action.args.ccddata.header['CTYPE1'] = 'Pix'
+        self.action.args.ccddata.header['CTYPE2'] = ('AWAV',
+                                                     'Air Wavelengths')
+        self.action.args.ccddata.header['CUNIT1'] = ('pixel', 'image units')
+        self.action.args.ccddata.header['CUNIT2'] = ('Angstrom',
+                                                     'Wavelength units')
+        self.action.args.ccddata.header['CNAME1'] = ('KCWI Pix', 'pix name')
+        self.action.args.ccddata.header['CNAME2'] = ('KCWI Wavelength',
+                                                     'Wavelength name')
+        self.action.args.ccddata.header['CRVAL1'] = (1, 'Pixel zeropoint')
+        self.action.args.ccddata.header['CRVAL2'] = (self.action.args.wave0out,
+                                                     'Wavelength zeropoint')
+        self.action.args.ccddata.header['CDELT1'] = (1.0, 'Pixel scale')
+        self.action.args.ccddata.header['CDELT2'] = (dwout, 'Wavelength scale')
+        self.action.args.ccddata.header['CRPIX1'] = (1,
+                                                     'Pixel reference pixel')
+        self.action.args.ccddata.header['CRPIX2'] = (
+            1, 'Wavelength reference pixel')
 
-        # Package geometry data
-        ofname = self.action.args.name
-        self.action.args.geometry_file = os.path.join(
-            self.config.instrument.output_directory,
-            strip_fname(ofname) + '_geom.pkl')
-        if os.path.exists(self.action.args.geometry_file):
-            self.logger.error("Geometry file already exists: %s" %
-                              self.action.args.geometry_file)
-        else:
-            geom = {
-                "geom_file": self.action.args.geometry_file,
-                "xsize": xsize, "ysize": ysize,
-                "pxscl": pxscl, "slscl": slscl,
-                "cbarsno": self.action.args.contbar_image_number,
-                "cbarsfl": self.action.args.contbar_image,
-                "arcno": self.action.args.arc_number,
-                "arcfl": self.action.args.arc_image,
-                "barsep": self.action.args.reference_bar_separation,
-                "bar0": self.action.args.x0out,
-                "waveall0": self.action.args.waveall0,
-                "waveall1": self.action.args.waveall1,
-                "wavegood0": self.action.args.wavegood0,
-                "wavegood1": self.action.args.wavegood1,
-                "wavemid": self.action.args.wavemid,
-                "wavensall0": self.action.args.wavensall0,
-                "wavensall1": self.action.args.wavensall1,
-                "wavensgood0": self.action.args.wavensgood0,
-                "wavensgood1": self.action.args.wavensgood1,
-                "wavensmid": self.action.args.wavensmid,
-                "dich_frac": dichroic_fraction,
-                "dwout": dwout,
-                "wave0out": self.action.args.wave0out,
-                "wave1out": self.action.args.wave1out,
-                "avwvsig": self.action.args.av_bar_sig,
-                "sdwvsig": self.action.args.st_bar_sig,
-                "xl0": xl0_out, "xl1": xl1_out,
-                "tform": tform_list, "invtf": invtf_list
-            }
-            with open(self.action.args.geometry_file, 'wb') as ofile:
-                pickle.dump(geom, ofile)
-            self.logger.info("Geometry written to: %s" %
-                             self.action.args.geometry_file)
-
-        log_string = SolveAIT.__module__
+        # write out cube
         self.action.args.ccddata.header['HISTORY'] = log_string
+
+        # Package AIT spectra
+        ofname = self.action.args.name
+        self.action.args.ait_file = os.path.join(
+            self.config.instrument.output_directory,
+            strip_fname(ofname) + '_aitspec.fits')
+        if os.path.exists(self.action.args.ait_file):
+            self.logger.error("AIT spec file already exists: %s" %
+                              self.action.args.ait_file)
+        else:
+
+            hdu = pf.PrimaryHDU(specout, header=self.action.args.ccddata.header)
+            hdul = pf.HDUList([hdu])
+            hdul.writeto(self.action.args.ait_file)
+
+            self.logger.info("AIT spectra written to: %s" %
+                             self.action.args.ait_file)
+
         self.logger.info(log_string)
 
         return self.action.args
-    # END: class SolveGeom()
+    # END: class SolveAIT()
