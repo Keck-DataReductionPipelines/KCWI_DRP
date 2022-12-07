@@ -271,14 +271,14 @@ class SolveArcs(BasePrimitive):
             rej_rsd_flux = []   # rejected line fluxes
             # iteratively remove outliers
             it = 0
-            while max_resid > 2.5 * wsig and it < 25:
+            while (max_resid > 2.5 * wsig or max_resid >= 10.) and it < 25:
                 arc_dat = []    # arc line pixel values
                 arc_fdat = []   # arc line flux data
                 at_dat = []     # atlas line wavelength values
                 at_fdat = []    # atlas line flux data
                 # trim largest outlier
                 for il, rsd in enumerate(resid):
-                    if abs(rsd) < max_resid:
+                    if abs(rsd) < max_resid and abs(rsd) < 10.:
                         # append data for line that passed cut
                         arc_dat.append(arc_pix_dat[il])
                         arc_fdat.append(arc_int_dat[il])
