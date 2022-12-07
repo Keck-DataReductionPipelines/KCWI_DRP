@@ -134,10 +134,11 @@ class SolveAIT(BasePrimitive):
                 wall1 = self.action.args.waveall1
                 wgoo0 = self.action.args.wavegood0
                 wgoo1 = self.action.args.wavegood1
-                yran = [np.nanmin([np.nanmin(arcout[50:-50]),
-                                   np.nanmin(barout[50:-50])]),
-                        np.nanmax([np.nanmax(arcout[50:-50]),
-                                   np.nanmax(barout[50:-50])])]
+                wl_good = [i for i, v in enumerate(yout) if wgoo0 <= v <= wgoo1]
+                yran = [np.nanmin([np.nanmin(arcout[wl_good]),
+                                   np.nanmin(barout[wl_good])]),
+                        np.nanmax([np.nanmax(arcout[wl_good]),
+                                   np.nanmax(barout[wl_good])])]
                 p = figure(title=self.action.args.plotlabel + "ARC # %d" % ib,
                            x_axis_label="Wavelength",
                            y_axis_label="Flux",
