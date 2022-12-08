@@ -18,6 +18,8 @@ class SubtractOverscan(BasePrimitive):
         self.logger = context.pipeline_logger
 
     def _perform(self):
+        # camera
+        camera = self.action.args.ccddata.header['CAMERA']
         # image sections for each amp
         bsec, dsec, tsec, direc, amps = self.action.args.map_ccd
         namps = len(amps)
@@ -26,6 +28,12 @@ class SubtractOverscan(BasePrimitive):
             porder = 2
         else:
             porder = 7
+        if 'RED' in camera.upper():
+            minoscanpix = self.config.instrument.red_minoscanpix
+            oscanbuf = self.config.instrument.red_oscanbuf
+        else:
+            minoscanpix = self.config.instrument.minoscanpix
+            oscanbuf = self.config.instrument.oscanbuf
         frameno = self.action.args.ccddata.header['FRAMENO']
         # header keyword to update
         key = 'OSCANSUB'
@@ -39,10 +47,10 @@ class SubtractOverscan(BasePrimitive):
             # get gain
             gain = self.action.args.ccddata.header['GAIN%d' % ia]
             # check if we have enough data to fit
-            if (bsec[ia][3] - bsec[ia][2]) > self.config.instrument.minoscanpix:
+            if (bsec[ia][3] - bsec[ia][2]) > minoscanpix:
                 # pull out an overscan vector
-                x0 = bsec[ia][2] + self.config.instrument.oscanbuf
-                x1 = bsec[ia][3] - self.config.instrument.oscanbuf
+                x0 = bsec[ia][2] + oscanbuf
+                x1 = bsec[ia][3] - oscanbuf
                 y0 = bsec[ia][0]
                 y1 = bsec[ia][1] + 1
                 osvec = np.nanmedian(
