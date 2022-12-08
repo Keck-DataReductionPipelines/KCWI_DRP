@@ -26,34 +26,62 @@ def parse_imsec(section=None):
 
     xsec = section[1:-1].split(',')[0]
     ysec = section[1:-1].split(',')[1]
-    p1 = int(xsec.split(':')[0])
-    p2 = int(xsec.split(':')[1])
-    p3 = int(ysec.split(':')[0])
-    p4 = int(ysec.split(':')[1])
-    # tests for individual axes
+    xparts = xsec.split(':')
+    yparts = ysec.split(':')
+    p1 = int(xparts[0])
+    p2 = int(xparts[1])
+    p3 = int(yparts[0])
+    p4 = int(yparts[1])
+    # check for scale factor
+    if len(xparts) == 3:
+        xp3 = int(xparts[2])
+        xscale = abs(xp3)
+    else:
+        xp3 = 1
+        xscale = 1
+    if len(yparts) == 3:
+        yp3 = int(yparts[2])
+        yscale = abs(yp3)
+    else:
+        yp3 = 1
+        yscale = 1
+    # apply scale
+    p1 = int(p1 / xscale)
+    p2 = int(p2 / xscale)
+    p3 = int(p3 / yscale)
+    p4 = int(p4 / yscale)
+    # is x axis in descending order?
     if p1 > p2:
         x0 = p2 - 1
         x1 = p1 - 1
         xfor = False
+    # x axis in ascending order
     else:
         x0 = p1 - 1
         x1 = p2 - 1
+    # is y axis in descending order
     if p3 > p4:
         y0 = p4 - 1
         y1 = p3 - 1
         yfor = False
+    # y axis in ascending order
     else:
         y0 = p3 - 1
         y1 = p4 - 1
+    # ensure no negative indices
+    if x0 < 0:
+        x0 = 0
+    if y0 < 0:
+        y0 = 0
     # verify read direction
-    if xsec.count(':') == 2 and xfor:
+    if xp3 < 0:
         xfor = False
-    if ysec.count(':') == 2 and yfor:
+    if yp3 < 0:
         yfor = False
-    # package output
+    # package output with python axis ordering
     sec = (y0, y1, x0, x1)
     rfor = (yfor, xfor)
-    # use python axis ordering
+
     return sec, rfor
 
 
@@ -490,7 +518,6 @@ class ingest_file(BasePrimitive):
                     direc.append(rfor)
                     section = self.get_keyword('CSEC%d' % i)
                     sec, rfor = parse_imsec(section)
-                    direc.append(rfor)
                     tsec.append(sec)
                 else:
                     bsec.append((0, 0, 0, 0))
