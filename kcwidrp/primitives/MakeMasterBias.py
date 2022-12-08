@@ -61,7 +61,7 @@ class MakeMasterBias(BaseImg):
         stackf = []
         for bias in combine_list:
             stackf.append(bias)
-            # using [0] drops the table
+            # using [0] drops the table and leaves just the image
             stack.append(kcwi_fits_reader(bias)[0])
 
         stacked = ccdproc.combine(stack, method=method, sigma_clip=True,
@@ -73,7 +73,8 @@ class MakeMasterBias(BaseImg):
         stacked.header['STCKMETH'] = (method, 'method used for stacking')
         for ii, fname in enumerate(stackf):
             fname_base = os.path.basename(fname)
-            stacked.header['STACKF%d' % (ii + 1)] = (fname_base, "stack input file")
+            stacked.header['STACKF%d' % (ii + 1)] = (fname_base,
+                                                     "stack input file")
 
         # for readnoise stats use 2nd and 3rd bias
         diff = stack[1].data.astype(np.float32) - \
