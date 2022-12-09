@@ -21,9 +21,6 @@ red_amp_gain = {'L1': 1.54, 'L2': 1.55, 'U1': 1.61, 'U2': 1.49}
 
 def parse_imsec(section=None):
 
-    xfor = True
-    yfor = True
-
     xsec = section[1:-1].split(',')[0]
     ysec = section[1:-1].split(',')[1]
     xparts = xsec.split(':')
@@ -34,27 +31,18 @@ def parse_imsec(section=None):
     p4 = int(yparts[1])
     # check for scale factor
     if len(xparts) == 3:
-        xp3 = int(xparts[2])
-        xscale = abs(xp3)
+        xstride = int(xparts[2])
     else:
-        xp3 = 1
-        xscale = 1
+        xstride = 1
     if len(yparts) == 3:
-        yp3 = int(yparts[2])
-        yscale = abs(yp3)
+        ystride = int(yparts[2])
     else:
-        yp3 = 1
-        yscale = 1
-    # apply scale
-    p1 = int(p1 / xscale)
-    p2 = int(p2 / xscale)
-    p3 = int(p3 / yscale)
-    p4 = int(p4 / yscale)
+        ystride = 1
     # is x axis in descending order?
     if p1 > p2:
         x0 = p2 - 1
         x1 = p1 - 1
-        xfor = False
+        xstride = -abs(xstride)
     # x axis in ascending order
     else:
         x0 = p1 - 1
@@ -63,7 +51,7 @@ def parse_imsec(section=None):
     if p3 > p4:
         y0 = p4 - 1
         y1 = p3 - 1
-        yfor = False
+        ystride = -abs(ystride)
     # y axis in ascending order
     else:
         y0 = p3 - 1
@@ -73,16 +61,11 @@ def parse_imsec(section=None):
         x0 = 0
     if y0 < 0:
         y0 = 0
-    # verify read direction
-    if xp3 < 0:
-        xfor = False
-    if yp3 < 0:
-        yfor = False
     # package output with python axis ordering
     sec = (y0, y1, x0, x1)
-    rfor = (yfor, xfor)
+    stride = (ystride, xstride)
 
-    return sec, rfor
+    return sec, stride
 
 
 class ingest_file(BasePrimitive):
@@ -460,7 +443,7 @@ class ingest_file(BasePrimitive):
         bsec = []
         dsec = []
         tsec = []
-        direc = []
+        strides = []
         amps = []
         if 'BLUE' in camera:
             # loop over amps
@@ -468,12 +451,14 @@ class ingest_file(BasePrimitive):
                 ia = i + 1
                 amps.append(ia)
                 section = self.get_keyword('BSEC%d' % ia)
-                sec, rfor = parse_imsec(section)
+                sec, stride = parse_imsec(section)
                 bsec.append(sec)
                 section = self.get_keyword('DSEC%d' % ia)
-                sec, rfor = parse_imsec(section)
+                sec, stride = parse_imsec(section)
                 dsec.append(sec)
-                direc.append(rfor)
+                section = self.get_keyword('CSEC%d' % ia)
+                sec, stride = parse_imsec(section)
+                strides.append(stride)
                 if i == 0:
                     y0 = 0
                     y1 = sec[1] - sec[0]
@@ -510,24 +495,29 @@ class ingest_file(BasePrimitive):
                     i = red_amp_dict[amp]
                     amps.append(i)
                     section = self.get_keyword('BSEC%d' % i)
-                    sec, rfor = parse_imsec(section)
+                    sec, stride = parse_imsec(section)
                     bsec.append(sec)
                     section = self.get_keyword('DSEC%d' % i)
-                    sec, rfor = parse_imsec(section)
+                    sec, stride = parse_imsec(section)
                     dsec.append(sec)
-                    direc.append(rfor)
                     section = self.get_keyword('CSEC%d' % i)
-                    sec, rfor = parse_imsec(section)
-                    tsec.append(sec)
+                    sec, stride = parse_imsec(section)
+                    strides.append(stride)
+                    y0, y1, x0, x1 = sec
+                    y0 = int(y0 / abs(stride[0]))
+                    y1 = int(y1 / abs(stride[0]))
+                    x0 = int(x0 / abs(stride[1]))
+                    x1 = int(x1 / abs(stride[1])) - (abs(stride[1]) - 1)
+                    tsec.append((y0, y1, x0, x1))
                 else:
                     bsec.append((0, 0, 0, 0))
                     dsec.append((0, 0, 0, 0))
-                    direc.append((True, True))
+                    strides.append((1, 1))
                     tsec.append((0, 0, 0, 0))
             if amp_count != namps:
                 self.logger.warning("Didn't get all the amps: %d", amp_count)
 
-        return bsec, dsec, tsec, direc, amps
+        return bsec, dsec, tsec, strides, amps
 
     def _perform(self):
         # if self.context.data_set is None:
