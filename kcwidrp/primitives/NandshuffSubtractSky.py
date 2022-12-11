@@ -66,7 +66,9 @@ class NandshuffSubtractSky(BasePrimitive):
         # aborted script with inverted panels
         # BLUE (sky in middle, object above)
         # RED (object in middle sky above)
-        if nshfdn != nshfup + 1:
+        if ('BLUE' in camera and nshfdn != nshfup + 1) or \
+           ('RED' in camera and nshfdn != nshfup):
+            self.logger.warning("Inverted N&S obs detected!")
             if 'BLUE' in camera:
                 skyrow0 = shrows
                 skyrow1 = shrows + shrows - 1
