@@ -42,22 +42,44 @@ class NandshuffSubtractSky(BasePrimitive):
         shrows = self.action.args.ccddata.header['SHUFROWS']
         nshfup = self.action.args.ccddata.header['NSHFUP']
         nshfdn = self.action.args.ccddata.header['NSHFDN']
+        camera = self.action.args.ccddata.header['CAMERA']
 
         # units
         u_out = self.action.args.ccddata.unit
 
-        # nominal conditions (sky on bottom, object in middle)
-        skyrow0 = 0
-        skyrow1 = shrows - 1
-        objrow0 = shrows
-        objrow1 = shrows + shrows - 1
-
-        # aborted script with inverted panels (sky in middle, object above)
-        if nshfdn != nshfup + 1:
+        # BLUE nominal conditions (sky on bottom, object in middle)
+        if 'BLUE' in camera:
+            skyrow0 = 0
+            skyrow1 = shrows - 1
+            objrow0 = shrows
+            objrow1 = shrows + shrows - 1
+        # RED nominal conditions (object on bottom, sky in middle)
+        elif 'RED' in camera:
             skyrow0 = shrows
             skyrow1 = shrows + shrows - 1
-            objrow0 = skyrow1
-            objrow1 = objrow0 + shrows - 1
+            objrow0 = 0
+            objrow1 = shrows - 1
+        else:
+            self.logger.error("CAMERA cannot be determined for N&S Sub")
+            return self.action.args
+
+        # aborted script with inverted panels
+        # BLUE (sky in middle, object above)
+        # RED (object in middle sky above)
+        if nshfdn != nshfup + 1:
+            if 'BLUE' in camera:
+                skyrow0 = shrows
+                skyrow1 = shrows + shrows - 1
+                objrow0 = skyrow1
+                objrow1 = objrow0 + shrows - 1
+            elif 'RED' in camera:
+                objrow0 = shrows
+                objrow1 = shrows + shrows - 1
+                skyrow0 = objrow1
+                skyrow1 = skyrow0 + shrows - 1
+            else:
+                self.logger.error("CAMERA cannot be determined for N&S aborted Sub")
+                return self.action.args
 
         # check limits
         if (skyrow1-skyrow0) != (objrow1-objrow0):
@@ -74,7 +96,8 @@ class NandshuffSubtractSky(BasePrimitive):
         objhdr = self.action.args.ccddata.header.copy()
 
         # nominal condition
-        if skyrow0 < 10:
+        if ('BLUE' in camera and skyrow0 < 10) or \
+           ('RED' in camera and objrow0 < 10):
             self.logger.info("standard nod-and-shuffle configuration")
             skystd = self.action.args.ccddata.uncertainty.array.copy()
             skymsk = self.action.args.ccddata.mask.copy()
@@ -200,4 +223,4 @@ class NandshuffSubtractSky(BasePrimitive):
         self.logger.info(log_string)
 
         return self.action.args
-    # END: class SubtractSky()
+    # END: class NandshuffSubtractSky()
