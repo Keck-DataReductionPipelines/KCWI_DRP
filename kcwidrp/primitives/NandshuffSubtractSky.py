@@ -60,7 +60,7 @@ class NandshuffSubtractSky(BasePrimitive):
                 self.logger.warning("Inverted N&S obs detected!")
                 skyrow0 = shrows
                 skyrow1 = shrows + shrows - 1
-                objrow0 = skyrow1
+                objrow0 = skyrow1 + 1
                 objrow1 = objrow0 + shrows - 1
 
         # RED camera handling
@@ -76,7 +76,7 @@ class NandshuffSubtractSky(BasePrimitive):
                 self.logger.warning("Inverted N&S obs detected!")
                 objrow0 = shrows
                 objrow1 = shrows + shrows - 1
-                skyrow0 = objrow1
+                skyrow0 = objrow1 + 1
                 skyrow1 = skyrow0 + shrows - 1
 
         else:
@@ -118,19 +118,17 @@ class NandshuffSubtractSky(BasePrimitive):
                 self.action.args.ccddata.flags |= skyflg
                 # clean images
                 self.action.args.ccddata.data[skyrow0:skyrow1, :] = 0.
-                self.action.args.ccddata.data[(objrow1 + 1):-1, :] = 0.
-                self.action.args.ccddata.uncertainty.array[skyrow0:skyrow1,
-                :] = 0.
-                self.action.args.ccddata.uncertainty.array[(objrow1 + 1):-1,
-                :] = 0.
+                self.action.args.ccddata.data[objrow1+1:-1, :] = 0.
+                self.action.args.ccddata.uncertainty.array[skyrow0:skyrow1, :] = 0.
+                self.action.args.ccddata.uncertainty.array[objrow1+1:-1, :] = 0.
                 self.action.args.ccddata.mask[skyrow0:skyrow1, :] = 1
-                self.action.args.ccddata.mask[(objrow1 + 1):-1, :] = 1
+                self.action.args.ccddata.mask[objrow1+1:-1, :] = 1
                 self.action.args.ccddata.flags[skyrow0:skyrow1, :] = 64
-                self.action.args.ccddata.flags[(objrow1 + 1):-1, :] = 64
-                sky[skyrow0:skyrow1, :] = 0.
-                sky[(objrow1 + 1), :] = 0.
-                obj[skyrow0:skyrow1, :] = 0.
-                obj[(objrow1 + 1), :] = 0.
+                self.action.args.ccddata.flags[objrow1+1:-1, :] = 64
+                sky[skyrow0:skyrow1+1, :] = 0.
+                sky[objrow1+1:-1, :] = 0.
+                obj[skyrow0:skyrow1+1, :] = 0.
+                obj[objrow1+1:-1, :] = 0.
             else:
                 self.logger.warning(
                     "non-standard nod-and-shuffle configuration")
@@ -166,17 +164,16 @@ class NandshuffSubtractSky(BasePrimitive):
                 # clean images
                 self.action.args.ccddata.data[objrow0:objrow1, :] = 0.
                 self.action.args.ccddata.data[0:skyrow0, :] = 0.
-                self.action.args.ccddata.uncertainty.array[objrow0:objrow1,
-                :] = 0.
+                self.action.args.ccddata.uncertainty.array[objrow0:objrow1, :] = 0.
                 self.action.args.ccddata.uncertainty.array[0:skyrow0, :] = 0.
                 self.action.args.ccddata.mask[objrow0:objrow1, :] = 1
                 self.action.args.ccddata.mask[0:skyrow0, :] = 1
                 self.action.args.ccddata.flags[objrow0:objrow1, :] = 64
                 self.action.args.ccddata.flags[0:skyrow0, :] = 64
-                sky[objrow0:objrow1, :] = 0.
-                sky[0:skyrow0, :] = 0.
-                obj[objrow0:objrow1, :] = 0.
-                obj[0:skyrow0, :] = 0.
+                sky[objrow0:-1, :] = 0.
+                sky[0:skyrow0+1, :] = 0.
+                obj[objrow0:-1, :] = 0.
+                obj[0:skyrow0+1, :] = 0.
                 cmnt = 'Aborted nod-and-shuffle observations'
                 objhdr['COMMENT'] = cmnt
                 skyhdr['COMMENT'] = cmnt
@@ -204,19 +201,17 @@ class NandshuffSubtractSky(BasePrimitive):
                 self.action.args.ccddata.flags |= objflg
                 # clean images
                 self.action.args.ccddata.data[objrow0:objrow1, :] = 0.
-                self.action.args.ccddata.data[(skyrow1 + 1):-1, :] = 0.
-                self.action.args.ccddata.uncertainty.array[objrow0:objrow1,
-                :] = 0.
-                self.action.args.ccddata.uncertainty.array[(skyrow1 + 1):-1,
-                :] = 0.
+                self.action.args.ccddata.data[skyrow1+1:-1, :] = 0.
+                self.action.args.ccddata.uncertainty.array[objrow0:objrow1, :] = 0.
+                self.action.args.ccddata.uncertainty.array[skyrow1+1:-1, :] = 0.
                 self.action.args.ccddata.mask[objrow0:objrow1, :] = 1
-                self.action.args.ccddata.mask[(skyrow1 + 1):-1, :] = 1
+                self.action.args.ccddata.mask[skyrow1+1:-1, :] = 1
                 self.action.args.ccddata.flags[objrow0:objrow1, :] = 64
-                self.action.args.ccddata.flags[(skyrow1 + 1):-1, :] = 64
-                obj[objrow0:objrow1, :] = 0.
-                obj[(skyrow1 + 1), :] = 0.
-                sky[objrow0:objrow1, :] = 0.
-                sky[(skyrow1 + 1), :] = 0.
+                self.action.args.ccddata.flags[skyrow1+1:-1, :] = 64
+                obj[objrow0:objrow1+1, :] = 0.
+                obj[skyrow1+1:-1, :] = 0.
+                sky[objrow0:objrow1+1, :] = 0.
+                sky[skyrow1+1:-1, :] = 0.
             else:
                 self.logger.warning(
                     "non-standard nod-and-shuffle configuration")
@@ -250,19 +245,17 @@ class NandshuffSubtractSky(BasePrimitive):
                 self.action.args.ccddata.flags |= skyflg
                 # clean images
                 self.action.args.ccddata.data[skyrow0:skyrow1, :] = 0.
-                self.action.args.ccddata.data[(objrow1 + 1):-1, :] = 0.
-                self.action.args.ccddata.uncertainty.array[skyrow0:skyrow1,
-                :] = 0.
-                self.action.args.ccddata.uncertainty.array[(objrow1 + 1):-1,
-                :] = 0.
+                self.action.args.ccddata.data[objrow1+1:-1, :] = 0.
+                self.action.args.ccddata.uncertainty.array[skyrow0:skyrow1, :] = 0.
+                self.action.args.ccddata.uncertainty.array[objrow1+1:-1:] = 0.
                 self.action.args.ccddata.mask[skyrow0:skyrow1, :] = 1
-                self.action.args.ccddata.mask[(objrow1 + 1):-1, :] = 1
+                self.action.args.ccddata.mask[objrow1+1:-1, :] = 1
                 self.action.args.ccddata.flags[skyrow0:skyrow1, :] = 64
-                self.action.args.ccddata.flags[(objrow1 + 1):-1, :] = 64
-                sky[skyrow0:skyrow1, :] = 0.
-                sky[(objrow1 + 1), :] = 0.
-                obj[skyrow0:skyrow1, :] = 0.
-                obj[(objrow1 + 1), :] = 0.
+                self.action.args.ccddata.flags[objrow1+1:-1, :] = 64
+                sky[0, objrow0, :] = 0.
+                sky[objrow1+1:-1, :] = 0.
+                obj[0, objrow0, :] = 0.
+                obj[objrow1+1:-1, :] = 0.
                 cmnt = 'Aborted nod-and-shuffle observations'
                 objhdr['COMMENT'] = cmnt
                 skyhdr['COMMENT'] = cmnt
