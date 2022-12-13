@@ -22,7 +22,13 @@ class RemoveCosmicRays(BasePrimitive):
 
         header = self.action.args.ccddata.header
 
-        if header['TELAPSE'] >= self.config.instrument.CRR_MINEXPTIME:
+        exptime = header['TELAPSE']
+        nshuf = header['NSHFUP']
+        ttime = header['TTIME']
+        if nshuf * ttime > exptime:
+            exptime = nshuf * ttime
+
+        if exptime >= self.config.instrument.CRR_MINEXPTIME:
 
             namps = header['NVIDINP']
             bsec, dsec, tsec, direc, amps = self.action.args.map_ccd
