@@ -73,7 +73,12 @@ def get_log_string(ifile, batch=False):
             # if header['TELAPSE'] > header['XPOSURE']:
             #    header['EXPTIME'] = header['TELAPSE']
             # else:
-            header['EXPTIME'] = header['XPOSURE']
+            nshuf = header['NSHFUP']
+            ttime = header['TTIME']
+            if nshuf > 0:
+                header['EXPTIME'] = (nshuf * ttime, "N&S frame exptime")
+            else:
+                header['EXPTIME'] = (header['XPOSURE'], "Shutter open time")
             if header['EXPTIME'] <= 0.:
                 is_bias = True
             header['ILLUME'] = '-'
