@@ -82,6 +82,9 @@ class Kcwi_pipeline(BasePipeline):
                                       "contbar_rectify_image"),
         "contbar_rectify_image":     ("RectifyImage",
                                       "rectification_started",
+                                      "contbar_make_master"),
+        "contbar_make_master":       ("MakeMasterContbars",
+                                      "master_contbar_started",
                                       "contbar_find_bars"),
         "contbar_find_bars":         ("FindBars",
                                       "find_bars_started",
@@ -101,12 +104,18 @@ class Kcwi_pipeline(BasePipeline):
                                       "arcs_correct_gain"),
         "arcs_correct_gain":         ("CorrectGain",
                                       "gain_correction_started",
+                                      "arcs_correct_defects"),
+        "arcs_correct_defects":      ("CorrectDefects",
+                                      "defect_correction_started",
                                       "arcs_create_unc"),
         "arcs_create_unc":           ("CreateUncertaintyImage",
                                       "create_unc_started",
                                       "arcs_rectify_image"),
         "arcs_rectify_image":        ("RectifyImage",
                                       "rectification_started",
+                                      "arcs_make_master"),
+        "arcs_make_master":          ("MakeMasterArc",
+                                      "master_arcs_started",
                                       "arcs_extract_arcs"),
         "arcs_extract_arcs":         ("ExtractArcs",
                                       "extract_arcs_started",
@@ -331,7 +340,14 @@ class Kcwi_pipeline(BasePipeline):
             dark_args.in_directory = "redux"
             context.push_event("process_dark", dark_args)
         elif "CONTBARS" in action.args.imtype:
-            context.push_event("process_contbars", action.args)
+            contbars_args = action.args
+            contbars_args.groupid = groupid
+            contbars_args.want_type = "CONTBARS"
+            contbars_args.new_type = "MCBARS"
+            contbars_args.min_files = context.config.instrument.contbars_min_nframes
+            contbars_args.new_file_name = "master_contbars_%s.fits" % groupid
+            contbars_args.in_directory = "redux"
+            context.push_event("process_contbars", contbars_args)
         elif "FLATLAMP" in action.args.imtype:
             flat_args = action.args
             flat_args.groupid = groupid
@@ -363,7 +379,14 @@ class Kcwi_pipeline(BasePipeline):
             flat_args.in_directory = "redux"
             context.push_event("process_flat", flat_args)
         elif "ARCLAMP" in action.args.imtype:
-            context.push_event("process_arc", action.args)
+            arc_args = action.args
+            arc_args.groupid = groupid
+            arc_args.want_type = "ARCLAMP"
+            arc_args.new_type = "MARC"
+            arc_args.min_files = context.config.instrument.arc_min_nframes
+            arc_args.new_file_name = "master_arc_%s.fits" % groupid
+            arc_args.in_directory = "redux"
+            context.push_event("process_arc", arc_args)
         elif "OBJECT" in action.args.imtype:
             if action.args.nasmask and action.args.numopen > 1:
                 context.push_event("process_nandshuff", action.args)
