@@ -636,7 +636,7 @@ class ingest_file(BasePrimitive):
             # master flats
             masterflat_frames = self.context.proctab.search_proctab(frame=self.ccddata, target_type='MFLAT', nearest=True)
             # arclamp
-            arclamp_frames = self.context.proctab.search_proctab(frame=self.ccddata, target_type='ARCLAMP', nearest=True)
+            arclamp_frames = self.context.proctab.search_proctab(frame=self.ccddata, target_type='MARC', nearest=True)
             if len(bias_frames) > 0:
                 '''\
                 and len(masterflat_frames) > 0 \
@@ -651,11 +651,11 @@ class ingest_file(BasePrimitive):
 
         if imtype == 'ARCLAMP':
             # continuum bars
-            contbars_frames = self.context.proctab.search_proctab(frame=self.ccddata, target_type='CONTBARS', nearest=True)
+            contbars_frames = self.context.proctab.search_proctab(frame=self.ccddata, target_type='MCBARS', nearest=True)
             if (len(contbars_frames)) > 0:
                 return True
             else:
-                self.logger.warn("Cannot reduce ARCLAMP frame. Missing continuum bars. Rescheduling for later.")
+                self.logger.warn("Cannot reduce ARCLAMP frame. Missing master continuum bars. Rescheduling for later.")
                 return False
 
         if imtype in ['FLATLAMP', 'TWIFLAT', 'DOMEFLAT']:
