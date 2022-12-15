@@ -28,14 +28,20 @@ class ExtractArcs(BasePrimitive):
         self.action.args.slice_id = None
 
     def _pre_condition(self):
+        marcs_in_proctable = self.context.proctab.search_proctab(
+            frame=self.action.args.ccddata, target_type='MARC',
+            nearest=True
+        )
+        self.logger.info("%d master arc frames found" %
+                         len(marcs_in_proctable))
         contbars_in_proctable = self.context.proctab.search_proctab(
-            frame=self.action.args.ccddata, target_type='CONTBARS',
+            frame=self.action.args.ccddata, target_type='MCBARS',
             nearest=True)
-        self.logger.info("%d continuum bars frames found" %
+        self.logger.info("%d master continuum bars frames found" %
                          len(contbars_in_proctable))
-        if len(contbars_in_proctable) > 0:
+        if len(contbars_in_proctable) > 0 and len(marcs_in_proctable) > 0:
             self.action.args.original_filename = strip_fname(
-                contbars_in_proctable['filename'][0])+ "_trace.fits"
+                contbars_in_proctable['filename'][0]) + "_trace.fits"
             return True
         else:
             self.action.args.original_filename = None
