@@ -109,8 +109,7 @@ class MakeMasterFlat(BaseImg):
 
         self.logger.info("Reading image: %s" % stname)
         stacked = kcwi_fits_reader(os.path.join(
-            self.config.instrument.cwd, 'redux',
-                         stname))[0]
+            self.config.instrument.cwd, 'redux', stname))[0]
 
         # get type of flat
         internal = ('SFLAT' in stacked.header['IMTYPE'])
@@ -862,7 +861,7 @@ class MakeMasterFlat(BaseImg):
                          output_dir=self.config.instrument.output_directory)
         self.context.proctab.update_proctab(frame=stacked, suffix=suffix,
                                             newtype=self.action.args.new_type,
-                                            filename=self.action.args.name)
+                                            filename=stacked.header['OFNAME'])
         self.context.proctab.write_proctab()
 
         self.logger.info(log_string)

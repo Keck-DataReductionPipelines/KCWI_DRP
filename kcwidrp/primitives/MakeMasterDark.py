@@ -70,7 +70,7 @@ class MakeMasterDark(BaseImg):
                          output_dir=self.config.instrument.output_directory)
         self.context.proctab.update_proctab(frame=stacked, suffix=suffix,
                                             newtype=args.new_type,
-                                            filename=self.action.args.name)
+                                            filename=stacked.header['OFNAME'])
         self.context.proctab.write_proctab()
         return self.action.args
-    # END: class StackDarks()
+    # END: class MakeMasterDark()

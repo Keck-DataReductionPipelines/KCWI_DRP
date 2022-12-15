@@ -53,7 +53,7 @@ class MakeMasterBias(BaseImg):
         combine_list = list(self.combine_list['filename'])
         # get master bias output name
         # mbname = combine_list[-1].split('.fits')[0] + '_' + suffix + '.fits'
-        mbname = strip_fname(combine_list[-1]) + '_' + suffix + '.fits'
+        mbname = strip_fname(combine_list[0]) + '_' + suffix + '.fits'
         # mbname = master_bias_name(self.action.args.ccddata)
         bsec, dsec, tsec, direc, amps = self.action.args.map_ccd
     
@@ -143,7 +143,7 @@ class MakeMasterBias(BaseImg):
                          output_dir=self.config.instrument.output_directory)
         self.context.proctab.update_proctab(frame=stacked, suffix=suffix,
                                             newtype=self.action.args.new_type,
-                                            filename=self.action.args.name)
+                                            filename=stacked.header['OFNAME'])
         self.context.proctab.write_proctab()
         return Arguments(name=mbname)
     # END: class ProcessBias()
