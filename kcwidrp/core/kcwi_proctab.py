@@ -137,7 +137,7 @@ class Proctab:
         self.log.info(f"proctable updated with {frame.header['OFNAME']} and {filename}")
 
     def search_proctab(self, frame, target_type=None, target_group=None,
-                  nearest=False, return_ofname=True):
+                       nearest=False, return_ofname=True):
         self.frame = frame
         if target_type is not None and self.proctab is not None:
             self.log.info('Looking for %s frames' % target_type)
@@ -175,7 +175,8 @@ class Proctab:
                 tab = tab[(tab['DID'] == int(self.frame.header['CCDCFG']))]
             else:
                 self.log.info('Looking for frames with STATEID = %s (%s)' %
-                              (self.frame.header['STATEID'], self.frame.header['STATENAM']))
+                              (self.frame.header['STATEID'],
+                               self.frame.header['STATENAM']))
                 tab = tab[(tab['CID'] == self.frame.header['STATEID'])]
             # Check if nearest entry is requested
             if nearest and len(tab) > 1:
