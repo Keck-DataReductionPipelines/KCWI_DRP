@@ -28,6 +28,13 @@ class SolveArcs(BasePrimitive):
         self.action.args.av_bar_nls = []
         self.action.args.st_bar_nls = []
 
+    def _pre_condition(self):
+        self.logger.info("Checking for master arc")
+        if 'MARC' in self.action.args.ccddata.header['IMTYPE']:
+            return True
+        else:
+            return False
+
     def _perform(self):
         """Solve individual arc bar spectra for wavelength"""
         self.logger.info("Solving individual arc spectra")

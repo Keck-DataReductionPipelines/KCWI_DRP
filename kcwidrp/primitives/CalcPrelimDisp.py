@@ -20,6 +20,13 @@ class CalcPrelimDisp(BasePrimitive):
         BasePrimitive.__init__(self, action, context)
         self.logger = context.pipeline_logger
 
+    def _pre_condition(self):
+        self.logger.info("Checking for master arc")
+        if 'MARC' in self.action.args.ccddata.header['IMTYPE']:
+            return True
+        else:
+            return False
+
     def _perform(self):
         # get binning
         y_binning = self.action.args.ybinsize

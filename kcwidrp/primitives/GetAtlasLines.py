@@ -192,6 +192,13 @@ class GetAtlasLines(BasePrimitive):
         self.action.args.at_wave = None
         self.action.args.at_flux = None
 
+    def _pre_condition(self):
+        self.logger.info("Checking for master arc")
+        if 'MARC' in self.action.args.ccddata.header['IMTYPE']:
+            return True
+        else:
+            return False
+
     def _perform(self):
         """Get atlas line positions for wavelength fitting"""
         self.logger.info("Finding isolated atlas lines")

@@ -197,6 +197,13 @@ class FitCenter(BasePrimitive):
         self.logger = context.pipeline_logger
         self.action.args.twkcoeff = []
 
+    def _pre_condition(self):
+        self.logger.info("Checking for master arc")
+        if 'MARC' in self.action.args.ccddata.header['IMTYPE']:
+            return True
+        else:
+            return False
+
     def _perform(self):
         """At this point we have the offsets between bars and the approximate
         offset from the reference bar to the atlas spectrum and the approximate
