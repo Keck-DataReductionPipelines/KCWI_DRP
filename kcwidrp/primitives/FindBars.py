@@ -17,6 +17,13 @@ class FindBars(BasePrimitive):
         self.logger = context.pipeline_logger
         basicConfig(level=logging.ERROR)
 
+    def _pre_condition(self):
+        self.logger.info("Checking for master contbars")
+        if 'MCBARS' in self.action.args.ccddata.header['IMTYPE']:
+            return True
+        else:
+            return False
+
     def _perform(self):
         self.logger.info("Finding continuum bars")
         # initialize
