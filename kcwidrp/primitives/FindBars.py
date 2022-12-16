@@ -47,7 +47,7 @@ class FindBars(BasePrimitive):
         bar_thresh = None
         average_value_middle_vector = None
         stdev_value_middle_vector = None
-        peaks_in_middle_vector = None
+        peaks_vector = None
         while peaks_found != self.config.instrument.NBARS and n_tries < 5:
             self.logger.info("Middle row for bars finding: %d" % middle_y_row)
             middle_vector = np.median(
@@ -62,7 +62,12 @@ class FindBars(BasePrimitive):
             # find peaks above threshold
             peaks_in_middle_vector, _ = find_peaks(
                 middle_vector, height=bar_thresh)
-            peaks_found = len(peaks_in_middle_vector)
+            peaks_vector = []
+            for pk in peaks_in_middle_vector:
+                if 5 < pk < (self.action.args.ccddata.header['NAXIS1'] - 5):
+                    peaks_vector.append(pk)
+            print(peaks_vector)
+            peaks_found = len(peaks_vector)
             n_tries += 1
             # do we have the requisite number?
             if peaks_found != self.config.instrument.NBARS:
@@ -90,8 +95,8 @@ class FindBars(BasePrimitive):
                     plot_width=self.config.instrument.plot_width,
                     plot_height=self.config.instrument.plot_height)
                 p.line(x, middle_vector, color='blue', legend_label="MidTrace")
-                p.scatter(peaks_in_middle_vector,
-                          middle_vector[peaks_in_middle_vector], marker='x',
+                p.scatter(peaks_vector,
+                          middle_vector[peaks_vector], marker='x',
                           color='red', legend_label="FoundBar")
                 p.line([0, x_size], [bar_thresh, bar_thresh],
                        color='grey', line_dash='dashed')
@@ -108,7 +113,7 @@ class FindBars(BasePrimitive):
                 do_inter = True
             else:
                 do_inter = False
-            for ip, peak in enumerate(peaks_in_middle_vector):
+            for ip, peak in enumerate(peaks_vector):
                 xs = list(range(peak-window, peak+window+1))
                 ys = middle_vector[xs] - np.nanmin(middle_vector[xs])
                 xc = np.sum(xs*ys) / np.sum(ys)
@@ -144,7 +149,8 @@ class FindBars(BasePrimitive):
         # calculate reference delta x based on refbar
         self.action.args.reference_delta_x = 0.
         try:
-            if (reference_bar-1) > 0 and (reference_bar+3) < self.config.instrument.NBARS:
+            if (reference_bar-1) > 0 and \
+                    (reference_bar+3) < self.config.instrument.NBARS:
                 for ib in range(reference_bar-1, reference_bar+3):
                     self.action.args.reference_delta_x += \
                         (middle_centers[ib] - middle_centers[ib-1])
@@ -155,7 +161,8 @@ class FindBars(BasePrimitive):
                         (middle_centers[ib] - middle_centers[ib-1])
                 ndiv = 2.
         except IndexError:
-            self.logger.warning("Not enough bars per slice to determine ref x sep")
+            self.logger.warning(
+                "Not enough bars per slice to determine ref x sep")
             self.action.args.reference_delta_x = 1.
             ndiv = 1.
         self.action.args.reference_delta_x /= ndiv
