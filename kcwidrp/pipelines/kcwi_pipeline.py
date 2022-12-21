@@ -305,23 +305,34 @@ class Kcwi_pipeline(BasePipeline):
 
     def action_planner(self, action, context):
         try:
-            self.context.pipeline_logger.info("******* FILE TYPE DETERMINED AS %s" %
-                             action.args.imtype)
+            self.context.pipeline_logger.info(
+                "******* FILE TYPE DETERMINED AS %s" % action.args.imtype)
         except:
-            self.context.pipeline_logger.warn("******* FILE TYPE is NOT determined. No processing is possible.")
+            self.context.pipeline_logger.warn(
+                "******* FILE TYPE is NOT determined. "
+                "No processing is possible.")
             return False
 
         groupid = action.args.groupid
-        self.context.pipeline_logger.info("******* GROUPID is %s " % action.args.groupid)
-        self.context.pipeline_logger.info("******* STATEID is %s (%s) " % (action.args.ccddata.header["STATENAM"], action.args.ccddata.header["STATEID"]))
+        camera = action.args.ccddata.header['CAMERA']
+        self.context.pipeline_logger.info("******* GROUPID is %s " %
+                                          action.args.groupid)
+        self.context.pipeline_logger.info(
+            "******* STATEID is %s (%s) " %
+            (action.args.ccddata.header["STATENAM"],
+             action.args.ccddata.header["STATEID"]))
+        self.context.pipeline_logger.info("******* CAMERA is %s " % camera)
         if action.args.in_proctab:
-            self.context.pipeline_logger.warn("Already processed (already in proctab)")
+            self.context.pipeline_logger.warn(
+                "Already processed (already in proctab)")
         if action.args.in_proctab and not context.config.instrument.clobber:
             self.context.pipeline_logger.warn("Pushing noop to queue")
             context.push_event("noop", action.args)
         elif "BIAS" in action.args.imtype:
             if action.args.ttime > 0:
-                self.context.pipeline_logger.warn(f"BIAS frame with exposure time = {action.args.ttime} > 0. Discarding.")
+                self.context.pipeline_logger.warn(
+                    f"BIAS frame with exposure time = {action.args.ttime} "
+                    f"> 0. Discarding.")
                 return False
             bias_args = action.args
             bias_args.groupid = groupid
@@ -344,7 +355,8 @@ class Kcwi_pipeline(BasePipeline):
             contbars_args.groupid = groupid
             contbars_args.want_type = "CONTBARS"
             contbars_args.new_type = "MCBARS"
-            contbars_args.min_files = context.config.instrument.contbars_min_nframes
+            contbars_args.min_files = int(context.config.instrument[camera][
+                                              'contbars_min_nframes'])
             contbars_args.new_file_name = "master_contbars_%s.fits" % groupid
             contbars_args.in_directory = "redux"
             context.push_event("process_contbars", contbars_args)
@@ -383,7 +395,8 @@ class Kcwi_pipeline(BasePipeline):
             arc_args.groupid = groupid
             arc_args.want_type = "ARCLAMP"
             arc_args.new_type = "MARC"
-            arc_args.min_files = context.config.instrument.arc_min_nframes
+            arc_args.min_files = int(context.config.instrument[camera][
+                                         'arc_min_nframes'])
             arc_args.new_file_name = "master_arc_%s.fits" % groupid
             arc_args.in_directory = "redux"
             context.push_event("process_arc", arc_args)
