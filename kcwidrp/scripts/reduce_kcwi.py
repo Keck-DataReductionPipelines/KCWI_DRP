@@ -151,8 +151,7 @@ def main():
         sys.exit(1)
     framework.context.pipeline_logger = getLogger(framework_logcfg_fullpath,
                                                   name="KCWI")
-    framework.logger = getLogger(framework_logcfg_fullpath,
-                                 name="DRPF")
+    framework.logger = getLogger(framework_logcfg_fullpath, name="DRPF")
 
     if args.infiles is not None:
         framework.config.file_type = args.infiles

@@ -28,12 +28,8 @@ class SubtractOverscan(BasePrimitive):
             porder = 2
         else:
             porder = 7
-        if 'RED' in camera.upper():
-            minoscanpix = self.config.instrument.red_minoscanpix
-            oscanbuf = self.config.instrument.red_oscanbuf
-        else:
-            minoscanpix = self.config.instrument.minoscanpix
-            oscanbuf = self.config.instrument.oscanbuf
+        minoscanpix = int(self.config.instrument[camera]['minoscanpix'])
+        oscanbuf = int(self.config.instrument[camera]['oscanbuf'])
         frameno = self.action.args.ccddata.header['FRAMENO']
         # header keyword to update
         key = 'OSCANSUB'
@@ -82,7 +78,8 @@ class SubtractOverscan(BasePrimitive):
 
                 if self.config.instrument.plot_level >= 1:
                     x = np.arange(len(osvec))
-                    p = figure(title='Img # %05d OSCAN [%d:%d, %d:%d] amp %d, noise: %.3f e-/px' %
+                    p = figure(title='Img # %05d OSCAN [%d:%d, %d:%d] '
+                                     'amp %d, noise: %.3f e-/px' %
                                      (frameno, x0, x1, y0, y1, ia, sdrs),
                                x_axis_label='overscan px',
                                y_axis_label='counts',
@@ -103,7 +100,7 @@ class SubtractOverscan(BasePrimitive):
                         self.action.args.ccddata.data[y0:y1, ix] - osfit
                 performed = True
             else:
-                self.logger.info("not enough overscan px to fit amp %d")
+                self.logger.info("not enough overscan px to fit amp %d" % ia)
         if self.config.instrument.plot_level >= 1 and len(plts) > 0:
             bokeh_plot(gridplot(plts, ncols=(2 if namps > 2 else 1),
                                 plot_width=500, plot_height=300,
