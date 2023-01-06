@@ -19,7 +19,7 @@ def gaus(x, a, mu, sigma):
     return a * np.exp(-(x - mu) ** 2 / (2. * sigma ** 2))
 
 
-def get_line_window(y, c, thresh=0., logger=None, strict=False):
+def get_line_window(y, c, thresh=0., logger=None, strict=False, maxwin=100):
     """Find a window that includes the fwhm of the line"""
     verbose = logger is not None
     nx = len(y)
@@ -58,6 +58,11 @@ def get_line_window(y, c, thresh=0., logger=None, strict=False):
             if verbose:
                 logger.info("Max check: high edge hit")
             return None, None, 0
+    # how big is our window?
+    if (x1 - x0) > maxwin:
+        if verbose:
+            logger.info("Window expanded beyond limit")
+        return None, None, 0
     # adjust starting window to center on max
     cmx = x0 + y[x0:x1+1].argmax()
     x0 = cmx - 2
@@ -367,6 +372,14 @@ class GetAtlasLines(BasePrimitive):
                 self.logger.info("woff = %.3f, xoff = %.2f, wrat = %.3f" %
                                  (woff, xoff, wrat))
                 continue
+            # check for duplicated lines
+            if pkw in refws:
+                rej_fit_w.append(pk)
+                rej_fit_y.append(spec_hgt[i])
+                nrej += 1
+                self.logger.info("Atlas line duplicated for line %.3f" % pk)
+                continue
+            self.logger.info("Atlas line accepted: %.3f" % pkw)
             refws.append(pkw)
             refas.append(y_dense[pki])
         # eliminate faintest lines if we have a large number
