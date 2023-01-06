@@ -356,14 +356,14 @@ class SolveArcs(BasePrimitive):
                     p.diamond(rej_rsd_wave, rej_rsd, color='orange',
                               legend_label='Rej', size=8)
                 xlim = [self.action.args.atminwave, self.action.args.atmaxwave]
-                ylim = [np.nanmin(list(resid)+list(rej_rsd)),
-                        np.nanmax(list(resid)+list(rej_rsd))]
+                ylim = get_plot_lims(list(resid)+list(rej_rsd))
                 p.line(xlim, [0., 0.], color='black', line_dash='dotted')
                 p.line(xlim, [wsig, wsig], color='gray', line_dash='dashdot')
                 p.line(xlim, [-wsig, -wsig], color='gray', line_dash='dashdot')
                 p.line([self.action.args.cwave, self.action.args.cwave],
                        ylim, legend_label='CWAV', color='magenta',
                        line_dash='dashdot')
+                set_plot_lims(p, xlim=xlim, ylim=ylim)
                 bokeh_plot(p, self.context.bokeh_session)
                 input("Next? <cr>: ")
 
