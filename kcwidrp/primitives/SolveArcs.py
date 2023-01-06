@@ -452,8 +452,6 @@ class SolveArcs(BasePrimitive):
         p.diamond(list(range(nbars)), bar_nls, size=8)
         xlim = [-1, nbars]
         ylim = get_plot_lims(bar_nls)
-        if ylim[0] == ylim[1]:
-            ylim = [ylim[0]-0.5, ylim[1]+0.5]
         self.logger.info("<N Lines> = %.1f +- %.1f" %
                          (self.action.args.av_bar_nls,
                           self.action.args.st_bar_nls))

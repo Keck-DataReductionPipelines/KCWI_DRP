@@ -12,6 +12,8 @@ def get_plot_lims(data, padding=0.05):
     dmin = np.nanmin(data)
     dmax = np.nanmax(data)
     ddel = dmax - dmin
+    if ddel == 0:
+        ddel = 1.0
     return dmin - padding * ddel, dmax + padding * ddel
 
 
