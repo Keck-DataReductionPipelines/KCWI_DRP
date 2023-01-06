@@ -7,12 +7,12 @@ import logging
 logger = logging.getLogger('KCWI')
 
 
-def get_plot_lims(data, padding=0.05):
+def get_plot_lims(data, padding=0.05, clip=True):
     """Get plot limits using data range plus padding fraction"""
     dmin = np.nanmin(data)
     dmax = np.nanmax(data)
     ddel = np.abs(dmax - dmin)
-    if ddel < 0.0001:
+    if ddel < 0.0001 and clip:
         ddel = 1.0
     return dmin - padding * ddel, dmax + padding * ddel
 

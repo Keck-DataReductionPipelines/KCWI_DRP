@@ -427,7 +427,7 @@ class SolveArcs(BasePrimitive):
                     coef.append(c[ic])
                 p.diamond(list(range(nbars)), coef, size=8)
                 xlim = [-1, nbars]
-                ylim = get_plot_lims(coef)
+                ylim = get_plot_lims(coef, clip=False)
                 p.xgrid.grid_line_color = None
                 oplot_slices(p, ylim)
                 set_plot_lims(p, xlim=xlim, ylim=ylim)
