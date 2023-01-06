@@ -56,12 +56,17 @@ class ReadAtlas(BasePrimitive):
         # Get central third
         minow = int(len(obsarc)/3)
         maxow = int(2.*len(obsarc)/3)
-        # Unless we are low disp. or red high disp., then get central 3 5ths
+        # Unless we are low disp., or red medium disp., then get central 3 5ths
         if 'BL' in self.action.args.grating or \
                 'RL' in self.action.args.grating or \
-                'RH' in self.action.args.grating:
+                'RM' in self.action.args.grating:
             minow = int(len(obsarc)/5)
             maxow = int(4.*len(obsarc)/5)
+        # Unless we are red high disp., then get central 8 10ths
+        if 'RH' in self.action.args.grating or \
+                'RM' in self.action.args.grating:
+            minow = int(len(obsarc)/10)
+            maxow = int(9.*len(obsarc)/10)
         if self.context.prelim_disp > 0:
             minwav = obswav[minow]
             maxwav = obswav[maxow]
