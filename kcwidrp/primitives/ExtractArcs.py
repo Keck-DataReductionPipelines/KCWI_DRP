@@ -59,16 +59,14 @@ class ExtractArcs(BasePrimitive):
         self.logger.info("Trace table found: %s" % original_filename)
         # trace = read_table(tab=tab, indir='redux', suffix='trace')
         # Find  and read control points from continuum bars
-        if hasattr(self.context, 'trace'):
-            trace = self.context.trace
-        else:
-            trace = read_table(
-                input_dir=os.path.join(self.config.instrument.cwd,
-                                       self.config.instrument.output_directory),
-                file_name=original_filename)
-            self.context.trace = {}
-            for key in trace.meta.keys():
-                self.context.trace[key] = trace.meta[key]
+        trace = read_table(
+            input_dir=os.path.join(self.config.instrument.cwd,
+                                   self.config.instrument.output_directory),
+            file_name=original_filename)
+        self.context.trace = {}
+        print('here2')
+        for key in trace.meta.keys():
+            self.context.trace[key] = trace.meta[key]
         middle_row = self.context.trace['MIDROW']
         window = self.context.trace['WINDOW']
         self.action.args.reference_bar_separation = self.context.trace[
