@@ -64,7 +64,6 @@ class ExtractArcs(BasePrimitive):
                                    self.config.instrument.output_directory),
             file_name=original_filename)
         self.context.trace = {}
-        print('here2')
         for key in trace.meta.keys():
             self.context.trace[key] = trace.meta[key]
         middle_row = self.context.trace['MIDROW']
