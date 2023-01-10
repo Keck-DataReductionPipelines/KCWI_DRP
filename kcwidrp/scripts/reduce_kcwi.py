@@ -52,6 +52,8 @@ def _parse_arguments(in_args: list) -> argparse.Namespace:
                         type=str, help="Atlas line list file", default=None)
     parser.add_argument('-M', '--middle_fraction', dest='middle_fraction',
                         type=float, help="Fraction of middle to use", default=None)
+    parser.add_argument('-o', '--atlas_offset', dest='atlas_offset',
+                        type=int, help="Atlas offset (px)", default=None)
 
     # in this case, we are loading an entire directory,
     # and ingesting all the files in that directory
@@ -173,6 +175,14 @@ def main():
             framework.context.pipeline_logger.info(
                 "Setting new middle_fraction = %.2f" % args.middle_fraction)
             framework.config.instrument.MIDFRAC = args.middle_fraction
+
+    # check for atlas_offset argument
+    if args.atlas_offset:
+        def_mf = getattr(framework.config.instrument, 'ATOFF', None)
+        if def_mf is not None:
+            framework.context.pipeline_logger.info(
+                "Setting new atlas offset = %.2f" % args.atlas_offset)
+            framework.config.instrument.ATOFF = args.atlas_offset
 
     # check for atlas line list argument
     if args.atlas_line_list:
