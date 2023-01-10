@@ -53,20 +53,26 @@ class ReadAtlas(BasePrimitive):
         # Preliminary wavelength solution
         xvals = np.arange(0, len(obsarc)) - int(len(obsarc)/2)
         obswav = xvals * self.context.prelim_disp + self.action.args.cwave
-        # Get central third
-        minow = int(len(obsarc)/3)
-        maxow = int(2.*len(obsarc)/3)
-        # Unless we are low disp., or red medium disp., then get central 3 5ths
-        if 'BL' in self.action.args.grating or \
-                'RL' in self.action.args.grating or \
-                'RM' in self.action.args.grating:
-            minow = int(len(obsarc)/5)
-            maxow = int(4.*len(obsarc)/5)
-        # Unless we are red high disp., then get central 8 10ths
-        if 'RH' in self.action.args.grating or \
-                'RM' in self.action.args.grating:
-            minow = int(len(obsarc)/10)
-            maxow = int(9.*len(obsarc)/10)
+        # Define Central Region
+        mf = self.config.instrument.MIDFRAC
+        # Set on command line
+        if 0 < mf <= 1.0:
+            minow = int(len(obsarc) * (0.5 - mf/2.))
+            maxow = int(len(obsarc) * (0.5 + mf/2.))
+        # Default values based on grating
+        else:
+            # Get central third
+            minow = int(len(obsarc)/3)
+            maxow = int(2.*len(obsarc)/3)
+            # Unless we are low disp., then get central 3 5ths
+            if 'BL' in self.action.args.grating or \
+                    'RL' in self.action.args.grating:
+                minow = int(len(obsarc)/5)
+                maxow = int(4.*len(obsarc)/5)
+            # Unless we are red high disp., then get central 8 10ths
+            if 'RH' in self.action.args.grating:
+                minow = int(len(obsarc)/10)
+                maxow = int(9.*len(obsarc)/10)
         if self.context.prelim_disp > 0:
             minwav = obswav[minow]
             maxwav = obswav[maxow]
