@@ -351,10 +351,14 @@ class SolveArcs(BasePrimitive):
                            y_axis_label="Fit - Inp (A)",
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height)
-                p.diamond(at_wave_dat, resid, legend_label='Rsd', size=8)
+                p.diamond(at_wave_dat, resid, color='green', legend_label='Kept',
+                          size=8)
                 if rej_rsd_wave:
                     p.diamond(rej_rsd_wave, rej_rsd, color='orange',
-                              legend_label='Rej', size=8)
+                              legend_label='RejRsd', size=8)
+                if rej_wave:
+                    p.diamond(rej_wave, np.zeros(len(rej_wave)),
+                              color='red', legend_label='RejFit', size=6)
                 xlim = [self.action.args.atminwave, self.action.args.atmaxwave]
                 ylim = get_plot_lims(list(resid)+list(rej_rsd))
                 p.line(xlim, [0., 0.], color='black', line_dash='dotted')
