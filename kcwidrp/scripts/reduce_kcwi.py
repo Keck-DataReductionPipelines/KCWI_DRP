@@ -50,6 +50,8 @@ def _parse_arguments(in_args: list) -> argparse.Namespace:
                         default=None)
     parser.add_argument('-a', '--atlas_line_list', dest='atlas_line_list',
                         type=str, help="Atlas line list file", default=None)
+    parser.add_argument('-M', '--middle_fraction', dest='middle_fraction',
+                        type=float, help="Fraction of middle to use", default=None)
 
     # in this case, we are loading an entire directory,
     # and ingesting all the files in that directory
@@ -163,6 +165,14 @@ def main():
             framework.context.pipeline_logger.info(
                 "Setting new taperfrac = %.3f" % args.taperfrac)
             framework.config.instrument.TAPERFRAC = args.taperfrac
+
+    # check for middle_fraction argument
+    if args.middle_fraction:
+        def_mf = getattr(framework.config.instrument, 'MIDFRAC', None)
+        if def_mf is not None:
+            framework.context.pipeline_logger.info(
+                "Setting new middle_fraction = %.2f" % args.middle_fraction)
+            framework.config.instrument.MIDFRAC = args.middle_fraction
 
     # check for atlas line list argument
     if args.atlas_line_list:
