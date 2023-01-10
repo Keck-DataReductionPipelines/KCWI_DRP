@@ -76,7 +76,7 @@ class SubtractOverscan(BasePrimitive):
                 self.action.args.ccddata.header['OSCNRN%d' % ia] = \
                     (sdrs, "amp%d RN in e- from oscan" % ia)
 
-                if self.config.instrument.plot_level >= 3:
+                if self.config.instrument.plot_level >= 1:
                     x = np.arange(len(osvec))
                     p = figure(title='Img # %05d OSCAN [%d:%d, %d:%d] '
                                      'amp %d, noise: %.3f e-/px' %
