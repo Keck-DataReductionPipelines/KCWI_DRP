@@ -57,22 +57,22 @@ class ReadAtlas(BasePrimitive):
         mf = self.config.instrument.MIDFRAC
         # Set on command line
         if 0 < mf <= 1.0:
-            minow = int(len(obsarc) * (0.5 - mf/2.))
-            maxow = int(len(obsarc) * (0.5 + mf/2.))
+            self.logger.info("Using command line value for middle fraction")
         # Default values based on grating
         else:
+            self.logger.info("Using default calculated middle fraction")
             # Get central third
-            minow = int(len(obsarc)/3)
-            maxow = int(2.*len(obsarc)/3)
+            mf = 1./3.
             # Unless we are low disp., then get central 3 5ths
             if 'BL' in self.action.args.grating or \
                     'RL' in self.action.args.grating:
-                minow = int(len(obsarc)/5)
-                maxow = int(4.*len(obsarc)/5)
+                mf = 3./5.
             # Unless we are red high disp., then get central 8 10ths
             if 'RH' in self.action.args.grating:
-                minow = int(len(obsarc)/10)
-                maxow = int(9.*len(obsarc)/10)
+                mf = 8./10.
+        self.logger.info("Central %.3f used for initial fit" % mf)
+        minow = int(len(obsarc) * (0.5 - mf / 2.))
+        maxow = int(len(obsarc) * (0.5 + mf / 2.))
         if self.context.prelim_disp > 0:
             minwav = obswav[minow]
             maxwav = obswav[maxow]
@@ -117,10 +117,9 @@ class ReadAtlas(BasePrimitive):
         # Resample onto reference wavelength scale
         obsint = interpolate.interp1d(cc_obswav, cc_obsarc, kind='cubic',
                                       bounds_error=False,
-                                      fill_value='extrapolate'
-                                      )
+                                      fill_value='extrapolate')
         cc_obsarc = obsint(cc_refwav)
-        # Apply cosign bell taper to both
+        # Apply cosin bell taper to both
         cc_obsarc *= signal.windows.tukey(
             len(cc_obsarc), alpha=self.config.instrument.TAPERFRAC)
         cc_reflux *= signal.windows.tukey(
@@ -135,10 +134,22 @@ class ReadAtlas(BasePrimitive):
         xcorr_central = xcorr[x0c:x1c]
         offar_central = offar[x0c:x1c]
         # Calculate offset
-        offset_pix = offar_central[xcorr_central.argmax()]
-        offset_wav = offset_pix * refdisp
-        self.logger.info("Initial arc-atlas offset (px, Ang): %d, %.1f" %
-                         (offset_pix, offset_wav))
+        calc_offset_pix = offar_central[xcorr_central.argmax()]
+        calc_offset_wav = calc_offset_pix * refdisp
+        self.logger.info("Calculated arc-atlas offset (px, Ang): %d, %.1f" %
+                         (calc_offset_pix, calc_offset_wav))
+        atoff = self.config.instrument.ATOFF
+        req_offset_pix = 0
+        if atoff != 0:
+            req_offset_pix = atoff
+            req_offset_wav = atoff * refdisp
+            self.logger.info("Command line requested offset (px, Ang): %d, %.1f" %
+                             (req_offset_pix, req_offset_wav))
+            offset_pix = req_offset_pix
+            offset_wav = req_offset_wav
+        else:
+            offset_pix = calc_offset_pix
+            offset_wav = calc_offset_wav
         if self.config.instrument.plot_level >= 1:
             # Plot
             p = figure(title=self.action.args.plotlabel +
@@ -150,8 +161,11 @@ class ReadAtlas(BasePrimitive):
             p.line(offar_central, xcorr_central, legend_label='Data')
             ylim_min = min(xcorr_central)
             ylim_max = max(xcorr_central)
-            p.line([offset_pix, offset_pix], [ylim_min, ylim_max],
+            p.line([calc_offset_pix, calc_offset_pix], [ylim_min, ylim_max],
                    color='red', legend_label='Peak')
+            if atoff != 0:
+                p.line([req_offset_pix, req_offset_pix], [ylim_min, ylim_max],
+                       color='green', legend_label='Reqested')
             bokeh_plot(p, self.context.bokeh_session)
             if self.config.instrument.plot_level >= 2:
                 input("Next? <cr>: ")
