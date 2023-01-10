@@ -76,7 +76,7 @@ class SubtractOverscan(BasePrimitive):
                 self.action.args.ccddata.header['OSCNRN%d' % ia] = \
                     (sdrs, "amp%d RN in e- from oscan" % ia)
 
-                if self.config.instrument.plot_level >= 1:
+                if self.config.instrument.plot_level >= 3:
                     x = np.arange(len(osvec))
                     p = figure(title='Img # %05d OSCAN [%d:%d, %d:%d] '
                                      'amp %d, noise: %.3f e-/px' %
@@ -90,7 +90,7 @@ class SubtractOverscan(BasePrimitive):
                            legend_label="Fit")
                     bokeh_plot(p, self.context.bokeh_session)
                     plts.append(p)
-                    if self.config.instrument.plot_level >= 2:
+                    if self.config.instrument.plot_level >= 3:
                         input("Next? <cr>: ")
                     else:
                         time.sleep(self.config.instrument.plot_pause)
@@ -101,7 +101,7 @@ class SubtractOverscan(BasePrimitive):
                 performed = True
             else:
                 self.logger.info("not enough overscan px to fit amp %d" % ia)
-        if self.config.instrument.plot_level >= 1 and len(plts) > 0:
+        if self.config.instrument.plot_level >= 3 and len(plts) > 0:
             bokeh_plot(gridplot(plts, ncols=(2 if namps > 2 else 1),
                                 plot_width=500, plot_height=300,
                                 toolbar_location=None),
