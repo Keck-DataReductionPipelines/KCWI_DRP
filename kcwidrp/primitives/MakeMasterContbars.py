@@ -82,6 +82,8 @@ class MakeMasterContbars(BaseImg):
                                                 suffix=suffix,
                                                 newtype=args.new_type,
                                                 filename=self.action.args.name)
+        # Update plot label for stack
+        self.action.args.plotlabel = self.action.plotlabel()
         self.logger.info(log_string)
 
         self.context.proctab.write_proctab()
