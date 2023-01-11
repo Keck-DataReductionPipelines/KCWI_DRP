@@ -136,7 +136,8 @@ class SolveAIT(BasePrimitive):
                 pfname = "arc_%05d_%s_%s_%s_tf%02d" % (
                     self.action.args.ccddata.header['FRAMENO'],
                     self.action.args.illum, self.action.args.grating,
-                    self.action.args.ifuname, int(100 * self.config.instrument.TAPERFRAC))
+                    self.action.args.ifuname,
+                    int(100 * self.config.instrument.TAPERFRAC))
                 wall0 = self.action.args.waveall0
                 wall1 = self.action.args.waveall1
                 wgoo0 = self.action.args.wavegood0
@@ -153,9 +154,11 @@ class SolveAIT(BasePrimitive):
                            plot_height=self.config.instrument.plot_height)
                 p.line(yout, arcout, legend_label='Arc', color='blue')
                 p.line(yout, barout, legend_label='Bar', color='red')
-                p.line([wgoo0, wgoo0], yran, legend_label='Good WLs', color='green')
+                p.line([wgoo0, wgoo0], yran, legend_label='Good WLs',
+                       color='green')
                 p.line([wgoo1, wgoo1], yran, color='green')
-                p.line([wall0, wall0], yran, legend_label='All WLs', color='orange')
+                p.line([wall0, wall0], yran, legend_label='All WLs',
+                       color='orange')
                 p.line([wall1, wall1], yran, color='orange')
                 set_plot_lims(p, xlim=[wall0, wall1], ylim=yran)
                 bokeh_plot(p, self.context.bokeh_session)

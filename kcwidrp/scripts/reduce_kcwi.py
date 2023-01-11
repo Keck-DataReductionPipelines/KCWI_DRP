@@ -6,7 +6,6 @@ Test Fits to PNG pipeline with HTTP server.
 @author: skwok
 """
 
-import enum
 from keckdrpframework.core.framework import Framework
 from keckdrpframework.config.framework_config import ConfigClass
 from keckdrpframework.models.arguments import Arguments
@@ -51,7 +50,8 @@ def _parse_arguments(in_args: list) -> argparse.Namespace:
     parser.add_argument('-a', '--atlas_line_list', dest='atlas_line_list',
                         type=str, help="Atlas line list file", default=None)
     parser.add_argument('-M', '--middle_fraction', dest='middle_fraction',
-                        type=float, help="Fraction of middle to use", default=None)
+                        type=float, help="Fraction of middle to use",
+                        default=None)
     parser.add_argument('-o', '--atlas_offset', dest='atlas_offset',
                         type=int, help="Atlas offset (px)", default=None)
 
@@ -197,7 +197,8 @@ def main():
     if framework.config.instrument.enable_bokeh is True:
         if check_running_process(process='bokeh') is False:
             with open("bokeh_output.txt", "wb") as out:
-                subprocess.Popen('bokeh serve', shell=True, stderr=out, stdout=out)
+                subprocess.Popen('bokeh serve', shell=True, stderr=out,
+                                 stdout=out)
             # --session-ids=unsigned --session-token-expiration=86400',
             # shell=True)
             time.sleep(5)
@@ -268,12 +269,13 @@ def main():
         data_set.data_table.drop(ccdclear_frames, inplace=True)
 
         # processing
-        imtypes = ['BIAS', 'CONTBARS', 'ARCLAMP', 'FLATLAMP', 'DOMEFLAT', 'TWIFLAT', 'OBJECT']
+        imtypes = ['BIAS', 'CONTBARS', 'ARCLAMP', 'FLATLAMP', 'DOMEFLAT',
+                   'TWIFLAT', 'OBJECT']
 
         for imtype in imtypes:
             subset = data_set.data_table[
                 framework.context.data_set.data_table.IMTYPE == imtype]
-            if 'OBJECT' in imtype: # Ensure that standards are processed first
+            if 'OBJECT' in imtype:  # Ensure that standards are processed first
                 object_order = []
                 standard_order = []
                 for frame in subset.index:
@@ -281,7 +283,7 @@ def main():
                         standard_order.append(frame)
                     else:
                         object_order.append(frame)
-                order = standard_order + object_order # Standards first
+                order = standard_order + object_order  # Standards first
                 process_list(order)
             else:
                 process_subset(subset)
