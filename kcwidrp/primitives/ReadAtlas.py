@@ -1,5 +1,6 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from kcwidrp.core.bokeh_plotting import bokeh_plot
+from kcwidrp.primitives.kcwi_file_primitives import plotlabel
 
 from bokeh.plotting import figure
 from bokeh.models import Range1d
@@ -150,10 +151,10 @@ class ReadAtlas(BasePrimitive):
         else:
             offset_pix = calc_offset_pix
             offset_wav = calc_offset_wav
+        plab = plotlabel(self.action.args)
         if self.config.instrument.plot_level >= 1:
             # Plot
-            p = figure(title=self.action.args.plotlabel +
-                       "ATLAS OFFSET = %d px" % offset_pix,
+            p = figure(title=plab + "ATLAS OFFSET = %d px" % offset_pix,
                        x_axis_label="Offset(px)", y_axis_label="X-corr",
                        plot_width=self.config.instrument.plot_width,
                        plot_height=self.config.instrument.plot_height)
@@ -177,8 +178,7 @@ class ReadAtlas(BasePrimitive):
             q = 'test'
             while q:
                 # Plot the two spectra
-                p = figure(title=self.action.args.plotlabel +
-                           "ATLAS OFFSET = %.1f Ang (%d px)" %
+                p = figure(title=plab + "ATLAS OFFSET = %.1f Ang (%d px)" %
                            (offset_wav, offset_pix),
                            x_axis_label="Wave(A)", y_axis_label="Rel. Flux",
                            plot_width=self.config.instrument.plot_width,

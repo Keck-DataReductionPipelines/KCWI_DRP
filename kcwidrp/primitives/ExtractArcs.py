@@ -1,7 +1,7 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from kcwidrp.primitives.kcwi_file_primitives import read_table, kcwi_fits_reader
 from kcwidrp.core.bokeh_plotting import bokeh_plot
-from kcwidrp.primitives.kcwi_file_primitives import strip_fname, get_master_name
+from kcwidrp.primitives.kcwi_file_primitives import strip_fname, plotlabel
 
 import numpy as np
 from numpy.polynomial import polynomial as P
@@ -49,6 +49,7 @@ class ExtractArcs(BasePrimitive):
 
     def _perform(self):
         do_plot = (self.config.instrument.plot_level >= 3)
+        plab = plotlabel(self.action.args)
         self.logger.info("Extracting arc spectra")
         # Double check
         if not self.action.args.original_filename:
@@ -121,8 +122,7 @@ class ExtractArcs(BasePrimitive):
                 bkgf = savgol_filter(bkg, 51, 5)
                 if do_plot:
                     xp = np.arange(len(arc))
-                    p = figure(title=self.action.args.plotlabel + "ARC # %d" %
-                               len(arcs),
+                    p = figure(title=plab + "ARC # %d" % len(arcs),
                                x_axis_label="Y CCD Pixel",
                                y_axis_label="Flux",
                                plot_width=self.config.instrument.plot_width,
@@ -182,8 +182,7 @@ class ExtractArcs(BasePrimitive):
                     bkg = np.polyval(res, xp)   # resulting model
                     # plot if requested
                     if do_plot:
-                        p = figure(title=self.action.args.plotlabel + "ARC # %d" %
-                                   len(arcs),
+                        p = figure(title=plab + "ARC # %d" % len(arcs),
                                    x_axis_label="Y CCD Pixel",
                                    y_axis_label="Flux",
                                    plot_width=self.config.instrument.plot_width,

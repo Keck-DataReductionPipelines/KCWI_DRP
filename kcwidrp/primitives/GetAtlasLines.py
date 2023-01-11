@@ -1,6 +1,7 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from kcwidrp.core.bokeh_plotting import bokeh_plot
 from kcwidrp.core.kcwi_plotting import save_plot
+from kcwidrp.primitives.kcwi_file_primitives import plotlabel
 
 from bokeh.plotting import figure
 from bokeh.models import Range1d
@@ -431,7 +432,7 @@ class GetAtlasLines(BasePrimitive):
         # plot final list of Atlas lines and show rejections
         norm_fac = np.nanmax(atspec)
         if self.config.instrument.plot_level >= 1:
-            p = figure(title=self.action.args.plotlabel +
+            p = figure(title=plotlabel(self.action.args) +
                        "ATLAS LINES Ngood = %d, Nrej = %d" % (len(refws), nrej),
                        x_axis_label="Wavelength (A)",
                        y_axis_label="Normalized Flux",

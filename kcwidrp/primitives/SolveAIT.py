@@ -1,5 +1,5 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
-from kcwidrp.primitives.kcwi_file_primitives import strip_fname
+from kcwidrp.primitives.kcwi_file_primitives import strip_fname, plotlabel
 from kcwidrp.core.bokeh_plotting import bokeh_plot
 from kcwidrp.core.kcwi_plotting import set_plot_lims, save_plot
 import os
@@ -146,7 +146,7 @@ class SolveAIT(BasePrimitive):
                                    np.nanmin(barout[wl_good])]),
                         np.nanmax([np.nanmax(arcout[wl_good]),
                                    np.nanmax(barout[wl_good])])]
-                p = figure(title=self.action.args.plotlabel + "ARC # %d" % ib,
+                p = figure(title=plotlabel(self.action.args) + "ARC # %d" % ib,
                            x_axis_label="Wavelength",
                            y_axis_label="Flux",
                            plot_width=self.config.instrument.plot_width,
@@ -267,7 +267,7 @@ class SolveAIT(BasePrimitive):
         self.action.args.ccddata.header['HISTORY'] = log_string
 
         # Package AIT spectra
-        ofname = self.action.args.name
+        ofname = self.action.args.ccddata.header['OFNAME']
         self.action.args.ait_file = os.path.join(
             self.config.instrument.output_directory,
             strip_fname(ofname) + '_aitspec.fits')

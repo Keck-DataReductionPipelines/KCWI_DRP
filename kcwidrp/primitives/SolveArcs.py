@@ -3,6 +3,7 @@ from kcwidrp.core.bokeh_plotting import bokeh_plot
 from kcwidrp.core.kcwi_plotting import get_plot_lims, oplot_slices, \
     set_plot_lims, save_plot
 from kcwidrp.primitives.GetAtlasLines import get_line_window, gaus
+from kcwidrp.primitives.kcwi_file_primitives import plotlabel
 
 import numpy as np
 from scipy.signal.windows import boxcar
@@ -41,6 +42,7 @@ class SolveArcs(BasePrimitive):
         # plot control booleans
         master_inter = (self.config.instrument.plot_level >= 2)
         do_inter = (self.config.instrument.plot_level >= 3)
+        plab = plotlabel(self.action.args)
         # output control
         verbose = (self.config.instrument.verbose > 1)
 
@@ -194,8 +196,7 @@ class SolveArcs(BasePrimitive):
                                 if v >= max(wvec)][0]
                         atnorm = np.nanmax(yvec) / np.nanmax(atspec[atx0:atx1])
                         p = figure(
-                            title=self.action.args.plotlabel +
-                            "ATLAS/ARC LINE FITS" + ptitle,
+                            title=plab + "ATLAS/ARC LINE FITS" + ptitle,
                             x_axis_label="Wavelength (A)",
                             y_axis_label="Relative Flux",
                             plot_width=self.config.instrument.plot_width,
@@ -345,8 +346,7 @@ class SolveArcs(BasePrimitive):
                 # plot bar fit residuals
                 ptitle = " for Bar %03d, Slice %02d, RMS = %.3f, N = %d" % \
                          (ib, int(ib / 5), wsig, len(arc_pix_dat))
-                p = figure(title=self.action.args.plotlabel +
-                           "RESIDUALS" + ptitle,
+                p = figure(title=plab + "RESIDUALS" + ptitle,
                            x_axis_label="Wavelength (A)",
                            y_axis_label="Fit - Inp (A)",
                            plot_width=self.config.instrument.plot_width,
@@ -372,8 +372,7 @@ class SolveArcs(BasePrimitive):
                 input("Next? <cr>: ")
 
                 # overplot atlas and bar using fit wavelengths
-                p = figure(title=self.action.args.plotlabel +
-                           "ATLAS/ARC FIT" + ptitle,
+                p = figure(title=plab + "ATLAS/ARC FIT" + ptitle,
                            x_axis_label="Wavelength (A)",
                            y_axis_label="Flux",
                            plot_width=self.config.instrument.plot_width,
@@ -421,7 +420,7 @@ class SolveArcs(BasePrimitive):
             for ic in reversed(
                     range(len(self.action.args.fincoeff[0]))):
                 cn = poly_order - ic
-                ptitle = self.action.args.plotlabel + "COEF %d VALUES" % cn
+                ptitle = plab + "COEF %d VALUES" % cn
                 p = figure(title=ptitle, x_axis_label="Bar #",
                            y_axis_label="Coef %d (%s)" % (cn, ylabs[ic]),
                            plot_width=self.config.instrument.plot_width,
@@ -446,7 +445,7 @@ class SolveArcs(BasePrimitive):
         # Plot number of lines fit
         self.action.args.av_bar_nls = float(np.nanmean(bar_nls))
         self.action.args.st_bar_nls = float(np.nanstd(bar_nls))
-        ptitle = self.action.args.plotlabel + \
+        ptitle = plab + \
             "FIT STATS <Nlns> = %.1f +- %.1f" % (self.action.args.av_bar_nls,
                                                  self.action.args.st_bar_nls)
         p = figure(title=ptitle, x_axis_label="Bar #",
@@ -490,7 +489,7 @@ class SolveArcs(BasePrimitive):
                          (self.action.args.av_bar_sig,
                           self.action.args.st_bar_sig))
 
-        ptitle = self.action.args.plotlabel + \
+        ptitle = plab + \
             "FIT STATS <RMS> = %.3f +- %.3f" % (self.action.args.av_bar_sig,
                                                 self.action.args.st_bar_sig)
         p = figure(title=ptitle, x_axis_label="Bar #", y_axis_label="RMS (A)",

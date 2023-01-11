@@ -2,6 +2,7 @@ from keckdrpframework.primitives.base_primitive import BasePrimitive
 from kcwidrp.core.bokeh_plotting import bokeh_plot
 from kcwidrp.core.kcwi_plotting import get_plot_lims, oplot_slices, \
     set_plot_lims
+from kcwidrp.primitives.kcwi_file_primitives import plotlabel
 
 from bokeh.plotting import figure
 import numpy as np
@@ -212,6 +213,7 @@ class FitCenter(BasePrimitive):
         self.logger.info("Finding wavelength solution for central region")
         # Are we interactive?
         do_inter = (self.config.instrument.plot_level >= 2)
+        plab = plotlabel(self.action.args)
 
         # y binning
         y_binning = self.action.args.ybinsize
@@ -302,7 +304,7 @@ class FitCenter(BasePrimitive):
                               shifted_coefficients[1]))
             if do_inter and ir == next_bar_to_plot:
                 # plot maxima
-                p = figure(title=self.action.args.plotlabel +
+                p = figure(title=plab +
                            "CENTRAL DISPERSION FIT for Bar: %d Slice: %d" %
                            (b, int(b / 5)),
                            plot_width=self.config.instrument.plot_width,
@@ -331,7 +333,7 @@ class FitCenter(BasePrimitive):
         if self.config.instrument.plot_level >= 1:
             nbars = self.config.instrument.NBARS
             # Plot central wavelength
-            p = figure(title=self.action.args.plotlabel + "CENTRAL VALUES",
+            p = figure(title=plab + "CENTRAL VALUES",
                        x_axis_label="Bar #",
                        y_axis_label="Central Wavelength (A)",
                        plot_width=self.config.instrument.plot_width,
@@ -352,7 +354,7 @@ class FitCenter(BasePrimitive):
             else:
                 time.sleep(self.config.instrument.plot_pause)
             # Plot central dispersion
-            p = figure(title=self.action.args.plotlabel + "CENTRAL VALUES",
+            p = figure(title=plab + "CENTRAL VALUES",
                        x_axis_label="Bar #",
                        y_axis_label="Central Dispersion (A)",
                        plot_width=self.config.instrument.plot_width,

@@ -1,6 +1,6 @@
 from keckdrpframework.primitives.base_img import BaseImg
 from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_reader, \
-    kcwi_fits_writer, strip_fname, get_master_name
+    kcwi_fits_writer, strip_fname, plotlabel
 from kcwidrp.core.kcwi_plotting import get_plot_lims
 from kcwidrp.core.bokeh_plotting import bokeh_plot
 from kcwidrp.core.kcwi_plotting import save_plot
@@ -63,6 +63,7 @@ class MakeMasterFlat(BaseImg):
         Returns an Argument() with the parameters that depends on this operation
         """
         self.logger.info("Creating master illumination correction")
+        plab = plotlabel(self.action.args)
 
         suffix = self.action.args.new_type.lower()
         insuff = self.action.args.stack_type.lower()
@@ -216,7 +217,7 @@ class MakeMasterFlat(BaseImg):
             wslfit = np.polyval(wavelinfit, wflat-ww0)
             # plot slope fit
             if self.config.instrument.plot_level >= 1:
-                p = figure(title=self.action.args.plotlabel + ' WAVE SLOPE FIT',
+                p = figure(title=plab + ' WAVE SLOPE FIT',
                            x_axis_label='wave px',
                            y_axis_label='counts',
                            plot_width=self.config.instrument.plot_width,
@@ -265,7 +266,7 @@ class MakeMasterFlat(BaseImg):
             xinter = -(resflat[1] - resfit[1]) / (resflat[0] - resfit[0])
             # plot slice profile and fits
             if self.config.instrument.plot_level >= 1:
-                p = figure(title=self.action.args.plotlabel + ' Vignetting',
+                p = figure(title=plab + ' Vignetting',
                            x_axis_label='Slice Pos (px)',
                            y_axis_label='Ratio',
                            plot_width=self.config.instrument.plot_width,
@@ -318,7 +319,7 @@ class MakeMasterFlat(BaseImg):
             buffit = np.polyfit(xbuff, ybuff, 3)
             # plot buffer fit
             if self.config.instrument.plot_level >= 1:
-                p = figure(title=self.action.args.plotlabel + ' Buffer Region',
+                p = figure(title=plab + ' Buffer Region',
                            x_axis_label='Slice Pos (px)',
                            y_axis_label='Ratio',
                            plot_width=self.config.instrument.plot_width,
@@ -387,7 +388,7 @@ class MakeMasterFlat(BaseImg):
                 peaks, _ = find_peaks(deriv, height=100)
                 if len(peaks) != 1:
                     self.logger.warning("Extra peak found!")
-                    p = figure(title=self.action.args.plotlabel +
+                    p = figure(title=plab +
                                ' Ledge', x_axis_label='Wavelength (A)',
                                y_axis_label='Value',
                                plot_width=self.config.instrument.plot_width,
@@ -396,8 +397,7 @@ class MakeMasterFlat(BaseImg):
                     p.line(fpoints, ylfit)
                     bokeh_plot(p, self.context.bokeh_session)
                     input("Next? <cr>: ")
-                    p = figure(title=self.action.args.plotlabel +
-                               ' Deriv', x_axis_label='px',
+                    p = figure(title=plab + ' Deriv', x_axis_label='px',
                                y_axis_label='Value',
                                plot_width=self.config.instrument.plot_width,
                                plot_height=self.config.instrument.plot_height)
@@ -414,7 +414,7 @@ class MakeMasterFlat(BaseImg):
                 apk = xvals[ipk]
                 if self.config.instrument.plot_level >= 3:
                     p = figure(
-                        title=self.action.args.plotlabel + ' Peak of ledge',
+                        title=plab + ' Peak of ledge',
                         x_axis_label='Wave (A)',
                         y_axis_label='Value',
                         plot_width=self.config.instrument.plot_width,
@@ -449,7 +449,7 @@ class MakeMasterFlat(BaseImg):
                 # plot BM ledge
                 if self.config.instrument.plot_level >= 1:
                     p = figure(
-                        title=self.action.args.plotlabel + ' BM Ledge Region',
+                        title=plab + ' BM Ledge Region',
                         x_axis_label='Wave (A)',
                         y_axis_label='Value',
                         plot_width=self.config.instrument.plot_width,
@@ -566,7 +566,7 @@ class MakeMasterFlat(BaseImg):
             ydplt = yfitd[::stride]
             ydplt_d = yfd[::stride]
             p = figure(
-                title=self.action.args.plotlabel + ' Blue/Red fits',
+                title=plab + ' Blue/Red fits',
                 x_axis_label='Wave (A)',
                 y_axis_label='Flux (e-)',
                 plot_width=self.config.instrument.plot_width,
@@ -635,7 +635,7 @@ class MakeMasterFlat(BaseImg):
             if nqb > 1:
                 # plot blue fits
                 p = figure(
-                    title=self.action.args.plotlabel + ' Blue fits',
+                    title=plab + ' Blue fits',
                     x_axis_label='Wave (A)',
                     y_axis_label='Flux (e-)',
                     plot_width=self.config.instrument.plot_width,
@@ -653,7 +653,7 @@ class MakeMasterFlat(BaseImg):
                     time.sleep(self.config.instrument.plot_pause)
                 # plot blue ratios
                 p = figure(
-                    title=self.action.args.plotlabel + ' Blue ratios',
+                    title=plab + ' Blue ratios',
                     x_axis_label='Wave (A)',
                     y_axis_label='Ratio',
                     plot_width=self.config.instrument.plot_width,
@@ -674,7 +674,7 @@ class MakeMasterFlat(BaseImg):
             if nqr > 1:
                 # plot red fits
                 p = figure(
-                    title=self.action.args.plotlabel + ' Red fits',
+                    title=plab + ' Red fits',
                     x_axis_label='Wave (A)',
                     y_axis_label='Flux (e-)',
                     plot_width=self.config.instrument.plot_width,
@@ -692,7 +692,7 @@ class MakeMasterFlat(BaseImg):
                     time.sleep(self.config.instrument.plot_pause)
                 # plot red ratios
                 p = figure(
-                    title=self.action.args.plotlabel + ' Red ratios',
+                    title=plab + ' Red ratios',
                     x_axis_label='Wave (A)',
                     y_axis_label='Ratio',
                     plot_width=self.config.instrument.plot_width,
@@ -793,7 +793,7 @@ class MakeMasterFlat(BaseImg):
             fplt = yfitall[::stride]
             yran = [np.nanmin(ally), np.nanmax(ally)]
             p = figure(
-                title=self.action.args.plotlabel + ' Master Illumination',
+                title=plab + ' Master Illumination',
                 x_axis_label='Wave (A)',
                 y_axis_label='Flux (e-)',
                 plot_width=self.config.instrument.plot_width,
