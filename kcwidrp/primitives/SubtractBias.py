@@ -35,7 +35,7 @@ class SubtractBias(BasePrimitive):
 
             # do the subtraction
             self.action.args.ccddata.data -= mbias.data
-            bsec, dsec, tsec, direc, amps = self.action.args.map_ccd
+            bsec, dsec, tsec, direc, amps, aoff = self.action.args.map_ccd
 
             # transfer bias read noise
             namps = self.action.args.ccddata.header['NVIDINP']

@@ -31,7 +31,7 @@ class RemoveCosmicRays(BasePrimitive):
         if exptime >= self.config.instrument.CRR_MINEXPTIME:
 
             namps = header['NVIDINP']
-            bsec, dsec, tsec, direc, amps = self.action.args.map_ccd
+            bsec, dsec, tsec, direc, amps, aoff = self.action.args.map_ccd
             read_noise = 0.
             if len(amps) != namps:
                 self.logger.warning("Amp count disagreement!")

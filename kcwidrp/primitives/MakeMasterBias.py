@@ -55,7 +55,7 @@ class MakeMasterBias(BaseImg):
         # mbname = combine_list[-1].split('.fits')[0] + '_' + suffix + '.fits'
         mbname = strip_fname(combine_list[0]) + '_' + suffix + '.fits'
         # mbname = master_bias_name(self.action.args.ccddata)
-        bsec, dsec, tsec, direc, amps = self.action.args.map_ccd
+        bsec, dsec, tsec, direc, amps, aoff = self.action.args.map_ccd
     
         stack = []
         stackf = []

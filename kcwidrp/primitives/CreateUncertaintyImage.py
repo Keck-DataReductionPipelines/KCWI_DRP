@@ -26,7 +26,7 @@ class CreateUncertaintyImage(BasePrimitive):
             np.sqrt(np.abs(self.action.args.ccddata.data)), copy=True)
         # add readnoise, if known
         have_bias = False
-        bsec, dsec, tsec, direc, amps = self.action.args.map_ccd
+        bsec, dsec, tsec, direc, amps, aoff = self.action.args.map_ccd
         for amp in amps:
             if 'BIASRN%d' % amp in self.action.args.ccddata.header:
                 have_bias = True

@@ -15,7 +15,7 @@ class TrimOverscan(BasePrimitive):
 
         # parameters
         # image sections for each amp
-        bsec, dsec, tsec, direc, amps = self.action.args.map_ccd
+        bsec, dsec, tsec, direc, amps, aoff = self.action.args.map_ccd
         # header keyword to update
         key = 'OSCANTRM'
         keycom = 'Overscan trimmed?'
@@ -25,16 +25,18 @@ class TrimOverscan(BasePrimitive):
         new = np.zeros((max_sec[1]+1, max_sec[3]+1), dtype=np.float32)
         # loop over amps
         for ia in amps:
+            # bias correct amp number for indexing python arrays
+            iac = ia - aoff
             # input range indices
-            yi0 = dsec[ia][0]
-            yi1 = dsec[ia][1] + 1
-            xi0 = dsec[ia][2]
-            xi1 = dsec[ia][3] + 1
+            yi0 = dsec[iac][0]
+            yi1 = dsec[iac][1] + 1
+            xi0 = dsec[iac][2]
+            xi1 = dsec[iac][3] + 1
             # output range indices
-            yo0 = tsec[ia][0]
-            yo1 = tsec[ia][1] + 1
-            xo0 = tsec[ia][2]
-            xo1 = tsec[ia][3] + 1
+            yo0 = tsec[iac][0]
+            yo1 = tsec[iac][1] + 1
+            xo0 = tsec[iac][2]
+            xo1 = tsec[iac][3] + 1
             # transfer to new image
             new[yo0:yo1, xo0:xo1] = self.action.args.ccddata.data[yi0:yi1,
                                                                   xi0:xi1]

@@ -16,7 +16,7 @@ class CorrectGain(BasePrimitive):
         keycom = 'Gain corrected?'
         # print(self.action.args.ccddata.header)
         number_of_amplifiers = self.action.args.namps
-        bsec, dsec, tsec, direc, amps = self.action.args.map_ccd
+        bsec, dsec, tsec, direc, amps, aoff = self.action.args.map_ccd
         namps = len(amps)
         if namps != number_of_amplifiers:
             self.logger.warning("Amp count disagreement!")

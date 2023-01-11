@@ -21,7 +21,7 @@ class SubtractOverscan(BasePrimitive):
         # camera
         camera = self.action.args.ccddata.header['CAMERA']
         # image sections for each amp
-        bsec, dsec, tsec, direc, amps = self.action.args.map_ccd
+        bsec, dsec, tsec, direc, amps, aoff = self.action.args.map_ccd
         namps = len(amps)
         # polynomial fit order
         if namps == 4:
@@ -40,21 +40,23 @@ class SubtractOverscan(BasePrimitive):
         plts = []   # plots for each amp
 
         for ia in amps:
+            # bias correct amp number for indexing python arrays
+            iac = ia - aoff
             # get gain
             gain = self.action.args.ccddata.header['GAIN%d' % ia]
             # check if we have enough data to fit
-            if (bsec[ia][3] - bsec[ia][2]) > minoscanpix:
+            if (bsec[iac][3] - bsec[iac][2]) > minoscanpix:
                 # pull out an overscan vector
-                x0 = bsec[ia][2] + oscanbuf
-                x1 = bsec[ia][3] - oscanbuf
-                y0 = bsec[ia][0]
-                y1 = bsec[ia][1] + 1
+                x0 = bsec[iac][2] + oscanbuf
+                x1 = bsec[iac][3] - oscanbuf
+                y0 = bsec[iac][0]
+                y1 = bsec[iac][1] + 1
                 osvec = np.nanmedian(
                     self.action.args.ccddata.data[y0:y1, x0:x1], axis=1)
                 nsam = x1 - x0
                 xx = np.arange(len(osvec), dtype=np.float)
                 # fit it, avoiding first 50 px
-                if direc[ia][0]:
+                if direc[iac][0]:
                     # forward read skips first 50 px
                     oscoef = np.polyfit(xx[50:], osvec[50:], porder)
                     # generate fitted overscan vector for full range
@@ -95,7 +97,7 @@ class SubtractOverscan(BasePrimitive):
                     else:
                         time.sleep(self.config.instrument.plot_pause)
                 # subtract it
-                for ix in range(dsec[ia][2], dsec[ia][3] + 1):
+                for ix in range(dsec[iac][2], dsec[iac][3] + 1):
                     self.action.args.ccddata.data[y0:y1, ix] = \
                         self.action.args.ccddata.data[y0:y1, ix] - osfit
                 performed = True
