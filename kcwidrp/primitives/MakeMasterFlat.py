@@ -63,7 +63,7 @@ class MakeMasterFlat(BaseImg):
         Returns an Argument() with the parameters that depends on this operation
         """
         self.logger.info("Creating master illumination correction")
-        plab = plotlabel(self.action.args)
+        olab = plotlabel(self.action.args)
 
         suffix = self.action.args.new_type.lower()
         insuff = self.action.args.stack_type.lower()
@@ -71,7 +71,7 @@ class MakeMasterFlat(BaseImg):
         stack_list = list(self.stack_list['filename'])
 
         if len(stack_list) <= 0:
-            self.logger.warning("No flats found!")
+            self.logger.warning("No flat stack found!")
             return self.action.args
 
         # get root for maps
@@ -88,22 +88,19 @@ class MakeMasterFlat(BaseImg):
         wmf = mroot + '_wavemap.fits'
         self.logger.info("Reading image: %s" % wmf)
         wavemap = kcwi_fits_reader(
-            os.path.join(self.config.instrument.cwd, 'redux',
-                         wmf))[0]
+            os.path.join(self.config.instrument.cwd, 'redux', wmf))[0]
 
         # Slice map image
         slf = mroot + '_slicemap.fits'
         self.logger.info("Reading image: %s" % slf)
         slicemap = kcwi_fits_reader(os.path.join(
-            self.config.instrument.cwd, 'redux',
-                         slf))[0]
+            self.config.instrument.cwd, 'redux', slf))[0]
 
         # Position map image
         pof = mroot + '_posmap.fits'
         self.logger.info("Reading image: %s" % pof)
         posmap = kcwi_fits_reader(os.path.join(
-            self.config.instrument.cwd, 'redux',
-                         pof))[0]
+            self.config.instrument.cwd, 'redux', pof))[0]
 
         # Read in stacked flat image
         stname = strip_fname(stack_list[0]) + '_' + insuff + '.fits'
@@ -111,6 +108,9 @@ class MakeMasterFlat(BaseImg):
         self.logger.info("Reading image: %s" % stname)
         stacked = kcwi_fits_reader(os.path.join(
             self.config.instrument.cwd, 'redux', stname))[0]
+        plab = " ".join(olab.split()[0:3]) + (
+            " %d " % stacked.header['FRAMENO']
+        ) + " ".join(olab.split()[4:])
 
         # get type of flat
         internal = ('SFLAT' in stacked.header['IMTYPE'])
@@ -547,7 +547,7 @@ class MakeMasterFlat(BaseImg):
         if self.config.instrument.plot_level >= 1:
             # output filename stub
             rbfnam = "redblue_%05d_%s_%s_%s" % \
-                      (self.action.args.ccddata.header['FRAMENO'],
+                      (stacked.header['FRAMENO'],
                        self.action.args.illum, self.action.args.grating,
                        self.action.args.ifuname)
             if xbin == 1:
@@ -780,7 +780,7 @@ class MakeMasterFlat(BaseImg):
         if self.config.instrument.plot_level >= 1:
             # output filename stub
             fltfnam = "flat_%05d_%s_%s_%s" % \
-                      (self.action.args.ccddata.header['FRAMENO'],
+                      (stacked.header['FRAMENO'],
                        self.action.args.illum, self.action.args.grating,
                        self.action.args.ifuname)
             if xbin == 1:
