@@ -68,6 +68,18 @@ def parse_imsec(section=None):
     return sec, stride
 
 
+def plotlabel(args):
+    lab = "[ Img # %d " % args.ccddata.header['FRAMENO']
+    lab += "(%s) " % args.illum
+    lab += "Slicer: %s, " % args.ifuname
+    lab += "Grating: %s, " % args.grating
+    lab += "CWave: %d" % int(args.cwave)
+    if 'BLUE' in args.ccddata.header['CAMERA']:
+        lab += ", Filter: %s " % args.filter
+    lab += "] "
+    return lab
+
+
 class ingest_file(BasePrimitive):
 
     def __init__(self, action, context):
