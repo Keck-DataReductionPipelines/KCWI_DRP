@@ -1,5 +1,6 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from kcwidrp.core.bokeh_plotting import bokeh_plot
+from kcwidrp.primitives.kcwi_file_primitives import plotlabel
 
 import numpy as np
 import logging
@@ -37,6 +38,9 @@ class FindBars(BasePrimitive):
         # get camera
         camera = self.action.args.camera
         window = int(10 / y_binning)
+        # get plot label
+        plab = plotlabel(self.action.args)
+        frameno = self.action.args.ccddata.header['FRAMENO']
         # select from center rows of image
         div_fac = 2
         middle_y_row = int(y_size / div_fac)
@@ -89,8 +93,7 @@ class FindBars(BasePrimitive):
                 # plot the peak positions
                 x = np.arange(len(middle_vector))
                 p = figure(
-                    title=self.action.args.plotlabel +
-                    "BARS MID TRACE Thresh = %.2f" % bar_thresh,
+                    title=plab + "BARS MID TRACE Thresh = %.2f" % bar_thresh,
                     x_axis_label='CCD X (px)', y_axis_label='e-',
                     plot_width=self.config.instrument.plot_width,
                     plot_height=self.config.instrument.plot_height)
@@ -120,8 +123,7 @@ class FindBars(BasePrimitive):
                 middle_centers.append(xc)
                 if do_inter:
                     p = figure(
-                        title=self.action.args.plotlabel +
-                        "BAR %d CENTRD = %.2f" % (ip, xc),
+                        title=plab + "BAR %d CENTRD = %.2f" % (ip, xc),
                         x_axis_label='CCD X (px)', y_axis_label='e-',
                         plot_width=self.config.instrument.plot_width,
                         plot_height=self.config.instrument.plot_height)
