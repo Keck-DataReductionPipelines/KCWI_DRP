@@ -402,7 +402,7 @@ class ingest_file(BasePrimitive):
                 if status == 1 and shutter == 1:
                     return lamps_dictionary[key]
 
-    def map_ccd(self):
+    def map_ccd(self, xbin, ybin):
         """Return CCD section variables useful for processing
 
         Uses FITS keyword NVIDINP to determine how many amplifiers were used
@@ -458,6 +458,7 @@ class ingest_file(BasePrimitive):
         strides = []
         amps = []
         if 'BLUE' in camera:
+            nb = 1    # numbering bias (0 or 1)
             # loop over amps
             for i in range(namps):
                 ia = i + 1
@@ -473,24 +474,24 @@ class ingest_file(BasePrimitive):
                 strides.append(stride)
                 if i == 0:
                     y0 = 0
-                    y1 = sec[1] - sec[0]
+                    y1 = int((sec[1] - sec[0]) / ybin)
                     x0 = 0
-                    x1 = sec[3] - sec[2]
+                    x1 = int((sec[3] - sec[2]) / xbin)
                 elif i == 1:
                     y0 = 0
-                    y1 = sec[1] - sec[0]
+                    y1 = int((sec[1] - sec[0]) / ybin)
                     x0 = tsec[0][3] + 1
-                    x1 = x0 + sec[3] - sec[2]
+                    x1 = x0 + int((sec[3] - sec[2]) / xbin)
                 elif i == 2:
                     y0 = tsec[0][1] + 1
-                    y1 = y0 + sec[1] - sec[0]
+                    y1 = y0 + int((sec[1] - sec[0]) / ybin)
                     x0 = 0
-                    x1 = sec[3] - sec[2]
+                    x1 = int((sec[3] - sec[2]) / xbin)
                 elif i == 3:
                     y0 = tsec[0][1] + 1
-                    y1 = y0 + sec[1] - sec[0]
+                    y1 = y0 + int((sec[1] - sec[0]) / ybin)
                     x0 = tsec[0][3] + 1
-                    x1 = x0 + sec[3] - sec[2]
+                    x1 = x0 + int((sec[3] - sec[2]) / xbin)
                 else:
                     # should not get here
                     y0 = -1
@@ -500,6 +501,7 @@ class ingest_file(BasePrimitive):
                     # self.log.info("ERROR - bad amp number: %d" % i)
                 tsec.append((y0, y1, x0, x1))
         elif 'RED' in camera:
+            nb = 0    # numbering bias (0 or 1)
             amp_count = 0
             for amp in red_amp_dict.keys():
                 if amp in ampmode:
@@ -528,8 +530,11 @@ class ingest_file(BasePrimitive):
                     tsec.append((0, 0, 0, 0))
             if amp_count != namps:
                 self.logger.warning("Didn't get all the amps: %d", amp_count)
+        else:
+            self.logger.warning("Unknown CAMERA: %s" % camera)
+            nb = 0
 
-        return bsec, dsec, tsec, strides, amps
+        return bsec, dsec, tsec, strides, amps, nb
 
     def _perform(self):
         # if self.context.data_set is None:
@@ -617,7 +622,7 @@ class ingest_file(BasePrimitive):
         # ILUM
         out_args.illum = self.illum()
         # MAPCCD
-        out_args.map_ccd = self.map_ccd()
+        out_args.map_ccd = self.map_ccd(out_args.xbinsize, out_args.ybinsize)
         # CALIBRATION LAMP
         out_args.calibration_lamp = self.calibration_lamp()
         # TTIME
