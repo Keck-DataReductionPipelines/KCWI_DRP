@@ -37,6 +37,8 @@ class FindBars(BasePrimitive):
         y_binning = self.action.args.ybinsize
         # get camera
         camera = self.action.args.camera
+        # get grating
+        grating = self.action.args.grating
         window = int(10 / y_binning)
         # get plot label
         plab = plotlabel(self.action.args)
@@ -70,7 +72,6 @@ class FindBars(BasePrimitive):
             for pk in peaks_in_middle_vector:
                 if 5 < pk < (self.action.args.ccddata.header['NAXIS1'] - 5):
                     peaks_vector.append(pk)
-            print(peaks_vector)
             peaks_found = len(peaks_vector)
             n_tries += 1
             # do we have the requisite number?
@@ -81,7 +82,10 @@ class FindBars(BasePrimitive):
                 if camera == 0:     # BLUE
                     div_fac += 0.5
                 else:               # RED
-                    div_fac -= 0.5
+                    if 'RH4' in grating:
+                        div_fac += 0.5
+                    else:
+                        div_fac -= 0.5
                 middle_y_row = int(y_size / div_fac)
         if peaks_found != self.config.instrument.NBARS:
             self.logger.error("Did not find %d peaks: n peaks = %d" %
