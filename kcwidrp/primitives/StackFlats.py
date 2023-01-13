@@ -74,7 +74,7 @@ class StackFlats(BaseImg):
                                   sigma_clip_low_thresh=None,
                                   sigma_clip_high_thresh=2.0)
 
-        # Get the BPM out of one of the flats (bpm is the same for all)
+        # Get the bad pixel mask out of one of the flats (is the same for all)
         # and add it to the stacked flat as the stack's mask
         last_flat_name = strip_fname(combine_list[-1]) + '_intd.fits'
         last_flat_path = os.path.join(self.config.instrument.cwd,
