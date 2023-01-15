@@ -174,7 +174,8 @@ def findpeaks(x, y, wid, sth, ath, pkg=None, verbose=False):
     if len(pks) > 0:
         cln_sgs, low, upp = sigmaclip(sgs, low=3., high=3.)
         for i in range(len(pks)):
-            if low < sgs[i] < upp:
+            # clean only blends (overly wide lines)
+            if sgs[i] < upp:
                 cpks.append(pks[i])
                 cvals.append(hgt[i])
         sgmn = cln_sgs.mean()
@@ -365,8 +366,8 @@ class GetAtlasLines(BasePrimitive):
             # current criteria for these diagnostic parameters
             if woff > 5. or xoff > 1.5 or wrat > 1.1:
                 # keep track of par rejected atlas lines
-                rej_par_w.append(pkw)
-                rej_par_a.append(y_dense[pki])
+                rej_par_w.append(pk)
+                rej_par_a.append(spec_hgt[i])
                 nrej += 1
                 self.logger.info("Atlas line parameters rejected for line %.3f"
                                  % pk)
