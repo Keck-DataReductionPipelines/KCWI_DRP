@@ -250,9 +250,10 @@ class SolveArcs(BasePrimitive):
                     rej_flux.append(self.action.args.at_flux[iw])
                     nrej += 1
             self.logger.info("")
+            n_points = len(arc_pix_dat)
             self.logger.info("Fitting wavelength solution starting with %d "
                              "lines after rejecting %d lines" %
-                             (len(arc_pix_dat), nrej))
+                             (n_points, nrej))
             # Fit wavelengths
             # Get poly order
             if self.action.args.dichroic_fraction <= 0.6:
@@ -261,6 +262,17 @@ class SolveArcs(BasePrimitive):
                 poly_order = 3
             else:
                 poly_order = 4
+            if n_points < 2:
+                self.logger.warning("Not enough points for wavelength "
+                                    "solution!  Using central coeffs")
+                # store final fit coefficients
+                self.action.args.fincoeff.append(coeff)
+                # store statistics
+                bar_sig.append(0.0)
+                bar_nls.append(n_points)
+                continue
+            elif n_points < poly_order:
+                poly_order = n_points - 1
             self.logger.info("Fitting with polynomial order %d" % poly_order)
             # Initial fit
             wfit = np.polyfit(arc_pix_dat, at_wave_dat, poly_order)
@@ -427,7 +439,10 @@ class SolveArcs(BasePrimitive):
                            plot_height=self.config.instrument.plot_height)
                 coef = []
                 for c in self.action.args.fincoeff:
-                    coef.append(c[ic])
+                    try:
+                        coef.append(c[ic])
+                    except IndexError:
+                        coef.append(0.0)
                 p.diamond(list(range(nbars)), coef, size=8)
                 xlim = [-1, nbars]
                 ylim = get_plot_lims(coef, clip=False)
