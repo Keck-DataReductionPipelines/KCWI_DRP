@@ -127,8 +127,8 @@ class SolveArcs(BasePrimitive):
                     wvec = bw[minow:maxow + 1]
                     f0 = max(yvec)
                     par_start = [f0, np.nanmean(xvec), 1.0]
-                    par_bounds = ([f0*0.9, np.min(xvec), 0.5],
-                                  [f0*1.1, np.max(xvec), 2.5])
+                    # par_bounds = ([f0*0.9, np.min(xvec), 0.5],
+                    #              [f0*1.1, np.max(xvec), 2.5])
                     # Gaussian fit
                     try:
                         fit, _ = curve_fit(gaus, xvec, yvec, p0=par_start)
@@ -308,9 +308,11 @@ class SolveArcs(BasePrimitive):
                             at_fdat.append(at_flux_dat[il])
                         else:
                             if verbose:
-                                self.logger.info("It%d REJ: %d, %.2f, %.3f, %.3f" %
-                                                 (it, il, arc_pix_dat[il],
-                                                  at_wave_dat[il], rsd))
+                                self.logger.info("It%d REJ: %d, %.2f, %.3f, "
+                                                 "%.3f" % (it, il,
+                                                           arc_pix_dat[il],
+                                                           at_wave_dat[il],
+                                                           rsd))
                             # keep track of rejected lines
                             rej_rsd_wave.append(at_wave_dat[il])
                             rej_rsd_flux.append(at_flux_dat[il])
@@ -363,8 +365,8 @@ class SolveArcs(BasePrimitive):
                            y_axis_label="Fit - Inp (A)",
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height)
-                p.diamond(at_wave_dat, resid, color='green', legend_label='Kept',
-                          size=8)
+                p.diamond(at_wave_dat, resid, color='green',
+                          legend_label='Kept', size=8)
                 if rej_rsd_wave:
                     p.diamond(rej_rsd_wave, rej_rsd, color='orange',
                               legend_label='RejRsd', size=8)
