@@ -433,18 +433,29 @@ class SolveArcs(BasePrimitive):
             ylabs = ylabs[-(poly_order+1):]
             for ic in reversed(
                     range(len(self.action.args.fincoeff[0]))):
-                cn = poly_order - ic
-                ptitle = plab + "COEF %d VALUES" % cn
-                p = figure(title=ptitle, x_axis_label="Bar #",
-                           y_axis_label="Coef %d (%s)" % (cn, ylabs[ic]),
-                           plot_width=self.config.instrument.plot_width,
-                           plot_height=self.config.instrument.plot_height)
+                # collect bar values for this particular coefficient
                 coef = []
                 for c in self.action.args.fincoeff:
                     try:
                         coef.append(c[ic])
                     except IndexError:
                         coef.append(0.0)
+                # some stats
+                cf_av = float(np.nanmean(coef))
+                cf_st = float(np.nanstd(coef))
+                cn = poly_order - ic
+                if cn > 0:
+                    ptitle = plab + "COEF %d VALUES <C%d> = " \
+                                    "%.1g +- %.1g" % (cn, cn, cf_av, cf_st)
+                else:
+                    ptitle = plab + "COEF %d VALUES <C%d> = " \
+                                    "%.1f +- %.1f" % (cn, cn, cf_av, cf_st)
+                self.logger.info(ptitle)
+                p = figure(title=ptitle, x_axis_label="Bar #",
+                           y_axis_label="Coef %d (%s)" % (cn, ylabs[ic]),
+                           plot_width=self.config.instrument.plot_width,
+                           plot_height=self.config.instrument.plot_height)
+
                 p.diamond(list(range(nbars)), coef, size=8)
                 xlim = [-1, nbars]
                 ylim = get_plot_lims(coef, clip=False)
