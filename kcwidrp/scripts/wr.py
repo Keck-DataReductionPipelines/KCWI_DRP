@@ -148,6 +148,8 @@ if __name__ == '__main__':
         cflat = []
         dflat = []
         tflat = []
+        cbars = []
+        arcs = []
         for ifl in sys.argv[1:]:
             logstr, cfgstr = get_log_string(ifl, batch=True)
             print(logstr)
@@ -161,6 +163,10 @@ if __name__ == '__main__':
                 dflat.append(ifl)
             if 'TWIFLAT' in logstr:
                 tflat.append(ifl)
+            if 'CONTBARS' in logstr:
+                cbars.append(ifl)
+            if 'ARCLAMP' in logstr:
+                arcs.append(ifl)
 
         # Unique configs
         uconfigs = sorted(set(configs))
@@ -184,3 +190,11 @@ if __name__ == '__main__':
             with open('tflat.txt', 'w') as ofil:
                 for t in tflat:
                     ofil.write(t + '\n')
+        if len(cbars) > 0:
+            with open('cbars.txt', 'w') as ofil:
+                for c in cbars:
+                    ofil.write(c + '\n')
+        if len(arcs) > 0:
+            with open('arcs.txt', 'w') as ofil:
+                for a in arcs:
+                    ofil.write(a + '\n')
