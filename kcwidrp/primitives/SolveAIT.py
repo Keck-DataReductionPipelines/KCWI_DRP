@@ -121,11 +121,9 @@ class SolveAIT(BasePrimitive):
             arc = self.context.arcs[ib]
             bar = self.context.bars[ib]
             xwv = np.polyval(fc, np.arange(len(arc)))
-            arcint = interpolate.interp1d(xwv, arc, kind='cubic',
-                                          bounds_error=False,
+            arcint = interpolate.interp1d(xwv, arc, bounds_error=False,
                                           fill_value='extrapolate')
-            barint = interpolate.interp1d(xwv, bar, kind='cubic',
-                                          bounds_error=False,
+            barint = interpolate.interp1d(xwv, bar, bounds_error=False,
                                           fill_value='extrapolate')
             arcout = arcint(yout)
             barout = barint(yout)
