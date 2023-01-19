@@ -65,8 +65,16 @@ class SolveArcs(BasePrimitive):
             self.context.arcs[self.config.instrument.REFBAR]))
         # loop over arcs and generate a wavelength solution for each
         next_bar_to_plot = 0
-        poly_order = 4
+        # Get poly order
+        if self.action.args.dichroic_fraction <= 0.6:
+            def_poly_order = 2
+        elif 0.6 < self.action.args.dichroic_fraction < 0.75:
+            def_poly_order = 3
+        else:
+            def_poly_order = 4
+        poly_order = def_poly_order
         for ib, b in enumerate(self.context.arcs):
+            self.logger.info("FITTING BAR %d" % ib)
             # Starting with pascal shifted coeffs from fit_center()
             coeff = self.action.args.twkcoeff[ib]
             # get bar wavelengths
@@ -255,13 +263,6 @@ class SolveArcs(BasePrimitive):
                              "lines after rejecting %d lines" %
                              (n_points, nrej))
             # Fit wavelengths
-            # Get poly order
-            if self.action.args.dichroic_fraction <= 0.6:
-                poly_order = 2
-            elif 0.6 < self.action.args.dichroic_fraction < 0.75:
-                poly_order = 3
-            else:
-                poly_order = 4
             if n_points < 2:
                 self.logger.warning("Not enough points for wavelength "
                                     "solution!  Using central coeffs")
@@ -271,8 +272,10 @@ class SolveArcs(BasePrimitive):
                 bar_sig.append(0.0)
                 bar_nls.append(n_points)
                 continue
-            elif n_points < poly_order:
+            elif n_points < def_poly_order:
                 poly_order = n_points - 1
+            else:
+                poly_order = def_poly_order
             self.logger.info("Fitting with polynomial order %d" % poly_order)
             # Initial fit
             wfit = np.polyfit(arc_pix_dat, at_wave_dat, poly_order)
@@ -351,6 +354,9 @@ class SolveArcs(BasePrimitive):
             self.logger.info("Coefs: " + ' '.join(['%.6g' % (c,)
                                                    for c in reversed(wfit)]))
             # store final fit coefficients
+            if poly_order < def_poly_order:
+                nins = def_poly_order - poly_order
+                wfit = np.insert(wfit, 0, np.zeros(nins, dtype=float))
             self.action.args.fincoeff.append(wfit)
             # store statistics
             bar_sig.append(wsig)
@@ -430,7 +436,7 @@ class SolveArcs(BasePrimitive):
         if self.config.instrument.plot_level >= 1:
             ylabs = ['Ang/px^4', 'Ang/px^3', 'Ang/px^2', 'Ang/px',
                      'Ang']
-            ylabs = ylabs[-(poly_order+1):]
+            ylabs = ylabs[-(def_poly_order+1):]
             for ic in reversed(
                     range(len(self.action.args.fincoeff[0]))):
                 # collect bar values for this particular coefficient
