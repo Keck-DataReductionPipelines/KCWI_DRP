@@ -73,6 +73,25 @@ class FindBars(BasePrimitive):
                 if 5 < pk < (self.action.args.ccddata.header['NAXIS1'] - 5):
                     peaks_vector.append(pk)
             peaks_found = len(peaks_vector)
+            if self.config.instrument.plot_level >= 3:
+                # plot the peak positions
+                x = np.arange(len(middle_vector))
+                p = figure(
+                    title=plab + "BARS TRACE at = %d, TRY %d" % (middle_y_row,
+                                                                 n_tries),
+                    x_axis_label='CCD X (px)', y_axis_label='e-',
+                    plot_width=self.config.instrument.plot_width,
+                    plot_height=self.config.instrument.plot_height)
+                p.line(x, middle_vector, color='blue', legend_label="Trace")
+                p.scatter(peaks_vector,
+                          middle_vector[peaks_vector], marker='x',
+                          color='red', legend_label="FoundBar")
+                p.line([0, x_size], [bar_thresh, bar_thresh],
+                       color='grey', line_dash='dashed')
+                p.legend.location = "bottom_center"
+                bokeh_plot(p, self.context.bokeh_session)
+                input("Next? <cr>: ")
+
             n_tries += 1
             # do we have the requisite number?
             if peaks_found != self.config.instrument.NBARS:
@@ -116,7 +135,7 @@ class FindBars(BasePrimitive):
                 # calculate the bar centroids
 
             # Do we plot?
-            if self.config.instrument.plot_level >= 2:
+            if self.config.instrument.plot_level >= 3:
                 do_inter = True
             else:
                 do_inter = False
