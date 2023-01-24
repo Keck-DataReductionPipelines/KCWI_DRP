@@ -6,6 +6,37 @@ else:
     import pyfits as pf
 
 
+def get_cal_list_file(hdr):
+    """Return list file name given configuration in header"""
+
+    fpre = {"ARCLAMP": "arcs", "CONTBARS": "cbars", "FLATLAMP": "cflat",
+            "DOMEFLAT": "dflat", "TWIFLAT": "tflat"}
+
+    imtype = hdr['IMTYPE']
+    lfname = None
+    if imtype in fpre:
+        lfname = fpre[imtype]
+        lfname += hdr['BINNING'].replace(',', 'x')
+        lfname += hdr['IFUNAM'][:3]
+        lfname += hdr['RGRATNAM']
+        if 'arcs' in lfname:
+            if 'FeAr' in hdr['ILLUME']:
+                lfname += 'FeAr'
+            else:
+                lfname += 'ThAr'
+        else:
+            lfname += '_'
+        lfname += "%.0f" % hdr['RCWAVE']
+        lfname += "_%.1f" % hdr['EXPTIME']
+    elif 'BIAS' in imtype:
+        lfname = 'bias'
+        lfname += hdr['BINNING'].replace(',', 'x')
+        lfname += hdr['AMPMODE']
+        lfname += str(hdr['CDSSPEED'])
+        lfname += str(hdr['ADCGAINS'])
+    return lfname
+
+
 def get_log_string(ifile, batch=False):
     try:
         ff = pf.open(ifile)
@@ -124,17 +155,20 @@ def get_log_string(ifile, batch=False):
                 else:
                     cstr = "%(BINNING)3s:%(RGRATNAM)s:%(IFUNAM)s:%(RCWAVE).1f:" \
                            "%(EXPTIME)6.1f:%(OBJECT)s" % header
+            lfn = get_cal_list_file(header)
         else:
             lstring = "%19s : NOT a RED image!" % ifile
             cstr = None
+            lfn = None
 
     else:
         if not batch:
             print("ERROR - Camera can not be determined.")
         lstring = "%19s : No CAMERA keyword!" % ifile
         cstr = None
+        lfn = None
 
-    return lstring, cstr
+    return lstring, cstr, lfn
 
 
 if __name__ == '__main__':
@@ -144,57 +178,25 @@ if __name__ == '__main__':
         print("Usage - wr <fspec>")
     else:
         configs = []
-        bias = []
-        cflat = []
-        dflat = []
-        tflat = []
-        cbars = []
-        arcs = []
+        fnames = {"all": []}
         for ifl in sys.argv[1:]:
-            logstr, cfgstr = get_log_string(ifl, batch=True)
+            logstr, cfgstr, lsfn = get_log_string(ifl, batch=True)
             print(logstr)
+            fnames['all'].append(ifl)
+            if lsfn:
+                if lsfn in fnames:
+                    fnames[lsfn].append(ifl)
+                else:
+                    fnames[lsfn] = [ifl]
             if cfgstr:
                 configs.append(cfgstr)
-            if 'BIAS' in logstr:
-                bias.append(ifl)
-            if 'FLATLAMP' in logstr:
-                cflat.append(ifl)
-            if 'DOMEFLAT' in logstr:
-                dflat.append(ifl)
-            if 'TWIFLAT' in logstr:
-                tflat.append(ifl)
-            if 'CONTBARS' in logstr:
-                cbars.append(ifl)
-            if 'ARCLAMP' in logstr:
-                arcs.append(ifl)
-
         # Unique configs
         uconfigs = sorted(set(configs))
         print("Number of unique configurations = %d" % len(uconfigs))
         for c in uconfigs:
             print(c)
 
-        if len(bias) > 0:
-            with open('bias.txt', 'w') as ofil:
-                for b in bias:
-                    ofil.write(b + '\n')
-        if len(cflat) > 0:
-            with open('cflat.txt', 'w') as ofil:
-                for c in cflat:
-                    ofil.write(c + '\n')
-        if len(dflat) > 0:
-            with open('dflat.txt', 'w') as ofil:
-                for d in dflat:
-                    ofil.write(d + '\n')
-        if len(tflat) > 0:
-            with open('tflat.txt', 'w') as ofil:
-                for t in tflat:
-                    ofil.write(t + '\n')
-        if len(cbars) > 0:
-            with open('cbars.txt', 'w') as ofil:
-                for c in cbars:
-                    ofil.write(c + '\n')
-        if len(arcs) > 0:
-            with open('arcs.txt', 'w') as ofil:
-                for a in arcs:
-                    ofil.write(a + '\n')
+        for cal in fnames:
+            with open(cal+".txt", 'w') as cal_list:
+                for f in fnames[cal]:
+                    cal_list.write(f + "\n")
