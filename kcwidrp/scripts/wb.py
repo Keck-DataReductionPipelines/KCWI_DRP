@@ -1,5 +1,41 @@
 #!/usr/bin/env python
-from astropy.io import fits as pf
+import sys
+if sys.version_info[0] > 2:
+    from astropy.io import fits as pf
+else:
+    import pyfits as pf
+
+
+def get_cal_list_file(hdr):
+    """Return list file name given configuration in header"""
+
+    fpre = {"ARCLAMP": "arcs", "CONTBARS": "cbars", "FLATLAMP": "cflat",
+            "DOMEFLAT": "dflat", "TWIFLAT": "tflat"}
+
+    imtype = hdr['IMTYPE']
+    lfname = None
+    if imtype in fpre:
+        lfname = fpre[imtype]
+        lfname += hdr['BINNING'].replace(',', 'x')
+        lfname += hdr['IFUNAM'][:3]
+        lfname += hdr['BFILTNAM']
+        lfname += hdr['BGRATNAM']
+        if 'arcs' in lfname:
+            if 'FeAr' in hdr['ILLUME']:
+                lfname += 'FeAr'
+            else:
+                lfname += 'ThAr'
+        else:
+            lfname += '_'
+        lfname += "%.0f" % hdr['BCWAVE']
+        lfname += "_%.1f" % hdr['EXPTIME']
+    elif 'BIAS' in imtype:
+        lfname = 'bias'
+        lfname += hdr['BINNING'].replace(',', 'x')
+        lfname += hdr['AMPMODE']
+        lfname += str(hdr['CCDMODE'])
+        lfname += str(hdr['GAINMUL'])
+    return lfname
 
 
 def get_log_string(ifile, batch=False):
@@ -7,12 +43,13 @@ def get_log_string(ifile, batch=False):
         ff = pf.open(ifile)
     except IOError:
         print("***ERROR*** empty or corrupt fits file: %s" % ifile)
-        quit()
+        return None, None
 
     header = ff[0].header
     header['FNAME'] = ifile
     if 'CAMERA' in header:
-        if 'BLUE' in header['CAMERA']:
+        if 'BLUE' in header['CAMERA'].upper():
+            is_bias = False
             if 'OFNAME' not in header:
                 header['OFNAME'] = ifile
             if 'AMPMODE' not in header:
@@ -69,6 +106,8 @@ def get_log_string(ifile, batch=False):
                 header['EXPTIME'] = header['TELAPSE']
             else:
                 header['EXPTIME'] = header['XPOSURE']
+            if header['EXPTIME'] <= 0.:
+                is_bias = True
             header['ILLUME'] = '-'
             if header['LMP0STAT'] == 1:
                 if header['LMP0SHST'] == 1:
@@ -86,6 +125,9 @@ def get_log_string(ifile, batch=False):
                     header['ILLUME'] = 'DOME'
                     if not batch:
                         header['OBJECT'] = 'DOME'
+            if 'BIAS' in header['IMTYPE']:
+                if not is_bias:
+                    header['IMTYPE'] = 'DARK'
             if not batch:
                 if 'object' not in header['CALTYPE']:
                     header['OBJECT'] = header['OBJECT'] + header['ILLUME']
@@ -97,25 +139,32 @@ def get_log_string(ifile, batch=False):
                           "(%(BARTANG)5.1f/%(BNASNAM)4s/%(BFOCMM)6.3f) %(AIRMASS)5.3f: %(IMTYPE)7s/" \
                           "%(ILLUME)6s/%(OBJECT)s" % header
             except:
-                lstring = "%28s : ?" % ifile
+                lstring = "%19s : ?" % ifile
 
             if header['EXPTIME'] <= 0.0:
                 cstr = "%(BINNING)3s:%(AMPMODE)3s:%(CCDMODE)1d:%(GAINMUL)2d:BIAS" % \
                        header
             else:
                 if batch:
-                    cstr = "%(BINNING)3s:%(BGRATNAM)s:%(IFUNAM)s:%(BCWAVE).1f" \
+                    cstr = "%(BINNING)3s:%(BFILTNAM)s:%(BGRATNAM)s:%(IFUNAM)s:%(BCWAVE).1f" \
                            % header
                 else:
-                    cstr = "%(BINNING)3s:%(BGRATNAM)s:%(IFUNAM)s:%(BCWAVE).1f:" \
+                    cstr = "%(BINNING)3s:%(BFILTNAM)s:%(BGRATNAM)s:%(IFUNAM)s:%(BCWAVE).1f:" \
                            "%(EXPTIME)6.1f:%(OBJECT)s" % header
+            lfn = get_cal_list_file(header)
         else:
-            lstring = ifile + ' FPC image'
+            lstring = "%19s : NOT a BLUE image!" % ifile
             cstr = None
+            lfn = None
 
-        return lstring, cstr
     else:
-        print("ERROR - Camera can not be determined.")
+        if not batch:
+            print("ERROR - Camera can not be determined.")
+        lstring = "%19s : No CAMERA keyword!" % ifile
+        cstr = None
+        lfn = None
+
+    return lstring, cstr, lfn
 
 
 if __name__ == '__main__':
@@ -125,43 +174,25 @@ if __name__ == '__main__':
         print("Usage - wb <fspec>")
     else:
         configs = []
-        bias = []
-        cflat = []
-        dflat = []
-        tflat = []
+        fnames = {"all": []}
         for ifl in sys.argv[1:]:
-            logstr, cfgstr = get_log_string(ifl, batch=True)
+            logstr, cfgstr, lsfn = get_log_string(ifl, batch=True)
             print(logstr)
+            fnames['all'].append(ifl)
+            if lsfn:
+                if lsfn in fnames:
+                    fnames[lsfn].append(ifl)
+                else:
+                    fnames[lsfn] = [ifl]
             if cfgstr:
                 configs.append(cfgstr)
-            if 'BIAS' in logstr:
-                bias.append(ifl)
-            if 'FLATLAMP' in logstr:
-                cflat.append(ifl)
-            if 'DOMEFLAT' in logstr:
-                dflat.append(ifl)
-            if 'TWIFLAT' in logstr:
-                tflat.append(ifl)
-
         # Unique configs
         uconfigs = sorted(set(configs))
         print("Number of unique configurations = %d" % len(uconfigs))
         for c in uconfigs:
             print(c)
 
-        if len(bias) > 0:
-            with open('bias.txt', 'a') as ofil:
-                for b in bias:
-                    ofil.write(b + '\n')
-        if len(cflat) > 0:
-            with open('cflat.txt', 'a') as ofil:
-                for c in cflat:
-                    ofil.write(c + '\n')
-        if len(dflat) > 0:
-            with open('dflat.txt', 'a') as ofil:
-                for d in dflat:
-                    ofil.write(d + '\n')
-        if len(tflat) > 0:
-            with open('tflat.txt', 'a') as ofil:
-                for t in tflat:
-                    ofil.write(t + '\n')
+        for cal in fnames:
+            with open(cal+".txt", 'w') as cal_list:
+                for f in fnames[cal]:
+                    cal_list.write(f + "\n")

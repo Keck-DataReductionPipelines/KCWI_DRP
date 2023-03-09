@@ -20,12 +20,22 @@ class CalcPrelimDisp(BasePrimitive):
         BasePrimitive.__init__(self, action, context)
         self.logger = context.pipeline_logger
 
+    def _pre_condition(self):
+        self.logger.info("Checking for master arc")
+        if 'MARC' in self.action.args.ccddata.header['IMTYPE']:
+            return True
+        else:
+            return False
+
     def _perform(self):
         # get binning
         y_binning = self.action.args.ybinsize
         # 0 - compute alpha
-        preliminary_alpha = self.action.args.grangle - 13.0 - \
-            self.action.args.adjang
+        if 'BLUE' in self.action.args.ccddata.header['CAMERA'].upper():
+            preliminary_alpha = self.action.args.grangle - 13.0 - \
+                self.action.args.adjang
+        else:
+            preliminary_alpha = 156.1748047 - self.action.args.grangle
         # 1 - compute preliminary angle of diffraction
         preliminary_beta = self.action.args.camangle - preliminary_alpha
         # 2 - compute preliminary dispersion

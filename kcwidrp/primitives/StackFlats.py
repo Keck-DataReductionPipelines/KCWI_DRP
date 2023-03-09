@@ -54,7 +54,7 @@ class StackFlats(BaseImg):
 
         combine_list = list(self.combine_list['filename'])
         # get flat stack output name
-        stname = strip_fname(combine_list[-1]) + '_' + suffix + '.fits'
+        stname = strip_fname(combine_list[0]) + '_' + suffix + '.fits'
         stack = []
         stackf = []
         mask = None
@@ -74,12 +74,12 @@ class StackFlats(BaseImg):
                                   sigma_clip_low_thresh=None,
                                   sigma_clip_high_thresh=2.0)
 
-        # Get the BPM out of one of the flats (bpm is the same for all)
+        # Get the bad pixel mask out of one of the flats (is the same for all)
         # and add it to the stacked flat as the stack's mask
         last_flat_name = strip_fname(combine_list[-1]) + '_intd.fits'
         last_flat_path = os.path.join(self.config.instrument.cwd,
-                                  self.config.instrument.output_directory,
-                                last_flat_name)
+                                      self.config.instrument.output_directory,
+                                      last_flat_name)
         last_flat = kcwi_fits_reader(last_flat_path)[0]
         stacked.mask = last_flat.mask
         
@@ -99,7 +99,7 @@ class StackFlats(BaseImg):
 
         self.context.proctab.update_proctab(frame=stacked, suffix=suffix,
                                             newtype=self.action.args.stack_type,
-                                            filename=self.action.args.name)
+                                            filename=stacked.header['OFNAME'])
         self.context.proctab.write_proctab()
 
         self.logger.info(log_string)

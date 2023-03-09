@@ -16,17 +16,21 @@ class CorrectGain(BasePrimitive):
         keycom = 'Gain corrected?'
         # print(self.action.args.ccddata.header)
         number_of_amplifiers = self.action.args.namps
-        for amplifier in range(number_of_amplifiers):
+        bsec, dsec, tsec, direc, amps, aoff = self.action.args.map_ccd
+        namps = len(amps)
+        if namps != number_of_amplifiers:
+            self.logger.warning("Amp count disagreement!")
+        for amplifier in amps:
             # get amp section
             section = self.action.args.ccddata.header['ATSEC%d' %
-                                                      (amplifier + 1)]
+                                                      amplifier]
             parsed_section, read_forward = parse_imsec(section)
             # get gain for this amp
-            gain = self.action.args.ccddata.header['GAIN%d' % (amplifier + 1)]
+            gain = self.action.args.ccddata.header['GAIN%d' % amplifier]
             self.logger.info(
                 "Applying gain correction of %.3f in section %s" %
                 (gain, self.action.args.ccddata.header['ATSEC%d' %
-                                                       (amplifier + 1)]))
+                                                       amplifier]))
             self.action.args.ccddata.data[
                 parsed_section[0]:(parsed_section[1]+1),
                 parsed_section[2]:(parsed_section[3]+1)] *= gain

@@ -6,7 +6,6 @@ Test Fits to PNG pipeline with HTTP server.
 @author: skwok
 """
 
-import enum
 from keckdrpframework.core.framework import Framework
 from keckdrpframework.config.framework_config import ConfigClass
 from keckdrpframework.models.arguments import Arguments
@@ -50,6 +49,11 @@ def _parse_arguments(in_args: list) -> argparse.Namespace:
                         default=None)
     parser.add_argument('-a', '--atlas_line_list', dest='atlas_line_list',
                         type=str, help="Atlas line list file", default=None)
+    parser.add_argument('-M', '--middle_fraction', dest='middle_fraction',
+                        type=float, help="Fraction of middle to use",
+                        default=None)
+    parser.add_argument('-o', '--atlas_offset', dest='atlas_offset',
+                        type=int, help="Atlas offset (px)", default=None)
 
     # in this case, we are loading an entire directory,
     # and ingesting all the files in that directory
@@ -151,8 +155,7 @@ def main():
         sys.exit(1)
     framework.context.pipeline_logger = getLogger(framework_logcfg_fullpath,
                                                   name="KCWI")
-    framework.logger = getLogger(framework_logcfg_fullpath,
-                                 name="DRPF")
+    framework.logger = getLogger(framework_logcfg_fullpath, name="DRPF")
 
     if args.infiles is not None:
         framework.config.file_type = args.infiles
@@ -164,6 +167,22 @@ def main():
             framework.context.pipeline_logger.info(
                 "Setting new taperfrac = %.3f" % args.taperfrac)
             framework.config.instrument.TAPERFRAC = args.taperfrac
+
+    # check for middle_fraction argument
+    if args.middle_fraction:
+        def_mf = getattr(framework.config.instrument, 'MIDFRAC', None)
+        if def_mf is not None:
+            framework.context.pipeline_logger.info(
+                "Setting new middle_fraction = %.2f" % args.middle_fraction)
+            framework.config.instrument.MIDFRAC = args.middle_fraction
+
+    # check for atlas_offset argument
+    if args.atlas_offset:
+        def_mf = getattr(framework.config.instrument, 'ATOFF', None)
+        if def_mf is not None:
+            framework.context.pipeline_logger.info(
+                "Setting new atlas offset = %.2f" % args.atlas_offset)
+            framework.config.instrument.ATOFF = args.atlas_offset
 
     # check for atlas line list argument
     if args.atlas_line_list:
@@ -177,7 +196,9 @@ def main():
     # start the bokeh server is requested by the configuration parameters
     if framework.config.instrument.enable_bokeh is True:
         if check_running_process(process='bokeh') is False:
-            subprocess.Popen('bokeh serve', shell=True)
+            with open("bokeh_output.txt", "wb") as out:
+                subprocess.Popen('bokeh serve', shell=True, stderr=out,
+                                 stdout=out)
             # --session-ids=unsigned --session-token-expiration=86400',
             # shell=True)
             time.sleep(5)
@@ -248,12 +269,13 @@ def main():
         data_set.data_table.drop(ccdclear_frames, inplace=True)
 
         # processing
-        imtypes = ['BIAS', 'CONTBARS', 'ARCLAMP', 'FLATLAMP', 'DOMEFLAT', 'TWIFLAT', 'OBJECT']
+        imtypes = ['BIAS', 'CONTBARS', 'ARCLAMP', 'FLATLAMP', 'DOMEFLAT',
+                   'TWIFLAT', 'OBJECT']
 
         for imtype in imtypes:
             subset = data_set.data_table[
                 framework.context.data_set.data_table.IMTYPE == imtype]
-            if 'OBJECT' in imtype: # Ensure that standards are processed first
+            if 'OBJECT' in imtype:  # Ensure that standards are processed first
                 object_order = []
                 standard_order = []
                 for frame in subset.index:
@@ -261,7 +283,7 @@ def main():
                         standard_order.append(frame)
                     else:
                         object_order.append(frame)
-                order = standard_order + object_order # Standards first
+                order = standard_order + object_order  # Standards first
                 process_list(order)
             else:
                 process_subset(subset)

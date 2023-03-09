@@ -4,6 +4,7 @@ from astropy.nddata import CCDData
 from astropy.table import Table
 # from astropy import units as u
 import numpy as np
+from datetime import datetime
 
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 import os
@@ -14,36 +15,69 @@ from pathlib import Path
 
 logger = logging.getLogger('KCWI')
 
+red_amp_dict = {'L1': 0, 'L2': 1, 'U1': 2, 'U2': 3}
+red_amp_gain = {'L1': 1.54, 'L2': 1.55, 'U1': 1.61, 'U2': 1.49}
+
 
 def parse_imsec(section=None):
 
-    xfor = True
-    yfor = True
-
-    p1 = int(section[1:-1].split(',')[0].split(':')[0])
-    p2 = int(section[1:-1].split(',')[0].split(':')[1])
-    p3 = int(section[1:-1].split(',')[1].split(':')[0])
-    p4 = int(section[1:-1].split(',')[1].split(':')[1])
-    # tests for individual axes
+    xsec = section[1:-1].split(',')[0]
+    ysec = section[1:-1].split(',')[1]
+    xparts = xsec.split(':')
+    yparts = ysec.split(':')
+    p1 = int(xparts[0])
+    p2 = int(xparts[1])
+    p3 = int(yparts[0])
+    p4 = int(yparts[1])
+    # check for scale factor
+    if len(xparts) == 3:
+        xstride = int(xparts[2])
+    else:
+        xstride = 1
+    if len(yparts) == 3:
+        ystride = int(yparts[2])
+    else:
+        ystride = 1
+    # is x axis in descending order?
     if p1 > p2:
         x0 = p2 - 1
         x1 = p1 - 1
-        xfor = False
+        xstride = -abs(xstride)
+    # x axis in ascending order
     else:
         x0 = p1 - 1
         x1 = p2 - 1
+    # is y axis in descending order
     if p3 > p4:
         y0 = p4 - 1
         y1 = p3 - 1
-        yfor = False
+        ystride = -abs(ystride)
+    # y axis in ascending order
     else:
         y0 = p3 - 1
         y1 = p4 - 1
-    # package output
+    # ensure no negative indices
+    if x0 < 0:
+        x0 = 0
+    if y0 < 0:
+        y0 = 0
+    # package output with python axis ordering
     sec = (y0, y1, x0, x1)
-    rfor = (yfor, xfor)
-    # use python axis ordering
-    return sec, rfor
+    stride = (ystride, xstride)
+
+    return sec, stride
+
+
+def plotlabel(args):
+    lab = "[ Img # %d " % args.ccddata.header['FRAMENO']
+    lab += "(%s) " % args.illum
+    lab += "Slicer: %s, " % args.ifuname
+    lab += "Grating: %s, " % args.grating
+    lab += "CWave: %d" % int(args.cwave)
+    if 'BLUE' in args.ccddata.header['CAMERA']:
+        lab += ", Filter: %s " % args.filter
+    lab += "] "
+    return lab
 
 
 class ingest_file(BasePrimitive):
@@ -64,7 +98,7 @@ class ingest_file(BasePrimitive):
         return keyval
 
     def camera(self):
-        camera = self.get_keyword('CAMERA')
+        camera = self.get_keyword('CAMERA').upper()
         if 'BLUE' in camera:
             return 0
         elif 'RED' in camera:
@@ -137,6 +171,11 @@ class ingest_file(BasePrimitive):
                 return 5.0
             else:
                 return 14.0
+        else:
+            if 'BIAS' in self.imtype():
+                return 0.
+            else:
+                raise ValueError("unable to determine atlas sigma: GRATING undefined")
 
     def rho(self):
         if 'BH1' in self.grating():
@@ -146,23 +185,23 @@ class ingest_file(BasePrimitive):
         elif 'BH3' in self.grating():
             return 2.800
         elif 'RH1' in self.grating():
-            return 2.420
+            return 2.360
         elif 'RH2' in self.grating():
-            return 2.068    # kcwi_sim_kcrm value is 2.030
+            return 2.020
         elif 'RH3' in self.grating():
-            return 1.705
+            return 1.735
         elif 'RH4' in self.grating():
-            return 1.435
+            return 1.490
         elif 'BM' in self.grating():
             return 1.900
         elif 'RM1' in self.grating():
-            return 1.220
+            return 1.300
         elif 'RM2' in self.grating():
-            return 0.921
+            return 0.945
         elif 'BL' in self.grating():
             return 0.870
         elif 'RL' in self.grating():
-            return 0.514
+            return 0.530
         else:
             return None
 
@@ -211,8 +250,12 @@ class ingest_file(BasePrimitive):
         elif 'RL' in self.grating():
             rez = rw / 800.
         else:
-            raise ValueError("unable to compute atlas resolution: "
-                             "grating undefined")
+            # Resolution not needed for biases
+            if 'BIAS' in self.imtype():
+                rez = 0.
+            else:
+                raise ValueError("unable to compute atlas resolution: "
+                                 "grating undefined")
         # Adjust for slicer
         if self.ifunum() == 2:  # Medium slicer
             rez /= 2.
@@ -237,8 +280,12 @@ class ingest_file(BasePrimitive):
         elif 'RL' in self.grating():
             dw = 0.5 * float(self.ybinsize())
         else:
-            raise ValueError("unable to compute output delta lambda: "
-                             "grating undefined")
+            # Delta wave not needed for biases
+            if 'BIAS' in self.imtype():
+                dw = 0.
+            else:
+                raise ValueError("unable to compute output delta lambda: "
+                                 "grating undefined")
         return dw
 
     def namps(self):
@@ -355,7 +402,7 @@ class ingest_file(BasePrimitive):
                 if status == 1 and shutter == 1:
                     return lamps_dictionary[key]
 
-    def map_ccd(self):
+    def map_ccd(self, xbin, ybin):
         """Return CCD section variables useful for processing
 
         Uses FITS keyword NVIDINP to determine how many amplifiers were used
@@ -381,12 +428,12 @@ class ingest_file(BasePrimitive):
         Tsec accounts for trimming the image according to Dsec.
 
         Amps are assumed to be organized as follows:
-
-        (0,ny)	--------- (nx,ny)
-                | 3 | 4 |
-                ---------
-                | 1 | 2 |
-        (0,0)	--------- (nx, 0)
+                  BLUE                          RED
+        (0,ny)	--------- (nx,ny)    (0,ny)  --------- (nx,ny)
+                | 2 | 3 |                    | 0 | 2 |
+                ---------                    ---------
+                | 0 | 1 |                    | 1 | 3 |
+        (0,0)	--------- (nx, 0)     (0,0)  --------- (nx, 0)
 
         Args:
         -----
@@ -400,52 +447,94 @@ class ingest_file(BasePrimitive):
             list: (bool) y-direction, x-direction, True if forward, else False
         """
 
-        namps = int(self.get_keyword('NVIDINP'))
+        namps = self.namps()    # int(self.get_keyword('NVIDINP'))
         # TODO: check namps
+        camera = self.get_keyword('CAMERA')
+        ampmode = self.get_keyword('AMPMODE')
         # section lists
         bsec = []
         dsec = []
         tsec = []
-        direc = []
-        # loop over amps
-        for i in range(namps):
-            section = self.get_keyword('BSEC%d' % (i + 1))
-            sec, rfor = parse_imsec(section)
-            bsec.append(sec)
-            section = self.get_keyword('DSEC%d' % (i + 1))
-            sec, rfor = parse_imsec(section)
-            dsec.append(sec)
-            direc.append(rfor)
-            if i == 0:
-                y0 = 0
-                y1 = sec[1] - sec[0]
-                x0 = 0
-                x1 = sec[3] - sec[2]
-            elif i == 1:
-                y0 = 0
-                y1 = sec[1] - sec[0]
-                x0 = tsec[0][3] + 1
-                x1 = x0 + sec[3] - sec[2]
-            elif i == 2:
-                y0 = tsec[0][1] + 1
-                y1 = y0 + sec[1] - sec[0]
-                x0 = 0
-                x1 = sec[3] - sec[2]
-            elif i == 3:
-                y0 = tsec[0][1] + 1
-                y1 = y0 + sec[1] - sec[0]
-                x0 = tsec[0][3] + 1
-                x1 = x0 + sec[3] - sec[2]
-            else:
-                # should not get here
-                y0 = -1
-                y1 = -1
-                x0 = -1
-                x1 = -1
-                # self.log.info("ERROR - bad amp number: %d" % i)
-            tsec.append((y0, y1, x0, x1))
+        strides = []
+        amps = []
+        if 'BLUE' in camera:
+            nb = 1    # numbering bias (0 or 1)
+            # loop over amps
+            for i in range(namps):
+                ia = i + 1
+                amps.append(ia)
+                section = self.get_keyword('BSEC%d' % ia)
+                sec, stride = parse_imsec(section)
+                bsec.append(sec)
+                section = self.get_keyword('DSEC%d' % ia)
+                sec, stride = parse_imsec(section)
+                dsec.append(sec)
+                section = self.get_keyword('CSEC%d' % ia)
+                sec, stride = parse_imsec(section)
+                strides.append(stride)
+                if i == 0:
+                    y0 = 0
+                    y1 = int((sec[1] - sec[0]) / ybin)
+                    x0 = 0
+                    x1 = int((sec[3] - sec[2]) / xbin)
+                elif i == 1:
+                    y0 = 0
+                    y1 = int((sec[1] - sec[0]) / ybin)
+                    x0 = tsec[0][3] + 1
+                    x1 = x0 + int((sec[3] - sec[2]) / xbin)
+                elif i == 2:
+                    y0 = tsec[0][1] + 1
+                    y1 = y0 + int((sec[1] - sec[0]) / ybin)
+                    x0 = 0
+                    x1 = int((sec[3] - sec[2]) / xbin)
+                elif i == 3:
+                    y0 = tsec[0][1] + 1
+                    y1 = y0 + int((sec[1] - sec[0]) / ybin)
+                    x0 = tsec[0][3] + 1
+                    x1 = x0 + int((sec[3] - sec[2]) / xbin)
+                else:
+                    # should not get here
+                    y0 = -1
+                    y1 = -1
+                    x0 = -1
+                    x1 = -1
+                    # self.log.info("ERROR - bad amp number: %d" % i)
+                tsec.append((y0, y1, x0, x1))
+        elif 'RED' in camera:
+            nb = 0    # numbering bias (0 or 1)
+            amp_count = 0
+            for amp in red_amp_dict.keys():
+                if amp in ampmode:
+                    amp_count += 1
+                    i = red_amp_dict[amp]
+                    amps.append(i)
+                    section = self.get_keyword('BSEC%d' % i)
+                    sec, stride = parse_imsec(section)
+                    bsec.append(sec)
+                    section = self.get_keyword('DSEC%d' % i)
+                    sec, stride = parse_imsec(section)
+                    dsec.append(sec)
+                    section = self.get_keyword('CSEC%d' % i)
+                    sec, stride = parse_imsec(section)
+                    strides.append(stride)
+                    y0, y1, x0, x1 = sec
+                    y0 = int(y0 / abs(stride[0]))
+                    y1 = int(y1 / abs(stride[0]))
+                    x0 = int(x0 / abs(stride[1]))
+                    x1 = int(x1 / abs(stride[1])) - (abs(stride[1]) - 1)
+                    tsec.append((y0, y1, x0, x1))
+                else:
+                    bsec.append((0, 0, 0, 0))
+                    dsec.append((0, 0, 0, 0))
+                    strides.append((1, 1))
+                    tsec.append((0, 0, 0, 0))
+            if amp_count != namps:
+                self.logger.warning("Didn't get all the amps: %d", amp_count)
+        else:
+            self.logger.warning("Unknown CAMERA: %s" % camera)
+            nb = 0
 
-        return bsec, dsec, tsec, direc
+        return bsec, dsec, tsec, strides, amps, nb
 
     def _perform(self):
         # if self.context.data_set is None:
@@ -512,7 +601,7 @@ class ingest_file(BasePrimitive):
         # DELTA WAVE OUT
         out_args.dwout = self.delta_wave_out()
         # NAMPS
-        out_args.namps = int(self.get_keyword('NVIDINP'))
+        out_args.namps = self.namps()
         # NASMASK
         out_args.nasmask = self.nasmask()
         # SHUFROWS
@@ -533,7 +622,7 @@ class ingest_file(BasePrimitive):
         # ILUM
         out_args.illum = self.illum()
         # MAPCCD
-        out_args.map_ccd = self.map_ccd()
+        out_args.map_ccd = self.map_ccd(out_args.xbinsize, out_args.ybinsize)
         # CALIBRATION LAMP
         out_args.calibration_lamp = self.calibration_lamp()
         # TTIME
@@ -557,21 +646,18 @@ class ingest_file(BasePrimitive):
         return self.output
 
     def check_if_file_can_be_processed(self, imtype):
-        # bias frames
-        bias_frames = self.context.proctab.search_proctab(frame=self.ccddata, target_type='MBIAS', nearest=True)
-        # continuum bars
-        contbars_frames = self.context.proctab.search_proctab(frame=self.ccddata, target_type='CONTBARS', nearest=True)
-        # master flats
-        masterflat_frames = self.context.proctab.search_proctab(frame=self.ccddata, target_type='MFLAT', nearest=True)
-        # inverse sensitivity
-        inverse_sensitivity_frames = self.context.proctab.search_proctab(frame=self.ccddata, target_type='INVSENS', nearest=True)
-        # arclamp
-        arclamp_frames = self.context.proctab.search_proctab(frame=self.ccddata, target_type='ARCLAMP', nearest=True)
 
         if imtype == 'OBJECT':
-            if len(bias_frames) > 0 \
+            # bias frames
+            bias_frames = self.context.proctab.search_proctab(frame=self.ccddata, target_type='MBIAS', nearest=True)
+            # master flats
+            masterflat_frames = self.context.proctab.search_proctab(frame=self.ccddata, target_type='MFLAT', nearest=True)
+            # arclamp
+            arclamp_frames = self.context.proctab.search_proctab(frame=self.ccddata, target_type='MARC', nearest=True)
+            if len(bias_frames) > 0:
+                '''\
                 and len(masterflat_frames) > 0 \
-                and len(arclamp_frames) > 0:
+                and len(arclamp_frames) > 0:'''
                 return True
             else:
                 self.logger.warn("Cannot reduce OBJECT frame. Rescheduling for later. Found:")
@@ -581,27 +667,29 @@ class ingest_file(BasePrimitive):
                 return False
 
         if imtype == 'ARCLAMP':
+            # continuum bars
+            contbars_frames = self.context.proctab.search_proctab(frame=self.ccddata, target_type='MCBARS', nearest=True)
             if (len(contbars_frames)) > 0:
                 return True
             else:
-                self.logger.warn("Cannot reduce ARCLAMP frame. Missing continuum bars. Rescheduling for later.")
+                self.logger.warn("Cannot reduce ARCLAMP frame. Missing master continuum bars. Rescheduling for later.")
                 return False
 
         if imtype in ['FLATLAMP', 'TWIFLAT', 'DOMEFLAT']:
+            # bias frames
+            bias_frames = self.context.proctab.search_proctab(frame=self.ccddata, target_type='MBIAS', nearest=True)
             if len(bias_frames) > 0:
                 return True
             else:
                 self.logger.warn(f"Cannot reduce {imtype} frame. Missing master bias. Rescheduling for later.")
                 return False
 
-
-
         return True
 
 
 def kcwi_fits_reader(file):
     """A reader for KeckData objects.
-    Currently this is a separate function, but should probably be
+    Currently, this is a separate function, but should probably be
     registered as a reader similar to fits_ccddata_reader.
     Arguments:
     file -- The filename (or pathlib.Path) of the FITS file to open.
@@ -634,6 +722,8 @@ def kcwi_fits_reader(file):
         table = None
     # prepare for floating point
     ccddata.data = ccddata.data.astype(np.float64)
+    # Fix red headers
+    fix_red_header(ccddata)
     # Check for CCDCFG keyword
     if 'CCDCFG' not in ccddata.header:
         ccdcfg = ccddata.header['CCDSUM'].replace(" ", "")
@@ -714,9 +804,9 @@ def kcwi_fits_writer(ccddata, table=None, output_file=None, output_dir=None,
 
         # Attempt to gather git version information
         git1 = subprocess.run(["git", "--git-dir", git_loc, "describe",
-                                 "--tags", "--long"], capture_output=True)
+                               "--tags", "--long"], capture_output=True)
         git2 = subprocess.run(["git", "--git-dir", git_loc, "log", "-1",
-                                 "--format=%cd"], capture_output=True)
+                               "--format=%cd"], capture_output=True)
         
         # If all went well, save to the header
         if not bool(git1.stderr) and not bool(git2.stderr):
@@ -745,6 +835,7 @@ def kcwi_fits_writer(ccddata, table=None, output_file=None, output_dir=None,
     logger.info(">>> Saving %d hdus to %s" % (len(hdus_to_save), out_file))
     hdus_to_save.writeto(out_file, overwrite=True)
 
+
 def strip_fname(filename):
     if not filename:
         logger.error(f"Failed to strip file {filename}")
@@ -752,10 +843,12 @@ def strip_fname(filename):
     strip = Path(filename).stem
     return strip
 
+
 def get_master_name(tab, target_type, loc=0):
-    res = Path(strip_fname(tab['filename'][loc]) + '_' + \
-                     target_type.lower() + ".fits").name
+    res = Path(strip_fname(tab['filename'][loc]) + '_' +
+               target_type.lower() + ".fits").name
     return res
+
 
 def master_bias_name(ccddata, target_type='MBIAS'):
     # Delivers a mbias filename that is unique for each CCD configuration
@@ -763,7 +856,61 @@ def master_bias_name(ccddata, target_type='MBIAS'):
     name = target_type.lower() + '_' + ccddata.header['CCDCFG'] + '.fits'
     return name
 
+
 def master_flat_name(ccddata, target_type):
-    # Delivers a name that is unqie across an observing block
+    # Delivers a name that is unique across an observing block
     name = target_type.lower() + '_' + ccddata.header['STATEID'] + '.fits'
     return name
+
+
+def fix_red_header(ccddata):
+    # are we red?
+    if 'RED' in ccddata.header['CAMERA'].upper():
+        # Fix red headers during Caltech AIT
+        # Add DCS keywords
+        ccddata.header['TARGNAME'] = ccddata.header['OBJECT']
+        dateend = ccddata.header['DATE-END']
+        de = datetime.fromisoformat(dateend)
+        day_frac = de.hour / 24. + de.minute / 1440. + de.second / 86400.
+        jd = datetime.date(de).toordinal() + day_frac + 1721424.5
+        mjd = jd - 2400000.5
+        ccddata.header['MJD'] = mjd
+        # Add NVIDINP
+        ccddata.header['NVIDINP'] = ccddata.header['TAPLINES']
+        # Add GAINMUL
+        ccddata.header['GAINMUL'] = 1
+        # Add CCDMODE
+        if 'CDSSPEED' in ccddata.header:
+            ccddata.header['CCDMODE'] = ccddata.header['CDSSPEED']
+        else:
+            ccddata.header['CCDMODE'] = 0
+        # Add AMPMNUM
+        if 'AMPMODE' in ccddata.header:
+            ampmode = ccddata.header['AMPMODE']
+            if ampmode == 'L2U2L1U1':
+                ampnum = 0
+            elif ampmode == 'L2U2':
+                ampnum = 1
+            elif ampmode == 'L1U1':
+                ampnum = 2
+            elif ampmode == 'L2L1':
+                ampnum = 3
+            elif ampmode == 'U2U1':
+                ampnum = 4
+            elif ampmode == 'L2':
+                ampnum = 5
+            elif ampmode == 'U2':
+                ampnum = 6
+            elif ampmode == 'L1':
+                ampnum = 7
+            elif ampmode == 'U1':
+                ampnum = 8
+            else:
+                ampnum = 0
+            ccddata.header['AMPMNUM'] = ampnum
+
+            for amp in red_amp_dict.keys():
+                if amp in ampmode:
+                    gkey = 'GAIN%d' % red_amp_dict[amp]
+                    gain = red_amp_gain[amp]
+                    ccddata.header[gkey] = gain

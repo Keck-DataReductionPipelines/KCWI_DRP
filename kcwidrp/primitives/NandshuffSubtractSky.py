@@ -42,27 +42,82 @@ class NandshuffSubtractSky(BasePrimitive):
         shrows = self.action.args.ccddata.header['SHUFROWS']
         nshfup = self.action.args.ccddata.header['NSHFUP']
         nshfdn = self.action.args.ccddata.header['NSHFDN']
+        camera = self.action.args.ccddata.header['CAMERA']
+        ybin = int(self.action.args.ccddata.header['BINNING'].split(',')[1])
 
         # units
         u_out = self.action.args.ccddata.unit
 
-        # nominal conditions (sky on bottom, object in middle)
-        skyrow0 = 0
-        skyrow1 = shrows - 1
-        objrow0 = shrows
-        objrow1 = shrows + shrows - 1
+        # BLUE camera handling
+        if 'BLUE' in camera:
+            # BLUE nominal conditions (sky on bottom, object in middle)
+            skyrow0 = 0
+            skyrow1 = shrows - 1
+            objrow0 = shrows
+            objrow1 = shrows + shrows - 1
+            # record subtraction rows
+            subrow0 = objrow0
+            subrow1 = objrow1
 
-        # aborted script with inverted panels (sky in middle, object above)
-        if nshfdn != nshfup + 1:
-            skyrow0 = shrows
-            skyrow1 = shrows + shrows - 1
-            objrow0 = skyrow1
-            objrow1 = objrow0 + shrows - 1
+            # aborted script with inverted panels (sky in middle, object above)
+            if nshfdn != nshfup + 1:
+                self.logger.warning("Inverted N&S obs detected!")
+                skyrow0 = shrows
+                skyrow1 = shrows + shrows - 1
+                objrow0 = skyrow1 + 1
+                objrow1 = objrow0 + shrows - 1
+                # record subtraction rows
+                subrow0 = skyrow0
+                subrow1 = skyrow1
+
+        # RED camera handling
+        elif 'RED' in camera:
+            # RED uses unbinned pixels for shrows
+            if ybin == 2:
+                shrows = int(shrows / 2) + 1
+            # RED nominal conditions (object on bottom, sky in middle)
+            objrow0 = 0
+            objrow1 = shrows - 1
+            skyrow0 = objrow1 + 1
+            skyrow1 = skyrow0 + shrows - 1
+            # record subtraction rows
+            subrow0 = skyrow0
+            subrow1 = skyrow1
+
+            # aborted script with inverted panels (object in middle sky above)
+            if nshfdn != nshfup:
+                self.logger.warning("Inverted N&S obs detected!")
+                objrow0 = shrows
+                objrow1 = objrow0 + shrows - 1
+                skyrow0 = objrow1 + 1
+                skyrow1 = skyrow0 + shrows - 1
+                # record subtraction rows
+                subrow0 = objrow0
+                subrow1 = objrow1
+
+        else:
+            self.logger.error("CAMERA cannot be determined for N&S Sub")
+            return self.action.args
 
         # check limits
+        self.logger.info(
+            "Nod-and-shuffle rows (sky0, 1, obj0,1): %d, %d, %d, %d" %
+            (skyrow0, skyrow1, objrow0, objrow1))
         if (skyrow1-skyrow0) != (objrow1-objrow0):
-            self.logger.error("Nod-and-shuffle row limits error")
+            self.logger.error("Nod-and-shuffle panel mis-match error")
             return self.action.args
+        else:
+            self.logger.info("Nod-and-shuffle panels match")
+
+        # record in header (and convert to 1-bias, for IRAF)
+        self.action.args.ccddata.header['OBJROW0'] = (objrow0+1, "Object row 0")
+        self.action.args.ccddata.header['OBJROW1'] = (objrow1+1, "Object row 1")
+        self.action.args.ccddata.header['SKYROW0'] = (skyrow0+1, "Sky row 0")
+        self.action.args.ccddata.header['SKYROW1'] = (skyrow1+1, "Sky row 1")
+        self.action.args.ccddata.header['SUBROW0'] = (subrow0 + 1,
+                                                      "Subtraction row 1")
+        self.action.args.ccddata.header['SUBROW1'] = (subrow1 + 1,
+                                                      "Subtraction row 1")
 
         # create intermediate images and headers
         sky = self.action.args.ccddata.data.copy()
@@ -73,91 +128,178 @@ class NandshuffSubtractSky(BasePrimitive):
         skyhdr = self.action.args.ccddata.header.copy()
         objhdr = self.action.args.ccddata.header.copy()
 
-        # nominal condition
-        if skyrow0 < 10:
-            self.logger.info("standard nod-and-shuffle configuration")
-            skystd = self.action.args.ccddata.uncertainty.array.copy()
-            skymsk = self.action.args.ccddata.mask.copy()
-            skyflg = self.action.args.ccddata.flags.copy()
-            # move sky to object position
-            sky[objrow0:objrow1, :] = obj[skyrow0:skyrow1, :]
-            skystd[objrow0:objrow1, :] = std[skyrow0:skyrow1, :]
-            skymsk[objrow0:objrow1, :] = msk[skyrow0:skyrow1, :]
-            skyflg[objrow0:objrow1, :] = flg[skyrow0:skyrow1, :]
-            # do subtraction
-            self.action.args.ccddata.data -= sky
-            self.action.args.ccddata.uncertainty.array = np.sqrt(std ** 2 +
-                                                                 skystd ** 2)
-            self.action.args.ccddata.mask += skymsk
-            self.action.args.ccddata.flags |= skyflg
-            # clean images
-            self.action.args.ccddata.data[skyrow0:skyrow1, :] = 0.
-            self.action.args.ccddata.data[(objrow1+1):-1, :] = 0.
-            self.action.args.ccddata.uncertainty.array[skyrow0:skyrow1, :] = 0.
-            self.action.args.ccddata.uncertainty.array[(objrow1+1):-1, :] = 0.
-            self.action.args.ccddata.mask[skyrow0:skyrow1, :] = 1
-            self.action.args.ccddata.mask[(objrow1 + 1):-1, :] = 1
-            self.action.args.ccddata.flags[skyrow0:skyrow1, :] = 64
-            self.action.args.ccddata.flags[(objrow1 + 1):-1, :] = 64
-            sky[skyrow0:skyrow1, :] = 0.
-            sky[(objrow1+1), :] = 0.
-            obj[skyrow0:skyrow1, :] = 0.
-            obj[(objrow1+1), :] = 0.
+        # BLUE camera handling
+        if 'BLUE' in camera:
+            # nominal condition
+            if skyrow0 < 10:
+                self.logger.info("standard nod-and-shuffle configuration")
+                skystd = self.action.args.ccddata.uncertainty.array.copy()
+                skymsk = self.action.args.ccddata.mask.copy()
+                skyflg = self.action.args.ccddata.flags.copy()
+                # move sky to object position
+                sky[objrow0:objrow1+1, :] = obj[skyrow0:skyrow1+1, :]
+                skystd[objrow0:objrow1+1, :] = std[skyrow0:skyrow1+1, :]
+                skymsk[objrow0:objrow1+1, :] = msk[skyrow0:skyrow1+1, :]
+                skyflg[objrow0:objrow1+1, :] = flg[skyrow0:skyrow1+1, :]
+                # do subtraction
+                self.action.args.ccddata.data -= sky
+                self.action.args.ccddata.uncertainty.array = np.sqrt(
+                    std ** 2 + skystd ** 2)
+                self.action.args.ccddata.mask += skymsk
+                self.action.args.ccddata.flags |= skyflg
+                # clean images
+                self.action.args.ccddata.data[skyrow0:skyrow1+1, :] = 0.
+                self.action.args.ccddata.data[objrow1+1:-1, :] = 0.
+                self.action.args.ccddata.uncertainty.array[skyrow0:skyrow1+1, :] = 0.
+                self.action.args.ccddata.uncertainty.array[objrow1+1:-1, :] = 0.
+                self.action.args.ccddata.mask[skyrow0:skyrow1+1, :] = 1
+                self.action.args.ccddata.mask[objrow1+1:-1, :] = 1
+                self.action.args.ccddata.flags[skyrow0:skyrow1+1, :] = 64
+                self.action.args.ccddata.flags[objrow1+1:-1, :] = 64
+                sky[skyrow0:skyrow1+1, :] = 0.
+                sky[objrow1+1:-1, :] = 0.
+                obj[skyrow0:skyrow1+1, :] = 0.
+                obj[objrow1+1:-1, :] = 0.
+            else:
+                self.logger.warning(
+                    "non-standard nod-and-shuffle configuration")
+                skyscl = -1.
+                while skyscl < 0.:
+                    if self.config.instrument.plot_level >= 2:
+                        q = input("Enter scale factor for sky to match obj "
+                                  "(float): ")
+                        try:
+                            skyscl = float(q)
+                        except ValueError:
+                            self.logger.warning(
+                                "Invalid input: %s, try again" % q)
+                            skyscl = -1.0
+                    else:
+                        skyscl = 1.0
+                self.logger.info("Sky scaling used = %.2f" % skyscl)
+                objstd = self.action.args.ccddata.uncertainty.array.copy()
+                objmsk = self.action.args.ccddata.mask.copy()
+                objflg = self.action.args.ccddata.flags.copy()
+                # move object to sky position
+                obj[skyrow0:skyrow1+1, :] = obj[objrow0:objrow1+1, :]
+                objstd[skyrow0:skyrow1+1, :] = std[objrow0:objrow1+1, :]
+                objmsk[skyrow0:skyrow1+1, :] = msk[objrow0:objrow1+1, :]
+                objflg[skyrow0:skyrow1+1, :] = flg[objrow0:objrow1+1, :]
+                # do subtraction
+                sky *= skyscl
+                self.action.args.ccddata.data = obj - sky
+                self.action.args.ccddata.uncertainty.array = np.sqrt(
+                    std ** 2 + objstd ** 2)
+                self.action.args.ccddata.mask += objmsk
+                self.action.args.ccddata.flags |= objflg
+                # clean images
+                self.action.args.ccddata.data[objrow0:-1, :] = 0.
+                self.action.args.ccddata.data[0:skyrow0+1, :] = 0.
+                self.action.args.ccddata.uncertainty.array[objrow0:-1, :] = 0.
+                self.action.args.ccddata.uncertainty.array[0:skyrow0+1, :] = 0.
+                self.action.args.ccddata.mask[objrow0:-1, :] = 1
+                self.action.args.ccddata.mask[0:skyrow0+1, :] = 1
+                self.action.args.ccddata.flags[objrow0:-1, :] = 64
+                self.action.args.ccddata.flags[0:skyrow0+1, :] = 64
+                sky[objrow0:-1, :] = 0.
+                sky[0:skyrow0+1, :] = 0.
+                obj[objrow0:-1, :] = 0.
+                obj[0:skyrow0+1, :] = 0.
+                cmnt = 'Aborted nod-and-shuffle observations'
+                objhdr['COMMENT'] = cmnt
+                skyhdr['COMMENT'] = cmnt
+                self.action.args.ccddata.header['COMMENT'] = cmnt
+                skyhdr['NASSCL'] = (skyscl, 'Scale factor applied to sky panel')
+                self.action.args.ccddata.header['NASSCL'] = (
+                    skyscl, 'Scale factor applied to sky panel')
+        elif 'RED' in camera:
+            # nominal condition
+            if objrow0 < 10:
+                self.logger.info("standard nod-and-shuffle configuration")
+                objstd = self.action.args.ccddata.uncertainty.array.copy()
+                objmsk = self.action.args.ccddata.mask.copy()
+                objflg = self.action.args.ccddata.flags.copy()
+                # move object to sky position
+                obj[skyrow0:skyrow1+1, :] = obj[objrow0:objrow1+1, :]
+                objstd[objrow0:objrow1+1, :] = std[skyrow0:skyrow1+1, :]
+                objmsk[objrow0:objrow1+1, :] = msk[skyrow0:skyrow1+1, :]
+                objflg[objrow0:objrow1+1, :] = flg[skyrow0:skyrow1+1, :]
+                # do subtraction
+                self.action.args.ccddata.data = obj - sky
+                self.action.args.ccddata.uncertainty.array = np.sqrt(
+                    std ** 2 + objstd ** 2)
+                self.action.args.ccddata.mask += objmsk
+                self.action.args.ccddata.flags |= objflg
+                # clean images
+                self.action.args.ccddata.data[objrow0:objrow1+1, :] = 0.
+                self.action.args.ccddata.data[skyrow1+1:-1, :] = 0.
+                self.action.args.ccddata.uncertainty.array[objrow0:objrow1+1, :] = 0.
+                self.action.args.ccddata.uncertainty.array[skyrow1+1:-1, :] = 0.
+                self.action.args.ccddata.mask[objrow0:objrow1+1, :] = 1
+                self.action.args.ccddata.mask[skyrow1+1:-1, :] = 1
+                self.action.args.ccddata.flags[objrow0:objrow1+1, :] = 64
+                self.action.args.ccddata.flags[skyrow1+1:-1, :] = 64
+                obj[objrow0:objrow1+1, :] = 0.
+                obj[skyrow1+1:-1, :] = 0.
+                sky[objrow0:objrow1+1, :] = 0.
+                sky[skyrow1+1:-1, :] = 0.
+            else:
+                self.logger.warning(
+                    "non-standard nod-and-shuffle configuration")
+                skyscl = -1.
+                while skyscl < 0.:
+                    if self.config.instrument.plot_level >= 2:
+                        q = input("Enter scale factor for sky to match obj "
+                                  "(float): ")
+                        try:
+                            skyscl = float(q)
+                        except ValueError:
+                            self.logger.warning(
+                                "Invalid input: %s, try again" % q)
+                            skyscl = -1.0
+                    else:
+                        skyscl = 1.0
+                self.logger.info("Sky scaling used = %.2f" % skyscl)
+                skystd = self.action.args.ccddata.uncertainty.array.copy()
+                skymsk = self.action.args.ccddata.mask.copy()
+                skyflg = self.action.args.ccddata.flags.copy()
+                # move sky to object position
+                sky[objrow0:objrow1+1, :] = obj[skyrow0:skyrow1+1, :]
+                skystd[objrow0:objrow1+1, :] = std[skyrow0:skyrow1+1, :]
+                skymsk[objrow0:objrow1+1, :] = msk[skyrow0:skyrow1+1, :]
+                skyflg[objrow0:objrow1+1, :] = flg[skyrow0:skyrow1+1, :]
+                # do subtraction
+                self.action.args.ccddata.data -= sky
+                self.action.args.ccddata.uncertainty.array = np.sqrt(
+                    std ** 2 + skystd ** 2)
+                self.action.args.ccddata.mask += skymsk
+                self.action.args.ccddata.flags |= skyflg
+                # clean images
+                self.action.args.ccddata.data[0:objrow0, :] = 0.
+                self.action.args.ccddata.data[objrow1+1:-1, :] = 0.
+                self.action.args.ccddata.uncertainty.array[0:objrow0, :] = 0.
+                self.action.args.ccddata.uncertainty.array[objrow1+1:-1:] = 0.
+                self.action.args.ccddata.mask[0:objrow0, :] = 1
+                self.action.args.ccddata.mask[objrow1+1:-1, :] = 1
+                self.action.args.ccddata.flags[0:objrow0, :] = 64
+                self.action.args.ccddata.flags[objrow1+1:-1, :] = 64
+                sky[0, objrow0, :] = 0.
+                sky[objrow1+1:-1, :] = 0.
+                obj[0, objrow0, :] = 0.
+                obj[objrow1+1:-1, :] = 0.
+                cmnt = 'Aborted nod-and-shuffle observations'
+                objhdr['COMMENT'] = cmnt
+                skyhdr['COMMENT'] = cmnt
+                self.action.args.ccddata.header['COMMENT'] = cmnt
+                skyhdr['NASSCL'] = (skyscl, 'Scale factor applied to sky panel')
+                self.action.args.ccddata.header['NASSCL'] = (
+                    skyscl, 'Scale factor applied to sky panel')
         else:
-            self.logger.warning("non-standard nod-and-shuffle configuration")
-            skyscl = -1.
-            while skyscl < 0.:
-                if self.config.instrument.plot_level >= 2:
-                    q = input("Enter scale factor for sky to match obj "
-                              "(float): ")
-                    try:
-                        skyscl = float(q)
-                    except ValueError:
-                        self.logger.warning("Invalid input: %s, try again" % q)
-                        skyscl = -1.0
-                else:
-                    skyscl = 1.0
-            self.logger.info("Sky scaling used = %.2f" % skyscl)
-            objstd = self.action.args.ccddata.uncertainty.array.copy()
-            objmsk = self.action.args.ccddata.mask.copy()
-            objflg = self.action.args.ccddata.flags.copy()
-            # move object to sky position
-            obj[skyrow0:skyrow1, :] = obj[objrow0:objrow1, :]
-            objstd[skyrow0:skyrow1, :] = std[objrow0:objrow1, :]
-            objmsk[skyrow0:skyrow1, :] = msk[objrow0:objrow1, :]
-            objflg[skyrow0:skyrow1, :] = flg[objrow0:objrow1, :]
-            # do subtraction
-            sky *= skyscl
-            self.action.args.ccddata.data = obj - sky
-            self.action.args.ccddata.uncertainty.array = np.sqrt(std ** 2 +
-                                                                 objstd ** 2)
-            self.action.args.ccddata.mask += objmsk
-            self.action.args.ccddata.flags |= objflg
-            # clean images
-            self.action.args.ccddata.data[objrow0:objrow1, :] = 0.
-            self.action.args.ccddata.data[0:skyrow0, :] = 0.
-            self.action.args.ccddata.uncertainty.array[objrow0:objrow1, :] = 0.
-            self.action.args.ccddata.uncertainty.array[0:skyrow0, :] = 0.
-            self.action.args.ccddata.mask[objrow0:objrow1, :] = 1
-            self.action.args.ccddata.mask[0:skyrow0, :] = 1
-            self.action.args.ccddata.flags[objrow0:objrow1, :] = 64
-            self.action.args.ccddata.flags[0:skyrow0, :] = 64
-            sky[objrow0:objrow1, :] = 0.
-            sky[0:skyrow0, :] = 0.
-            obj[objrow0:objrow1, :] = 0.
-            obj[0:skyrow0, :] = 0.
-            cmnt = 'Aborted nod-and-shuffle observations'
-            objhdr['COMMENT'] = cmnt
-            skyhdr['COMMENT'] = cmnt
-            self.action.args.ccddata.header['COMMENT'] = cmnt
-            skyhdr['NASSCL'] = (skyscl, 'Scale factor applied to sky panel')
-            self.action.args.ccddata.header['NASSCL'] = (
-                skyscl, 'Scale factor applied to sky panel')
+            self.logger.error("CAMERA cannot be determined for N&S Sub")
+            return self.action.arg
 
         # log
-        self.logger.info("nod-and-shuffle subtracted, rows (sky0, 1, obj0,1): "
-                         "%d, %d, %d, %d" % (skyrow0, skyrow1,
-                                             objrow0, objrow1))
+        self.logger.info("Nod-and-shuffle subtracted")
         # update headers
         log_string = NandshuffSubtractSky.__module__
 
@@ -200,4 +342,4 @@ class NandshuffSubtractSky(BasePrimitive):
         self.logger.info(log_string)
 
         return self.action.args
-    # END: class SubtractSky()
+    # END: class NandshuffSubtractSky()

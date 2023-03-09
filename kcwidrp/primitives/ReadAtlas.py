@@ -1,5 +1,6 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from kcwidrp.core.bokeh_plotting import bokeh_plot
+from kcwidrp.primitives.kcwi_file_primitives import plotlabel
 
 from bokeh.plotting import figure
 from bokeh.models import Range1d
@@ -19,6 +20,13 @@ class ReadAtlas(BasePrimitive):
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
         self.logger = context.pipeline_logger
+
+    def _pre_condition(self):
+        self.logger.info("Checking for master arc")
+        if 'MARC' in self.action.args.ccddata.header['IMTYPE']:
+            return True
+        else:
+            return False
 
     def _perform(self):
         # What lamp are we using?
@@ -46,15 +54,32 @@ class ReadAtlas(BasePrimitive):
         # Preliminary wavelength solution
         xvals = np.arange(0, len(obsarc)) - int(len(obsarc)/2)
         obswav = xvals * self.context.prelim_disp + self.action.args.cwave
-        # Get central third
-        minow = int(len(obsarc)/3)
-        maxow = int(2.*len(obsarc)/3)
-        # Unless we are low dispersion, then get central 3 5ths
-        if 'BL' in self.action.args.grating or 'RL' in self.action.args.grating:
-            minow = int(len(obsarc)/5)
-            maxow = int(4.*len(obsarc)/5)
-        minwav = obswav[minow]
-        maxwav = obswav[maxow]
+        # Define Central Region
+        mf = self.config.instrument.MIDFRAC
+        # Set on command line
+        if 0 < mf <= 1.0:
+            self.logger.info("Using command line value for middle fraction")
+        # Default values based on grating
+        else:
+            self.logger.info("Using default calculated middle fraction")
+            # Get central third
+            mf = 1./3.
+            # Unless we are low disp., then get central 3 5ths
+            if 'BL' in self.action.args.grating or \
+                    'RL' in self.action.args.grating:
+                mf = 3./5.
+            # Unless we are red high disp., then get central 8 10ths
+            if 'RH' in self.action.args.grating:
+                mf = 8./10.
+        self.logger.info("Central %.3f used for initial fit" % mf)
+        minow = int(len(obsarc) * (0.5 - mf / 2.))
+        maxow = int(len(obsarc) * (0.5 + mf / 2.))
+        if self.context.prelim_disp > 0:
+            minwav = obswav[minow]
+            maxwav = obswav[maxow]
+        else:
+            minwav = obswav[maxow]
+            maxwav = obswav[minow]
         # Check for dichroic
         if self.action.args.dich:
             obs_extent = maxow - minow
@@ -93,10 +118,9 @@ class ReadAtlas(BasePrimitive):
         # Resample onto reference wavelength scale
         obsint = interpolate.interp1d(cc_obswav, cc_obsarc, kind='cubic',
                                       bounds_error=False,
-                                      fill_value='extrapolate'
-                                      )
+                                      fill_value='extrapolate')
         cc_obsarc = obsint(cc_refwav)
-        # Apply cosign bell taper to both
+        # Apply cosin bell taper to both
         cc_obsarc *= signal.windows.tukey(
             len(cc_obsarc), alpha=self.config.instrument.TAPERFRAC)
         cc_reflux *= signal.windows.tukey(
@@ -111,14 +135,26 @@ class ReadAtlas(BasePrimitive):
         xcorr_central = xcorr[x0c:x1c]
         offar_central = offar[x0c:x1c]
         # Calculate offset
-        offset_pix = offar_central[xcorr_central.argmax()]
-        offset_wav = offset_pix * refdisp
-        self.logger.info("Initial arc-atlas offset (px, Ang): %d, %.1f" %
-                         (offset_pix, offset_wav))
+        calc_offset_pix = offar_central[xcorr_central.argmax()]
+        calc_offset_wav = calc_offset_pix * refdisp
+        self.logger.info("Calculated arc-atlas offset (px, Ang): %d, %.1f" %
+                         (calc_offset_pix, calc_offset_wav))
+        atoff = self.config.instrument.ATOFF
+        req_offset_pix = 0
+        if atoff != 0:
+            req_offset_pix = atoff
+            req_offset_wav = atoff * refdisp
+            self.logger.info("Command line requested offset (px, Ang): %d, %.1f" %
+                             (req_offset_pix, req_offset_wav))
+            offset_pix = req_offset_pix
+            offset_wav = req_offset_wav
+        else:
+            offset_pix = calc_offset_pix
+            offset_wav = calc_offset_wav
+        plab = plotlabel(self.action.args)
         if self.config.instrument.plot_level >= 1:
             # Plot
-            p = figure(title=self.action.args.plotlabel +
-                       "ATLAS OFFSET = %d px" % offset_pix,
+            p = figure(title=plab + "ATLAS OFFSET = %d px" % offset_pix,
                        x_axis_label="Offset(px)", y_axis_label="X-corr",
                        plot_width=self.config.instrument.plot_width,
                        plot_height=self.config.instrument.plot_height)
@@ -126,8 +162,11 @@ class ReadAtlas(BasePrimitive):
             p.line(offar_central, xcorr_central, legend_label='Data')
             ylim_min = min(xcorr_central)
             ylim_max = max(xcorr_central)
-            p.line([offset_pix, offset_pix], [ylim_min, ylim_max],
+            p.line([calc_offset_pix, calc_offset_pix], [ylim_min, ylim_max],
                    color='red', legend_label='Peak')
+            if atoff != 0:
+                p.line([req_offset_pix, req_offset_pix], [ylim_min, ylim_max],
+                       color='green', legend_label='Reqested')
             bokeh_plot(p, self.context.bokeh_session)
             if self.config.instrument.plot_level >= 2:
                 input("Next? <cr>: ")
@@ -139,8 +178,7 @@ class ReadAtlas(BasePrimitive):
             q = 'test'
             while q:
                 # Plot the two spectra
-                p = figure(title=self.action.args.plotlabel +
-                           "ATLAS OFFSET = %.1f Ang (%d px)" %
+                p = figure(title=plab + "ATLAS OFFSET = %.1f Ang (%d px)" %
                            (offset_wav, offset_pix),
                            x_axis_label="Wave(A)", y_axis_label="Rel. Flux",
                            plot_width=self.config.instrument.plot_width,

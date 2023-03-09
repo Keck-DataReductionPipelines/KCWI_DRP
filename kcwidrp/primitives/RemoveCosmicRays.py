@@ -22,15 +22,24 @@ class RemoveCosmicRays(BasePrimitive):
 
         header = self.action.args.ccddata.header
 
-        if header['XPOSURE'] >= self.config.instrument.CRR_MINEXPTIME:
+        exptime = header['TELAPSE']
+        nshuf = header['NSHFUP']
+        ttime = header['TTIME']
+        if nshuf * ttime > exptime:
+            exptime = nshuf * ttime
+
+        if exptime >= self.config.instrument.CRR_MINEXPTIME:
 
             namps = header['NVIDINP']
+            bsec, dsec, tsec, direc, amps, aoff = self.action.args.map_ccd
             read_noise = 0.
-            for ia in range(namps):
-                if 'BIASRN%d' % (ia + 1) in header:
-                    read_noise += header['BIASRN%d' % (ia + 1)]
-                elif 'OSCNRN%d' % (ia + 1) in header:
-                    read_noise += header['OSCNRN%d' % (ia + 1)]
+            if len(amps) != namps:
+                self.logger.warning("Amp count disagreement!")
+            for ia in amps:
+                if 'BIASRN%d' % ia in header:
+                    read_noise += header['BIASRN%d' % ia]
+                elif 'OSCNRN%d' % ia in header:
+                    read_noise += header['OSCNRN%d' % ia]
                 else:
                     read_noise += 3.
             read_noise /= float(namps)

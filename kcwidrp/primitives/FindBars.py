@@ -1,5 +1,6 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from kcwidrp.core.bokeh_plotting import bokeh_plot
+from kcwidrp.primitives.kcwi_file_primitives import plotlabel
 
 import numpy as np
 import logging
@@ -17,6 +18,13 @@ class FindBars(BasePrimitive):
         self.logger = context.pipeline_logger
         basicConfig(level=logging.ERROR)
 
+    def _pre_condition(self):
+        self.logger.info("Checking for master contbars")
+        if 'MCBARS' in self.action.args.ccddata.header['IMTYPE']:
+            return True
+        else:
+            return False
+
     def _perform(self):
         self.logger.info("Finding continuum bars")
         # initialize
@@ -29,7 +37,12 @@ class FindBars(BasePrimitive):
         y_binning = self.action.args.ybinsize
         # get camera
         camera = self.action.args.camera
+        # get grating
+        grating = self.action.args.grating
         window = int(10 / y_binning)
+        # get plot label
+        plab = plotlabel(self.action.args)
+        frameno = self.action.args.ccddata.header['FRAMENO']
         # select from center rows of image
         div_fac = 2
         middle_y_row = int(y_size / div_fac)
@@ -40,7 +53,7 @@ class FindBars(BasePrimitive):
         bar_thresh = None
         average_value_middle_vector = None
         stdev_value_middle_vector = None
-        peaks_in_middle_vector = None
+        peaks_vector = None
         while peaks_found != self.config.instrument.NBARS and n_tries < 5:
             self.logger.info("Middle row for bars finding: %d" % middle_y_row)
             middle_vector = np.median(
@@ -55,7 +68,30 @@ class FindBars(BasePrimitive):
             # find peaks above threshold
             peaks_in_middle_vector, _ = find_peaks(
                 middle_vector, height=bar_thresh)
-            peaks_found = len(peaks_in_middle_vector)
+            peaks_vector = []
+            for pk in peaks_in_middle_vector:
+                if 5 < pk < (self.action.args.ccddata.header['NAXIS1'] - 5):
+                    peaks_vector.append(pk)
+            peaks_found = len(peaks_vector)
+            if self.config.instrument.plot_level >= 3:
+                # plot the peak positions
+                x = np.arange(len(middle_vector))
+                p = figure(
+                    title=plab + "BARS TRACE at = %d, TRY %d" % (middle_y_row,
+                                                                 n_tries),
+                    x_axis_label='CCD X (px)', y_axis_label='e-',
+                    plot_width=self.config.instrument.plot_width,
+                    plot_height=self.config.instrument.plot_height)
+                p.line(x, middle_vector, color='blue', legend_label="Trace")
+                p.scatter(peaks_vector,
+                          middle_vector[peaks_vector], marker='x',
+                          color='red', legend_label="FoundBar")
+                p.line([0, x_size], [bar_thresh, bar_thresh],
+                       color='grey', line_dash='dashed')
+                p.legend.location = "bottom_center"
+                bokeh_plot(p, self.context.bokeh_session)
+                input("Next? <cr>: ")
+
             n_tries += 1
             # do we have the requisite number?
             if peaks_found != self.config.instrument.NBARS:
@@ -65,7 +101,10 @@ class FindBars(BasePrimitive):
                 if camera == 0:     # BLUE
                     div_fac += 0.5
                 else:               # RED
-                    div_fac -= 0.5
+                    if 'RH4' in grating:
+                        div_fac += 0.5
+                    else:
+                        div_fac -= 0.5
                 middle_y_row = int(y_size / div_fac)
         if peaks_found != self.config.instrument.NBARS:
             self.logger.error("Did not find %d peaks: n peaks = %d" %
@@ -77,14 +116,13 @@ class FindBars(BasePrimitive):
                 # plot the peak positions
                 x = np.arange(len(middle_vector))
                 p = figure(
-                    title=self.action.args.plotlabel +
-                    "BARS MID TRACE Thresh = %.2f" % bar_thresh,
+                    title=plab + "BARS MID TRACE Thresh = %.2f" % bar_thresh,
                     x_axis_label='CCD X (px)', y_axis_label='e-',
                     plot_width=self.config.instrument.plot_width,
                     plot_height=self.config.instrument.plot_height)
                 p.line(x, middle_vector, color='blue', legend_label="MidTrace")
-                p.scatter(peaks_in_middle_vector,
-                          middle_vector[peaks_in_middle_vector], marker='x',
+                p.scatter(peaks_vector,
+                          middle_vector[peaks_vector], marker='x',
                           color='red', legend_label="FoundBar")
                 p.line([0, x_size], [bar_thresh, bar_thresh],
                        color='grey', line_dash='dashed')
@@ -97,19 +135,18 @@ class FindBars(BasePrimitive):
                 # calculate the bar centroids
 
             # Do we plot?
-            if self.config.instrument.plot_level >= 2:
+            if self.config.instrument.plot_level >= 3:
                 do_inter = True
             else:
                 do_inter = False
-            for ip, peak in enumerate(peaks_in_middle_vector):
+            for ip, peak in enumerate(peaks_vector):
                 xs = list(range(peak-window, peak+window+1))
                 ys = middle_vector[xs] - np.nanmin(middle_vector[xs])
                 xc = np.sum(xs*ys) / np.sum(ys)
                 middle_centers.append(xc)
                 if do_inter:
                     p = figure(
-                        title=self.action.args.plotlabel +
-                        "BAR %d CENTRD = %.2f" % (ip, xc),
+                        title=plab + "BAR %d CENTRD = %.2f" % (ip, xc),
                         x_axis_label='CCD X (px)', y_axis_label='e-',
                         plot_width=self.config.instrument.plot_width,
                         plot_height=self.config.instrument.plot_height)
@@ -136,10 +173,24 @@ class FindBars(BasePrimitive):
         self.action.args.window = window
         # calculate reference delta x based on refbar
         self.action.args.reference_delta_x = 0.
-        for ib in range(reference_bar-1, reference_bar+3):
-            self.action.args.reference_delta_x += \
-                (middle_centers[ib] - middle_centers[ib-1])
-        self.action.args.reference_delta_x /= 4.
+        try:
+            if (reference_bar-1) > 0 and \
+                    (reference_bar+3) < self.config.instrument.NBARS:
+                for ib in range(reference_bar-1, reference_bar+3):
+                    self.action.args.reference_delta_x += \
+                        (middle_centers[ib] - middle_centers[ib-1])
+                ndiv = 4.
+            else:
+                for ib in range(reference_bar, reference_bar+1):
+                    self.action.args.reference_delta_x += \
+                        (middle_centers[ib] - middle_centers[ib-1])
+                ndiv = 2.
+        except IndexError:
+            self.logger.warning(
+                "Not enough bars per slice to determine ref x sep")
+            self.action.args.reference_delta_x = 1.
+            ndiv = 1.
+        self.action.args.reference_delta_x /= ndiv
         # store image info
         self.action.args.contbar_image_number = \
             self.action.args.ccddata.header['FRAMENO']

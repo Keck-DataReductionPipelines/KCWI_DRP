@@ -1,7 +1,7 @@
 from keckdrpframework.models.arguments import Arguments
 from keckdrpframework.primitives.base_img import BaseImg
 from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_reader, \
-    kcwi_fits_writer, master_bias_name, parse_imsec
+    kcwi_fits_writer, parse_imsec, strip_fname
 from kcwidrp.core.bokeh_plotting import bokeh_plot
 from kcwidrp.core.kcwi_plotting import save_plot
 
@@ -53,13 +53,15 @@ class MakeMasterBias(BaseImg):
         combine_list = list(self.combine_list['filename'])
         # get master bias output name
         # mbname = combine_list[-1].split('.fits')[0] + '_' + suffix + '.fits'
-        mbname = master_bias_name(self.action.args.ccddata)
+        mbname = strip_fname(combine_list[0]) + '_' + suffix + '.fits'
+        # mbname = master_bias_name(self.action.args.ccddata)
+        bsec, dsec, tsec, direc, amps, aoff = self.action.args.map_ccd
     
         stack = []
         stackf = []
         for bias in combine_list:
             stackf.append(bias)
-            # using [0] drops the table
+            # using [0] drops the table and leaves just the image
             stack.append(kcwi_fits_reader(bias)[0])
 
         stacked = ccdproc.combine(stack, method=method, sigma_clip=True,
@@ -71,17 +73,20 @@ class MakeMasterBias(BaseImg):
         stacked.header['STCKMETH'] = (method, 'method used for stacking')
         for ii, fname in enumerate(stackf):
             fname_base = os.path.basename(fname)
-            stacked.header['STACKF%d' % (ii + 1)] = (fname_base, "stack input file")
+            stacked.header['STACKF%d' % (ii + 1)] = (fname_base,
+                                                     "stack input file")
 
         # for readnoise stats use 2nd and 3rd bias
         diff = stack[1].data.astype(np.float32) - \
             stack[2].data.astype(np.float32)
         namps = stack[1].header['NVIDINP']
-        for ia in range(namps):
+        if len(amps) != namps:
+            self.logger.warning("Amp count disagreement!")
+        for ia in amps:
             # get gain
-            gain = stacked.header['GAIN%d' % (ia + 1)]
+            gain = stacked.header['GAIN%d' % ia]
             # get amp section
-            sec, rfor = parse_imsec(stacked.header['DSEC%d' % (ia + 1)])
+            sec, rfor = parse_imsec(stacked.header['DSEC%d' % ia])
             noise = diff[sec[0]:(sec[1]+1), sec[2]:(sec[3]+1)]
             noise = np.reshape(noise, noise.shape[0]*noise.shape[1]) * \
                 gain / 1.414
@@ -89,15 +94,14 @@ class MakeMasterBias(BaseImg):
             c, low, upp = sigmaclip(noise, low=3.5, high=3.5)
             bias_rn = c.std()
             self.logger.info("Amp%d read noise from bias in e-: %.3f" %
-                             ((ia + 1), bias_rn))
-            stacked.header['BIASRN%d' % (ia + 1)] = \
+                             (ia, bias_rn))
+            stacked.header['BIASRN%d' % ia] = \
                 (float("%.3f" % bias_rn), "RN in e- from bias")
             if self.config.instrument.plot_level >= 1:
                 # output filename stub
                 biasfnam = "bias_%05d_amp%d_rdnoise" % \
-                          (self.action.args.ccddata.header['FRAMENO'], ia+1)
-                plabel = '[ Img # %d' % self.action.args.ccddata.header[
-                    'FRAMENO']
+                          (stacked.header['FRAMENO'], ia)
+                plabel = '[ Img # %d' % stacked.header['FRAMENO']
                 plabel += ' (Bias)'
                 plabel += ' %s' % self.action.args.ccddata.header['BINNING']
                 plabel += ' %s' % self.action.args.ccddata.header['AMPMODE']
@@ -111,7 +115,7 @@ class MakeMasterBias(BaseImg):
                 x = np.linspace(low, upp, 500)
                 pdf = np.max(hist)*np.exp(-x**2/(2.*bias_rn**2))
                 p = figure(title=plabel+'BIAS NOISE amp %d = %.3f' %
-                           (ia+1, bias_rn),
+                           (ia, bias_rn),
                            x_axis_label='e-', y_axis_label='N',
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height)
@@ -138,7 +142,7 @@ class MakeMasterBias(BaseImg):
                          output_dir=self.config.instrument.output_directory)
         self.context.proctab.update_proctab(frame=stacked, suffix=suffix,
                                             newtype=self.action.args.new_type,
-                                            filename=self.action.args.name)
+                                            filename=stacked.header['OFNAME'])
         self.context.proctab.write_proctab()
         return Arguments(name=mbname)
     # END: class ProcessBias()

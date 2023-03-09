@@ -2,6 +2,7 @@ from keckdrpframework.primitives.base_primitive import BasePrimitive
 from kcwidrp.core.bokeh_plotting import bokeh_plot
 from kcwidrp.core.kcwi_plotting import get_plot_lims, oplot_slices, \
     set_plot_lims
+from kcwidrp.primitives.kcwi_file_primitives import plotlabel
 
 import time
 
@@ -24,12 +25,21 @@ class ArcOffsets(BasePrimitive):
         BasePrimitive.__init__(self, action, context)
         self.logger = context.pipeline_logger
 
+    def _pre_condition(self):
+        self.logger.info("Checking for master arc")
+        if 'MARC' in self.action.args.ccddata.header['IMTYPE']:
+            return True
+        else:
+            return False
+
     def _perform(self):
         self.logger.info("Finding inter-bar offsets")
+        nbars = self.config.instrument.NBARS
         arcs = self.context.arcs
         if arcs is not None:
             # Do we plot?
             do_plot = (self.config.instrument.plot_level >= 2)
+            plab = plotlabel(self.action.args)
             # Compare with reference arc
             reference_arc = arcs[self.config.instrument.REFBAR][:]
             tkwgt = signal.windows.tukey(len(reference_arc), alpha=0.2)
@@ -58,7 +68,7 @@ class ArcOffsets(BasePrimitive):
                                  (arc_number, int(arc_number/5), offset))
                 # display if requested
                 if do_plot and arc_number == next_bar_to_plot:
-                    p = figure(title=self.action.args.plotlabel +
+                    p = figure(title=plab +
                                "BAR OFFSET for Arc: %d Slice: %d = %d" %
                                (arc_number, int(arc_number/5), offset),
                                x_axis_label="CCD y (px)", y_axis_label="e-",
@@ -81,13 +91,13 @@ class ArcOffsets(BasePrimitive):
                             next_bar_to_plot = arc_number + 1
             # plot offsets
             if self.config.instrument.plot_level >= 1:
-                p = figure(title=self.action.args.plotlabel + "BAR OFFSETS ",
+                p = figure(title=plab + "BAR OFFSETS ",
                            x_axis_label="Bar #",
                            y_axis_label="Wave offset (px)",
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height)
-                p.diamond(list(range(120)), offsets, size=8)
-                xlim = [-1, 120]
+                p.diamond(list(range(nbars)), offsets, size=8)
+                xlim = [-1, nbars]
                 ylim = get_plot_lims(offsets)
                 p.xgrid.grid_line_color = None
                 oplot_slices(p, ylim)

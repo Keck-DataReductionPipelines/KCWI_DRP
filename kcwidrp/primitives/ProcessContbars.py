@@ -9,4 +9,3 @@ class ProcessContbars(BasePrimitive):
 
     def _perform(self):
         return self.action.args
-

@@ -1,6 +1,6 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_reader, \
-    master_bias_name
+    get_master_name
 
 import os
 
@@ -21,13 +21,13 @@ class SubtractBias(BasePrimitive):
 
         self.logger.info("Subtracting master bias")
         tab = self.context.proctab.search_proctab(frame=self.action.args.ccddata,
-                                             target_type=target_type,
-                                             nearest=True)
+                                                  target_type=target_type,
+                                                  nearest=True)
         self.logger.info("%d master bias frames found" % len(tab))
 
         if len(tab) > 0:
-            # mbname = get_master_name(tab, target_type)
-            mbname = master_bias_name(self.action.args.ccddata)
+            mbname = get_master_name(tab, target_type)
+            # mbname = master_bias_name(self.action.args.ccddata)
             self.logger.info("Reading image: %s" % mbname)
             mbias = kcwi_fits_reader(
                 os.path.join(self.context.config.instrument.cwd, 'redux',
@@ -35,12 +35,15 @@ class SubtractBias(BasePrimitive):
 
             # do the subtraction
             self.action.args.ccddata.data -= mbias.data
+            bsec, dsec, tsec, direc, amps, aoff = self.action.args.map_ccd
 
             # transfer bias read noise
             namps = self.action.args.ccddata.header['NVIDINP']
-            for ia in range(namps):
-                self.action.args.ccddata.header['BIASRN%d' % (ia + 1)] = \
-                    mbias.header['BIASRN%d' % (ia + 1)]
+            if len(amps) != namps:
+                self.logger.warning("Amp count disagreement!")
+            for ia in amps:
+                self.action.args.ccddata.header['BIASRN%d' % ia] = \
+                    mbias.header['BIASRN%d' % ia]
 
             self.action.args.ccddata.header[key] = (True, keycom)
             self.action.args.ccddata.header['MBFILE'] = (mbname,

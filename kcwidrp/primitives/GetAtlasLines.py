@@ -1,6 +1,7 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from kcwidrp.core.bokeh_plotting import bokeh_plot
 from kcwidrp.core.kcwi_plotting import save_plot
+from kcwidrp.primitives.kcwi_file_primitives import plotlabel
 
 from bokeh.plotting import figure
 from bokeh.models import Range1d
@@ -19,7 +20,7 @@ def gaus(x, a, mu, sigma):
     return a * np.exp(-(x - mu) ** 2 / (2. * sigma ** 2))
 
 
-def get_line_window(y, c, thresh=0., logger=None, strict=False):
+def get_line_window(y, c, thresh=0., logger=None, strict=False, maxwin=100):
     """Find a window that includes the fwhm of the line"""
     verbose = logger is not None
     nx = len(y)
@@ -58,6 +59,11 @@ def get_line_window(y, c, thresh=0., logger=None, strict=False):
             if verbose:
                 logger.info("Max check: high edge hit")
             return None, None, 0
+    # how big is our window?
+    if (x1 - x0) > maxwin:
+        if verbose:
+            logger.info("Window expanded beyond limit")
+        return None, None, 0
     # adjust starting window to center on max
     cmx = x0 + y[x0:x1+1].argmax()
     x0 = cmx - 2
@@ -168,7 +174,8 @@ def findpeaks(x, y, wid, sth, ath, pkg=None, verbose=False):
     if len(pks) > 0:
         cln_sgs, low, upp = sigmaclip(sgs, low=3., high=3.)
         for i in range(len(pks)):
-            if low < sgs[i] < upp:
+            # clean only blends (overly wide lines)
+            if sgs[i] < upp:
                 cpks.append(pks[i])
                 cvals.append(hgt[i])
         sgmn = cln_sgs.mean()
@@ -191,6 +198,13 @@ class GetAtlasLines(BasePrimitive):
         self.action.args.atmaxwave = None
         self.action.args.at_wave = None
         self.action.args.at_flux = None
+
+    def _pre_condition(self):
+        self.logger.info("Checking for master arc")
+        if 'MARC' in self.action.args.ccddata.header['IMTYPE']:
+            return True
+        else:
+            return False
 
     def _perform(self):
         """Get atlas line positions for wavelength fitting"""
@@ -242,141 +256,11 @@ class GetAtlasLines(BasePrimitive):
         self.action.args.atminwave = minwav
         self.action.args.atmaxwave = maxwav
         self.action.args.dichroic_fraction = dichroic_fraction
-        # get atlas sub spectrum
-        atspec = self.action.args.reflux[minrw:maxrw]
-        atwave = self.action.args.refwave[minrw:maxrw]
-        # get reference bar arc spectrum, pixel values, and prelim wavelengths
-        subxvals = xvals[minrow:maxrow]
-        subyvals = self.context.arcs[self.config.instrument.REFBAR][
-                   minrow:maxrow].copy()
-        subwvals = np.polyval(
-            self.action.args.twkcoeff[self.config.instrument.REFBAR],
-            subxvals)
-        # smooth subyvals
-        win = boxcar(3)
-        subyvals = sp.signal.convolve(subyvals, win, mode='same') / sum(win)
-        # find good peaks in arc spectrum
-        smooth_width = 4  # in pixels
-        # peak width
-        peak_width = int(self.action.args.atsig/abs(refbar_disp))
-        if peak_width < 4:
-            peak_width = 4
-        # slope threshold
-        slope_thresh = 0.7 * smooth_width / 2. / 100.
-        # slope_thresh = 0.7 * smooth_width / 1000.   # more severe for arc
-        # slope_thresh = 0.016 / peak_width
-        # get amplitude threshold
-        ampl_thresh = 0.
-        self.logger.info("Using a peak_width of %d px, a slope_thresh of %.5f "
-                         "a smooth_width of %d and an ampl_thresh of %.3f" %
-                         (peak_width, slope_thresh, smooth_width, ampl_thresh))
-        arc_cent, avwsg, arc_hgt = findpeaks(subwvals, subyvals, smooth_width,
-                                             slope_thresh, ampl_thresh,
-                                             peak_width)
-        avwfwhm = avwsg * 2.354
-        self.logger.info("Found %d lines with <sig> = %.3f (A),"
-                         " <FWHM> = %.3f (A)" % (len(arc_cent), avwsg,
-                                                 avwfwhm))
-        # fitting window based on grating type
-        if 'H' in self.action.args.grating or 'M' in self.action.args.grating:
-            fwid = avwfwhm
-        else:
-            fwid = avwsg
-        # clean near neighbors
-        spec_cent = arc_cent
-        spec_hgt = arc_hgt
-        #
-        # generate an atlas line list
-        refws = []      # atlas line wavelength
-        refas = []      # atlas line amplitude
-        rej_fit_w = []  # fit rejected atlas line wavelength
-        rej_fit_y = []  # fit rejected atlas line amplitude
-        rej_par_w = []  # par rejected atlas line wavelength
-        rej_par_a = []  # par rejected atlas line amplitude
-        nrej = 0
-        # look at each arc spectrum line
-        for i, pk in enumerate(spec_cent):
-            if pk <= minwav or pk >= maxwav:
-                continue
-            # get atlas pixel position corresponding to arc line
-            try:
-                line_x = [ii for ii, v in enumerate(atwave) if v >= pk][0]
-                # get window around atlas line to fit
-                minow, maxow, count = get_line_window(atspec, line_x)
-            except IndexError:
-                count = 0
-                minow = None
-                maxow = None
-                self.logger.warning("line at edge: %d, %.2f, %.f2f" %
-                                    (i, pk, max(atwave)))
-            # is resulting window large enough for fitting?
-            if count < 5 or not minow or not maxow:
-                # keep track of fit rejected lines
-                rej_fit_w.append(pk)
-                rej_fit_y.append(spec_hgt[i])
-                nrej += 1
-                self.logger.info("Atlas window rejected for line %.3f" % pk)
-                continue
-            # get data to fit
-            yvec = atspec[minow:maxow + 1]
-            xvec = atwave[minow:maxow + 1]
-            # attempt Gaussian fit
-            try:
-                fit, _ = curve_fit(gaus, xvec, yvec, p0=[spec_hgt[i], pk, 1.])
-            except RuntimeError:
-                # keep track of Gaussian fit rejected lines
-                rej_fit_w.append(pk)
-                rej_fit_y.append(spec_hgt[i])
-                nrej += 1
-                self.logger.info("Atlas Gaussian fit rejected for line %.3f" %
-                                 pk)
-                continue
-            # get interpolation function of atlas line
-            int_line = interpolate.interp1d(xvec, yvec, kind='cubic',
-                                            bounds_error=False,
-                                            fill_value='extrapolate')
-            # use very dense pixel sampling
-            x_dense = np.linspace(min(xvec), max(xvec), num=1000)
-            # resample line with dense sampling
-            y_dense = int_line(x_dense)
-            # get peak amplitude and wavelength
-            pki = y_dense.argmax()
-            pkw = x_dense[pki]
-            # calculate some diagnostic parameters for the line
-            # how many atlas pixels have we moved?
-            xoff = abs(pkw - fit[1]) / self.action.args.refdisp
-            # what is the wavelength offset in Angstroms?
-            woff = abs(pkw - pk)
-            # what fraction of the canonical fit width is the line?
-            wrat = abs(fit[2]) / fwid  # can be neg or pos
-            # current criteria for these diagnostic parameters
-            if woff > 5. or xoff > 1.5 or wrat > 1.1:
-                # keep track of par rejected atlas lines
-                rej_par_w.append(pkw)
-                rej_par_a.append(y_dense[pki])
-                nrej += 1
-                self.logger.info("Atlas line parameters rejected for line %.3f"
-                                 % pk)
-                self.logger.info("woff = %.3f, xoff = %.2f, wrat = %.3f" %
-                                 (woff, xoff, wrat))
-                continue
-            refws.append(pkw)
-            refas.append(y_dense[pki])
-        # eliminate faintest lines if we have a large number
-        self.logger.info("number of remaining lines: %d" % len(refas))
-        if len(refas) > 400:
-            # sort on flux
-            sf = np.argsort(refas)
-            refws = np.asarray(refws)[sf]
-            refas = np.asarray(refas)[sf]
-            # remove faintest two-thirds
-            hlim = int(len(refas) * 0.67)
-            refws = refws[hlim:]
-            refas = refas[hlim:]
-            # sort back onto wavelength
-            sw = np.argsort(refws)
-            refws = refws[sw].tolist()
-            refas = refas[sw].tolist()
+        # output filename stub
+        atfnam = "arc_%05d_%s_%s_%s_atlines" % \
+                 (self.action.args.ccddata.header['FRAMENO'],
+                  self.action.args.illum, self.action.args.grating,
+                  self.action.args.ifuname)
         # check if line list was given on command line
         if self.config.instrument.LINELIST:
             with open(self.config.instrument.LINELIST) as llfn:
@@ -391,58 +275,225 @@ class GetAtlasLines(BasePrimitive):
             self.logger.info("Read %d lines from %s" %
                              (len(refws), self.config.instrument.LINELIST))
         else:
+            # get atlas sub spectrum
+            atspec = self.action.args.reflux[minrw:maxrw]
+            atwave = self.action.args.refwave[minrw:maxrw]
+            # get ref bar arc spectrum, pixel values, and prelim wavelengths
+            subxvals = xvals[minrow:maxrow]
+            subyvals = self.context.arcs[self.config.instrument.REFBAR][
+                       minrow:maxrow].copy()
+            subwvals = np.polyval(
+                self.action.args.twkcoeff[self.config.instrument.REFBAR],
+                subxvals)
+            # smooth subyvals
+            win = boxcar(3)
+            subyvals = sp.signal.convolve(subyvals, win, mode='same') / sum(win)
+            # find good peaks in arc spectrum
+            smooth_width = 4  # in pixels
+            # peak width
+            peak_width = int(self.action.args.atsig/abs(refbar_disp))
+            if peak_width < 4:
+                peak_width = 4
+            # slope threshold
+            slope_thresh = 0.7 * smooth_width / 2. / 100.
+            # slope_thresh = 0.7 * smooth_width / 1000.   # more severe for arc
+            # slope_thresh = 0.016 / peak_width
+            # get amplitude threshold
+            ampl_thresh = 0.
+            self.logger.info("Using a peak_width of %d px, a slope_thresh of "
+                             "%.5f a smooth_width of %d and an ampl_thresh of "
+                             "%.3f" % (peak_width, slope_thresh, smooth_width,
+                                       ampl_thresh))
+            arc_cent, avwsg, arc_hgt = findpeaks(subwvals, subyvals,
+                                                 smooth_width, slope_thresh,
+                                                 ampl_thresh,
+                                                 peak_width)
+            avwfwhm = avwsg * 2.354
+            self.logger.info("Found %d lines with <sig> = %.3f (A),"
+                             " <FWHM> = %.3f (A)" % (len(arc_cent), avwsg,
+                                                     avwfwhm))
+            # fitting window based on grating type
+            if 'H' in self.action.args.grating or \
+                    'M' in self.action.args.grating:
+                fwid = avwfwhm
+            else:
+                fwid = avwsg
+            # clean near neighbors
+            spec_cent = arc_cent
+            spec_hgt = arc_hgt
+            #
+            # generate an atlas line list
+            refws = []      # atlas line wavelength
+            refas = []      # atlas line amplitude
+            rej_win_w = []  # win rejected atlas line wavelength
+            rej_win_a = []  # win rejected atlas line amplitude
+            rej_fit_w = []  # fit rejected atlas line wavelength
+            rej_fit_a = []  # fit rejected atlas line amplitude
+            rej_par_w = []  # par rejected atlas line wavelength
+            rej_par_a = []  # par rejected atlas line amplitude
+            rej_dup_w = []  # dup rejected atlas line wavelength
+            rej_dup_a = []  # dup rejected atlas line wavelength
+            rej_fnt_w = []  # fnt rejected atlas line wavelength
+            rej_fnt_a = []  # fnt rejected atlas line wavelength
+            nrej = 0
+            # look at each arc spectrum line
+            for i, pk in enumerate(spec_cent):
+                if pk <= minwav or pk >= maxwav:
+                    continue
+                # get atlas pixel position corresponding to arc line
+                try:
+                    line_x = [ii for ii, v in enumerate(atwave) if v >= pk][0]
+                    # get window around atlas line to fit
+                    minow, maxow, count = get_line_window(atspec, line_x)
+                except IndexError:
+                    count = 0
+                    minow = None
+                    maxow = None
+                    self.logger.warning("line at edge: %d, %.2f, %.f2f" %
+                                        (i, pk, max(atwave)))
+                # is resulting window large enough for fitting?
+                if count < 5 or not minow or not maxow:
+                    # keep track of fit rejected lines
+                    rej_win_w.append(pk)
+                    rej_win_a.append(spec_hgt[i])
+                    nrej += 1
+                    self.logger.info("Atlas window rejected for line %.3f" % pk)
+                    continue
+                # get data to fit
+                yvec = atspec[minow:maxow + 1]
+                xvec = atwave[minow:maxow + 1]
+                # attempt Gaussian fit
+                try:
+                    fit, _ = curve_fit(gaus, xvec, yvec, p0=[spec_hgt[i], pk,
+                                                             1.])
+                except RuntimeError:
+                    # keep track of Gaussian fit rejected lines
+                    rej_fit_w.append(pk)
+                    rej_fit_a.append(spec_hgt[i])
+                    nrej += 1
+                    self.logger.info("Atlas Gaussian fit rejected for line "
+                                     "%.3f" % pk)
+                    continue
+                # get interpolation function of atlas line
+                int_line = interpolate.interp1d(xvec, yvec, kind='cubic',
+                                                bounds_error=False,
+                                                fill_value='extrapolate')
+                # use very dense pixel sampling
+                x_dense = np.linspace(min(xvec), max(xvec), num=1000)
+                # resample line with dense sampling
+                y_dense = int_line(x_dense)
+                # get peak amplitude and wavelength
+                pki = y_dense.argmax()
+                pkw = x_dense[pki]
+                # calculate some diagnostic parameters for the line
+                # how many atlas pixels have we moved?
+                xoff = abs(pkw - fit[1]) / self.action.args.refdisp
+                # what is the wavelength offset in Angstroms?
+                woff = abs(pkw - pk)
+                # what fraction of the canonical fit width is the line?
+                wrat = abs(fit[2]) / fwid  # can be neg or pos
+                # current criteria for these diagnostic parameters
+                if woff > 5. or xoff > 1.5 or wrat > 1.1:
+                    # keep track of par rejected atlas lines
+                    rej_par_w.append(pk)
+                    rej_par_a.append(spec_hgt[i])
+                    nrej += 1
+                    self.logger.info("Atlas line parameters rejected for line "
+                                     "%.3f" % pk)
+                    self.logger.info("woff = %.3f, xoff = %.2f, wrat = %.3f" %
+                                     (woff, xoff, wrat))
+                    continue
+                # check for duplicated lines
+                if pkw in refws:
+                    rej_dup_w.append(pk)
+                    rej_dup_a.append(spec_hgt[i])
+                    nrej += 1
+                    self.logger.info("Atlas line duplicated for line %.3f" % pk)
+                    continue
+                self.logger.info("Atlas line accepted: %.3f" % pkw)
+                refws.append(pkw)
+                refas.append(y_dense[pki])
+            # eliminate faintest lines if we have a large number
+            self.logger.info("number of remaining lines: %d" % len(refas))
+            if len(refas) > 400:
+                # sort on flux
+                sf = np.argsort(refas)
+                refws = np.asarray(refws)[sf]
+                refas = np.asarray(refas)[sf]
+                # remove faintest two-thirds
+                hlim = int(len(refas) * 0.67)
+                refws = refws[hlim:]
+                refas = refas[hlim:]
+                rej_fnt_w = refws[:hlim]
+                rej_fnt_a = refas[:hlim]
+                # sort back onto wavelength
+                sw = np.argsort(refws)
+                refws = refws[sw].tolist()
+                refas = refas[sw].tolist()
+
             self.logger.info("Using %d generated lines" % len(refws))
-        # store wavelengths, fluxes
-        self.action.args.at_wave = refws
-        self.action.args.at_flux = refas
-        # output filename stub
-        atfnam = "arc_%05d_%s_%s_%s_atlines" % \
-            (self.action.args.ccddata.header['FRAMENO'],
-             self.action.args.illum, self.action.args.grating,
-             self.action.args.ifuname)
+
+            # plot final list of Atlas lines and show rejections
+            norm_fac = np.nanmax(atspec)
+            if self.config.instrument.plot_level >= 1:
+                p = figure(title=plotlabel(self.action.args) +
+                           "ATLAS LINES Ngood = %d, Nrej = %d" % (len(refws),
+                                                                  nrej),
+                           x_axis_label="Wavelength (A)",
+                           y_axis_label="Normalized Flux",
+                           plot_width=self.config.instrument.plot_width,
+                           plot_height=self.config.instrument.plot_height)
+                p.line(subwvals, subyvals / np.nanmax(subyvals),
+                       legend_label='RefArc', color='lightgray')
+                p.line(atwave, atspec / norm_fac, legend_label='Atlas',
+                       color='blue')
+                # Rejected: window bad
+                if len(rej_win_w) > 0:
+                    p.diamond(rej_win_w, rej_win_a / norm_fac,
+                              legend_label='WinRej', color='cyan', size=8)
+                # Rejected: fit failure
+                if len(rej_fit_w) > 0:
+                    p.diamond(rej_fit_w, rej_fit_a / norm_fac,
+                              legend_label='FitRej', color='red', size=8)
+                # Rejected: line parameter outside range
+                if len(rej_par_w) > 0:
+                    p.diamond(rej_par_w, rej_par_a / norm_fac,
+                              legend_label='ParRej', color='orange', size=8)
+                # Rejected: duplicated line
+                if len(rej_dup_w) > 0:
+                    p.diamond(rej_dup_w, rej_dup_a / norm_fac,
+                              legend_label='DupRej', color='brown', size=8)
+                # Rejected: faint
+                if len(rej_fnt_w) > 0:
+                    p.diamond(rej_fnt_w, rej_fnt_a / norm_fac,
+                              legend_label='FntRej', color='magenta', size=8)
+                # Kept
+                p.diamond(refws, refas / norm_fac, legend_label='Kept',
+                          color='green', size=16)
+                p.line([minwav, minwav], [-0.1, 1.1], legend_label='WavLim',
+                       color='brown')
+                p.line([maxwav, maxwav], [-0.1, 1.1], color='brown')
+                p.x_range = Range1d(min([min(subwvals), minwav-10.]),
+                                    max(subwvals))
+                p.y_range = Range1d(-0.04, 1.04)
+                bokeh_plot(p, self.context.bokeh_session)
+                if self.config.instrument.plot_level >= 2:
+                    input("Next? <cr>: ")
+                else:
+                    time.sleep(self.config.instrument.plot_pause)
+                save_plot(p, filename=atfnam+".png")
+
         # output directory
         output_dir = os.path.join(self.config.instrument.cwd,
                                   self.config.instrument.output_directory)
         # write out final atlas line list
         atlines = np.array([refws, refas])
         atlines = atlines.T
-        with open(os.path.join(output_dir, atfnam+'.txt'), 'w') as atlfn:
+        with open(os.path.join(output_dir, atfnam + '.txt'), 'w') as atlfn:
             np.savetxt(atlfn, atlines, fmt=['%12.3f', '%12.3f'])
-        # plot final list of Atlas lines and show rejections
-        norm_fac = np.nanmax(atspec)
-        if self.config.instrument.plot_level >= 1:
-            p = figure(title=self.action.args.plotlabel +
-                       "ATLAS LINES Ngood = %d, Nrej = %d" % (len(refws), nrej),
-                       x_axis_label="Wavelength (A)",
-                       y_axis_label="Normalized Flux",
-                       plot_width=self.config.instrument.plot_width,
-                       plot_height=self.config.instrument.plot_height)
-            p.line(subwvals, subyvals / np.nanmax(subyvals),
-                   legend_label='RefArc', color='lightgray')
-            p.line(atwave, atspec / norm_fac, legend_label='Atlas',
-                   color='blue')
-            # Rejected: nearby neighbor
-            # p.diamond(rej_neigh_w, rej_neigh_y / norm_fac,
-            #          legend_label='NeighRej', color='cyan', size=8)
-            # Rejected: fit failure
-            p.diamond(rej_fit_w, rej_fit_y / norm_fac, legend_label='FitRej',
-                      color='red', size=8)
-            # Rejected: line parameter outside range
-            p.diamond(rej_par_w, rej_par_a / norm_fac, legend_label='ParRej',
-                      color='orange', size=8)
-            p.diamond(refws, refas / norm_fac, legend_label='Kept',
-                      color='green', size=10)
-            p.line([minwav, minwav], [-0.1, 1.1], legend_label='WavLim',
-                   color='brown')
-            p.line([maxwav, maxwav], [-0.1, 1.1], color='brown')
-            p.x_range = Range1d(min([min(subwvals), minwav-10.]), max(subwvals))
-            p.y_range = Range1d(-0.04, 1.04)
-            bokeh_plot(p, self.context.bokeh_session)
-            if self.config.instrument.plot_level >= 2:
-                input("Next? <cr>: ")
-            else:
-                time.sleep(self.config.instrument.plot_pause)
-            save_plot(p, filename=atfnam+".png")
+        # store wavelengths, fluxes
+        self.action.args.at_wave = refws
+        self.action.args.at_flux = refas
         self.logger.info("Final atlas list has %d lines" % len(refws))
 
         log_string = GetAtlasLines.__module__
