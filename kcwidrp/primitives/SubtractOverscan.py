@@ -19,7 +19,7 @@ class SubtractOverscan(BasePrimitive):
 
     def _perform(self):
         # camera
-        camera = self.action.args.ccddata.header['CAMERA']
+        camera = self.action.args.ccddata.header['CAMERA'].upper()
         # image sections for each amp
         bsec, dsec, tsec, direc, amps, aoff = self.action.args.map_ccd
         namps = len(amps)

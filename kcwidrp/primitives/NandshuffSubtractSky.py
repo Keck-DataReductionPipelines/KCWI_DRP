@@ -42,7 +42,7 @@ class NandshuffSubtractSky(BasePrimitive):
         shrows = self.action.args.ccddata.header['SHUFROWS']
         nshfup = self.action.args.ccddata.header['NSHFUP']
         nshfdn = self.action.args.ccddata.header['NSHFDN']
-        camera = self.action.args.ccddata.header['CAMERA']
+        camera = self.action.args.ccddata.header['CAMERA'].upper()
         ybin = int(self.action.args.ccddata.header['BINNING'].split(',')[1])
 
         # units

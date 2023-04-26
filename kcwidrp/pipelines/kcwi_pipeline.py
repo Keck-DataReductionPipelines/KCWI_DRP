@@ -314,7 +314,7 @@ class Kcwi_pipeline(BasePipeline):
             return False
 
         groupid = action.args.groupid
-        camera = action.args.ccddata.header['CAMERA']
+        camera = action.args.ccddata.header['CAMERA'].upper()
         self.context.pipeline_logger.info("******* GROUPID is %s " %
                                           action.args.groupid)
         self.context.pipeline_logger.info(
