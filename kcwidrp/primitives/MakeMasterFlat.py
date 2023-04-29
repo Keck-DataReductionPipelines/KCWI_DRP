@@ -143,22 +143,22 @@ class MakeMasterFlat(BaseImg):
             fitl = int(4/xbin)
             fitr = int(24/xbin)
 
-            # un-vignetted slice position range
-            flatl = int(34/xbin)
-            flatr = int(72/xbin)
-
+            # flat fitting slice position range
+            ffleft = int(10 / xbin)
+            ffright = int(70 / xbin)
         else:   # Red
             # vignetted slice position range
-            fitl = int(52 / xbin)
-            fitr = int(72 / xbin)
+            fitl = int(114 / xbin)
+            fitr = int(134 / xbin)
 
-            # un-vignetted slice position range
-            flatl = int(4 / xbin)
-            flatr = int(42 / xbin)
+            # flat fitting slice position range
+            ffleft = int(70 / xbin)
+            ffright = int(130 / xbin)
 
-        # flat fitting slice position range
-        ffleft = int(10/xbin)
-        ffright = int(70/xbin)
+        # un-vignetted slice position range
+        flatl = int(34 / xbin)
+        flatr = int(72 / xbin)
+
         nrefx = int(ffright - ffleft)
 
         buffer = 6.0/float(xbin)
