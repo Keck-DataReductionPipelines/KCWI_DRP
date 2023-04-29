@@ -138,13 +138,23 @@ class MakeMasterFlat(BaseImg):
 
         # Parameters for fitting
 
-        # vignetted slice position range
-        fitl = int(4/xbin)
-        fitr = int(24/xbin)
+        if self.action.args.camera == 0:  # Blue
+            # vignetted slice position range
+            fitl = int(4/xbin)
+            fitr = int(24/xbin)
 
-        # un-vignetted slice position range
-        flatl = int(34/xbin)
-        flatr = int(72/xbin)
+            # un-vignetted slice position range
+            flatl = int(34/xbin)
+            flatr = int(72/xbin)
+
+        else:   # Red
+            # vignetted slice position range
+            fitl = int(52 / xbin)
+            fitr = int(72 / xbin)
+
+            # un-vignetted slice position range
+            flatl = int(4 / xbin)
+            flatr = int(42 / xbin)
 
         # flat fitting slice position range
         ffleft = int(10/xbin)
