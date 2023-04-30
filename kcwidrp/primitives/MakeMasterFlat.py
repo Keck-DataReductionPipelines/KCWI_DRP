@@ -146,6 +146,8 @@ class MakeMasterFlat(BaseImg):
             # flat fitting slice position range
             ffleft = int(10 / xbin)
             ffright = int(70 / xbin)
+
+            corlim = 0
         else:   # Red
             # vignetted slice position range
             fitl = int(114 / xbin)
@@ -154,6 +156,8 @@ class MakeMasterFlat(BaseImg):
             # flat fitting slice position range
             ffleft = int(70 / xbin)
             ffright = int(130 / xbin)
+
+            corlim = int(140 / xbin)
 
         # un-vignetted slice position range
         flatl = int(34 / xbin)
@@ -303,8 +307,12 @@ class MakeMasterFlat(BaseImg):
                     time.sleep(self.config.instrument.plot_pause)
 
             # figure out where the correction applies
-            qcor = [i for i, v in enumerate(posmap.data.flat)
-                    if 0 <= v <= (xinter-buffer)]
+            if self.action.args.camera == 0:
+                qcor = [i for i, v in enumerate(posmap.data.flat)
+                        if corlim <= v <= (xinter-buffer)]
+            else:
+                qcor = [i for i, v in enumerate(posmap.data.flat)
+                        if (xinter + buffer) <= v <= corlim]
             # apply the correction!
             self.logger.info("Applying vignetting correction...")
             for i in qcor:
