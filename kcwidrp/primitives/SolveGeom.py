@@ -185,7 +185,7 @@ class SolveGeom(BasePrimitive):
             dichroic_fraction = 1.
 
         # Package geometry data
-        ofname = self.action.args.name
+        ofname = self.action.args.ccddata.header['OFNAME']
         self.action.args.geometry_file = os.path.join(
             self.config.instrument.output_directory,
             strip_fname(ofname) + '_geom.pkl')
