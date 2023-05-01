@@ -85,6 +85,6 @@ class MakeMasterContbars(BaseImg):
 
         self.logger.info(log_string)
 
-        self.context.proctab.write_proctab()
+        self.context.proctab.write_proctab(tfil=self.config.instrument.procfile)
         return self.action.args
     # END: class MakeMasterContbars()

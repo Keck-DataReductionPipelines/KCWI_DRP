@@ -84,6 +84,6 @@ class MakeMasterArc(BaseImg):
                                                 filename=self.action.args.name)
         self.logger.info(log_string)
 
-        self.context.proctab.write_proctab()
+        self.context.proctab.write_proctab(tfil=self.config.instrument.procfile)
         return self.action.args
     # END: class MakeMasterArc()

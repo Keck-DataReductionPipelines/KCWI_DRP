@@ -71,6 +71,6 @@ class MakeMasterDark(BaseImg):
         self.context.proctab.update_proctab(frame=stacked, suffix=suffix,
                                             newtype=args.new_type,
                                             filename=stacked.header['OFNAME'])
-        self.context.proctab.write_proctab()
+        self.context.proctab.write_proctab(tfil=self.config.instrument.procfile)
         return self.action.args
     # END: class MakeMasterDark()
