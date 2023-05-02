@@ -80,7 +80,7 @@ class MakeMasterSky(BaseImg):
 
         # get root for maps
         tab = self.context.proctab.search_proctab(
-            frame=self.action.args.ccddata, target_type='ARCLAMP',
+            frame=self.action.args.ccddata, target_type='MARC',
             target_group=self.action.args.groupid)
         if len(tab) <= 0:
             self.logger.error("Geometry not solved!")
