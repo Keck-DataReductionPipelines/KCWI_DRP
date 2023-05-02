@@ -881,6 +881,7 @@ class MakeMasterFlat(BaseImg):
                                             newtype=self.action.args.new_type,
                                             filename=stacked.header['OFNAME'])
         self.context.proctab.write_proctab(tfil=self.config.instrument.procfile)
+        self.action.args.name = stacked.header['OFNAME']
 
         self.logger.info(log_string)
         return self.action.args

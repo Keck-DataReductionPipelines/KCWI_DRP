@@ -73,6 +73,7 @@ class MakeMasterContbars(BaseImg):
                                                 newtype=args.new_type,
                                                 filename=stacked.header[
                                                     'OFNAME'])
+            self.action.args.name = stacked.header['OFNAME']
         else:
             self.action.args.ccddata.header['IMTYPE'] = args.new_type
             self.action.args.ccddata.header['HISTORY'] = log_string
