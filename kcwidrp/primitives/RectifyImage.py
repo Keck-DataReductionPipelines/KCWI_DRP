@@ -23,6 +23,7 @@ class RectifyImage(BasePrimitive):
         # get camera
         camera = self.action.args.ccddata.header['CAMERA'].upper()
 
+        # Upper Right Amp
         if '__B' in ampmode or '__G' in ampmode:
             newimg = np.rot90(self.action.args.ccddata.data, 2)
             self.action.args.ccddata.data = newimg
@@ -42,6 +43,7 @@ class RectifyImage(BasePrimitive):
             else:
                 self.logger.info("No flags data to rectify")
             did_rectify = True
+        # Lower Right Amp
         elif '__D' in ampmode or '__F' in ampmode:
             newimg = np.fliplr(self.action.args.ccddata.data)
             self.action.args.ccddata.data = newimg
@@ -61,6 +63,7 @@ class RectifyImage(BasePrimitive):
             else:
                 self.logger.info("No flags data to rectify")
             did_rectify = True
+        # Upper Left Amp
         elif '__A' in ampmode or '__H' in ampmode or 'TUP' in ampmode:
             newimg = np.flipud(self.action.args.ccddata.data)
             self.action.args.ccddata.data = newimg
@@ -80,12 +83,14 @@ class RectifyImage(BasePrimitive):
             else:
                 self.logger.info("No flags data to rectify")
             did_rectify = True
+        # Blue Lower Left Amps and all Red amps are already rectified
         else:
             if 'RED' in camera:
                 self.logger.info("Red images are already rectified")
                 did_rectify = True
             elif 'BLUE' in camera:
-                if 'TBO' in ampmode or 'ALL' in ampmode:
+                if 'TBO' in ampmode or 'ALL' in ampmode or \
+                        '__C' in ampmode or '__E' in ampmode:
                     self.logger.info("Blue ampmode %s images are already "
                                      "rectified", ampmode)
                     did_rectify = True
