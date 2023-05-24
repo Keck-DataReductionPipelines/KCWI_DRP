@@ -96,7 +96,7 @@ class MakeCube(BasePrimitive):
         self.logger.info("Generating data cube")
         # Find and read geometry transformation
         tab = self.context.proctab.search_proctab(frame=self.action.args.ccddata,
-                                             target_type='ARCLAMP',
+                                             target_type='MARC',
                                              nearest=True)
         if not len(tab):
             self.logger.error("No reference geometry, cannot make cube!")
@@ -419,7 +419,7 @@ class MakeCube(BasePrimitive):
             self.context.proctab.update_proctab(frame=self.action.args.ccddata,
                                                 suffix="icube",
                                                 filename=self.action.args.name)
-            self.context.proctab.write_proctab()
+            self.context.proctab.write_proctab(tfil=self.config.instrument.procfile)
 
             # check for obj, sky outputs
             if obj is not None:

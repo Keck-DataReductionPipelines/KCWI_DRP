@@ -76,7 +76,7 @@ class MakeMasterFlat(BaseImg):
 
         # get root for maps
         tab = self.context.proctab.search_proctab(
-            frame=self.action.args.ccddata, target_type='ARCLAMP',
+            frame=self.action.args.ccddata, target_type='MARC',
             target_group=self.action.args.groupid)
         if len(tab) <= 0:
             self.logger.error("Geometry not solved!")
@@ -138,17 +138,31 @@ class MakeMasterFlat(BaseImg):
 
         # Parameters for fitting
 
-        # vignetted slice position range
-        fitl = int(4/xbin)
-        fitr = int(24/xbin)
+        if self.action.args.camera == 0:  # Blue
+            # vignetted slice position range
+            fitl = int(4/xbin)
+            fitr = int(24/xbin)
+
+            # flat fitting slice position range
+            ffleft = int(10 / xbin)
+            ffright = int(70 / xbin)
+
+            corlim = 0
+        else:   # Red
+            # vignetted slice position range
+            fitl = int(114 / xbin)
+            fitr = int(134 / xbin)
+
+            # flat fitting slice position range
+            ffleft = int(70 / xbin)
+            ffright = int(130 / xbin)
+
+            corlim = int(140 / xbin)
 
         # un-vignetted slice position range
-        flatl = int(34/xbin)
-        flatr = int(72/xbin)
+        flatl = int(34 / xbin)
+        flatr = int(72 / xbin)
 
-        # flat fitting slice position range
-        ffleft = int(10/xbin)
-        ffright = int(70/xbin)
         nrefx = int(ffright - ffleft)
 
         buffer = 6.0/float(xbin)
@@ -293,8 +307,12 @@ class MakeMasterFlat(BaseImg):
                     time.sleep(self.config.instrument.plot_pause)
 
             # figure out where the correction applies
-            qcor = [i for i, v in enumerate(posmap.data.flat)
-                    if 0 <= v <= (xinter-buffer)]
+            if self.action.args.camera == 0:
+                qcor = [i for i, v in enumerate(posmap.data.flat)
+                        if corlim <= v <= (xinter-buffer)]
+            else:
+                qcor = [i for i, v in enumerate(posmap.data.flat)
+                        if (xinter + buffer) <= v <= corlim]
             # apply the correction!
             self.logger.info("Applying vignetting correction...")
             for i in qcor:
@@ -862,7 +880,8 @@ class MakeMasterFlat(BaseImg):
         self.context.proctab.update_proctab(frame=stacked, suffix=suffix,
                                             newtype=self.action.args.new_type,
                                             filename=stacked.header['OFNAME'])
-        self.context.proctab.write_proctab()
+        self.context.proctab.write_proctab(tfil=self.config.instrument.procfile)
+        self.action.args.name = stacked.header['OFNAME']
 
         self.logger.info(log_string)
         return self.action.args

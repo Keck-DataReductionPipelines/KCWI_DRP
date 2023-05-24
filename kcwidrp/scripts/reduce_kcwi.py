@@ -193,6 +193,13 @@ def main():
                 args.atlas_line_list)
             framework.config.instrument.LINELIST = args.atlas_line_list
 
+    # update proc table argument
+    if args.proctab:
+        framework.context.pipeline_logger.info(
+            "Using proc table file %s" % args.proctab
+        )
+        framework.config.instrument.procfile = args.proctab
+
     # start the bokeh server is requested by the configuration parameters
     if framework.config.instrument.enable_bokeh is True:
         if check_running_process(process='bokeh') is False:

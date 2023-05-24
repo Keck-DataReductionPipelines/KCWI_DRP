@@ -66,6 +66,8 @@ class Proctab:
                       'mbias': 1,
                       'int': 1,
                       'intd': 2,
+                      'mcbars': 3,
+                      'marc': 3,
                       'mflat': 4,
                       'sflat': 4,
                       'intf': 4,
@@ -86,6 +88,10 @@ class Proctab:
                 frame.header['STATEID'] = 'NONE'
             if 'GROUPID' not in frame.header:
                 frame.header['GROUPID'] = "NONE"
+            else:
+                grpid = frame.header['GROUPID'].strip()
+                if len(grpid) <= 0:
+                    frame.header['GROUPID'] = "NONE"
             #    dto = self.frame.header['DATE-OBS']
             #    fno = self.frame.header['FRAMENO']
             #    self.frame.header['GROUPID'] = "%s-%s" % (dto, fno)

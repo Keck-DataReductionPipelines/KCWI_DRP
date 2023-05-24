@@ -74,7 +74,7 @@ def plotlabel(args):
     lab += "Slicer: %s, " % args.ifuname
     lab += "Grating: %s, " % args.grating
     lab += "CWave: %d" % int(args.cwave)
-    if 'BLUE' in args.ccddata.header['CAMERA']:
+    if 'BLUE' in args.ccddata.header['CAMERA'].upper():
         lab += ", Filter: %s " % args.filter
     lab += "] "
     return lab
@@ -449,7 +449,7 @@ class ingest_file(BasePrimitive):
 
         namps = self.namps()    # int(self.get_keyword('NVIDINP'))
         # TODO: check namps
-        camera = self.get_keyword('CAMERA')
+        camera = self.get_keyword('CAMERA').upper()
         ampmode = self.get_keyword('AMPMODE')
         # section lists
         bsec = []
@@ -561,6 +561,12 @@ class ingest_file(BasePrimitive):
 
         imtype = self.get_keyword("IMTYPE")
         groupid = self.get_keyword("GROUPID")
+
+        if groupid is None:
+            groupid = "NONE"
+        else:
+            if len(groupid) <= 0:
+               groupid = "NONE"
         if imtype is None:
             fname = os.path.basename(self.action.args.name)
             self.logger.warn(f"Unknown IMTYPE {fname}")
@@ -867,14 +873,15 @@ def fix_red_header(ccddata):
     # are we red?
     if 'RED' in ccddata.header['CAMERA'].upper():
         # Fix red headers during Caltech AIT
-        # Add DCS keywords
-        ccddata.header['TARGNAME'] = ccddata.header['OBJECT']
-        dateend = ccddata.header['DATE-END']
-        de = datetime.fromisoformat(dateend)
-        day_frac = de.hour / 24. + de.minute / 1440. + de.second / 86400.
-        jd = datetime.date(de).toordinal() + day_frac + 1721424.5
-        mjd = jd - 2400000.5
-        ccddata.header['MJD'] = mjd
+        if 'TELESCOP' not in ccddata.header:
+            # Add DCS keywords
+            ccddata.header['TARGNAME'] = ccddata.header['OBJECT']
+            dateend = ccddata.header['DATE-END']
+            de = datetime.fromisoformat(dateend)
+            day_frac = de.hour / 24. + de.minute / 1440. + de.second / 86400.
+            jd = datetime.date(de).toordinal() + day_frac + 1721424.5
+            mjd = jd - 2400000.5
+            ccddata.header['MJD'] = mjd
         # Add NVIDINP
         ccddata.header['NVIDINP'] = ccddata.header['TAPLINES']
         # Add GAINMUL

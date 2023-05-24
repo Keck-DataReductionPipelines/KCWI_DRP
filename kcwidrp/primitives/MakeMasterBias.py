@@ -29,7 +29,7 @@ class MakeMasterBias(BaseImg):
         self.context.proctab.update_proctab(frame=self.action.args.ccddata,
                                             suffix='RAW',
                                             filename=self.action.args.name)
-        self.context.proctab.write_proctab()
+        self.context.proctab.write_proctab(tfil=self.config.instrument.procfile)
         # Get bias count
         self.logger.info("Checking precondition for MakeMasterBias")
         self.combine_list = self.context.proctab.search_proctab(
@@ -143,6 +143,6 @@ class MakeMasterBias(BaseImg):
         self.context.proctab.update_proctab(frame=stacked, suffix=suffix,
                                             newtype=self.action.args.new_type,
                                             filename=stacked.header['OFNAME'])
-        self.context.proctab.write_proctab()
+        self.context.proctab.write_proctab(tfil=self.config.instrument.procfile)
         return Arguments(name=mbname)
     # END: class ProcessBias()

@@ -69,7 +69,7 @@ class WavelengthCorrections(BasePrimitive):
         self.context.proctab.update_proctab(frame=self.action.args.ccddata,
                                             suffix=f'_{suffix}w',
                                             filename=self.action.args.name)
-        self.context.proctab.write_proctab()
+        self.context.proctab.write_proctab(tfil=self.config.instrument.procfile)
 
         # Unsure here: Is this right? it seems to make DAR happy
         self.action.args.ccddata = obj

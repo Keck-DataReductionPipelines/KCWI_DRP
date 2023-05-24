@@ -42,7 +42,7 @@ class NandshuffSubtractSky(BasePrimitive):
         shrows = self.action.args.ccddata.header['SHUFROWS']
         nshfup = self.action.args.ccddata.header['NSHFUP']
         nshfdn = self.action.args.ccddata.header['NSHFDN']
-        camera = self.action.args.ccddata.header['CAMERA']
+        camera = self.action.args.ccddata.header['CAMERA'].upper()
         ybin = int(self.action.args.ccddata.header['BINNING'].split(',')[1])
 
         # units
@@ -337,7 +337,7 @@ class NandshuffSubtractSky(BasePrimitive):
         self.context.proctab.update_proctab(frame=self.action.args.ccddata,
                                             suffix="intk",
                                             filename=self.action.args.name)
-        self.context.proctab.write_proctab()
+        self.context.proctab.write_proctab(tfil=self.config.instrument.procfile)
 
         self.logger.info(log_string)
 
