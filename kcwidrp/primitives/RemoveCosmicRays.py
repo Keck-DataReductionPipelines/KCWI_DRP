@@ -93,7 +93,8 @@ class RemoveCosmicRays(BasePrimitive):
             except AttributeError:
                 self.logger.warning("Flags array not found!")
             n_crs = mask.sum()
-            self.action.args.ccddata.mask += mask
+            # DN 2023-may-28: commenting out mask update because it causes bad things
+            # self.action.args.ccddata.mask += mask
             self.action.args.ccddata.data = clean
             # update header
             header[key] = (True, keycom)
