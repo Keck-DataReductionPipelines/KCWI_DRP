@@ -164,7 +164,7 @@ class ExtractArcs(BasePrimitive):
             for xyi, xy in enumerate(self.action.args.source_control_points):
                 if xy[1] == middle_row:
                     xi = int(xy[0]+0.5)
-                    arc = np.median(
+                    arc = np.nanmedian(
                         warped_image[:, (xi - window):(xi + window + 1)], axis=1)
                     # divide spectrum into sectors
                     div = int((len(arc)-100) / sectors)
@@ -172,10 +172,13 @@ class ExtractArcs(BasePrimitive):
                     xv = []
                     yv = []
                     for i in range(sectors):
-                        mi = np.nanargmin(arc[50+i*div:50+(i+1)*div])
-                        mn = np.nanmin(arc[50+i*div:50+(i+1)*div])
-                        xv.append(mi+50+i*div)
-                        yv.append(mn)
+                        try:
+                            mi = np.nanargmin(arc[50+i*div:50+(i+1)*div])
+                            mn = np.nanmin(arc[50+i*div:50+(i+1)*div])
+                            xv.append(mi+50+i*div)
+                            yv.append(mn)
+                        except ValueError:
+                            self.logger.warning("Bad sector %d" % i)
                     # fit minima to model background
                     res = np.polyfit(xv, yv, 3)
                     xp = np.arange(len(arc))
