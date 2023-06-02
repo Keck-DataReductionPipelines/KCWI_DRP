@@ -179,11 +179,11 @@ class ingest_file(BasePrimitive):
 
     def rho(self):
         if 'BH1' in self.grating():
-            return 3.751
+            return 3.6
         elif 'BH2' in self.grating():
-            return 3.255
+            return 3.2805
         elif 'BH3' in self.grating():
-            return 2.800
+            return 2.8017
         elif 'RH1' in self.grating():
             return 2.360
         elif 'RH2' in self.grating():
@@ -193,7 +193,7 @@ class ingest_file(BasePrimitive):
         elif 'RH4' in self.grating():
             return 1.490
         elif 'BM' in self.grating():
-            return 1.900
+            return 1.901
         elif 'RM1' in self.grating():
             return 1.300
         elif 'RM2' in self.grating():
