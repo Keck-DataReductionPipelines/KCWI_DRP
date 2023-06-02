@@ -35,7 +35,9 @@ class CalcPrelimDisp(BasePrimitive):
             preliminary_alpha = self.action.args.grangle - 13.0 - \
                 self.action.args.adjang
         else:
-            preliminary_alpha = 156.1748047 - self.action.args.grangle
+            # red_grat_norm_angle = 156.1748047  # Caltech AIT value
+            red_grat_norm_angle = 155.892
+            preliminary_alpha = red_grat_norm_angle - self.action.args.grangle
         # 1 - compute preliminary angle of diffraction
         preliminary_beta = self.action.args.camangle - preliminary_alpha
         # 2 - compute preliminary dispersion
