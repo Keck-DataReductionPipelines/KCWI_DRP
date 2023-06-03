@@ -278,7 +278,7 @@ class MakeInvsens(BasePrimitive):
             while not done:
                 p = figure(
                     tooltips=[("x", "@x{0,0.0}"), ("y", "@y{0,0.0}")],
-                    title=self.action.args.plotlabel + ' Obs Spec',
+                    title=self.action.args.stdlabel + ' Obs Spec',
                     x_axis_label='Wave (A)',
                     y_axis_label='Intensity (e-)',
                     plot_width=self.config.instrument.plot_width,
@@ -321,7 +321,7 @@ class MakeInvsens(BasePrimitive):
             while not done:
                 p = figure(
                     tooltips=[("x", "@x{0.0}"), ("y", "@y{0.0}")],
-                    title=self.action.args.plotlabel + ' Obs Spec',
+                    title=self.action.args.stdlabel + ' Obs Spec',
                     x_axis_label='Wave (A)',
                     y_axis_label='Intensity (e-)',
                     plot_width=self.config.instrument.plot_width,
@@ -426,7 +426,7 @@ class MakeInvsens(BasePrimitive):
                 effmax = np.nanmax(100.*fearea/area)
                 effmean = np.nanmean(100.*fearea/area)
                 peff = figure(
-                    title=self.action.args.plotlabel + ' Efficiency',
+                    title=self.action.args.stdlabel + ' Efficiency',
                     x_axis_label='Wave (A)',
                     y_axis_label='Effective Efficiency (%)',
                     plot_width=self.config.instrument.plot_width,
@@ -452,7 +452,7 @@ class MakeInvsens(BasePrimitive):
 
                 yran = [np.min(sf), np.max(sf)]
                 pivs = figure(
-                    title=self.action.args.plotlabel + ' Inverse sensitivity',
+                    title=self.action.args.stdlabel + ' Inverse sensitivity',
                     x_axis_label='Wave (A)',
                     y_axis_label='Invserse Sensitivity (Flux/e-/s)',
                     y_axis_type='log',
@@ -473,7 +473,7 @@ class MakeInvsens(BasePrimitive):
 
                 yran = [np.min(calspec[wl_good]), np.max(calspec[wl_good])]
                 pcal = figure(
-                    title=self.action.args.plotlabel + ' Calibrated',
+                    title=self.action.args.stdlabel + ' Calibrated',
                     x_axis_label='Wave (A)',
                     y_axis_label='Flux (ergs/s/cm^2/A)',
                     plot_width=self.config.instrument.plot_width,
@@ -492,7 +492,7 @@ class MakeInvsens(BasePrimitive):
 
                 yran = [np.min(resid), np.max(resid)]
                 prsd = figure(
-                    title=self.action.args.plotlabel +
+                    title=self.action.args.stdlabel +
                     ' Residuals = %.1f +- %.1f (%%)' % (rsd_mean, rsd_stdv),
                     x_axis_label='Wave (A)',
                     y_axis_label='Obs - Ref / Ref (%)',

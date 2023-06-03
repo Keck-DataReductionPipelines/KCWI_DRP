@@ -330,6 +330,16 @@ class ingest_file(BasePrimitive):
         lab += "] "
         return lab
 
+    def stdlabel(self):
+        lab = "[ Img # %d " % self.get_keyword('FRAMENO')
+        lab += "(%s) " % self.get_keyword('TARGNAME')
+        lab += "Slicer: %s, " % self.ifuname()
+        lab += "Grating: %s, " % self.grating()
+        lab += "CWave: %d, " % int(self.cwave())
+        lab += "Filter: %s " % self.filter()
+        lab += "] "
+        return lab
+
     def ifuname(self):
         return self.get_keyword('IFUNAM')
 
@@ -625,6 +635,8 @@ class ingest_file(BasePrimitive):
         out_args.ifuname = self.get_keyword('IFUNAM')
         # PLOTLABEL
         out_args.plotlabel = self.plotlabel()
+        # STDLABEL
+        out_args.stdlabel = self.stdlabel()
         # ILUM
         out_args.illum = self.illum()
         # MAPCCD
