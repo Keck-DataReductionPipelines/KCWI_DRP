@@ -99,8 +99,6 @@ def get_log_string(ifile, batch=False):
                 header['CALXNAM'] = '-'
             if 'object' not in header['CALTYPE']:
                 header['OBJECT'] = header['CALXNAM']
-            else:
-                header['OBJECT'] = header['TARGNAME']
             # if header['TELAPSE'] > header['XPOSURE']:
             #    header['EXPTIME'] = header['TELAPSE']
             # else:
