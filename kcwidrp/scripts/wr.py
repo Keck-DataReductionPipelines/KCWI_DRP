@@ -139,7 +139,7 @@ def get_log_string(ifile, batch=False):
                           "%(RFILTNAM)5s/%(RGRATNAM)4s/%(RGROTNAM)9s dg/" \
                           "%(RCWAVE)6.1f/%(CALPNAM)5s/%(CALLANG)5.1f dg), " \
                           "(%(RARTANG)5.1f/%(RNASNAM)4s/%(RFOCMM)6.3f) %(AIRMASS)5.3f: %(IMTYPE)7s/" \
-                          "%(ILLUME)6s/%(TARGNAME)s%(OBJECT)s" % header
+                          "%(ILLUME)6s/%(TARGNAME)s:%(OBJECT)s" % header
             except:
                 lstring = "%19s : ?" % ifile
 

@@ -135,7 +135,7 @@ def get_log_string(ifile, batch=False):
                           "%(BFILTNAM)5s/%(BGRATNAM)4s/%(BGROTNAM)9s dg/" \
                           "%(BCWAVE)6.1f/%(CALPNAM)5s/%(CALLANG)5.1f dg), " \
                           "(%(BARTANG)5.1f/%(BNASNAM)4s/%(BFOCMM)6.3f) %(AIRMASS)5.3f: %(IMTYPE)7s/" \
-                          "%(ILLUME)6s/%(TARGNAME)s/%(OBJECT)s" % header
+                          "%(ILLUME)6s/%(TARGNAME)s:%(OBJECT)s" % header
             except:
                 lstring = "%19s : ?" % ifile
 
