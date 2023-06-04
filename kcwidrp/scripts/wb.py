@@ -42,7 +42,6 @@ def get_cal_list_file(hdr):
         lfname += hdr['BFILTNAM']
         lfname += hdr['BGRATNAM']
         lfname += "%.0f" % hdr['BCWAVE']
-        lfname += "_%.1f" % hdr['EXPTIME']
     return lfname
 
 

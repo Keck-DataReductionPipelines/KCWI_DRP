@@ -40,7 +40,6 @@ def get_cal_list_file(hdr):
         lfname += hdr['IFUNAM'][:3]
         lfname += hdr['RGRATNAM']
         lfname += "%.0f" % hdr['RCWAVE']
-        lfname += "_%.1f" % hdr['EXPTIME']
     return lfname
 
 
