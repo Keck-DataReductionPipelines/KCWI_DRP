@@ -34,6 +34,13 @@ def get_cal_list_file(hdr):
         lfname += hdr['AMPMODE']
         lfname += str(hdr['CDSSPEED'])
         lfname += str(hdr['ADCGAINS'])
+    elif 'OBJECT' in imtype:
+        lfname = hdr['TARGNAME']
+        lfname += hdr['BINNING'].replace(',', 'x')
+        lfname += hdr['IFUNAM'][:3]
+        lfname += hdr['RGRATNAM']
+        lfname += "%.0f" % hdr['RCWAVE']
+        lfname += "_%.1f" % hdr['EXPTIME']
     return lfname
 
 
