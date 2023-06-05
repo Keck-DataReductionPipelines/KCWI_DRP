@@ -196,6 +196,9 @@ class Kcwi_pipeline(BasePipeline):
         # OBJECT PROCESSING
         "process_object":            ("ProcessObject",
                                       "object_processing_started",
+                                      "object_flag_saturation"),
+        "object_flag_saturation":    ("FlagSaturation",
+                                      "object_flag_saturation_started",
                                       "object_subtract_bias"),
         "object_subtract_bias":      ("SubtractBias",
                                       "subtract_bias started",
