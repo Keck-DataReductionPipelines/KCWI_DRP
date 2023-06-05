@@ -21,8 +21,14 @@ class TrimOverscan(BasePrimitive):
         keycom = 'Overscan trimmed?'
         # get output image dimensions
         max_sec = max(tsec)
+        # do we have flags?
+        have_flags = (self.action.args.ccddata.flags is not None)
         # create new blank image
         new = np.zeros((max_sec[1]+1, max_sec[3]+1), dtype=np.float32)
+        if have_flags:
+            new_flags = np.zeros((max_sec[1]+1, max_sec[3]+1), dtype=np.uint8)
+        else:
+            new_flags = None
         # loop over amps
         for ia in amps:
             # bias correct amp number for indexing python arrays
@@ -40,6 +46,10 @@ class TrimOverscan(BasePrimitive):
             # transfer to new image
             new[yo0:yo1, xo0:xo1] = self.action.args.ccddata.data[yi0:yi1,
                                                                   xi0:xi1]
+            if have_flags:
+                new_flags[yo0:yo1,
+                          xo0:xo1] = self.action.args.ccddata.flags[yi0:yi1,
+                                                                    xi0:xi1]
             # update amp section
             sec = "[%d:" % (xo0+1)
             sec += "%d," % xo1
@@ -58,6 +68,7 @@ class TrimOverscan(BasePrimitive):
                 self.action.args.ccddata.header.pop(t_key)
         # update with new image
         self.action.args.ccddata.data = new
+        self.action.args.ccddata.flags = new_flags
         self.action.args.ccddata.header['NAXIS1'] = max_sec[3] + 1
         self.action.args.ccddata.header['NAXIS2'] = max_sec[1] + 1
         self.action.args.ccddata.header[key] = (True, keycom)
