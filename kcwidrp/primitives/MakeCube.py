@@ -226,6 +226,19 @@ class MakeCube(BasePrimitive):
                     else:
                         time.sleep(self.config.instrument.plot_pause)
 
+            # Rotate RED data by 180 to align with Blue
+            if 'RED' in self.action.args.ccddata.header['CAMERA'].upper():
+                out_cube = np.rot90(out_cube, 2)
+                out_vube = np.rot90(out_vube, 2)
+                out_mube = np.rot90(out_mube, 2)
+                out_fube = np.rot90(out_fube, 2)
+                if obj is not None:
+                    out_oube = np.rot90(out_oube, 2)
+                if sky is not None:
+                    out_sube = np.rot90(out_sube, 2)
+                if dew is not None:
+                    out_dube = np.rot90(out_dube, 2)
+
             # Calculate some WCS parameters
             # Get object pointing
             try:
