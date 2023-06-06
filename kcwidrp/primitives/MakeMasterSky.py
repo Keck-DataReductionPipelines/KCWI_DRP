@@ -1,6 +1,6 @@
 from keckdrpframework.primitives.base_img import BaseImg
 from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_reader, \
-    kcwi_fits_writer, strip_fname, get_master_name
+    kcwi_fits_writer, strip_fname
 from kcwidrp.core.bokeh_plotting import bokeh_plot
 from kcwidrp.core.kcwi_plotting import save_plot
 from kcwidrp.core.bspline import Bspline
@@ -26,7 +26,7 @@ class MakeMasterSky(BaseImg):
         """
         self.logger.info("Checking precondition for MakeMasterSky")
 
-        suffix = self.action.args.new_type.lower()
+        suffix = 'sky'  # self.action.args.new_type.lower()
         ofn = self.action.args.name
         rdir = self.config.instrument.output_directory
 
@@ -76,7 +76,7 @@ class MakeMasterSky(BaseImg):
         """
         self.logger.info("Creating master sky")
 
-        suffix = self.action.args.new_type.lower()
+        suffix = 'sky'
 
         # get root for maps
         tab = self.context.proctab.search_proctab(
@@ -286,7 +286,7 @@ class MakeMasterSky(BaseImg):
         msname = strip_fname(ofn) + '_' + suffix + '.fits'
 
         log_string = MakeMasterSky.__module__
-        self.action.args.ccddata.header['IMTYPE'] = self.action.args.new_type
+        self.action.args.ccddata.header['IMTYPE'] = 'SKY'
         self.action.args.ccddata.header['HISTORY'] = log_string
         self.action.args.ccddata.header['SKYMODEL'] = (True, 'sky model image?')
         self.action.args.ccddata.header['SKYIMAGE'] = \
@@ -308,7 +308,7 @@ class MakeMasterSky(BaseImg):
                          output_dir=self.config.instrument.output_directory)
         self.context.proctab.update_proctab(frame=self.action.args.ccddata,
                                             suffix=suffix,
-                                            newtype=self.action.args.new_type,
+                                            newtype="SKY",
                                             filename=self.action.args.name)
         self.context.proctab.write_proctab(tfil=self.config.instrument.procfile)
 
