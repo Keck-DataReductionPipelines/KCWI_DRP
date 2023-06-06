@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """Modify FITS header keyword"""
 
 from astropy.io import fits
