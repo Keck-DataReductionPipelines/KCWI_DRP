@@ -175,7 +175,8 @@ class ingest_file(BasePrimitive):
             if 'BIAS' in self.imtype():
                 return 0.
             else:
-                raise ValueError("unable to determine atlas sigma: GRATING undefined")
+                raise ValueError(
+                    "unable to determine atlas sigma: GRATING undefined")
 
     def rho(self):
         if 'BH1' in self.grating():
@@ -576,7 +577,7 @@ class ingest_file(BasePrimitive):
             groupid = "NONE"
         else:
             if len(groupid) <= 0:
-               groupid = "NONE"
+                groupid = "NONE"
         if imtype is None:
             fname = os.path.basename(self.action.args.name)
             self.logger.warn(f"Unknown IMTYPE {fname}")
@@ -667,18 +668,22 @@ class ingest_file(BasePrimitive):
 
         if imtype == 'OBJECT':
             # bias frames
-            bias_frames = self.context.proctab.search_proctab(frame=self.ccddata, target_type='MBIAS', nearest=True)
+            bias_frames = self.context.proctab.search_proctab(
+                frame=self.ccddata, target_type='MBIAS', nearest=True)
             # master flats
-            masterflat_frames = self.context.proctab.search_proctab(frame=self.ccddata, target_type='MFLAT', nearest=True)
+            masterflat_frames = self.context.proctab.search_proctab(
+                frame=self.ccddata, target_type='MFLAT', nearest=True)
             # arclamp
-            arclamp_frames = self.context.proctab.search_proctab(frame=self.ccddata, target_type='MARC', nearest=True)
+            arclamp_frames = self.context.proctab.search_proctab(
+                frame=self.ccddata, target_type='MARC', nearest=True)
             if len(bias_frames) > 0:
                 '''\
                 and len(masterflat_frames) > 0 \
                 and len(arclamp_frames) > 0:'''
                 return True
             else:
-                self.logger.warn("Cannot reduce OBJECT frame. Rescheduling for later. Found:")
+                self.logger.warn("Cannot reduce OBJECT frame. "
+                                 "Rescheduling for later. Found:")
                 self.logger.warn(f"\tMBIAS: {len(bias_frames)}")
                 self.logger.warn(f"\tMFLAT: {len(masterflat_frames)}")
                 self.logger.warn(f"\tARCLAMP: {len(arclamp_frames)}")
@@ -686,20 +691,25 @@ class ingest_file(BasePrimitive):
 
         if imtype == 'ARCLAMP':
             # continuum bars
-            contbars_frames = self.context.proctab.search_proctab(frame=self.ccddata, target_type='MCBARS', nearest=True)
+            contbars_frames = self.context.proctab.search_proctab(
+                frame=self.ccddata, target_type='MCBARS', nearest=True)
             if (len(contbars_frames)) > 0:
                 return True
             else:
-                self.logger.warn("Cannot reduce ARCLAMP frame. Missing master continuum bars. Rescheduling for later.")
+                self.logger.warn("Cannot reduce ARCLAMP frame. "
+                                 "Missing master continuum bars. "
+                                 "Rescheduling for later.")
                 return False
 
         if imtype in ['FLATLAMP', 'TWIFLAT', 'DOMEFLAT']:
             # bias frames
-            bias_frames = self.context.proctab.search_proctab(frame=self.ccddata, target_type='MBIAS', nearest=True)
+            bias_frames = self.context.proctab.search_proctab(
+                frame=self.ccddata, target_type='MBIAS', nearest=True)
             if len(bias_frames) > 0:
                 return True
             else:
-                self.logger.warn(f"Cannot reduce {imtype} frame. Missing master bias. Rescheduling for later.")
+                self.logger.warn(f"Cannot reduce {imtype} frame. Missing "
+                                 f"master bias. Rescheduling for later.")
                 return False
 
         return True
