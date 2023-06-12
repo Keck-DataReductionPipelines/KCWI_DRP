@@ -2,7 +2,8 @@ from keckdrpframework.primitives.base_primitive import BasePrimitive
 from kcwidrp.primitives.kcwi_file_primitives import strip_fname
 import os
 import numpy as np
-from skimage import transform as tf
+# from skimage import transform as tf
+from kcwidrp.primitives import geometric as tf
 import pickle
 
 
@@ -166,6 +167,8 @@ class SolveGeom(BasePrimitive):
             self.logger.info("Fitting wavelength and spatial control points")
             tform = tf.estimate_transform('polynomial', src, dst, order=3)
             invtf = tf.estimate_transform('polynomial', dst, src, order=3)
+            # tform = etf('polynomial', src, dst, order=3)
+            # invtf = etf('polynomial', dst, src, order=3)
             # Store for output
             tform_list.append(tform)
             invtf_list.append(invtf)
