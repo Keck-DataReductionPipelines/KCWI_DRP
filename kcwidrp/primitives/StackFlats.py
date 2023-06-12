@@ -57,13 +57,12 @@ class StackFlats(BaseImg):
         stname = strip_fname(combine_list[0]) + '_' + suffix + '.fits'
         stack = []
         stackf = []
-        mask = None
         for flat in combine_list:
             # get flat intensity (int) image file name in redux directory
             stackf.append(strip_fname(flat) + '_intd.fits')
             flatfn = os.path.join(self.config.instrument.cwd,
                                   self.config.instrument.output_directory,
-                                stackf[-1])
+                                  stackf[-1])
             # using [0] gets just the image data
             f = kcwi_fits_reader(flatfn)[0]
             # Set mask to None to prevent ccdproc.combine from masking
