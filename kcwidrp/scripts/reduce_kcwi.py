@@ -83,7 +83,11 @@ def _parse_arguments(in_args: list) -> argparse.Namespace:
 
     # kcwi specific parameter
     parser.add_argument("-p", "--proctab", dest='proctab', help='Proctab file',
-                        default='kcwi.proc')
+                        default=None)
+    parser.add_argument("-b", "--blue", dest='blue', action="store_true",
+                        default=False, help="KCWI Blue processing")
+    parser.add_argument("-r", "--red", dest='red', action="store_true",
+                        default=False, help="KCWI Red processing")
 
     out_args = parser.parse_args(in_args[1:])
     return out_args
@@ -132,9 +136,17 @@ def main():
         kcwi_config_fullpath = pkg_resources.resource_filename(
             pkg, kcwi_config_file)
         kcwi_config = ConfigClass(kcwi_config_fullpath, default_section='KCWI')
+        kcwi_blue_config = ConfigClass(kcwi_config_fullpath,
+                                       default_section='BLUE')
+        kcwi_red_config = ConfigClass(kcwi_config_fullpath,
+                                      default_section='RED')
     else:
         # kcwi_config_fullpath = os.path.abspath(args.kcwi_config_file)
         kcwi_config = ConfigClass(args.kcwi_config_file, default_section='KCWI')
+        kcwi_blue_config = ConfigClass(args.kcwi_config_file,
+                                       default_section='BLUE')
+        kcwi_red_config = ConfigClass(args.kcwi_config_file,
+                                      default_section='RED')
 
     # END HANDLING OF CONFIGURATION FILES ##########
 
@@ -199,6 +211,17 @@ def main():
             "Using proc table file %s" % args.proctab
         )
         framework.config.instrument.procfile = args.proctab
+    else:
+        if args.blue:
+            proctab = kcwi_blue_config.procfile
+        elif args.red:
+            proctab = kcwi_red_config.procfile
+        else:
+            proctab = kcwi_config.procfile
+        framework.context.pipeline_logger.info(
+            "Using proc table file %s" % proctab
+        )
+        framework.config.instrument.procfile = proctab
 
     # start the bokeh server is requested by the configuration parameters
     if framework.config.instrument.enable_bokeh is True:
@@ -214,7 +237,7 @@ def main():
 
     # initialize the proctab and read it
     framework.context.proctab = Proctab(framework.logger)
-    framework.context.proctab.read_proctab(tfil=args.proctab)
+    framework.context.proctab.read_proctab(framework.config.instrument.procfile)
 
     framework.logger.info("Framework initialized")
 
