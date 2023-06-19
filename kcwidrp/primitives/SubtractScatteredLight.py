@@ -22,6 +22,9 @@ class SubtractScatteredLight(BasePrimitive):
         key = 'SCATSUB'
         keycom = "was scattered light subtracted?"
 
+        # get camera
+        camera = self.action.args.ccddata.header['CAMERA'].upper()
+
         # Skip if nod-and-shuffle
         if self.action.args.nasmask:
             self.logger.info("NAS Mask: skipping scattered light subtraction")
@@ -46,9 +49,14 @@ class SubtractScatteredLight(BasePrimitive):
             # Y data values
             yvals = np.nanmedian(self.action.args.ccddata.data[y0:y3, x0:x1],
                                  axis=1)
-            # Fix extreme values
-            yvals[0] = np.nanmedian(yvals[1:10])
-            yvals[-1] = np.nanmedian(yvals[-11:-2])
+            # Fix extreme edge values
+            if 'RED' in camera:
+                if np.nanmax(yvals) > 100:
+                    yvals[:10] = yvals[10:20]
+                    yvals[-10:] = yvals[-21:-11]
+            else:
+                yvals[0] = np.nanmedian(yvals[1:10])
+                yvals[-1] = np.nanmedian(yvals[-11:-2])
             # X data values
             xvals = np.arange(len(yvals), dtype=np.float)
             # filter window
