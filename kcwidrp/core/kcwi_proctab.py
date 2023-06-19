@@ -179,6 +179,10 @@ class Proctab:
                 self.log.info('Looking for frames with CCDCFG = %s' %
                               self.frame.header['CCDCFG'])
                 tab = tab[(tab['DID'] == int(self.frame.header['CCDCFG']))]
+            elif target_type == 'OBJECT':
+                self.log.info('Looking for frames with GRPID = %s' %
+                              target_group)
+                tab = tab[tab['GRPID'] == target_group]
             else:
                 self.log.info('Looking for frames with STATEID = %s (%s)' %
                               (self.frame.header['STATEID'],
