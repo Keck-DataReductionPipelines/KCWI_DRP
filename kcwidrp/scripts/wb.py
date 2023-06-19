@@ -83,6 +83,8 @@ def get_log_string(ifile, batch=False):
                 header['BGROTNAM'] = '-'
             if 'BCWAVE' not in header:
                 header['BCWAVE'] = -1.
+            if 'CALMNAM' not in header:
+                header['CALMNAM'] = '-'
             if 'CALPNAM' not in header:
                 header['CALPNAM'] = '-'
             if 'CALLANG' not in header:
@@ -114,33 +116,36 @@ def get_log_string(ifile, batch=False):
             if header['EXPTIME'] <= 0.:
                 is_bias = True
             header['ILLUME'] = '-'
-            if header['LMP0STAT'] == 1:
-                if header['LMP0SHST'] == 1:
-                    header['ILLUME'] = header['LMP0NAM']
-            if header['LMP1STAT'] == 1:
-                if header['LMP1SHST'] == 1:
-                    header['ILLUME'] = header['LMP1NAM']
-            if header['LMP2STAT'] == 1:
-                if header['LMP2SHST'] == 1:
-                    header['ILLUME'] = header['LMP2NAM']
-            if header['LMP3STAT'] == 1:
-                header['ILLUME'] = header['LMP3NAM'][0:6]
-            if 'object' in header['CALTYPE']:
-                if 'on' in header['FLSPECTR'] or 'on' in header['FLIMAGIN']:
-                    header['ILLUME'] = 'DOME'
-                    if not batch:
-                        header['OBJECT'] = 'DOME'
-            if 'BIAS' in header['IMTYPE']:
-                if not is_bias:
-                    header['IMTYPE'] = 'DARK'
-            if not batch:
-                if 'object' not in header['CALTYPE']:
-                    header['OBJECT'] = header['OBJECT'] + header['ILLUME']
+            try:
+                if header['LMP0STAT'] == 1:
+                    if header['LMP0SHST'] == 1:
+                        header['ILLUME'] = header['LMP0NAM']
+                if header['LMP1STAT'] == 1:
+                    if header['LMP1SHST'] == 1:
+                        header['ILLUME'] = header['LMP1NAM']
+                if header['LMP2STAT'] == 1:
+                    if header['LMP2SHST'] == 1:
+                        header['ILLUME'] = header['LMP2NAM']
+                if header['LMP3STAT'] == 1:
+                    header['ILLUME'] = header['LMP3NAM'][0:6]
+                if 'object' in header['CALTYPE']:
+                    if 'on' in header['FLSPECTR'] or 'on' in header['FLIMAGIN']:
+                        header['ILLUME'] = 'DOME'
+                        if not batch:
+                            header['OBJECT'] = 'DOME'
+                if 'BIAS' in header['IMTYPE']:
+                    if not is_bias:
+                        header['IMTYPE'] = 'DARK'
+                if not batch:
+                    if 'object' not in header['CALTYPE']:
+                        header['OBJECT'] = header['OBJECT'] + header['ILLUME']
+            except KeyError:
+                pass
             try:
                 lstring = "%(OFNAME)19s (%(AMPMODE)3s/%(BINNING)3s/%(CCDMODE)1d/" \
                           "%(GAINMUL)2d/%(NUMOPEN)2d/%(EXPTIME)6.1f s), (%(IFUNAM)3s/" \
                           "%(BFILTNAM)5s/%(BGRATNAM)4s/%(BGROTNAM)9s dg/" \
-                          "%(BCWAVE)6.1f/%(CALPNAM)5s/%(CALLANG)5.1f dg), " \
+                          "%(BCWAVE)6.1f/%(CALMNAM)s/%(CALPNAM)5s/%(CALLANG)5.1f dg), " \
                           "(%(BARTANG)5.1f/%(BNASNAM)4s/%(BFOCMM)6.3f) %(AIRMASS)5.3f: %(IMTYPE)7s/" \
                           "%(ILLUME)6s/%(TARGNAME)s:%(OBJECT)s" % header
             except:
