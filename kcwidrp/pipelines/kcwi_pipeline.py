@@ -214,7 +214,7 @@ class Kcwi_pipeline(BasePipeline):
                                       "object_correct_defects"),
         "object_correct_defects":    ("CorrectDefects",
                                       "defect_correction_started",
-                                      "object_create_unc"),
+                                      "object_remove_crs"),
         "object_remove_crs":         ("RemoveCosmicRays",
                                       "remove_crs_started",
                                       "object_create_unc"),
