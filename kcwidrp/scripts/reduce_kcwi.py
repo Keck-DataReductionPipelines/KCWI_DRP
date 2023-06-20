@@ -54,6 +54,9 @@ def _parse_arguments(in_args: list) -> argparse.Namespace:
                         default=None)
     parser.add_argument('-o', '--atlas_offset', dest='atlas_offset',
                         type=int, help="Atlas offset (px)", default=None)
+    parser.add_argument('-t', '--line_thresh', dest='line_thresh',
+                        type=float, help="Line Cleaning Threshold (e-)",
+                        default=None)
 
     # in this case, we are loading an entire directory,
     # and ingesting all the files in that directory
@@ -195,6 +198,14 @@ def main():
             framework.context.pipeline_logger.info(
                 "Setting new atlas offset = %.2f" % args.atlas_offset)
             framework.config.instrument.ATOFF = args.atlas_offset
+
+    # check for line_thresh argument
+    if args.atlas_offset:
+        def_lt = getattr(framework.config.instrument, 'LINETHRESH', None)
+        if def_lt is not None:
+            framework.context.pipeline_logger.info(
+                "Setting new line thresh = %.2f" % args.line_thresh)
+            framework.config.instrument.LINETHRESH = args.line_thresh
 
     # check for atlas line list argument
     if args.atlas_line_list:
