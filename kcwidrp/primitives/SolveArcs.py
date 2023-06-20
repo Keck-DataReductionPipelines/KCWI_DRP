@@ -50,7 +50,7 @@ class SolveArcs(BasePrimitive):
         bar_sig = []
         bar_nls = []
         # set thresh for finding lines
-        hgt = 50.
+        hgt = self.config.instrument.LINETHRESH
         self.logger.info("line thresh = %.2f" % hgt)
         # get relevant part of atlas spectrum
         atwave = self.action.args.refwave[self.action.args.atminrow:
@@ -177,7 +177,7 @@ class SolveArcs(BasePrimitive):
                                              "rejected for line %.3f" %
                                              (abs(cent - peak), aw))
                         continue
-                    if plt_line[max_index] < 100:
+                    if plt_line[max_index] < hgt:
                         # keep track of rejected line
                         rej_wave.append(aw)
                         rej_flux.append(self.action.args.at_flux[iw])
