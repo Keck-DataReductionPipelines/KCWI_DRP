@@ -54,7 +54,7 @@ def _parse_arguments(in_args: list) -> argparse.Namespace:
                         default=None)
     parser.add_argument('-o', '--atlas_offset', dest='atlas_offset',
                         type=int, help="Atlas offset (px)", default=None)
-    parser.add_argument('-h', '--line_thresh', dest='line_thresh',
+    parser.add_argument('-e', '--line_thresh', dest='line_thresh',
                         type=float, help="Line Cleaning Threshold (e-)",
                         default=None)
 
