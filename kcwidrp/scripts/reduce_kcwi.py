@@ -200,7 +200,7 @@ def main():
             framework.config.instrument.ATOFF = args.atlas_offset
 
     # check for line_thresh argument
-    if args.atlas_offset:
+    if args.line_thresh:
         def_lt = getattr(framework.config.instrument, 'LINETHRESH', None)
         if def_lt is not None:
             framework.context.pipeline_logger.info(
