@@ -161,9 +161,9 @@ class ingest_file(BasePrimitive):
                 return 2.5
         elif 'M' in self.grating():
             if self.ifunum() >= 2:
-                return 2.0
-            else:
                 return 4.0
+            else:
+                return 8.0
         elif 'L' in self.grating():
             if self.ifunum() == 2:
                 return 10.0
