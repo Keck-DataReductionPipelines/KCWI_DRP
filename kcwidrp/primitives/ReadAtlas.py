@@ -1,5 +1,6 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from kcwidrp.core.bokeh_plotting import bokeh_plot
+from kcwidrp.core.kcwi_plotting import save_plot
 from kcwidrp.primitives.kcwi_file_primitives import plotlabel
 
 from bokeh.plotting import figure
@@ -211,6 +212,12 @@ class ReadAtlas(BasePrimitive):
                 else:
                     time.sleep(self.config.instrument.plot_pause)
                     q = None
+            # save final plot of arc/atlas offset
+            pfname = "arc_%05d_%s_%s_%s" % (
+                self.action.args.ccddata.header['FRAMENO'],
+                self.action.args.illum, self.action.args.grating,
+                self.action.args.ifuname)
+            save_plot(p, filename=pfname + '_atoff.png')
             self.logger.info("Final   arc-atlas offset (px, Ang): %d, %.1f" %
                              (offset_pix, offset_wav))
         # Store atlas spectrum
