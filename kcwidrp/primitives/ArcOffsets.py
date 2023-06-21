@@ -1,7 +1,7 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from kcwidrp.core.bokeh_plotting import bokeh_plot
 from kcwidrp.core.kcwi_plotting import get_plot_lims, oplot_slices, \
-    set_plot_lims
+    set_plot_lims, save_plot
 from kcwidrp.primitives.kcwi_file_primitives import plotlabel
 
 import time
@@ -35,6 +35,8 @@ class ArcOffsets(BasePrimitive):
     def _perform(self):
         self.logger.info("Finding inter-bar offsets")
         nbars = self.config.instrument.NBARS
+        tkalpha = self.config.instrument.TUKEYALPHA
+        self.logger.info("Using Tukey Alpha value of %.2f" % tkalpha)
         arcs = self.context.arcs
         if arcs is not None:
             # Do we plot?
@@ -89,6 +91,12 @@ class ArcOffsets(BasePrimitive):
                             next_bar_to_plot = int(q)
                         except ValueError:
                             next_bar_to_plot = arc_number + 1
+            # plot output name stub
+            pfname = "arc_%05d_%s_%s_%s_ta%03d" % (
+                self.action.args.ccddata.header['FRAMENO'],
+                self.action.args.illum, self.action.args.grating,
+                self.action.args.ifuname,
+                int(100 * self.config.instrument.TUKEYALPHA))
             # plot offsets
             if self.config.instrument.plot_level >= 1:
                 p = figure(title=plab + "BAR OFFSETS ",
@@ -107,6 +115,8 @@ class ArcOffsets(BasePrimitive):
                     input("Next? <cr>: ")
                 else:
                     time.sleep(self.config.instrument.plot_pause)
+                # save offset plot
+                save_plot(p, filename=pfname + '_baroffs.png')
             self.context.bar_offsets = offsets
         else:
             self.logger.error("No extracted arcs found")
