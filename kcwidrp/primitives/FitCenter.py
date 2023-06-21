@@ -1,7 +1,7 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from kcwidrp.core.bokeh_plotting import bokeh_plot
 from kcwidrp.core.kcwi_plotting import get_plot_lims, oplot_slices, \
-    set_plot_lims
+    set_plot_lims, save_plot
 from kcwidrp.primitives.kcwi_file_primitives import plotlabel
 
 from bokeh.plotting import figure
@@ -353,6 +353,12 @@ class FitCenter(BasePrimitive):
                 input("Next? <cr>: ")
             else:
                 time.sleep(self.config.instrument.plot_pause)
+            # save plots of central wavelengths
+            pfname = "arc_%05d_%s_%s_%s" % (
+                self.action.args.ccddata.header['FRAMENO'],
+                self.action.args.illum, self.action.args.grating,
+                self.action.args.ifuname)
+            save_plot(p, filename=pfname + '_cwaves.png')
             # Plot central dispersion
             p = figure(title=plab + "CENTRAL VALUES",
                        x_axis_label="Bar #",
@@ -375,6 +381,7 @@ class FitCenter(BasePrimitive):
                 input("Next? <cr>: ")
             else:
                 time.sleep(self.config.instrument.plot_pause)
+            save_plot(p, filename=pfname + '_cdisp.png')
 
         log_string = FitCenter.__module__
         self.action.args.ccddata.header['HISTORY'] = log_string
