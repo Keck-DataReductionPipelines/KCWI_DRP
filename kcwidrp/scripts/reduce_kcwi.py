@@ -57,6 +57,9 @@ def _parse_arguments(in_args: list) -> argparse.Namespace:
     parser.add_argument('-e', '--line_thresh', dest='line_thresh',
                         type=float, help="Line Cleaning Threshold (e-)",
                         default=None)
+    parser.add_argument('-u', '--tukey_alpha', dest='tukey_alpha',
+                        type=float, help="Tukey Window Alpha (0.0 - 1.0)",
+                        default=None)
 
     # in this case, we are loading an entire directory,
     # and ingesting all the files in that directory
@@ -206,6 +209,24 @@ def main():
             framework.context.pipeline_logger.info(
                 "Setting new line thresh = %.2f" % args.line_thresh)
             framework.config.instrument.LINETHRESH = args.line_thresh
+    else:
+        if args.blue:
+            framework.config.instrument.LINETHRESH = kcwi_blue_config.LINETHRESH
+        elif args.red:
+            framework.config.instrument.LINETHRESH = kcwi_red_config.LINETHRESH
+
+    # check for tukey_alpha argument
+    if args.tukey_alpha:
+        def_lt = getattr(framework.config.instrument, 'TUKEYALPHA', None)
+        if def_lt is not None:
+            framework.context.pipeline_logger.info(
+                "Setting new tukey alpha = %.2f" % args.tukey_alpha)
+            framework.config.instrument.TUKEYALPHA = args.tukey_alpha
+    else:
+        if args.blue:
+            framework.config.instrument.TUKEYALPHA = kcwi_blue_config.TUKEYALPHA
+        elif args.red:
+            framework.config.instrument.TUKEYALPHA = kcwi_red_config.TUKEYALPHA
 
     # check for atlas line list argument
     if args.atlas_line_list:
