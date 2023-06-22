@@ -14,7 +14,7 @@ class RemoveCosmicRays(BasePrimitive):
 
     def _perform(self):
         # TODO: implement parameter options from kcwi_stage1.pro
-        self.logger.info("Finding and masking cosmic rays")
+        self.logger.info("Cleaning and flagging cosmic rays")
 
         # Header keyword to update
         key = 'CRCLEAN'
