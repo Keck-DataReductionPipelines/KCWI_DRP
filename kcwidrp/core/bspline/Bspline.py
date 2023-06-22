@@ -430,7 +430,7 @@ class Bspline(object):
         nbkpt = self.mask.sum()
         if nbkpt <= 2*self.nord:
             return -2
-        hmm = err[np.unique(err/self.npoly)]/self.npoly
+        hmm = err[np.unique(err)]/self.npoly
         n = nbkpt - self.nord
         if np.any(hmm >= n):
             return -2
