@@ -430,12 +430,12 @@ class Bspline(object):
         nbkpt = self.mask.sum()
         if nbkpt <= 2*self.nord:
             return -2
-        hmm = err[np.unique(err, return_index=True)[1]]/self.npoly
+        hmm = np.unique(err)/self.npoly
         n = nbkpt - self.nord
         if np.any(hmm >= n):
             return -2
         test = np.zeros(nbkpt, dtype='bool')
-        for jj in range(-np.ceil(self.nord/2.0), int(self.nord/2.0)):
+        for jj in range(int(-np.ceil(self.nord/2.0)), int(self.nord/2.0)):
             foo = np.where((hmm+jj) > 0, hmm+jj, np.zeros(hmm.shape,
                                                           dtype=hmm.dtype))
             inside = np.where((foo+self.nord) < n-1, foo+self.nord,
