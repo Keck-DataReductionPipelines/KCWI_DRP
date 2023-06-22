@@ -428,21 +428,24 @@ class Bspline(object):
         mask.
         """
         nbkpt = self.mask.sum()
+        goodbkpt = np.where(self.mask)[0]
+        nbkpt = len(goodbkpt)
         if nbkpt <= 2*self.nord:
             return -2
-        hmm = (np.unique(err)/self.npoly).astype(int)
+        hmm = err[uniq(err//self.npoly)]//self.npoly
         n = nbkpt - self.nord
         if np.any(hmm >= n):
             return -2
         test = np.zeros(nbkpt, dtype='bool')
-        for jj in range(int(-np.ceil(self.nord/2.0)), int(self.nord/2.0)):
+        for jj in range(-int(np.ceil(self.nord/2)), int(self.nord/2.)):
             foo = np.where((hmm+jj) > 0, hmm+jj, np.zeros(hmm.shape,
                                                           dtype=hmm.dtype))
             inside = np.where((foo+self.nord) < n-1, foo+self.nord,
                               np.zeros(hmm.shape, dtype=hmm.dtype)+n-1)
-            test[inside] = True
+            if len(inside) > 0:
+                test[inside] = True
         if test.any():
-            reality = self.mask[test]
+            reality = goodbkpt[test]
             if self.mask[reality].any():
                 self.mask[reality] = False
                 return -1
