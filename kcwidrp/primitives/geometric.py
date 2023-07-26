@@ -1,6 +1,6 @@
 import math
 import numpy as np
-from scipy import spatial
+from scipy import spatial, linalg
 import textwrap
 
 from .._shared.utils import get_bound_method_class, safe_as_int
@@ -1323,6 +1323,182 @@ class PolynomialTransform(GeometricTransform):
             'then apply the forward transformation.')
 
 
+class AsymmetricPolynomialTransform(GeometricTransform):
+    """2D polynomial transformation.
+
+    Has the following form::
+
+        X = sum[j=0:order]( sum[i=0:j]( a_ji * x**(j - i) * y**i ))
+        Y = sum[j=0:order]( sum[i=0:j]( b_ji * x**(j - i) * y**i ))
+
+    Parameters
+    ----------
+    params : (2, N) array, optional
+        Polynomial coefficients where `N * 2 = (order + 1) * (order + 2)`. So,
+        a_ji is defined in `params[0, :]` and b_ji in `params[1, :]`.
+
+    Attributes
+    ----------
+    params : (2, N) array
+        Polynomial coefficients where `N * 2 = (order + 1) * (order + 2)`. So,
+        a_ji is defined in `params[0, :]` and b_ji in `params[1, :]`.
+
+    """
+
+    def __init__(self, params=None):
+        if params is None:
+            # default to transformation which preserves original coordinates
+            params = np.array([[0, 1, 0], [0, 0, 1]])
+        if params.shape[0] != 2:
+            raise ValueError("invalid shape of transformation parameters")
+        self.params = params
+
+    def estimate(self, src, dst, order=(2, 2)):
+        """Generate a pair of warping polynomial kernels in two
+           dimensions (Kx, Ky) taking  starting coordinates (Xo,Yo) to
+           ending coordinates (Xi,Yi). The polynomial degrees in the
+           two dimensions are allowed to differ:
+
+           Xi = Sum (i,0,Degree[1]) (j,0,Degree[0]) Kx[i,j] Xo^j Yo^i
+           Yi = Sum (i,0,Degree[1]) (j,0,Degree[0]) Ky[i,j] Xo^j Yo^i
+
+           The degrees need not be equal, but the number of points provided
+           must be greater than or equal to
+
+           number of points = (Degree[0]+1)*(Degree[1]+1)
+
+        Parameters
+        ----------
+        src : (N, 2) array
+            Source coordinates.
+        dst : (N, 2) array
+            Destination coordinates.
+        order : (2) array, int
+            Polynomial order (number of coefficients is order + 1).
+
+        Returns
+        -------
+        success : bool
+            True, if model estimation succeeds.
+
+        """
+        if isinstance(order, int):
+            order = (order, order)
+
+        m = order[0] + 1
+        n = order[1] + 1
+
+        xi = src[:, 0]
+        yi = src[:, 1]
+        xo = dst[:, 0]
+        yo = dst[:, 1]
+        npts = src.shape[0]
+
+        W = np.empty((npts, m*n), dtype=float)
+        X = np.empty((npts, 2), dtype=float)
+
+        medxo = np.median(abs(xo))
+        medyo = np.median(abs(yo))
+
+        X[:, 0] = xi/medxo
+        X[:, 1] = yi/medyo
+
+        xx = np.zeros(m, dtype=float)
+        xx[0] = 1.0
+        for ix in range(1, m):
+            xx[ix] = xx[ix-1]/medxo
+
+        yy = np.zeros(n, dtype=float)
+        yy[0] = 1.0
+        for iy in range(1, n):
+            yy[iy] = yy[iy-1]/medyo
+
+        zz = np.outer(yy, xx)
+
+        U = X
+        U[:, 0] = xo / medxo
+        U[:, 1] = yo / medyo
+
+        for iy in range(0, n):
+            for ix in range(0, m):
+                row = ix * n + iy
+                W[:, row] = U[:, 1]**iy * U[:, 0]**ix
+        W = W.T
+
+        WW = np.matmul(W, W.T)
+
+        MM = linalg.inv(WW)
+
+        MMM = np.matmul(MM.T, W)
+
+        print('MMM shape', MMM.shape)
+        print('X shape', X.shape)
+        print('zz shape', zz.shape)
+        print('n, m', n, m)
+
+        mmx = np.matmul(MMM, X[:, 0]).reshape((n, m))
+        mmy = np.matmul(MMM, X[:, 1]).reshape((n, m))
+
+        print('mmx shape', mmx.shape)
+        print('mmy shape', mmy.shape)
+
+        kx = zz * (np.zeros((n, m), dtype=float) + mmx) * medxo
+        ky = zz * (np.zeros((n, m), dtype=float) + mmy) * medyo
+
+        # kx = zz * (np.zeros((n, m), dtype=float) + (np.matmul(MMM, X[:, 0]))) * medxo
+        # ky = zz * (np.zeros((n, m), dtype=float) + (np.matmul(MMM, X[:, 1]))) * medyo
+
+        self.params = [kx, ky]
+
+        return True
+
+    def __call__(self, coords):
+        """Apply forward transformation.
+
+        Parameters
+        ----------
+        coords : (N, 2) array
+            source coordinates
+
+        Returns
+        -------
+        coords : (N, 2) array
+            Transformed coordinates.
+
+        """
+        x = coords[:, 0]
+        y = coords[:, 1]
+
+        assert len(self.params) == 2, "Must have both Kx and Ky!"
+
+        kx = self.params[0]
+        ky = self.params[1]
+
+        ordx = kx.shape[0]
+        ordy = kx.shape[1]
+
+        assert ordx == ky.shape[0], "Kx and Ky must have same shape!"
+        assert ordy == ky.shape[1], "Kx and Ky must have same shape!"
+
+        dst = np.zeros(coords.shape)
+
+        pidx = 0
+        for j in range(ordx):
+            for i in range(ordy):
+                dst[:, 0] += kx[i, j] * x ** j * y ** i
+                dst[:, 1] += ky[i, j] * x ** j * y ** i
+                pidx += 1
+
+        return dst
+
+    def inverse(self, coords):
+        raise Exception(
+            'There is no explicit way to do the inverse polynomial '
+            'transformation. Instead, estimate the inverse transformation '
+            'parameters by exchanging source and destination coordinates,'
+            'then apply the forward transformation.')
+
+
 TRANSFORMS = {
     'euclidean': EuclideanTransform,
     'similarity': SimilarityTransform,
@@ -1332,6 +1508,7 @@ TRANSFORMS = {
     'fundamental': FundamentalMatrixTransform,
     'essential': EssentialMatrixTransform,
     'polynomial': PolynomialTransform,
+    'asympolynomial': AsymmetricPolynomialTransform,
 }
 
 
