@@ -1431,22 +1431,19 @@ class AsymmetricPolynomialTransform(GeometricTransform):
 
         MMM = np.matmul(MM.T, W)
 
-        print('MMM shape', MMM.shape)
-        print('X shape', X.shape)
-        print('zz shape', zz.shape)
-        print('n, m', n, m)
+        # print('MMM shape', MMM.shape)
+        # print('X shape', X.shape)
+        # print('zz shape', zz.shape)
+        # print('n, m', n, m)
 
         mmx = np.matmul(MMM, X[:, 0]).reshape((n, m))
         mmy = np.matmul(MMM, X[:, 1]).reshape((n, m))
 
-        print('mmx shape', mmx.shape)
-        print('mmy shape', mmy.shape)
+        # print('mmx shape', mmx.shape)
+        # print('mmy shape', mmy.shape)
 
         kx = zz * (np.zeros((n, m), dtype=float) + mmx) * medxo
         ky = zz * (np.zeros((n, m), dtype=float) + mmy) * medyo
-
-        # kx = zz * (np.zeros((n, m), dtype=float) + (np.matmul(MMM, X[:, 0]))) * medxo
-        # ky = zz * (np.zeros((n, m), dtype=float) + (np.matmul(MMM, X[:, 1]))) * medyo
 
         self.params = [kx, ky]
 
@@ -1482,12 +1479,10 @@ class AsymmetricPolynomialTransform(GeometricTransform):
 
         dst = np.zeros(coords.shape)
 
-        pidx = 0
-        for j in range(ordx):
-            for i in range(ordy):
-                dst[:, 0] += kx[i, j] * x ** j * y ** i
-                dst[:, 1] += ky[i, j] * x ** j * y ** i
-                pidx += 1
+        for j in range(ordy):
+            for i in range(ordx):
+                dst[:, 0] += kx[i, j] * x ** i * y ** j
+                dst[:, 1] += ky[i, j] * x ** i * y ** j
 
         return dst
 
