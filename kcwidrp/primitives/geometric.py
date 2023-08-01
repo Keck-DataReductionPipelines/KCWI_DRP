@@ -1387,6 +1387,9 @@ class AsymmetricPolynomialTransform(GeometricTransform):
 
         m = order[0] + 1
         n = order[1] + 1
+        maxord = np.max([m, n])
+
+        plen = int(maxord * (maxord + 1) / 2)
 
         xi = src[:, 0]
         yi = src[:, 1]
@@ -1394,8 +1397,8 @@ class AsymmetricPolynomialTransform(GeometricTransform):
         yo = dst[:, 1]
         npts = src.shape[0]
 
-        W = np.empty((npts, m*n), dtype=float)
-        X = np.empty((npts, 2), dtype=float)
+        W = np.zeros((npts, m*n), dtype=float)
+        X = np.zeros((npts, 2), dtype=float)
 
         medxo = np.median(abs(xo))
         medyo = np.median(abs(yo))
@@ -1415,7 +1418,7 @@ class AsymmetricPolynomialTransform(GeometricTransform):
 
         zz = np.outer(yy, xx)
 
-        U = X
+        U = np.zeros((npts, 2), dtype=float)
         U[:, 0] = xo / medxo
         U[:, 1] = yo / medyo
 
@@ -1423,13 +1426,14 @@ class AsymmetricPolynomialTransform(GeometricTransform):
             for ix in range(0, m):
                 row = ix * n + iy
                 W[:, row] = U[:, 1]**iy * U[:, 0]**ix
-        W = W.T
 
-        WW = np.matmul(W, W.T)
+        # W = W.T
+
+        WW = np.matmul(W.T, W)
 
         MM = linalg.inv(WW)
 
-        MMM = np.matmul(MM.T, W)
+        MMM = np.matmul(MM.T, W.T)
 
         # print('MMM shape', MMM.shape)
         # print('X shape', X.shape)
@@ -1442,10 +1446,28 @@ class AsymmetricPolynomialTransform(GeometricTransform):
         # print('mmx shape', mmx.shape)
         # print('mmy shape', mmy.shape)
 
-        kx = zz * (np.zeros((n, m), dtype=float) + mmx) * medxo
-        ky = zz * (np.zeros((n, m), dtype=float) + mmy) * medyo
+        kx = zz * mmx * medxo
+        ky = zz * mmy * medyo
 
-        self.params = [kx, ky]
+        params = np.zeros((2, plen))
+
+        pidx = 0
+        for j in range(maxord):
+            for ix in range(j + 1):
+                iy = j - ix
+                if ix <= order[0] and iy <= order[1]:
+                    params[0, pidx] = kx[ix, iy]
+                    params[1, pidx] = ky[ix, iy]
+                else:
+                    params[0, pidx] = 0.
+                    params[1, pidx] = 0.
+                pidx += 1
+
+        print("kx", kx)
+        print("ky", ky)
+        print("params", params)
+
+        self.params = params
 
         return True
 
@@ -1465,6 +1487,20 @@ class AsymmetricPolynomialTransform(GeometricTransform):
         """
         x = coords[:, 0]
         y = coords[:, 1]
+        u = len(self.params.ravel())
+        # number of coefficients -> u = (order + 1) * (order + 2)
+        order = int((- 3 + math.sqrt(9 - 4 * (2 - u))) / 2)
+        dst = np.zeros(coords.shape)
+
+        pidx = 0
+        for j in range(order + 1):
+            for i in range(j + 1):
+                dst[:, 0] += self.params[0, pidx] * x ** (j - i) * y ** i
+                dst[:, 1] += self.params[1, pidx] * x ** (j - i) * y ** i
+                pidx += 1
+        """
+        x = coords[:, 0]
+        y = coords[:, 1]
 
         assert len(self.params) == 2, "Must have both Kx and Ky!"
 
@@ -1479,11 +1515,11 @@ class AsymmetricPolynomialTransform(GeometricTransform):
 
         dst = np.zeros(coords.shape)
 
-        for j in range(ordy):
-            for i in range(ordx):
-                dst[:, 0] += kx[i, j] * x ** i * y ** j
-                dst[:, 1] += ky[i, j] * x ** i * y ** j
-
+        for i in range(ordy):
+            for j in range(ordx):
+                dst[:, 0] += kx[i, j] * x ** j * y ** i
+                dst[:, 1] += ky[i, j] * x ** j * y ** i
+        """
         return dst
 
     def inverse(self, coords):
