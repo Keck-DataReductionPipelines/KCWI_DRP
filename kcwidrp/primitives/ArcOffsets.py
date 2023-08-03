@@ -44,7 +44,7 @@ class ArcOffsets(BasePrimitive):
             plab = plotlabel(self.action.args)
             # Compare with reference arc
             reference_arc = arcs[self.config.instrument.REFBAR][:]
-            tkwgt = signal.windows.tukey(len(reference_arc), alpha=0.2)
+            tkwgt = signal.windows.tukey(len(reference_arc), alpha=tkalpha)
             reference_arc *= tkwgt
             # number of cross-correlation samples (avoiding ends)
             number_of_samples = len(reference_arc[10:-10])
