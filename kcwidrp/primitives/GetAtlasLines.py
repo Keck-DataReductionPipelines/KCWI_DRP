@@ -73,35 +73,35 @@ def get_line_window(y, c, thresh=0., logger=None, strict=False, maxwin=100):
     if mx < thresh:
         return None, None, 0
     #
-    # expand until we get to half max
-    hmx = mx * 0.5
+    # expand until we get to quarter max
+    qmx = mx * 0.25
     #
     # Low index side
     prev = mx
-    while y[x0] > hmx:
+    while y[x0] > qmx:
         if y[x0] > mx or x0 <= 0 or y[x0] > prev:
             if verbose:
                 if y[x0] > mx:
-                    logger.info("hafmax check: low index err - missed max")
+                    logger.info("quartermax check: low index err - missed max")
                 if x0 <= 0:
-                    logger.info("hafmax check: low index err - at edge")
+                    logger.info("quartermax check: low index err - at edge")
                 if y[x0] > prev:
-                    logger.info("hafmax check: low index err - wiggly")
+                    logger.info("quartermax check: low index err - wiggly")
             return None, None, 0
         prev = y[x0]
         x0 -= 1
         count += 1
     # High index side
     prev = mx
-    while y[x1] > hmx:
+    while y[x1] > qmx:
         if y[x1] > mx or x1 >= nx or y[x1] > prev:
             if verbose:
                 if y[x1] > mx:
-                    logger.info("hafmax check: high index err - missed max")
+                    logger.info("quartermax check: high index err - missed max")
                 if x1 >= nx:
-                    logger.info("hafmax check: high index err - at edge")
+                    logger.info("quartermax check: high index err - at edge")
                 if y[x1] > prev:
-                    logger.info("hafmax check: high index err - wiggly")
+                    logger.info("quartermax check: high index err - wiggly")
             return None, None, 0
         prev = y[x1]
         if x1 < (nx-1):
@@ -209,6 +209,8 @@ class GetAtlasLines(BasePrimitive):
     def _perform(self):
         """Get atlas line positions for wavelength fitting"""
         self.logger.info("Finding isolated atlas lines")
+        verbose = (self.config.instrument.verbose > 1)
+
         # get atlas wavelength range
         # get pixel values (no longer centered in the middle)
         specsz = len(self.context.arcs[self.config.instrument.REFBAR])
@@ -344,7 +346,8 @@ class GetAtlasLines(BasePrimitive):
                 try:
                     line_x = [ii for ii, v in enumerate(atwave) if v >= pk][0]
                     # get window around atlas line to fit
-                    minow, maxow, count = get_line_window(atspec, line_x)
+                    minow, maxow, count = get_line_window(
+                        atspec, line_x, logger=(self.logger if verbose else None))
                 except IndexError:
                     count = 0
                     minow = None
