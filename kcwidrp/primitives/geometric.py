@@ -1446,8 +1446,8 @@ class AsymmetricPolynomialTransform(GeometricTransform):
         # print('mmx shape', mmx.shape)
         # print('mmy shape', mmy.shape)
 
-        kx = zz * mmx * medxo
-        ky = zz * mmy * medyo
+        kx = zz * mmx.T * medxo
+        ky = zz * mmy.T * medyo
 
         params = np.zeros((2, plen))
 
