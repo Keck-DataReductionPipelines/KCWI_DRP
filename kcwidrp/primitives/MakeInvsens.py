@@ -240,16 +240,13 @@ class MakeInvsens(BasePrimitive):
         earea = ubsspec / rspho
         # correct to native bins
         earea *= dw/dwspec
-        # Balmer lines
-        blines = [6563., 4861., 4341., 4102., 3970., 3889., 3835.]
+        # Line masks
+        lmasks = []
         # default values (for BM)
-        bwid = 0.008    # fractional width to mask
         ford = 9        # fit order
         if 'BL' in self.action.args.grating:
-            bwid = 0.004
             ford = 7
         elif 'BH' in self.action.args.grating:
-            bwid = 0.012
             ford = 9
         # Adjust for dichroic fraction
         try:
@@ -260,7 +257,6 @@ class MakeInvsens(BasePrimitive):
         if ford < 3:
             ford = 3
         self.logger.info("Fitting Invsens with polynomial order %d" % ford)
-        bwids = [bl * bwid for bl in blines]
         # fit inverse sensitivity and effective area
         # get initial region of interest
         wl_good = [i for i, v in enumerate(w) if wgoo0 <= v <= wgoo1]
@@ -334,31 +330,32 @@ class MakeInvsens(BasePrimitive):
                        legend_label='LIMITS')
                 p.line([wlm1, wlm1], yran, line_color='blue')
                 p.line([cwv, cwv], yran, line_color='red', legend_label='CWAV')
-                for il, bl in enumerate(blines):
-                    if wall0 < bl < wall1:
-                        p.line([bl, bl], yran, line_color='orange')
-                        p.line([bl-bwids[il], bl-bwids[il]], yran,
+                for ml in lmasks:
+                    if wall0 < ml[0] < wall1:
+                        p.line([ml[0], ml[0]], yran, line_color='orange')
+                        p.line([ml[0] - ml[1], ml[0] - ml[1]], yran,
                                line_color='orange', line_dash='dashed')
-                        p.line([bl + bwids[il], bl + bwids[il]], yran,
+                        p.line([ml[0] + ml[1], ml[0] + ml[1]], yran,
                                line_color='orange', line_dash='dashed')
                 set_plot_lims(p, xlim=[wall0, wall1], ylim=yran)
                 bokeh_plot(p, self.context.bokeh_session)
-                qstr = input("New lines? <float> [<float>] ... (A), "
+                qstr = input("Mask line: wavelength, half-width (Ang)? <float> <float> (A), "
                              "<cr> - done: ")
                 if len(qstr) <= 0:
                     done = True
                 else:
-                    for lstr in qstr.split():
-                        try:
-                            new_line = float(lstr)
-                        except ValueError:
-                            print("bad line: %s" % lstr)
-                            continue
-                        if wlm0 < new_line < wlm1:
-                            blines.append(new_line)
-                            bwids.append(bwid * new_line)
+                    try:
+                        newl = [float(val) for val in qstr.split()]
+                    except ValueError:
+                        print("bad line: %s" % qstr)
+                        continue
+                    if len(newl) == 2:
+                        if wlm0 < newl[0] < wlm1:
+                            lmasks.append(newl)
                         else:
-                            print("line outside range: %s" % lstr)
+                            print("line outside range: %s" % newl[0])
+                    else:
+                        print("bad input: %s" % qstr)
         # END: interactively identify lines
         # set up fitting vectors, flux, waves, measure errors
         sf = invsen[wl_good]   # dependent variable
@@ -369,14 +366,14 @@ class MakeInvsens(BasePrimitive):
         mw = np.ones(nwl_good, dtype=float)     # weights
         use = np.ones(nwl_good, dtype=int)      # toggles for usage
         # loop over Balmer lines
-        for il, bl in enumerate(blines):
+        for ml in lmasks:
             roi = [i for i, v in enumerate(wf)
-                   if (bl - bwids[il]) <= v <= (bl + bwids[il])]
+                   if (ml[0] - ml[1]) <= v <= (ml[0] + ml[1])]
             nroi = len(roi)
             if nroi > 0:
                 use[roi] = 0
                 self.logger.info("Masking line at %.1f +- %.4f (A)"
-                                 % (bl, bwids[il]))
+                                 % (ml[0], ml[1]))
         # ignore bad points by setting large errors
         mf = []
         ef = []
