@@ -13,6 +13,7 @@ from scipy.optimize import curve_fit
 from scipy.stats import sigmaclip
 import time
 import os
+import traceback
 
 
 def gaus(x, a, mu, sigma):
@@ -367,15 +368,20 @@ class GetAtlasLines(BasePrimitive):
                 xvec = atwave[minow:maxow + 1]
                 # attempt Gaussian fit
                 try:
-                    fit, _ = curve_fit(gaus, xvec, yvec, p0=[spec_hgt[i], pk,
-                                                             1.])
-                except RuntimeError:
+                    fit, _ = curve_fit(gaus, xvec, yvec,
+                                       p0=[spec_hgt[i], pk, 1.],
+                                       maxfev=5000)
+                except RuntimeError as e:
                     # keep track of Gaussian fit rejected lines
                     rej_fit_w.append(pk)
                     rej_fit_a.append(spec_hgt[i])
                     nrej += 1
                     self.logger.info("Atlas Gaussian fit rejected for line "
                                      "%.3f" % pk)
+                    if verbose:
+                        tb_str = traceback.format_exception(etype=type(e), value=e,
+                                                            tb=e.__traceback__)
+                        self.logger.info("".join(tb_str))
                     continue
                 # get interpolation function of atlas line
                 int_line = interpolate.interp1d(xvec, yvec, kind='cubic',
