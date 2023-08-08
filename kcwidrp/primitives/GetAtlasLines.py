@@ -74,35 +74,35 @@ def get_line_window(y, c, thresh=0., logger=None, strict=False, maxwin=100):
     if mx < thresh:
         return None, None, 0
     #
-    # expand until we get to quarter max
-    qmx = mx * 0.25
+    # expand until we get to half max
+    hmx = mx * 0.5
     #
     # Low index side
     prev = mx
-    while y[x0] > qmx:
+    while y[x0] > hmx:
         if y[x0] > mx or x0 <= 0 or y[x0] > prev:
             if verbose:
                 if y[x0] > mx:
-                    logger.info("quartermax check: low index err - missed max")
+                    logger.info("halfmax check: low index err - missed max")
                 if x0 <= 0:
-                    logger.info("quartermax check: low index err - at edge")
+                    logger.info("halfmax check: low index err - at edge")
                 if y[x0] > prev:
-                    logger.info("quartermax check: low index err - wiggly")
+                    logger.info("halfmax check: low index err - wiggly")
             return None, None, 0
         prev = y[x0]
         x0 -= 1
         count += 1
     # High index side
     prev = mx
-    while y[x1] > qmx:
+    while y[x1] > hmx:
         if y[x1] > mx or x1 >= nx or y[x1] > prev:
             if verbose:
                 if y[x1] > mx:
-                    logger.info("quartermax check: high index err - missed max")
+                    logger.info("halfmax check: high index err - missed max")
                 if x1 >= nx:
-                    logger.info("quartermax check: high index err - at edge")
+                    logger.info("halfmax check: high index err - at edge")
                 if y[x1] > prev:
-                    logger.info("quartermax check: high index err - wiggly")
+                    logger.info("halfmax check: high index err - wiggly")
             return None, None, 0
         prev = y[x1]
         if x1 < (nx-1):
