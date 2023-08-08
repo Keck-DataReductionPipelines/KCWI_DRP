@@ -340,7 +340,7 @@ class MakeInvsens(BasePrimitive):
                 set_plot_lims(p, xlim=[wall0, wall1], ylim=yran)
                 bokeh_plot(p, self.context.bokeh_session)
                 qstr = input("Mask line: wavelength, half-width (Ang)? <float> <float> (A), "
-                             "<cr> - done: ")
+                             " (negative width to delete) <cr> - done: ")
                 if len(qstr) <= 0:
                     done = True
                 else:
@@ -351,7 +351,16 @@ class MakeInvsens(BasePrimitive):
                         continue
                     if len(newl) == 2:
                         if wlm0 < newl[0] < wlm1:
-                            lmasks.append(newl)
+                            if newl[1] > 0:
+                                lmasks.append(newl)
+                            else:
+                                nlmasks = []
+                                for ml in lmasks:
+                                    if ml[0] != newl[0]:
+                                        nlmasks.append(ml)
+                                    else:
+                                        print('%.2f deleted!' % newl[0])
+                                lmasks = nlmasks
                         else:
                             print("line outside range: %s" % newl[0])
                     else:
