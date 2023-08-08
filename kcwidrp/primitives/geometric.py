@@ -1387,7 +1387,7 @@ class AsymmetricPolynomialTransform(GeometricTransform):
 
         m = order[0] + 1
         n = order[1] + 1
-        maxord = np.max([m, n])
+        maxord = order[0] + order[1] + 1
 
         plen = int(maxord * (maxord + 1) / 2)
 
