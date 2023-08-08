@@ -845,6 +845,12 @@ def kcwi_fits_writer(ccddata, table=None, output_file=None, output_dir=None,
         else:
             logger.debug("Package not installed from a git repo, skipping")
     
+    if ccddata.data and ccddata.data.dtype == np.float64:
+        ccddata.data = ccddata.data.astype(np.float32)
+
+    if ccddata.uncertainty and ccddata.uncertainty.dtype == np.float64:
+        ccddata.uncertainty = ccddata.uncertainty.astype(np.float32)
+    
     out_file = os.path.join(output_dir, os.path.basename(output_file))
     if suffix is not None:
         (main_name, extension) = os.path.splitext(out_file)
