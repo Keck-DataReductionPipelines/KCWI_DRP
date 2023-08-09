@@ -844,12 +844,15 @@ def kcwi_fits_writer(ccddata, table=None, output_file=None, output_dir=None,
             ccddata.header.add_history(f"git date={git_d}")
         else:
             logger.debug("Package not installed from a git repo, skipping")
-    
-    if ccddata.data and ccddata.data.dtype == np.float64:
-        ccddata.data = ccddata.data.astype(np.float32)
 
-    if ccddata.uncertainty and ccddata.uncertainty.dtype == np.float64:
-        ccddata.uncertainty = ccddata.uncertainty.astype(np.float32)
+    # If there is a data array, and the type of that array is a 64-bit float,
+    # force it to 32 bits.
+    if ccddata.data is not None and ccddata.data.dtype == np.float64:
+        ccddata.data = ccddata.data.astype(np.float32)
+    # If there is an uncertainty array, and the values within (the .array property), make it
+    # 32 bits.
+    if ccddata.uncertainty is not None and ccddata.uncertainty.array.dtype == np.float64:
+        ccddata.uncertainty.array = ccddata.uncertainty.array.astype(np.float32)
     
     out_file = os.path.join(output_dir, os.path.basename(output_file))
     if suffix is not None:
