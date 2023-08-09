@@ -42,11 +42,10 @@ class SubtractSky(BasePrimitive):
             self.logger.info("pre condition got 1 master sky, expected 1")
             return True
         else:
-
             target_type = 'SKY'
-            tab = self.context.proctab.search_proctab(frame=self.action.args.ccddata,
-                                                 target_type=target_type,
-                                                 nearest=True)
+            tab = self.context.proctab.search_proctab(
+                frame=self.action.args.ccddata, target_type=target_type,
+                nearest=True)
             self.logger.info("pre condition got %d master sky, expected 1"
                              % len(tab))
             if len(tab) <= 0:
@@ -66,9 +65,9 @@ class SubtractSky(BasePrimitive):
         skymask = self.action.args.skymask
 
         if not self.action.args.skyfile:
-            tab = self.context.proctab.search_proctab(frame=self.action.args.ccddata,
-                                                 target_type=target_type,
-                                                 nearest=True)
+            tab = self.context.proctab.search_proctab(
+                frame=self.action.args.ccddata, target_type=target_type,
+                nearest=True)
             self.logger.info("%d master sky frames found" % len(tab))
 
             if len(tab) > 0:
