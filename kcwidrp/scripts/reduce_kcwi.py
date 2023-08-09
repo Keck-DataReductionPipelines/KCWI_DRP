@@ -60,6 +60,9 @@ def _parse_arguments(in_args: list) -> argparse.Namespace:
     parser.add_argument('-u', '--tukey_alpha', dest='tukey_alpha',
                         type=float, help="Tukey Window Alpha (0.0 - 1.0)",
                         default=None)
+    parser.add_argument('-F', '--max_frac', dest='max_frac',
+                        type=float, default=None,
+                        help="Fraction of line max for fitting window (default: 0.5)")
 
     # in this case, we are loading an entire directory,
     # and ingesting all the files in that directory
@@ -196,8 +199,8 @@ def main():
 
     # check for atlas_offset argument
     if args.atlas_offset:
-        def_mf = getattr(framework.config.instrument, 'ATOFF', None)
-        if def_mf is not None:
+        def_ao = getattr(framework.config.instrument, 'ATOFF', None)
+        if def_ao is not None:
             framework.context.pipeline_logger.info(
                 "Setting new atlas offset = %.2f" % args.atlas_offset)
             framework.config.instrument.ATOFF = args.atlas_offset
@@ -217,8 +220,8 @@ def main():
 
     # check for tukey_alpha argument
     if args.tukey_alpha:
-        def_lt = getattr(framework.config.instrument, 'TUKEYALPHA', None)
-        if def_lt is not None:
+        def_ta = getattr(framework.config.instrument, 'TUKEYALPHA', None)
+        if def_ta is not None:
             framework.context.pipeline_logger.info(
                 "Setting new tukey alpha = %.2f" % args.tukey_alpha)
             framework.config.instrument.TUKEYALPHA = args.tukey_alpha
@@ -227,6 +230,19 @@ def main():
             framework.config.instrument.TUKEYALPHA = kcwi_blue_config.TUKEYALPHA
         elif args.red:
             framework.config.instrument.TUKEYALPHA = kcwi_red_config.TUKEYALPHA
+
+    # check for max_frac argument
+    if args.max_frac:
+        def_fm = getattr(framework.config.instrument, 'FRACMAX', None)
+        if def_fm is not None:
+            framework.context.pipeline_logger.info(
+                "Setting new line windowing max fraction = %.2f" % args.max_frac)
+            framework.config.instrument.FRACMAX = args.max_frac
+    else:
+        if args.blue:
+            framework.config.instrument.FRACMAX = kcwi_blue_config.FRACMAX
+        elif args.red:
+            framework.config.instrument.FRACMAX = kcwi_red_config.FRACMAX
 
     # check for atlas line list argument
     if args.atlas_line_list:
