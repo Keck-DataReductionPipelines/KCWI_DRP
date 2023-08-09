@@ -509,7 +509,7 @@ class MakeMasterFlat(BaseImg):
         if twiflat:
             knots = int(ny * knotspp)
         else:
-            knots = 100
+            knots = 1000
         self.logger.info("Using %d knots for bspline fit" % knots)
 
         # generate a fit from ref slice points
