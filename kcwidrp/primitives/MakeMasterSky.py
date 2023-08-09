@@ -40,25 +40,46 @@ class MakeMasterSky(BaseImg):
             f.close()
             # is our file in the list?
             for row in skyproc:
+                # skip comments
+                if row.startswith('#'):
+                    continue
+                # Parse row:
+                # <raw sci file> <raw sky file> <optional mask file>
+                #  OR
+                # <raw sci file> skip
+                # to disable sky subtraction
+                # Find match to current file
                 if ofn in row.split()[0]:
                     skyfile = row.split()[1]
+                    # Should we skip sky subtraction?
+                    if 'skip' in skyfile:
+                        self.logger.info("Skipping sky subtraction for %s" %
+                                         ofn)
+                        return False
                     self.logger.info("Found sky entry for %s: %s" % (ofn,
                                                                      skyfile))
+                    # Do we have an optional sky mask file?
                     if len(row.split()) > 2:
                         skymask = row.split()[2]
                         self.logger.info("Found sky mask entry for %s: %s"
                                          % (ofn, skymask))
+            # Do have a mask file?
             if skymask:
+                # Does it exist?
                 if os.path.exists(skymask):
                     self.logger.info("Using sky mask file: %s" % skymask)
                 else:
                     self.logger.warning("Sky mask file not found: %s" % skymask)
                     skymask = None
+        # Record results
         self.action.args.skyfile = skyfile
         self.action.args.skymask = skymask
+        # Do we have a sky alternate?
         if skyfile:
+            # Generate sky file name
             msname = skyfile.split('.fits')[0] + '_' + suffix + '.fits'
             mskyf = os.path.join(rdir, msname)
+            # Does it exist?
             if os.path.exists(mskyf):
                 self.logger.info("Master sky already exists: %s" % mskyf)
                 return False
