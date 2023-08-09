@@ -45,6 +45,8 @@ class SolveArcs(BasePrimitive):
         plab = plotlabel(self.action.args)
         # output control
         verbose = (self.config.instrument.verbose > 1)
+        frac_max = self.config.instrument.FRACMAX
+        self.logger.info("Finding line windows using fraction of line max of %.2f" % frac_max)
 
         # Bar statistics
         bar_sig = []
@@ -110,7 +112,8 @@ class SolveArcs(BasePrimitive):
                     # get window for arc line
                     minow, maxow, count = get_line_window(
                         bspec, line_x, thresh=hgt,
-                        logger=(self.logger if verbose else None))
+                        logger=(self.logger if verbose else None),
+                        frac_max=frac_max)
                     # do we have enough points to fit?
                     if count < 5 or not minow or not maxow:
                         rej_wave.append(aw)
