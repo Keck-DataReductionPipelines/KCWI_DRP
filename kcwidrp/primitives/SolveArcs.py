@@ -142,7 +142,7 @@ class SolveArcs(BasePrimitive):
                     #              [f0*1.1, np.max(xvec), 2.5])
                     # Gaussian fit
                     try:
-                        fit, _ = curve_fit(gaus, xvec, yvec, p0=par_start)
+                        fit, _ = curve_fit(gaus, xvec, yvec, p0=par_start, maxfev=5000)
                         #  bounds=par_bounds, method='trf')
                         sp_pk_x = fit[1]
                         gaus_sig.append(fit[2])
