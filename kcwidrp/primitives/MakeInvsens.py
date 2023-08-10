@@ -198,7 +198,8 @@ class MakeInvsens(BasePrimitive):
             obsmean = np.nanmean(obsspec)
             obsspec[zeros] = obsmean
         # read in standard star spectrum
-        hdul = pf.open(self.action.args.stdfile)
+        stdfile = self.action.args.stdfile
+        hdul = pf.open(stdfile)
         swl = hdul[1].data['WAVELENGTH']
         sflx = hdul[1].data['FLUX']
         sfw = hdul[1].data['FWHM']
@@ -309,8 +310,34 @@ class MakeInvsens(BasePrimitive):
             wl_good = [i for i, v in enumerate(w) if wlm0 <= v <= wlm1]
             nwl_good = len(wl_good)
         # END: interactively set wavelength limits
-        # Now interactively identify lines
-        if self.config.instrument.plot_level >= 1:
+        # Look for mask data file
+        # first in local directory
+        lmfile = os.path.basename(stdfile).split('.fits')[0] + '.lmsk'
+        if not os.path.exists(lmfile):
+            # then in stds directory
+            lmfile = stdfile.split('.fits')[0] + '.lmsk'
+            if not os.path.exists(lmfile):
+                lmfile = None
+        # masks?
+        lmasks = []
+        # if we found a mask file, read it in
+        if lmfile is None:
+            self.logger.info("No line mask file found")
+        else:
+            self.logger.info("Using line mask file %s" % lmfile)
+            with open(lmfile) as lmf:
+                lmasks_str = lmf.readlines()
+            # parse file into mask list
+            for lmws in lmasks_str:
+                try:
+                    lm = [float(v) for v in lmws.split()]
+                except ValueError:
+                    print("bad line: %s" % lmws)
+                    continue
+                if len(lm) == 2:
+                    lmasks.append(lm)
+        # Now interactively identify lines if requested
+        if self.config.instrument.plot_level >= 2:
             yran = [np.min(obsspec), np.max(obsspec)]
             # source = ColumnDataSource(data=dict(x=w, y=obsspec))
             done = False
@@ -331,16 +358,15 @@ class MakeInvsens(BasePrimitive):
                 p.line([wlm1, wlm1], yran, line_color='blue')
                 p.line([cwv, cwv], yran, line_color='red', legend_label='CWAV')
                 for ml in lmasks:
-                    if wall0 < ml[0] < wall1:
-                        p.line([ml[0], ml[0]], yran, line_color='orange')
-                        p.line([ml[0] - ml[1], ml[0] - ml[1]], yran,
-                               line_color='orange', line_dash='dashed')
-                        p.line([ml[0] + ml[1], ml[0] + ml[1]], yran,
-                               line_color='orange', line_dash='dashed')
+                    if wall0 < ml[0] < wall1 and wall0 < ml[1] < wall1:
+                        p.line([ml[0], ml[0]], yran, line_color='orange',
+                               line_dash='dashed')
+                        p.line([ml[1], ml[1]], yran, line_color='orange',
+                               line_dash='dashed')
                 set_plot_lims(p, xlim=[wall0, wall1], ylim=yran)
                 bokeh_plot(p, self.context.bokeh_session)
-                qstr = input("Mask line: wavelength, half-width (Ang)? <float> <float> (A), "
-                             " (negative width to delete) <cr> - done: ")
+                qstr = input("Mask line: wavelength start, stop (Ang)? "
+                             "<float> <float> (A), <cr> - done: ")
                 if len(qstr) <= 0:
                     done = True
                 else:
@@ -350,22 +376,20 @@ class MakeInvsens(BasePrimitive):
                         print("bad line: %s" % qstr)
                         continue
                     if len(newl) == 2:
-                        if wlm0 < newl[0] < wlm1:
-                            if newl[1] > 0:
-                                lmasks.append(newl)
-                            else:
-                                nlmasks = []
-                                for ml in lmasks:
-                                    if ml[0] != newl[0]:
-                                        nlmasks.append(ml)
-                                    else:
-                                        print('%.2f deleted!' % newl[0])
-                                lmasks = nlmasks
+                        if wlm0 < newl[0] < wlm1 and wlm0 < newl[1] < wlm1:
+                            lmasks.append(newl)
                         else:
-                            print("line outside range: %s" % newl[0])
+                            print("line mask outside wl range: %s" % qstr)
                     else:
                         print("bad input: %s" % qstr)
         # END: interactively identify lines
+        # Write out a local copy of line masks so user can edit
+        if len(lmasks) > 0:
+            local_lmfile = os.path.basename(
+                stdfile).split('.fits')[0] + '.lmsk'
+            with open(local_lmfile, 'w') as lmf:
+                for lm in lmasks:
+                    lmf.write("%.2f %.2f\n" % (lm[0], lm[1]))
         # set up fitting vectors, flux, waves, measure errors
         sf = invsen[wl_good]   # dependent variable
         af = earea[wl_good]    # effective area
@@ -374,14 +398,13 @@ class MakeInvsens(BasePrimitive):
         rf = rsflx[wl_good]    # reference flux
         mw = np.ones(nwl_good, dtype=float)     # weights
         use = np.ones(nwl_good, dtype=int)      # toggles for usage
-        # loop over Balmer lines
+        # loop over line masks and apply them
         for ml in lmasks:
-            roi = [i for i, v in enumerate(wf)
-                   if (ml[0] - ml[1]) <= v <= (ml[0] + ml[1])]
+            roi = [i for i, v in enumerate(wf) if ml[0] <= v <= ml[1]]
             nroi = len(roi)
             if nroi > 0:
                 use[roi] = 0
-                self.logger.info("Masking line at %.1f +- %.4f (A)"
+                self.logger.info("Masking line at %.2f to %.2f (A)"
                                  % (ml[0], ml[1]))
         # ignore bad points by setting large errors
         mf = []
