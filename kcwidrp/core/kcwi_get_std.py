@@ -21,6 +21,7 @@ def kcwi_get_std(targname, logger=None):
         logger.info("Not found in data/stds: %s" % full_path)
     return stdfile, stdname
 
+
 def is_file_kcwi_std(filename, logger=None):
     try:
         with fits.open(filename) as hdul:
