@@ -1387,18 +1387,18 @@ class AsymmetricPolynomialTransform(GeometricTransform):
 
         m = order[0] + 1
         n = order[1] + 1
-        maxord = order[0] + order[1] + 1
+        efford = order[0] + order[1] + 1
 
-        plen = int(maxord * (maxord + 1) / 2)
+        plen = int(efford * (efford + 1) / 2)
 
-        xi = src[:, 0]
-        yi = src[:, 1]
-        xo = dst[:, 0]
-        yo = dst[:, 1]
+        xi = dst[:, 0]
+        yi = dst[:, 1]
+        xo = src[:, 0]
+        yo = src[:, 1]
         npts = src.shape[0]
 
-        W = np.zeros((npts, m*n), dtype=float)
-        X = np.zeros((npts, 2), dtype=float)
+        W = np.zeros((npts, m*n))
+        X = np.zeros((npts, 2))
 
         medxo = np.median(abs(xo))
         medyo = np.median(abs(yo))
@@ -1406,19 +1406,19 @@ class AsymmetricPolynomialTransform(GeometricTransform):
         X[:, 0] = xi/medxo
         X[:, 1] = yi/medyo
 
-        xx = np.zeros(m, dtype=float)
+        xx = np.zeros(m)
         xx[0] = 1.0
         for ix in range(1, m):
             xx[ix] = xx[ix-1]/medxo
 
-        yy = np.zeros(n, dtype=float)
+        yy = np.zeros(n)
         yy[0] = 1.0
         for iy in range(1, n):
             yy[iy] = yy[iy-1]/medyo
 
         zz = np.outer(yy, xx)
 
-        U = np.zeros((npts, 2), dtype=float)
+        U = np.zeros((npts, 2))
         U[:, 0] = xo / medxo
         U[:, 1] = yo / medyo
 
@@ -1446,13 +1446,26 @@ class AsymmetricPolynomialTransform(GeometricTransform):
         # print('mmx shape', mmx.shape)
         # print('mmy shape', mmy.shape)
 
-        kx = zz * mmx.T * medxo
-        ky = zz * mmy.T * medyo
+        maxord = np.max([m, n])
+        if m != n:
+            zzz = np.zeros((maxord, maxord))
+            mmmx = np.zeros((maxord, maxord))
+            mmmy = np.zeros((maxord, maxord))
+            zzz[:n, :m] = zz
+            mmmx[:n, :m] = mmx
+            mmmy[:n, :m] = mmy
+        else:
+            zzz = zz
+            mmmx = mmx
+            mmmy = mmy
+
+        kx = zzz * mmmx.T * medxo
+        ky = zzz * mmmy.T * medyo
 
         params = np.zeros((2, plen))
 
         pidx = 0
-        for j in range(maxord):
+        for j in range(efford):
             for ix in range(j + 1):
                 iy = j - ix
                 if ix <= order[0] and iy <= order[1]:
