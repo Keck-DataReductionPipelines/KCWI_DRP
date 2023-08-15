@@ -1440,27 +1440,17 @@ class AsymmetricPolynomialTransform(GeometricTransform):
         # print('zz shape', zz.shape)
         # print('n, m', n, m)
 
-        mmx = np.matmul(MMM, X[:, 0]).reshape((n, m))
-        mmy = np.matmul(MMM, X[:, 1]).reshape((n, m))
+        mmx = np.matmul(MMM, X[:, 0]).reshape((m, n))
+        mmy = np.matmul(MMM, X[:, 1]).reshape((m, n))
 
         # print('mmx shape', mmx.shape)
         # print('mmy shape', mmy.shape)
 
-        maxord = np.max([m, n])
-        if m != n:
-            zzz = np.zeros((maxord, maxord))
-            mmmx = np.zeros((maxord, maxord))
-            mmmy = np.zeros((maxord, maxord))
-            zzz[:n, :m] = zz
-            mmmx[:n, :m] = mmx
-            mmmy[:n, :m] = mmy
-        else:
-            zzz = zz
-            mmmx = mmx
-            mmmy = mmy
+        kx = zz * mmx.T * medxo
+        ky = zz * mmy.T * medyo
 
-        kx = zzz * mmmx.T * medxo
-        ky = zzz * mmmy.T * medyo
+        # print("kx", kx)
+        # print("ky", ky)
 
         params = np.zeros((2, plen))
 
@@ -1468,7 +1458,7 @@ class AsymmetricPolynomialTransform(GeometricTransform):
         for j in range(efford):
             for ix in range(j + 1):
                 iy = j - ix
-                if ix <= order[0] and iy <= order[1]:
+                if ix <= order[1] and iy <= order[0]:
                     params[0, pidx] = kx[ix, iy]
                     params[1, pidx] = ky[ix, iy]
                 else:
@@ -1476,9 +1466,7 @@ class AsymmetricPolynomialTransform(GeometricTransform):
                     params[1, pidx] = 0.
                 pidx += 1
 
-        print("kx", kx)
-        print("ky", ky)
-        print("params", params)
+        # print("params", params)
 
         self.params = params
 
