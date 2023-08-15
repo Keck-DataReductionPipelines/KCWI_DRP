@@ -455,10 +455,10 @@ class SolveArcs(BasePrimitive):
                 cn = poly_order - ic
                 if cn > 0:
                     ptitle = plab + "COEF %d VALUES <C%d> = " \
-                                    "%.1g +- %.1g" % (cn, cn, cf_av, cf_st)
+                                    "%.3g +- %.3g" % (cn, cn, cf_av, cf_st)
                 else:
                     ptitle = plab + "COEF %d VALUES <C%d> = " \
-                                    "%.1f +- %.1f" % (cn, cn, cf_av, cf_st)
+                                    "%.2f +- %.2f" % (cn, cn, cf_av, cf_st)
                 self.logger.info(ptitle)
                 p = figure(title=ptitle, x_axis_label="Bar #",
                            y_axis_label="Coef %d (%s)" % (cn, ylabs[ic]),
