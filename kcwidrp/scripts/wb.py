@@ -184,11 +184,11 @@ if __name__ == '__main__':
         print("Usage - wb <fspec>")
     else:
         configs = []
-        fnames = {"all": []}
+        fnames = {"allb": []}
         for ifl in sys.argv[1:]:
             logstr, cfgstr, lsfn = get_log_string(ifl, batch=True)
             print(logstr)
-            fnames['all'].append(ifl)
+            fnames['allb'].append(ifl)
             if lsfn:
                 if lsfn in fnames:
                     fnames[lsfn].append(ifl)
