@@ -165,8 +165,10 @@ class SolveGeom(BasePrimitive):
             dst = np.column_stack((xit, yi))
             src = np.column_stack((xw, yw))
             self.logger.info("Fitting wavelength and spatial control points")
-            tform = tf.estimate_transform('polynomial', src, dst, order=3)
-            invtf = tf.estimate_transform('polynomial', dst, src, order=3)
+            tform = tf.estimate_transform('asympolynomial', src, dst,
+                                          order=(2, 4))
+            invtf = tf.estimate_transform('asympolynomial', dst, src,
+                                          order=(2, 4))
             # tform = etf('polynomial', src, dst, order=3)
             # invtf = etf('polynomial', dst, src, order=3)
             # Store for output
