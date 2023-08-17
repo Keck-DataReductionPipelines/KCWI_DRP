@@ -347,7 +347,7 @@ class MakeInvsens(BasePrimitive):
                     lmasks.append(lmdict)
         # Now interactively identify lines if requested
         if self.config.instrument.plot_level >= 1:
-            yran = [np.min(obsspec), np.max(obsspec)]
+            yran = [np.min(obsspec[wl_good]), np.max(obsspec[wl_good])]
             # source = ColumnDataSource(data=dict(x=w, y=obsspec))
             done = False
             while not done:
