@@ -327,6 +327,8 @@ def main():
                 if "#" not in frame:
                     frames.append(frame.strip('\n'))
         framework.ingest_data(None, frames, False)
+        with open(args.file_list + '_done') as donef:
+            donef.write(datetime.datetime.now().isoformat())
 
     # ingest an entire directory, trigger "next_file" (which is an option
     # specified in the config file) on each file,
@@ -369,10 +371,6 @@ def main():
 
     framework.start(args.queue_manager_only, args.ingest_data_only,
                     args.wait_for_event, args.continuous)
-
-    if args.file_list:
-        with open(args.file_list+'_done') as donef:
-            donef.write(datetime.datetime.now().isoformat())
 
 
 if __name__ == "__main__":
