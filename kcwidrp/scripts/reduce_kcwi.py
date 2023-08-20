@@ -327,7 +327,7 @@ def main():
                 if "#" not in frame:
                     frames.append(frame.strip('\n'))
         framework.ingest_data(None, frames, False)
-        with open(args.file_list + '_done') as donef:
+        with open(args.file_list + '_done', 'w') as donef:
             donef.write(datetime.datetime.now().isoformat())
 
     # ingest an entire directory, trigger "next_file" (which is an option
