@@ -148,6 +148,9 @@ class MakeMasterFlat(BaseImg):
             ffright = int(70 / xbin)
 
             corlim = 0
+
+            # ymap not needed for Blue
+            ymap = None
         else:   # Red
             # vignetted slice position range
             fitl = int(114 / xbin)
@@ -158,6 +161,12 @@ class MakeMasterFlat(BaseImg):
             ffright = int(130 / xbin)
 
             corlim = int(140 / xbin)
+
+            # Get ymap for trimming junk at ends
+            ymap = kcwi_fits_reader(os.path.join(
+                self.config.instrument.cwd, 'redux', pof))[0]
+            for i in range(ny):
+                ymap.data[i, :] = float(i)
 
         # un-vignetted slice position range
         flatl = int(34 / xbin)
@@ -200,7 +209,8 @@ class MakeMasterFlat(BaseImg):
                 self.logger.warning("Camera keyword not defined")
                 wmin = waves[0]
                 wmax = waves[1]
-            dw = (wmax - wmin) / 30.0
+            # Use central fraction to calculate vignetting
+            dw = (wmax - wmin) / 30.0   # fraction of full wavelength range
             wavemin = (wmin+wmax) / 2.0 - dw
             wavemax = (wmin+wmax) / 2.0 + dw
             self.logger.info("Using %.1f - %.1f A of slice %d" % (wavemin,
@@ -362,7 +372,11 @@ class MakeMasterFlat(BaseImg):
         self.logger.info("Fitting master illumination")
         # now fit master flat
         # get reference slice points
-        qref = [i for i in q if ffleft <= posmap.data.flat[i] <= ffright]
+        if ymap is not None:
+            qref = [i for i in q if ffleft <= posmap.data.flat[i] <= ffright and
+                    50 <= ymap.data.flat[i] <= (ny-50)]
+        else:
+            qref = [i for i in q if ffleft <= posmap.data.flat[i] <= ffright]
         xfr = wavemap.data.flat[qref]
         yfr = newflat.flat[qref]
         # sort on wavelength
@@ -520,7 +534,10 @@ class MakeMasterFlat(BaseImg):
         yfitr, _ = sftr.value(xfr)
 
         # generate a blue slice spectrum bspline fit
-        blueslice = 12
+        if self.action.args.camera == 0:  # Blue
+            blueslice = 12
+        else:
+            blueslice = 11
         blueleft = 60 / xbin
         blueright = 80 / xbin
         qb = [i for i, v in enumerate(slicemap.data.flat) if v == blueslice]
@@ -537,7 +554,10 @@ class MakeMasterFlat(BaseImg):
         yfitb, _ = sftb.value(xfb)
 
         # generate a red slice spectrum bspline fit
-        redslice = 23
+        if self.action.args.camera == 0:  # Blue
+            redslice = 23
+        else:
+            redslice = 0
         redleft = 60 / xbin
         redright = 80 / xbin
         qr = [i for i, v in enumerate(slicemap.data.flat) if v == redslice]
