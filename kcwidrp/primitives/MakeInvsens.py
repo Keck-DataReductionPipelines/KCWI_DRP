@@ -79,6 +79,8 @@ class MakeInvsens(BasePrimitive):
         suffix = 'invsens'
         stdname = self.action.args.stdname
 
+        do_plots = self.config.instrument.plot_level >= 3
+
         # get size
         sz = self.action.args.ccddata.data.shape
         # default pixel ranges
@@ -107,7 +109,10 @@ class MakeInvsens(BasePrimitive):
         # get DAR padding in y
         pad_y = self.action.args.ccddata.header['DARPADY']
         # get sky subtraction status
-        skycor = self.action.args.ccddata.header['SKYCOR']
+        if 'SKYCOR' in self.action.args.ccddata.header:
+            skycor = self.action.args.ccddata.header['SKYCOR']
+        else:
+            skycor = False
         # get telescope and atm. correction
         if 'TELESCOP' in self.action.args.ccddata.header:
             tel = self.action.args.ccddata.header['TELESCOP']
@@ -144,8 +149,25 @@ class MakeInvsens(BasePrimitive):
             if tstd > mxsg:
                 mxsg = tstd
                 mxsl = i
+            # plot slice data, if requested
+            if do_plots:
+                py = tot[:, i]
+                px = np.arange(len(py))
+                p = figure(
+                    title=self.action.args.stdlabel + ' Std Slice %d' % i,
+                    x_axis_label="Position along slice",
+                    y_axis_label="Flux summed over WLs",
+                    plot_width=self.config.instrument.plot_width,
+                    plot_height=self.config.instrument.plot_height)
+                p.scatter(px, py, marker='x')
+                bokeh_plot(p, self.context.bokeh_session)
+                print("sl, std: %02d, %.3f" % (i, tstd))
+                qstr = input("Next? <cr>, q - quit: ")
+                if 'Q' in qstr.upper():
+                    do_plots = False
 
         # relevant slices
+        # TODO: more sophisticated method needed, esp. for Med and Small slicers
         sl0 = (mxsl - 3) if mxsl >= 3 else 0
         sl1 = (mxsl + 3) if (mxsl + 3) <= sz[2]-1 else sz[2]-1
         # get y position of std
