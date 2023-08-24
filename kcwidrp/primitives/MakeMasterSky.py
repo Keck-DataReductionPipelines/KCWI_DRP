@@ -55,6 +55,9 @@ class MakeMasterSky(BaseImg):
                     if 'skip' in skyfile:
                         self.logger.info("Skipping sky subtraction for %s" %
                                          ofn)
+                        keycom = 'sky corrected?'
+                        self.action.args.ccddata.header['SKYCOR'] = (False,
+                                                                     keycom)
                         return False
                     self.logger.info("Found sky entry for %s: %s" % (ofn,
                                                                      skyfile))
