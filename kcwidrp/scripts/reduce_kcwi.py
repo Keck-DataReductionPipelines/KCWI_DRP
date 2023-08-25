@@ -322,11 +322,13 @@ def main():
             print('Blue channel requested, but red files in list')
             qstr = input('Proceed? <cr>=yes or Q=quit: ')
             if 'Q' in qstr.upper():
+                framework.end()
                 sys.exit()
         if args.red and 'kb' in args.frames:
             print('Red channel requested, but blue files in list')
             qstr = input('Proceed? <cr>=yes or Q=quit: ')
             if 'Q' in qstr.upper():
+                framework.end()
                 sys.exit()
         framework.ingest_data(None, args.frames, False)
 
@@ -342,11 +344,13 @@ def main():
                         print('Blue channel requested, but red files in list')
                         qstr = input('Proceed? <cr>=yes or Q=quit: ')
                         if 'Q' in qstr.upper():
+                            framework.end()
                             sys.exit()
                     if args.red and 'kb' in frame:
                         print('Red channel requested, but blue files in list')
                         qstr = input('Proceed? <cr>=yes or Q=quit: ')
                         if 'Q' in qstr.upper():
+                            framework.end()
                             sys.exit()
         framework.ingest_data(None, frames, False)
         with open(args.file_list + '_ingest', 'w') as ingest_f:
