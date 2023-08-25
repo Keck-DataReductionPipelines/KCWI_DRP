@@ -326,6 +326,17 @@ def main():
             for frame in file_list:
                 if "#" not in frame:
                     frames.append(frame.strip('\n'))
+                    # Verify we have the correct channel selected
+                    if args.blue and 'kr' in frame:
+                        print('Blue channel requested, but red files in list')
+                        qstr = input('Proceed? <cr>=yes or Q=quit: ')
+                        if 'Q' in qstr.upper():
+                            sys.exit()
+                    if args.red and 'kb' in frame:
+                        print('Red channel requested, but blue files in list')
+                        qstr = input('Proceed? <cr>=yes or Q=quit: ')
+                        if 'Q' in qstr.upper():
+                            sys.exit()
         framework.ingest_data(None, frames, False)
         with open(args.file_list + '_ingest', 'w') as ingest_f:
             ingest_f.write('Files ingested at: ' + datetime.datetime.now().isoformat())
