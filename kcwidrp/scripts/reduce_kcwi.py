@@ -317,6 +317,17 @@ def main():
 
     # single frame processing
     elif args.frames:
+        # Verify we have the correct channel selected
+        if args.blue and 'kr' in args.frames:
+            print('Blue channel requested, but red files in list')
+            qstr = input('Proceed? <cr>=yes or Q=quit: ')
+            if 'Q' in qstr.upper():
+                sys.exit()
+        if args.red and 'kb' in args.frames:
+            print('Red channel requested, but blue files in list')
+            qstr = input('Proceed? <cr>=yes or Q=quit: ')
+            if 'Q' in qstr.upper():
+                sys.exit()
         framework.ingest_data(None, args.frames, False)
 
     # processing of a list of files contained in a file
