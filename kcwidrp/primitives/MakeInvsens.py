@@ -185,7 +185,7 @@ class MakeInvsens(BasePrimitive):
         cy, _ = find_peaks(tot[:, mxsl], height=np.nanmean(tot[:, mxsl]))
         cy = int(cy[0]) + gy0
         # log results
-        self.logger.info("Std lices: max, sl0, sl1, spatial cntrd: "
+        self.logger.info("Std slices: max, sl0, sl1, spatial cntrd: "
                          "%d, %d, %d, %.2f" % (mxsl, sl0, sl1, cy))
         # get dwave spectrum
         ofn = self.action.args.name
