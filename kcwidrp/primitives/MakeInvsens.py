@@ -46,8 +46,13 @@ class MakeInvsens(BasePrimitive):
         # have we been processed correctly?
         if 'DARCOR' in self.action.args.ccddata.header:
             if self.action.args.ccddata.header['DARCOR']:
-                # check pre condition
+                # does the standard file exist?
                 if self.action.args.stdfile is not None:
+                    # have we been stacked?
+                    if 'NSTACK' in self.action.args.ccddata.header:
+                        nstack = self.action.args.ccddata.header['NSTACK']
+                    else:
+                        nstack = 0
                     # does file already exist?
                     ofn = self.action.args.name
                     msname = strip_fname(ofn) + '_invsens.fits'
@@ -56,9 +61,15 @@ class MakeInvsens(BasePrimitive):
                                             rdir,
                                             msname)
                     if os.path.exists(invsensf):
-                        self.logger.warning("Master cal already exists: %s" %
-                                            invsensf)
-                        return False
+                        if nstack <= 0:
+                            self.logger.warning("Master cal already exists: %s"
+                                                % invsensf)
+                            return False
+                        else:
+                            os.unlink(invsensf)
+                            self.logger.info("Master cal will re-generated "
+                                             "from stacked image")
+                            return True
                     else:
                         self.logger.info("Master cal will be generated.")
                         return True
@@ -293,7 +304,8 @@ class MakeInvsens(BasePrimitive):
         wlm1 = wgoo1
         # interactively set wavelength limits
         if self.config.instrument.plot_level >= 1:
-            yran = [np.min(obsspec), np.max(obsspec)]
+            # yran = [np.min(obsspec), np.max(obsspec)]
+            yran = [np.min(obsspec[wl_good]), np.max(obsspec[wl_good])]
             source = ColumnDataSource(data=dict(x=w, y=obsspec))
             done = False
             while not done:
