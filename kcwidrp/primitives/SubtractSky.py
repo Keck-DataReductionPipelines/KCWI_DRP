@@ -26,10 +26,33 @@ class SubtractSky(BasePrimitive):
             # is our file in the list?
             ofn = self.action.args.name
             for row in skyproc:
+                # skip comments
+                if row.startswith('#'):
+                    continue
+                # Parse row:
+                # <raw sci file> <raw sky file> <optional mask file>
+                #  OR
+                # <raw sci file> skip
+                # to disable sky subtraction
+                # Find match to current file
                 if ofn in row.split()[0]:
                     skyfile = row.split()[1]
+                    # Should we skip sky subtraction?
+                    if 'skip' in skyfile:
+                        self.logger.info("Skipping sky subtraction for %s" %
+                                         ofn)
+                        keycom = 'sky corrected?'
+                        self.action.args.ccddata.header['SKYCOR'] = (False,
+                                                                     keycom)
+                        return False
+                    self.logger.info("Found sky entry for %s: %s" % (ofn,
+                                                                     skyfile))
+                    # Do we have an optional sky mask file?
                     if len(row.split()) > 2:
                         skymask = row.split()[2]
+                        self.logger.info("Found sky mask entry for %s: %s"
+                                         % (ofn, skymask))
+            # check if requested files exist
             if skyfile:
                 if not os.path.exists(skyfile):
                     skyfile = None
