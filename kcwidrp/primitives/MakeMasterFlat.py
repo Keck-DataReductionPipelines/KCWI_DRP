@@ -373,6 +373,7 @@ class MakeMasterFlat(BaseImg):
         # now fit master flat
         # get reference slice points
         if ymap is not None:
+            self.logger.info("Using ymap to limit yrange of data in qref")
             qref = [i for i in q if ffleft <= posmap.data.flat[i] <= ffright and
                     50 <= ymap.data.flat[i] <= (ny-50)]
         else:
