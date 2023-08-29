@@ -165,7 +165,8 @@ class MakeInvsens(BasePrimitive):
                 py = tot[:, i]
                 px = np.arange(len(py))
                 p = figure(
-                    title=self.action.args.stdlabel + ' Std Slice %d' % i,
+                    title=self.action.args.stdlabel +
+                    ' Std Slice %d (DAR padded)' % i,
                     x_axis_label="Position along slice",
                     y_axis_label="Flux summed over WLs",
                     plot_width=self.config.instrument.plot_width,
@@ -178,14 +179,23 @@ class MakeInvsens(BasePrimitive):
                     do_plots = False
 
         # relevant slices
-        # TODO: more sophisticated method needed, esp. for Med and Small slicers
-        sl0 = (mxsl - 3) if mxsl >= 3 else 0
-        sl1 = (mxsl + 3) if (mxsl + 3) <= sz[2]-1 else sz[2]-1
+        slset = 3                           # Large slicer
+        if self.action.args.ifunum == 2:  # Medium slicer
+            slset = 5
+        elif self.action.args.ifunum == 3:  # Small slicer
+            slset = 12
+        else:
+            self.logger.error("Slicer number undefined! - %d" %
+                              self.action.args.ifunum)
+        # Get set of slices needed for calculation
+        sl0 = (mxsl - slset) if mxsl >= slset else 0
+        sl1 = (mxsl + slset) if (mxsl + slset) <= sz[2]-1 else sz[2]-1
         # get y position of std
         cy, _ = find_peaks(tot[:, mxsl], height=np.nanmean(tot[:, mxsl]))
         cy = int(cy[0]) + gy0
         # log results
-        self.logger.info("Std slices: max, sl0, sl1, spatial cntrd: "
+        self.logger.info("Std slices (DAR padded): "
+                         "max, sl0, sl1, spatial cntrd: "
                          "%d, %d, %d, %.2f" % (mxsl, sl0, sl1, cy))
         # get dwave spectrum
         ofn = self.action.args.name
