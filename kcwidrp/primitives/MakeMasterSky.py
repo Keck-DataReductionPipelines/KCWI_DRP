@@ -196,30 +196,36 @@ class MakeMasterSky(BaseImg):
 
         # if we are a standard, get mask for bright continuum source
         if self.action.args.stdname is not None:
-            self.logger.info("Standard %s observation will be auto-masked" %
+            self.logger.info("Standard star observation of "
+                             "%s will be auto-masked" %
                              self.action.args.stdname)
+            # Use 10% of wavelength range at wavemid
             std_wav_ran = (wavemid - 0.05 * (wavegood1 - wavegood0),
                            wavemid + 0.05 * (wavegood1 - wavegood0))
             std_sl_max = -1
             std_sl_sig_max = -1.
             std_sl_max_pos_data = None
             std_sl_max_flx_data = None
-            std_mask = np.zeros(sm_sz, dtype=bool)
+
+            self.logger.info("Finding the std max slice")
             for si in range(24):
                 sq = [i for i, v in enumerate(slicemap.data.flat) if v == si and
                       std_wav_ran[0] < wavemap.data.flat[i] < std_wav_ran[1] and
                       posbuf < posmap.data.flat[i] < (posmax - posbuf)]
                 xplt = posmap.data.flat[sq]
                 yplt = self.action.args.ccddata.data.flat[sq]
-                if float(np.nanstd(yplt)) > std_sl_sig_max:
-                    std_sl_sig_max = float(np.nanstd(yplt))
+                sig = float(np.nanstd(yplt))
+                self.logger.info("Slice %d - StDev = %.2f" % (si, sig))
+                if sig > std_sl_sig_max:
+                    std_sl_sig_max = sig
                     std_sl_max = si
                     std_sl_max_pos_data = xplt.copy()
                     std_sl_max_flx_data = yplt.copy()
             ipk = np.argmax(std_sl_max_flx_data)
             ppk = std_sl_max_pos_data[ipk]
             fpk = std_sl_max_flx_data[ipk]
-            # gaussian fit
+
+            # gaussian fit to max slice
             res, _ = curve_fit(gaus, std_sl_max_pos_data, std_sl_max_flx_data,
                                p0=[fpk, ppk, 1.])
             self.logger.info("Std max at %.2f in slice %d with width %.2f px"
@@ -228,6 +234,8 @@ class MakeMasterSky(BaseImg):
             std_pos_mask_1 = res[1] + 5. * res[2]
             self.logger.info("Masking between %.2f and %.2f" %
                              (std_pos_mask_0, std_pos_mask_1))
+
+            # Mask standard from sky calculation
             for i, v in enumerate(binary_mask.flat):
                 if std_pos_mask_0 < posmap.data.flat[i] < std_pos_mask_1:
                     binary_mask.flat[i] = True
@@ -238,7 +246,8 @@ class MakeMasterSky(BaseImg):
                                np.max(std_sl_max_pos_data), 1)
                 yy = gaus(xx, res[0], res[1], res[2])
                 p = figure(
-                    title=self.action.args.plotlabel + ' Std max sl %d' % std_sl_max,
+                    title=self.action.args.plotlabel +
+                    ' Std max sl %d' % std_sl_max,
                     x_axis_label='Pos (x px)',
                     y_axis_label='Flux (e-)',
                     plot_width=self.config.instrument.plot_width,
