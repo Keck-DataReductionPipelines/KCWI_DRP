@@ -163,8 +163,7 @@ class MakeMasterFlat(BaseImg):
             corlim = int(140 / xbin)
 
             # Get ymap for trimming junk at ends
-            ymap = kcwi_fits_reader(os.path.join(
-                self.config.instrument.cwd, 'redux', pof))[0]
+            ymap = posmap.copy()
             for i in range(ny):
                 ymap.data[i, :] = float(i)
 
