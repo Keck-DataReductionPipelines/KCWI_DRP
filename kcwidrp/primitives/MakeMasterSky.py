@@ -1,6 +1,8 @@
 from keckdrpframework.primitives.base_img import BaseImg
 from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_reader, \
     kcwi_fits_writer, strip_fname
+from kcwidrp.primitives.GetAtlasLines import gaus
+from kcwidrp.core.kcwi_get_std import kcwi_get_std
 from kcwidrp.core.bokeh_plotting import bokeh_plot
 from kcwidrp.core.kcwi_plotting import save_plot
 from kcwidrp.core.bspline import Bspline
@@ -9,6 +11,7 @@ from bokeh.plotting import figure
 import os
 import time
 import numpy as np
+from scipy.optimize import curve_fit
 from astropy.io import fits
 
 
@@ -30,6 +33,24 @@ class MakeMasterSky(BaseImg):
         ofn = self.action.args.name
         rdir = self.config.instrument.output_directory
 
+        # Are we a standard star?
+        stdfile = None
+        stdname = None
+        if 'object' in self.action.args.imtype.lower():
+            self.logger.info("Checking OBJECT keyword")
+            stdfile, stdname = kcwi_get_std(
+                self.action.args.ccddata.header['OBJECT'], self.logger)
+            if not stdfile:
+                self.logger.info("Checking TARGNAME keyword")
+                stdfile, stdname = kcwi_get_std(
+                    self.action.args.ccddata.header['TARGNAME'], self.logger)
+        else:
+            self.logger.warning("Not object type: %s" %
+                                self.action.args.imtype)
+        self.action.args.stdfile = stdfile
+        self.action.args.stdname = stdname
+
+        # Is there a kcwi.sky file?
         skyfile = None
         skymask = None
         # check if kcwi.sky exists
@@ -136,8 +157,7 @@ class MakeMasterSky(BaseImg):
 
         if self.action.args.camera == 1:    # Red
             # Get ymap for trimming junk at ends
-            ymap = kcwi_fits_reader(os.path.join(
-                self.config.instrument.cwd, 'redux', pof))[0]
+            ymap = posmap.copy()
             for i in range(ny):
                 ymap.data[i, :] = float(i)
         else:
@@ -148,6 +168,7 @@ class MakeMasterSky(BaseImg):
         wavegood1 = wavemap.header['WAVGOOD1']
         waveall0 = wavemap.header['WAVALL0']
         waveall1 = wavemap.header['WAVALL1']
+        wavemid = wavemap.header['WAVMID']
 
         # get image size
         sm_sz = self.action.args.ccddata.data.shape
@@ -172,6 +193,67 @@ class MakeMasterSky(BaseImg):
             else:
                 self.logger.warning("Sky mask image not found: %s"
                                     % self.action.args.skymask)
+
+        # if we are a standard, get mask for bright continuum source
+        if self.action.args.stdname is not None:
+            self.logger.info("Standard %s observation will be auto-masked" %
+                             self.action.args.stdname)
+            std_wav_ran = (wavemid - 0.05 * (wavegood1 - wavegood0),
+                           wavemid + 0.05 * (wavegood1 - wavegood0))
+            std_sl_max = -1
+            std_sl_sig_max = -1.
+            std_sl_max_pos_data = None
+            std_sl_max_flx_data = None
+            std_mask = np.zeros(sm_sz, dtype=bool)
+            for si in range(24):
+                sq = [i for i, v in enumerate(slicemap.data.flat) if v == si and
+                      std_wav_ran[0] < wavemap.data.flat[i] < std_wav_ran[1] and
+                      posbuf < posmap.data.flat[i] < (posmax - posbuf)]
+                xplt = posmap.data.flat[sq]
+                yplt = self.action.args.ccddata.data.flat[sq]
+                if float(np.nanstd(yplt)) > std_sl_sig_max:
+                    std_sl_sig_max = float(np.nanstd(yplt))
+                    std_sl_max = si
+                    std_sl_max_pos_data = xplt.copy()
+                    std_sl_max_flx_data = yplt.copy()
+            ipk = np.argmax(std_sl_max_flx_data)
+            ppk = std_sl_max_pos_data[ipk]
+            fpk = std_sl_max_flx_data[ipk]
+            # gaussian fit
+            res, _ = curve_fit(gaus, std_sl_max_pos_data, std_sl_max_flx_data,
+                               p0=[fpk, ppk, 1.])
+            self.logger.info("Std max at %.2f in slice %d with width %.2f px"
+                             % (res[1], std_sl_max, res[2]))
+            std_pos_mask_0 = res[1] - 5. * res[2]
+            std_pos_mask_1 = res[1] + 5. * res[2]
+            self.logger.info("Masking between %.2f and %.2f" %
+                             (std_pos_mask_0, std_pos_mask_1))
+            for i, v in enumerate(binary_mask.flat):
+                if std_pos_mask_0 < posmap.data.flat[i] < std_pos_mask_1:
+                    binary_mask.flat[i] = True
+
+            # plot, if requested
+            if self.config.instrument.plot_level >= 1:
+                xx = np.arange(np.min(std_sl_max_pos_data),
+                               np.max(std_sl_max_pos_data), 1)
+                yy = gaus(xx, res[0], res[1], res[2])
+                p = figure(
+                    title=self.action.args.plotlabel + ' Std max sl %d' % std_sl_max,
+                    x_axis_label='Pos (x px)',
+                    y_axis_label='Flux (e-)',
+                    plot_width=self.config.instrument.plot_width,
+                    plot_height=self.config.instrument.plot_height)
+                p.circle(std_sl_max_pos_data, std_sl_max_flx_data, size=1,
+                         line_alpha=0., fill_color='purple', legend_label='Data')
+                p.line([ppk, ppk], [0, fpk], color='green')
+                p.line([std_pos_mask_0, std_pos_mask_0], [0, fpk], color='blue')
+                p.line([std_pos_mask_1, std_pos_mask_1], [0, fpk], color='blue')
+                p.line(xx, yy, color='red')
+                bokeh_plot(p, self.context.bokeh_session)
+                if self.config.instrument.plot_level >= 2:
+                    input("Next? <cr>: ")
+                else:
+                    time.sleep(self.config.instrument.plot_pause)
 
         # count masked pixels
         tmsk = len(np.nonzero(np.where(binary_mask.flat, True, False))[0])
