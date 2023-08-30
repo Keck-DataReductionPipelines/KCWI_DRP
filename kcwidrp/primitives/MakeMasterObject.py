@@ -38,11 +38,17 @@ class MakeMasterObject(BaseImg):
         Returns an Argument() with the parameters that depends on this operation
         """
         args = self.action.args
-        method = 'median'
+        method = 'median'   # default for 3 or fewer images
         suffix = args.new_type.lower()
         log_string = MakeMasterObject.__module__
 
         combine_list = list(self.combine_list['filename'])
+
+        # more than three and we can average
+        nstack = len(combine_list)
+        if nstack > 3:
+            method = 'average'
+
         # get master arc output name
         maname = strip_fname(combine_list[0]) + '_' + suffix + '.fits'
         if self.action.args.min_files > 1:
@@ -61,8 +67,7 @@ class MakeMasterObject(BaseImg):
                                       sigma_clip_high_thresh=2.0)
             stacked.unit = stack[0].unit
             stacked.header['IMTYPE'] = args.new_type
-            stacked.header['NSTACK'] = (len(combine_list),
-                                        'number of images stacked')
+            stacked.header['NSTACK'] = (nstack, 'number of images stacked')
             stacked.header['STCKMETH'] = (method, 'method used for stacking')
             for ii, fname in enumerate(stacko):
                 stacked.header['STACKF%d' % (ii + 1)] = (fname,
