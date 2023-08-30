@@ -98,6 +98,8 @@ def _parse_arguments(in_args: list) -> argparse.Namespace:
                         default=False, help="KCWI Blue processing")
     parser.add_argument("-r", "--red", dest='red', action="store_true",
                         default=False, help="KCWI Red processing")
+    parser.add_argument("-k", "--skipsky", dest='skipsky', action="store_true",
+                        default=False, help="Skip sky subtraction")
 
     out_args = parser.parse_args(in_args[1:])
     return out_args
@@ -181,6 +183,13 @@ def main():
 
     if args.infiles is not None:
         framework.config.file_type = args.infiles
+
+    # check for skipsky argument
+    if args.skipsky:
+        def_sk = getattr(framework.config.instrument, 'skipsky', None)
+        if def_sk is not None:
+            framework.context.pipeline_logger.info("Skipping sky subtraction")
+            framework.config.instrument.skipsky = args.skipsky
 
     # check for taperfrac argument
     if args.taperfrac:
