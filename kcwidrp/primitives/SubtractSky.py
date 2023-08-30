@@ -16,6 +16,12 @@ class SubtractSky(BasePrimitive):
         :return:
         """
         self.logger.info("Checking precondition for SubtractSky")
+
+        if self.config.instrument.skipsky:
+            self.logger.warning("Sky subtraction turned off, "
+                                "skipping SubtractSky")
+            return False
+
         skyfile = None
         skymask = None
         # check if kcwi.sky exists

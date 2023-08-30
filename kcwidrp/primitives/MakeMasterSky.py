@@ -29,6 +29,11 @@ class MakeMasterSky(BaseImg):
         """
         self.logger.info("Checking precondition for MakeMasterSky")
 
+        if self.config.instrument.skipsky:
+            self.logger.warning("Sky subtraction turned off, "
+                                "skipping MakeMasterSky")
+            return False
+
         suffix = 'sky'  # self.action.args.new_type.lower()
         ofn = self.action.args.name
         rdir = self.config.instrument.output_directory
