@@ -223,9 +223,6 @@ class Kcwi_pipeline(BasePipeline):
                                       "object_rectify_image"),
         "object_rectify_image":      ("RectifyImage",
                                       "rectification_started",      # int
-                                      "object_make_master"),
-        "object_make_master":        ("MakeMasterObject",
-                                      "master_object_started",      # mobj
                                       "object_subtract_dark"),
         "object_subtract_dark":      ("SubtractDark",
                                       "subtract_dark started",      # intd
@@ -235,6 +232,9 @@ class Kcwi_pipeline(BasePipeline):
                                       "object_correct_illum"),
         "object_correct_illum":      ("CorrectIllumination",
                                       "illumination_correction_started",  # intf
+                                      "object_make_master"),
+        "object_make_master":        ("MakeMasterObject",
+                                      "master_object_started",  # mobj
                                       "object_make_sky"),
         "object_make_sky":           ("MakeMasterSky",
                                       "making_master_sky_started",

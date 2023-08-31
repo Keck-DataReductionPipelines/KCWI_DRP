@@ -56,7 +56,7 @@ class MakeMasterObject(BaseImg):
             stacko = []
             for obj in combine_list:
                 # get object intensity (int) image file name in redux directory
-                stackf = obj.split('.fits')[0] + '_int.fits'
+                stackf = obj.split('.fits')[0] + '_intf.fits'
                 objfn = os.path.join(args.in_directory, stackf)
                 stacko.append(stackf)
                 # using [0] gets just the image data
