@@ -16,10 +16,12 @@ class SubtractSky(BasePrimitive):
         :return:
         """
         self.logger.info("Checking precondition for SubtractSky")
+        keycom = 'sky corrected?'
 
         if self.config.instrument.skipsky:
             self.logger.warning("Sky subtraction turned off, "
                                 "skipping SubtractSky")
+            self.action.args.ccddata.header['SKYCOR'] = (False, keycom)
             return False
 
         skyfile = None
@@ -47,7 +49,6 @@ class SubtractSky(BasePrimitive):
                     if 'skip' in skyfile:
                         self.logger.info("Skipping sky subtraction for %s" %
                                          ofn)
-                        keycom = 'sky corrected?'
                         self.action.args.ccddata.header['SKYCOR'] = (False,
                                                                      keycom)
                         return False
