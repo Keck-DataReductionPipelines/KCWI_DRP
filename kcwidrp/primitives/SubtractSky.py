@@ -122,6 +122,10 @@ class SubtractSky(BasePrimitive):
                 skscl = obtime / sktime
             self.logger.info("Sky scale factor = %.3f" % skscl)
 
+            # store un-sky-subtracted image
+            self.action.args.ccddata.noskysub = \
+                self.action.args.ccddata.data.copy()
+
             # do the subtraction
             self.action.args.ccddata.data -= msky.data * skscl
 
