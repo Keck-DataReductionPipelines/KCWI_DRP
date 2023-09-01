@@ -44,7 +44,7 @@ class WavelengthCorrections(BasePrimitive):
                 , options are ["none", "heliocentric", "barycentric"]')
             return self.action.args
         
-        suffix = 'icube' # Can be ammended to handle ocube files
+        suffix = 'icube'  # Can be ammended to handle ocube files
         obj = self.locate_object_file(suffix)
 
         if "none" in correction_mode:
@@ -62,10 +62,10 @@ class WavelengthCorrections(BasePrimitive):
         obj.header['HISTORY'] = log_string
         
         kcwi_fits_writer(obj,
-                        table=self.action.args.table,
-                        output_file=self.action.args.name,
-                        output_dir=self.config.instrument.output_directory,
-                        suffix=f'{suffix}w')
+                         table=self.action.args.table,
+                         output_file=self.action.args.name,
+                         output_dir=self.config.instrument.output_directory,
+                         suffix=f'{suffix}w')
         self.context.proctab.update_proctab(frame=self.action.args.ccddata,
                                             suffix=f'_{suffix}w',
                                             filename=self.action.args.name)
@@ -80,7 +80,7 @@ class WavelengthCorrections(BasePrimitive):
         """Covert wavelengths in a cube from standard air to vacuum.
 
         Args:
-            fits_in (astropy HDU / HDUList): Input HDU/HDUList with 3D data.
+            obj (astropy HDU / HDUList): Input HDU/HDUList with 3D data.
             mask (bool): Set if the cube is a mask cube.
 
         Returns:
@@ -160,9 +160,11 @@ class WavelengthCorrections(BasePrimitive):
         wavelength = wave.value
 
         # Standard conversion format
-        sigma_sq = (1.e4/wavelength)**2. #wavenumber squared
-        factor = 1 + (5.792105e-2/(238.0185-sigma_sq)) + (1.67918e-3/(57.362-sigma_sq))
-        factor = factor*(wavelength>=2000.) + 1.*(wavelength<2000.) #only modify above 2000A
+        sigma_sq = (1.e4/wavelength)**2.  # wavenumber squared
+        factor = 1 + (5.792105e-2/(238.0185-sigma_sq)) + \
+                 (1.67918e-3/(57.362-sigma_sq))
+        # only modify above 2000A
+        factor = factor*(wavelength >= 2000.) + 1.*(wavelength < 2000.)
 
         # Convert
         wavelength = wavelength*factor
@@ -172,22 +174,21 @@ class WavelengthCorrections(BasePrimitive):
 
         return new_wave
 
-    def heliocentric(self, obj, correction_mode, mask=False, resample=True, vcorr=None):
+    def heliocentric(self, obj, correction_mode, mask=False, resample=True,
+                     vcorr=None):
         """Apply heliocentric correction to the cubes. 
-        *Note that this only works for KCWI data because the location of the Keck 
-        Observatory is hard-coded in the function.*
+        *Note that this only works for KCWI data because the location of
+        Keck Observatory is hard-coded in the function.*
 
         Adapted from https://github.com/dbosul/cwitools.git
 
         Args:
-            fits_in (astropy HDU / HDUList): Input HDU/HDUList with 3D data.
+            obj (astropy HDU / HDUList): Input HDU/HDUList with 3D data.
+            correction_mode (str): "none", "barycentric", or "heliocentric"
             mask (bool): Set if the cube is a mask cube. This only works for
                 resampled cubes.
-            return_vcorr (bool): If set, return the correction velocity (in km/s)
-                as well.
             resample (bool): Resample the cube to the original wavelength grid?
             vcorr (float): Use a different correction velocity.
-            barycentric (bool): Use barycentric correction instead of heliocentric.
 
         Returns:
             HDU / HDUList*: Trimmed FITS object with updated header.
@@ -209,13 +210,13 @@ class WavelengthCorrections(BasePrimitive):
         barycentric = ("barycentric" in correction_mode)
 
         cube = np.nan_to_num(obj.data,
-                            nan=0, posinf=0, neginf=0)
+                             nan=0, posinf=0, neginf=0)
 
         v_old = 0.
         if 'VCORR' in obj.header:
             v_old = obj.header['VCORR']
             self.logger.info("Rolling back the existing correction with:")
-            self.logger.info("Vcorr = %.2f km/s." % (v_old))
+            self.logger.info("Vcorr = %.2f km/s." % v_old)
 
         if vcorr is None:
             targ = SkyCoord(
@@ -239,7 +240,7 @@ class WavelengthCorrections(BasePrimitive):
             vcorr = vcorr.to('km/s').value
 
         self.logger.info("Helio/Barycentric correction:")
-        self.logger.info("Vcorr = %.2f km/s." % (vcorr))
+        self.logger.info("Vcorr = %.2f km/s." % vcorr)
 
         v_tot = vcorr-v_old
 
@@ -261,15 +262,15 @@ class WavelengthCorrections(BasePrimitive):
                 spc0 = cube[:, j, i]
                 if not mask:
                     f_cubic = interp1d(wav_hel, spc0, kind='cubic',
-                                    fill_value='extrapolate')
+                                       fill_value='extrapolate')
                     spec_new = f_cubic(wav_old)
 
                 else:
                     f_pre = interp1d(wav_hel, spc0, kind='previous',
-                                    bounds_error=False, fill_value=128)
+                                     bounds_error=False, fill_value=128)
                     spec_pre = f_pre(wav_old)
                     f_nex = interp1d(wav_hel, spc0, kind='next',
-                                    bounds_error=False, fill_value=128)
+                                     bounds_error=False, fill_value=128)
                     spec_nex = f_nex(wav_old)
                     spec_new = np.zeros_like(spc0)
                     for k in range(spc0.shape[0]):
@@ -295,32 +296,33 @@ class WavelengthCorrections(BasePrimitive):
 
         """
 
-        #Select the appropriate axis.
+        # Select the appropriate axis.
         naxis = header['NAXIS']
         flag = False
         for i in range(naxis):
-            #Keyword entry
+            # Keyword entry
             card = "CTYPE{0}".format(i+1)
             if not card in header:
-                self.logger.warning.error("Header must contain 'CTYPE' keywords.")
+                self.logger.warning.error(
+                    "Header must contain 'CTYPE' keywords.")
             
-            #Possible wave types.
+            # Possible wave types.
             if header[card] in ['AWAV', 'WAVE', 'VELO']:
                 axis = i+1
                 flag = True
                 break
 
-        #No wavelength axis
+        # No wavelength axis
         if flag is False:
             self.logger.error("Header must contain a wavelength/velocity axis.")
 
-        #Get keywords defining wavelength axis
+        # Get keywords defining wavelength axis
         nwav = header["NAXIS{0}".format(axis)]
         wav0 = header["CRVAL{0}".format(axis)]
         dwav = header["CD{0}_{0}".format(axis)]
         pix0 = header["CRPIX{0}".format(axis)]
 
-        #Calculate and return
+        # Calculate and return
         return np.array([wav0 + (i - pix0) * dwav for i in range(nwav)])
     
     def locate_object_file(self, suffix):
@@ -334,5 +336,3 @@ class WavelengthCorrections(BasePrimitive):
         else:
             self.logger.error(f'Unable to read file {objfn}')
             return None
-
-    
