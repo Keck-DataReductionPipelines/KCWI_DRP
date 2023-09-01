@@ -32,6 +32,10 @@ def make_cube_helper(argument):
     slice_var = argument['std'][:, xl0:xl1]
     slice_msk = argument['msk'][:, xl0:xl1]
     slice_flg = argument['flg'][:, xl0:xl1]
+    if 'nsk' in argument:
+        slice_nsk = argument['nsk'][:, xl0:xl1]
+    else:
+        slice_nsk = None
     if 'obj' in argument:
         slice_obj = argument['obj'][:, xl0:xl1]
     else:
@@ -54,6 +58,12 @@ def make_cube_helper(argument):
     farped = tf.warp(slice_flg, tform, order=3,
                      output_shape=(ysize, xsize), preserve_range=True)
 
+    if slice_nsk is not None:
+        karped = tf.warp(slice_nsk, tform, order=3,
+                         output_shape=(ysize, xsize))
+    else:
+        karped = None
+
     if slice_obj is not None:
         oarped = tf.warp(slice_obj, tform, order=3,
                          output_shape=(ysize, xsize))
@@ -72,7 +82,7 @@ def make_cube_helper(argument):
     else:
         darped = None
 
-    return argument['slice_number'], warped, varped, marped, farped, \
+    return argument['slice_number'], warped, varped, marped, farped, karped, \
         oarped, sarped, darped
 
 
@@ -95,9 +105,9 @@ class MakeCube(BasePrimitive):
             do_inter = False
         self.logger.info("Generating data cube")
         # Find and read geometry transformation
-        tab = self.context.proctab.search_proctab(frame=self.action.args.ccddata,
-                                             target_type='MARC',
-                                             nearest=True)
+        tab = self.context.proctab.search_proctab(
+                frame=self.action.args.ccddata, target_type='MARC',
+                nearest=True)
         if not len(tab):
             self.logger.error("No reference geometry, cannot make cube!")
             self.action.args.ccddata.header['GEOMCOR'] = (False,
@@ -129,6 +139,13 @@ class MakeCube(BasePrimitive):
             data_std = self.action.args.ccddata.uncertainty.array
             data_msk = self.action.args.ccddata.mask
             data_flg = self.action.args.ccddata.flags
+            # check for noskysub property
+            if self.action.args.ccddata.noskysub is not None:
+                out_kube = np.zeros((ysize, xsize, 24), dtype=np.float64)
+                data_nsk = self.action.args.ccddata.noskysub
+            else:
+                data_nsk = None
+                out_kube = None
             # check for obj, sky images
             obj = None
             data_obj = None
@@ -152,7 +169,7 @@ class MakeCube(BasePrimitive):
                 if os.path.exists(full_path):
                     sky = kcwi_fits_reader(full_path)[0]
                     data_sky = sky.data
-            # check for geometry maps
+            # check for delta wavelength map
             dew = None
             data_dew = None
             if 'ARCLAMP' in self.action.args.imtype:
@@ -178,6 +195,8 @@ class MakeCube(BasePrimitive):
                     'ysize': ysize,
                     'logger': self.logger
                 }
+                if data_nsk is not None:
+                    arguments['nsk'] = data_nsk
                 if obj is not None:
                     arguments['obj'] = data_obj
                 if sky is not None:
@@ -197,12 +216,14 @@ class MakeCube(BasePrimitive):
                 out_vube[:, :, slice_number] = partial_cube[2]
                 out_mube[:, :, slice_number] = partial_cube[3]
                 out_fube[:, :, slice_number] = partial_cube[4]
+                if data_nsk is not None:
+                    out_kube[:, :, slice_number] = partial_cube[5]
                 if obj is not None:
-                    out_oube[:, :, slice_number] = partial_cube[5]
+                    out_oube[:, :, slice_number] = partial_cube[6]
                 if sky is not None:
-                    out_sube[:, :, slice_number] = partial_cube[6]
+                    out_sube[:, :, slice_number] = partial_cube[7]
                 if dew is not None:
-                    out_dube[:, :, slice_number] = partial_cube[7]
+                    out_dube[:, :, slice_number] = partial_cube[8]
 
             if self.config.instrument.plot_level >= 3:
                 for isl in range(0, 24):
@@ -232,6 +253,8 @@ class MakeCube(BasePrimitive):
                 out_vube = np.rot90(out_vube, 2, (1, 2))
                 out_mube = np.rot90(out_mube, 2, (1, 2))
                 out_fube = np.rot90(out_fube, 2, (1, 2))
+                if data_nsk is not None:
+                    out_kube = np.rot90(out_kube, 2, (1, 2))
                 if obj is not None:
                     out_oube = np.rot90(out_oube, 2, (1, 2))
                 if sky is not None:
@@ -422,6 +445,8 @@ class MakeCube(BasePrimitive):
             self.action.args.ccddata.uncertainty.array = out_vube
             self.action.args.ccddata.mask = out_mube
             self.action.args.ccddata.flags = out_fube
+            if data_nsk is not None:
+                self.action.args.ccddata.noskysub = out_kube
 
             # write out int image
             kcwi_fits_writer(self.action.args.ccddata,
