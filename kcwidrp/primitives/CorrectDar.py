@@ -144,9 +144,13 @@ class CorrectDar(BasePrimitive):
                                 image_size[2]+2*padding_x), dtype=np.uint8)
         output_flags = np.zeros((image_size[0], image_size[1] + 2*padding_y,
                                  image_size[2] + 2 * padding_x), dtype=np.uint8)
-        output_noskysub = np.zeros((image_size[0], image_size[1] + 2*padding_y,
-                                   image_size[2] + 2 * padding_x),
-                                   dtype=np.float64)
+        if self.action.args.ccddata.noskysub is not None:
+            output_noskysub = np.zeros((image_size[0],
+                                        image_size[1] + 2*padding_y,
+                                        image_size[2] + 2 * padding_x),
+                                       dtype=np.float64)
+        else:
+            output_noskysub = None
         # DAR padded pixel flag
         output_flags += 128
 
@@ -166,9 +170,10 @@ class CorrectDar(BasePrimitive):
                      padding_x:(padding_x+image_size[2])] = \
             self.action.args.ccddata.flags
 
-        output_noskysub[:, padding_y:(padding_y + image_size[1]),
-                        padding_x:(padding_x + image_size[2])] = \
-            self.action.args.ccddata.noskysub
+        if output_noskysub is not None:
+            output_noskysub[:, padding_y:(padding_y + image_size[1]),
+                            padding_x:(padding_x + image_size[2])] = \
+                self.action.args.ccddata.noskysub
 
         # check for obj, sky cubes
         output_obj = None
@@ -234,8 +239,9 @@ class CorrectDar(BasePrimitive):
                                          (y_shift, x_shift))
             output_flags[j, :, :] = shift(output_flags[j, :, :],
                                           (y_shift, x_shift))
-            output_noskysub[j, :, :] = shift(output_noskysub[j, :, :],
-                                             (y_shift, x_shift))
+            if output_noskysub is not None:
+                output_noskysub[j, :, :] = shift(output_noskysub[j, :, :],
+                                                 (y_shift, x_shift))
         # for obj, sky if they exist
         if output_obj is not None:
             for j, wl in enumerate(waves):

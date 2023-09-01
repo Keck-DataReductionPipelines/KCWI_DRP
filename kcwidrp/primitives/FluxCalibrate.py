@@ -96,7 +96,8 @@ class FluxCalibrate(BasePrimitive):
             for isl in range(sz[2]):
                 for ix in range(sz[1]):
                     self.action.args.ccddata.data[:, ix, isl] *= mscal
-                    self.action.args.ccddata.noskysub[:, ix, isl] *= mscal
+                    if self.action.args.ccddata.noskysub is not None:
+                        self.action.args.ccddata.noskysub[:, ix, isl] *= mscal
                     self.action.args.ccddata.uncertainty.array[:, ix, isl] *= \
                         mscal
 
