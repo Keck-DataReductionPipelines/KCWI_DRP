@@ -80,6 +80,24 @@ def plotlabel(args):
     return lab
 
 
+class KCCDData(CCDData):
+
+    def __init__(self, *args, **kwd):
+        """
+        Constructor
+        """
+        super().__init__(*args, **kwd)
+        self._noskysub = None
+
+    @property
+    def noskysub(self):
+        return self._noskysub
+
+    @noskysub.setter
+    def noskysub(self, value):
+        self._noskysub = value
+
+
 class ingest_file(BasePrimitive):
 
     def __init__(self, action, context):
@@ -730,8 +748,8 @@ def kcwi_fits_reader(file):
     read_imgs = 0
     read_tabs = 0
     # primary image
-    ccddata = CCDData(hdul['PRIMARY'].data, meta=hdul['PRIMARY'].header,
-                      unit='adu')
+    ccddata = KCCDData(hdul['PRIMARY'].data, meta=hdul['PRIMARY'].header,
+                       unit='adu')
     read_imgs += 1
     # check for other legal components
     if 'UNCERT' in hdul:
@@ -742,6 +760,9 @@ def kcwi_fits_reader(file):
         read_imgs += 1
     if 'MASK' in hdul:
         ccddata.mask = hdul['MASK'].data
+        read_imgs += 1
+    if 'NOSKYSUB' in hdul:
+        ccddata.noskysub = hdul['NOSKYSUB'].data
         read_imgs += 1
     if 'Exposure Events' in hdul:
         table = hdul['Exposure Events']
@@ -849,8 +870,8 @@ def kcwi_fits_writer(ccddata, table=None, output_file=None, output_dir=None,
     # force it to 32 bits.
     if ccddata.data is not None and ccddata.data.dtype == np.float64:
         ccddata.data = ccddata.data.astype(np.float32)
-    # If there is an uncertainty array, and the values within (the .array property), make it
-    # 32 bits.
+    # If there is an uncertainty array, and the values within
+    # (the .array property), make it 32 bits.
     if ccddata.uncertainty is not None and ccddata.uncertainty.array.dtype == np.float64:
         ccddata.uncertainty.array = ccddata.uncertainty.array.astype(np.float32)
     
@@ -864,6 +885,12 @@ def kcwi_fits_writer(ccddata, table=None, output_file=None, output_dir=None,
     if flags is not None:
         hdus_to_save.append(fits.ImageHDU(flags, name='FLAGS',
                                           do_not_scale_image_data=True))
+    # check for noskysub
+    nskysb = getattr(ccddata, "noskysub", None)
+    if nskysb is not None:
+        if ccddata.noskysub.dtype == np.float64:
+            ccddata.noskysub = ccddata.noskysub.astype(np.float32)
+        hdus_to_save.append(fits.ImageHDU(nskysb, name='NOSKYSUB'))
     # something about the way the original table is written out is wrong
     # and causes problems.  Leaving it off for now.
     # if table is not None:
