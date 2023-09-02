@@ -63,7 +63,8 @@ def _parse_arguments(in_args: list) -> argparse.Namespace:
                         default=None)
     parser.add_argument('-F', '--max_frac', dest='max_frac',
                         type=float, default=None,
-                        help="Fraction of line max for fitting window (default: 0.5)")
+                        help="Fraction of line max for fitting window "
+                             "(default: 0.5)")
 
     # in this case, we are loading an entire directory,
     # and ingesting all the files in that directory
@@ -91,7 +92,7 @@ def _parse_arguments(in_args: list) -> argparse.Namespace:
                         dest="queue_manager_only", action="store_true",
                         help="Starts queue manager only, no processing",)
 
-    # kcwi specific parameter
+    # kcwi specific parameters
     parser.add_argument("-p", "--proctab", dest='proctab', help='Proctab file',
                         default=None)
     parser.add_argument("-b", "--blue", dest='blue', action="store_true",
@@ -124,6 +125,14 @@ def main():
             framework.append_event('next_file', arguments, recurrent=True)
 
     args = _parse_arguments(sys.argv)
+
+    # make sure user has selected a channel
+    if not args.blue and not args.red:
+        print("\nERROR - DRP can process only one channel at a time\n\n"
+              "Please indicate a channel to process:\n"
+              "Either BLUE with -b or --blue or\n"
+              "       RED  with -r or --red\n")
+        sys.exit(0)
 
     # START HANDLING OF CONFIGURATION FILES ##########
     pkg = 'kcwidrp'
@@ -246,7 +255,8 @@ def main():
         def_fm = getattr(framework.config.instrument, 'FRACMAX', None)
         if def_fm is not None:
             framework.context.pipeline_logger.info(
-                "Setting new line windowing max fraction = %.2f" % args.max_frac)
+                "Setting new line windowing max fraction = %.2f" %
+                args.max_frac)
             framework.config.instrument.FRACMAX = args.max_frac
     else:
         if args.blue:
@@ -363,7 +373,8 @@ def main():
                             framework.default_on_exit()
         framework.ingest_data(None, frames, False)
         with open(args.file_list + '_ingest', 'w') as ingest_f:
-            ingest_f.write('Files ingested at: ' + datetime.datetime.now().isoformat())
+            ingest_f.write('Files ingested at: ' +
+                           datetime.datetime.now().isoformat())
 
     # ingest an entire directory, trigger "next_file" (which is an option
     # specified in the config file) on each file,
