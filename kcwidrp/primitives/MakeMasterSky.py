@@ -58,6 +58,9 @@ class MakeMasterSky(BaseImg):
         # Is there a kcwi.sky file?
         skyfile = None
         skymask = None
+        contsky = False
+        cont_source_pos = None
+        cont_source_width = None
         # check if kcwi.sky exists
         if os.path.exists('kcwi.sky'):
             self.logger.info("Reading kcwi.sky")
@@ -68,6 +71,9 @@ class MakeMasterSky(BaseImg):
             for row in skyproc:
                 # skip comments
                 if row.startswith('#'):
+                    continue
+                # skip empty lines
+                if len(row.split()) < 1:
                     continue
                 # Parse row:
                 # <raw sci file> <raw sky file> <optional mask file>
@@ -85,13 +91,26 @@ class MakeMasterSky(BaseImg):
                         self.action.args.ccddata.header['SKYCOR'] = (False,
                                                                      keycom)
                         return False
-                    self.logger.info("Found sky entry for %s: %s" % (ofn,
-                                                                     skyfile))
+                    elif 'cont' in skyfile:
+                        self.logger.info("Using continuum source local sky for"
+                                         " %s" % ofn)
+                        contsky = True
+                        if len(row.split()) == 4:
+                            cont_source_pos = float(row.split()[2])
+                            cont_source_width = float(row.split()[3])
+                            self.logger.info("Using input continuum pos of"
+                                             "%.2f with width of %.2f" %
+                                             (cont_source_pos,
+                                              cont_source_width))
+
                     # Do we have an optional sky mask file?
-                    if len(row.split()) > 2:
+                    elif len(row.split()) > 2:
                         skymask = row.split()[2]
                         self.logger.info("Found sky mask entry for %s: %s"
                                          % (ofn, skymask))
+
+                    self.logger.info("Found sky entry for %s: %s" % (ofn,
+                                                                     skyfile))
             # Do have a mask file?
             if skymask:
                 # Does it exist?
@@ -103,6 +122,9 @@ class MakeMasterSky(BaseImg):
         # Record results
         self.action.args.skyfile = skyfile
         self.action.args.skymask = skymask
+        self.action.args.contsky = contsky
+        self.action.args.cont_source_pos = cont_source_pos
+        self.action.args.cont_source_width = cont_source_width
         # Do we have a sky alternate?
         if skyfile:
             # Generate sky file name
@@ -199,11 +221,17 @@ class MakeMasterSky(BaseImg):
                 self.logger.warning("Sky mask image not found: %s"
                                     % self.action.args.skymask)
 
+        auto_masked = False
+        auto_mask_type = ""
+        auto_cont_pos = None
+        auto_cont_width = None
         # if we are a standard, get mask for bright continuum source
         if self.action.args.stdname is not None:
             self.logger.info("Standard star observation of "
                              "%s will be auto-masked" %
                              self.action.args.stdname)
+            auto_masked = True
+            auto_mask_type = "Std Star"
             # Use 10% of wavelength range at wavemid
             std_wav_ran = (wavemid - 0.05 * (wavegood1 - wavegood0),
                            wavemid + 0.05 * (wavegood1 - wavegood0))
@@ -239,6 +267,8 @@ class MakeMasterSky(BaseImg):
             std_pos_mask_1 = res[1] + 5. * res[2]
             self.logger.info("Masking between %.2f and %.2f" %
                              (std_pos_mask_0, std_pos_mask_1))
+            auto_cont_pos = res[1]
+            auto_cont_width = 5. * res[2]
 
             # Mask standard from sky calculation
             for i, v in enumerate(binary_mask.flat):
@@ -258,7 +288,8 @@ class MakeMasterSky(BaseImg):
                     plot_width=self.config.instrument.plot_width,
                     plot_height=self.config.instrument.plot_height)
                 p.circle(std_sl_max_pos_data, std_sl_max_flx_data, size=1,
-                         line_alpha=0., fill_color='purple', legend_label='Data')
+                         line_alpha=0., fill_color='purple',
+                         legend_label='Data')
                 p.line([ppk, ppk], [0, fpk], color='green')
                 p.line([std_pos_mask_0, std_pos_mask_0], [0, fpk], color='blue')
                 p.line([std_pos_mask_1, std_pos_mask_1], [0, fpk], color='blue')
@@ -268,6 +299,125 @@ class MakeMasterSky(BaseImg):
                     input("Next? <cr>: ")
                 else:
                     time.sleep(self.config.instrument.plot_pause)
+
+        # if we are a continuum source,
+        # get local mask for bright continuum source
+        elif self.action.args.contsky:
+            self.logger.info("continuum source observation will be auto-masked")
+            auto_masked = True
+
+            # Use 10% of wavelength range at wavemid
+            con_wav_ran = (wavemid - 0.05 * (wavegood1 - wavegood0),
+                           wavemid + 0.05 * (wavegood1 - wavegood0))
+            con_sl_max = -1
+            con_sl_sig_max = -1.
+            con_sl_max_pos_data = None
+            con_sl_max_flx_data = None
+
+            if self.action.args.cont_source_pos is None:
+                self.logger.info("Finding the continuum source automatically")
+                auto_mask_type = "AutoCont"
+
+                for si in range(24):
+                    sq = [i for i, v in enumerate(slicemap.data.flat) if
+                          v == si and
+                          con_wav_ran[0] < wavemap.data.flat[i] <
+                          con_wav_ran[1] and
+                          posbuf < posmap.data.flat[i] < (posmax - posbuf)]
+                    xplt = posmap.data.flat[sq]
+                    yplt = self.action.args.ccddata.data.flat[sq]
+                    sig = float(np.nanstd(yplt))
+                    self.logger.info("Slice %d - StDev = %.2f" % (si, sig))
+                    if sig > con_sl_sig_max:
+                        con_sl_sig_max = sig
+                        con_sl_max = si
+                        con_sl_max_pos_data = xplt.copy()
+                        con_sl_max_flx_data = yplt.copy()
+                ipk = np.argmax(con_sl_max_flx_data)
+                ppk = con_sl_max_pos_data[ipk]
+                fpk = con_sl_max_flx_data[ipk]
+
+                # gaussian fit to max slice
+                res, _ = curve_fit(gaus, con_sl_max_pos_data,
+                                   con_sl_max_flx_data, p0=[fpk, ppk, 1.])
+                self.logger.info("Continuum source max at %.2f in "
+                                 "slice %d with width %.2f px"
+                                 % (res[1], con_sl_max, res[2]))
+
+                # First define source extent
+                con_pos_mask_0 = res[1] - 7. * res[2]
+                con_pos_mask_1 = res[1] + 7. * res[2]
+
+                auto_cont_pos = res[1]
+                auto_cont_width = 7. * res[2]
+
+                # Next define lower and upper windows
+                con_pos_mask_lo_0 = con_pos_mask_0 - \
+                    14 / self.action.args.xbinsize
+                con_pos_mask_up_1 = con_pos_mask_1 + \
+                    14 / self.action.args.xbinsize
+
+                # plot, if requested
+                if self.config.instrument.plot_level >= 1:
+                    xx = np.arange(np.min(con_sl_max_pos_data),
+                                   np.max(con_sl_max_pos_data), 1)
+                    yy = gaus(xx, res[0], res[1], res[2])
+                    p = figure(
+                        title=self.action.args.plotlabel +
+                        ' Cont source max sl %d' % con_sl_max,
+                        x_axis_label='Pos (x px)',
+                        y_axis_label='Flux (e-)',
+                        plot_width=self.config.instrument.plot_width,
+                        plot_height=self.config.instrument.plot_height)
+                    p.circle(con_sl_max_pos_data, con_sl_max_flx_data,
+                             size=1, line_alpha=0., fill_color='purple',
+                             legend_label='Data')
+                    p.line([ppk, ppk], [0, fpk], color='green')
+                    p.line([con_pos_mask_lo_0, con_pos_mask_lo_0], [0, fpk],
+                           color='blue')
+                    p.line([con_pos_mask_0, con_pos_mask_0], [0, fpk],
+                           color='blue')
+                    p.line([con_pos_mask_1, con_pos_mask_1], [0, fpk],
+                           color='blue')
+                    p.line([con_pos_mask_up_1, con_pos_mask_up_1], [0, fpk],
+                           color='blue')
+                    p.line(xx, yy, color='red')
+                    bokeh_plot(p, self.context.bokeh_session)
+                    if self.config.instrument.plot_level >= 2:
+                        input("Next? <cr>: ")
+                    else:
+                        time.sleep(self.config.instrument.plot_pause)
+
+            else:
+                self.logger.info("Using input source position of %.2f and"
+                                 "source width of %.2f" %
+                                 (self.action.args.cont_source_pos,
+                                  self.action.args.cont_source_width))
+                auto_mask_type = "UserCont"
+                auto_cont_pos = self.action.args.cont_source_pos
+                auto_cont_width = self.action.args.cont_source_width
+
+                # First define source extent
+                con_pos_mask_0 = auto_cont_pos - auto_cont_width
+                con_pos_mask_1 = auto_cont_pos + auto_cont_width
+
+                # Next define lower and upper windows
+                con_pos_mask_lo_0 = con_pos_mask_0 - \
+                    14 / self.action.args.xbinsize
+                con_pos_mask_up_1 = con_pos_mask_1 + \
+                    14 / self.action.args.xbinsize
+
+            self.logger.info("Masking all but sky region between "
+                             "%.2f and %.2f and between %.2f and %.2f" %
+                             (con_pos_mask_lo_0, con_pos_mask_0,
+                              con_pos_mask_1, con_pos_mask_up_1))
+
+            # Mask all but local sky from sky calculation
+            for i, v in enumerate(binary_mask.flat):
+                if (0 < posmap.data.flat[i] < con_pos_mask_lo_0) or \
+                   (con_pos_mask_0 < posmap.data.flat[i] < con_pos_mask_1) or \
+                   (con_pos_mask_up_1 < posmap.data.flat[i] < posmax):
+                    binary_mask.flat[i] = True
 
         # count masked pixels
         tmsk = len(np.nonzero(np.where(binary_mask.flat, True, False))[0])
@@ -434,6 +584,15 @@ class MakeMasterSky(BaseImg):
         if tmsk > 0:
             self.action.args.ccddata.header['SKYMSK'] = (True,
                                                          'was sky masked?')
+            if auto_masked:
+                self.action.args.ccddata.header['AUTOMASK'] = (True,
+                                                               'auto-masked?')
+                self.action.args.ccddata.header['AUTMSKTY'] = (
+                    auto_mask_type, 'Type of auto-masking')
+                self.action.args.ccddata.header['CONTPOS'] = (
+                    auto_cont_pos, 'Position in slice of continuum')
+                self.action.args.ccddata.header['CONTWID'] = (
+                    auto_cont_width, 'Width of continuum source')
             # self.action.args.ccddata.header['SKYMSKF'] = (skymf,
             # 'sky mask file')
         else:
