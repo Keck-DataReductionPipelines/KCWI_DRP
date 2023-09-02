@@ -37,6 +37,9 @@ class SubtractSky(BasePrimitive):
                 # skip comments
                 if row.startswith('#'):
                     continue
+                # skip empty lines
+                if len(row.split()) < 1:
+                    continue
                 # Parse row:
                 # <raw sci file> <raw sky file> <optional mask file>
                 #  OR
@@ -52,13 +55,18 @@ class SubtractSky(BasePrimitive):
                         self.action.args.ccddata.header['SKYCOR'] = (False,
                                                                      keycom)
                         return False
-                    self.logger.info("Found sky entry for %s: %s" % (ofn,
-                                                                     skyfile))
+
+                    elif 'cont' in skyfile:
+                        self.logger.info("Using continuum source local sky")
+
                     # Do we have an optional sky mask file?
-                    if len(row.split()) > 2:
+                    elif len(row.split()) > 2:
                         skymask = row.split()[2]
                         self.logger.info("Found sky mask entry for %s: %s"
                                          % (ofn, skymask))
+
+                    self.logger.info("Found sky entry for %s: %s" % (ofn,
+                                                                     skyfile))
             # check if requested files exist
             if skyfile:
                 if not os.path.exists(skyfile):
