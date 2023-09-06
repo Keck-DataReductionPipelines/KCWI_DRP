@@ -1,23 +1,21 @@
 scikit-image~=0.16.2
 astropy~=4.0
-ccdproc~=2.1.0
+ccdproc~=2.2.0
 numpy~=1.20
 scipy~=1.4.1
+pyerfa
 bokeh~=2.0.0
 psutil~=5.7.0
 pytest~=5.4.1
 keckdrpframework
--e git://github.com/cmccully/lacosmicx.git#egg=lacosmicx
-requests~=2.23.0
+requests
 pandas~=1.0.3
+matplotlib~=3.1.3
 setuptools~=46.1.1
 ref_index~=1.0
 pyregion~=2.0
-<<<<<<< HEAD
-<<<<<<< HEAD
+cython
 selenium
-=======
-numpy
->>>>>>> adding requirement for readthedocs
-=======
->>>>>>> adding requirement for readthedocs
+geckodriver
+firefox
+phantomjs
