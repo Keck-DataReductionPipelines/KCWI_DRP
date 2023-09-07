@@ -84,12 +84,9 @@ are not KCWI frames.
 Other command line options
 --------------------------
 
-* ``-c config_file.cfg``  This options overrides the standard configuration file that is stored
-in the installation directory in ``kcwidrp/config/kcwi.cfg``.
+* ``-c config_file.cfg``  This options overrides the standard configuration file that is stored in the installation directory in ``kcwidrp/config/kcwi.cfg``.
 
-* ``-p proctable.proc``  When the DRP runs, it keeps track of the files processed using
-a processing table. Normally that table is called ``kcwi.proc`` and is stored in the
-current directory. This options is used to specify a different file if needed.
+* ``-p proctable.proc``  When the DRP runs, it keeps track of the files processed using a processing table. Normally that table is called ``kcwi.proc`` and is stored in the current directory. This options is used to specify a different file if needed.
 
 * ``-t taper_fraction``  TBD
 
