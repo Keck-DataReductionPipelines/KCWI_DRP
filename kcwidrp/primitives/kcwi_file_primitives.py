@@ -20,7 +20,22 @@ red_amp_gain = {'L1': 1.54, 'L2': 1.55, 'U1': 1.61, 'U2': 1.49}
 
 
 def parse_imsec(section=None):
+    """
+    Parse image section FITS header keyword into useful tuples.
 
+    Take into account one-biased IRAF-style image section keywords and the
+    possibility that a third element (strid) may be present and generate the
+    x and y limits as well as the stride for each axis that are useful for
+    python image slices.
+
+    Args:
+        section (str): square-bracket enclosed string with colon range
+        specifiers and comma delimiters.
+
+    Returns:
+        (nested tuple of int): ((y0, y1, x0, x1), (ystride, xstride))
+
+    """
     xsec = section[1:-1].split(',')[0]
     ysec = section[1:-1].split(',')[1]
     xparts = xsec.split(':')
@@ -69,6 +84,7 @@ def parse_imsec(section=None):
 
 
 def plotlabel(args):
+    """Return label string for plot titles as (str)."""
     lab = "[ Img # %d " % args.ccddata.header['FRAMENO']
     lab += "(%s) " % args.illum
     lab += "Slicer: %s, " % args.ifuname
@@ -81,11 +97,20 @@ def plotlabel(args):
 
 
 class KCCDData(CCDData):
+    """
+    A container for KCWI images based on the CCDData object that adds
+    the `noskysub` frame to allow parallel processing of sky-subtracted
+    and un-sky-subtracted KCWI images.
+
+    Attributes:
+        noskysub (`numpy.ndarray` or None): Optional un-sky-subtracted frame
+            that is created at the sky subtraction stage and processed in
+            parallel with the primary frame.
+            Default is ``None``.
+
+    """
 
     def __init__(self, *args, **kwd):
-        """
-        Constructor
-        """
         super().__init__(*args, **kwd)
         self._noskysub = None
 
@@ -99,15 +124,32 @@ class KCCDData(CCDData):
 
 
 class ingest_file(BasePrimitive):
+    """
+    File ingestion class for KCWI images.
+
+    Args:
+        action (str): Pipeline action
+        context: Pipeline context which includes arguments for the action.
+
+    Attributes:
+        logger: KCWI pipeline logger
+
+    """
 
     def __init__(self, action, context):
-        """
-        Constructor
-        """
         BasePrimitive.__init__(self, action, context)
         self.logger = context.pipeline_logger
 
     def get_keyword(self, keyword):
+        """
+        Get a keyword from ingested headers.
+
+        Args:
+            keyword (str): Keyword to fetch from header
+
+        Returns:
+            Keyword value if present, otherwise ``None``.
+        """
         try:
             keyval = self.ccddata.header[keyword]
         except KeyError:
@@ -116,6 +158,14 @@ class ingest_file(BasePrimitive):
         return keyval
 
     def camera(self):
+        """
+        Get camera ID number.
+
+        Uses `CAMERA` FITS header keyword.
+
+        Returns:
+            0 for Blue channel, 1 for Red, and -1 for Unknown.
+        """
         camera = self.get_keyword('CAMERA').upper()
         if 'BLUE' in camera:
             return 0
@@ -125,6 +175,19 @@ class ingest_file(BasePrimitive):
             return -1
 
     def camang(self):
+        """
+        Return the articulation stage camera angle.
+
+        Determines which channel to use based on camera() call, then
+        uses keyword `BARTANG` for Blue channel and `RARTANG` for Red.
+
+        Raises:
+            ValueError: if the camera ID is Unknown.
+
+        Returns:
+            (float): Camera angle in degrees for the given channel.
+
+        """
         if self.camera() == 0:  # Blue
             key = 'BARTANG'
         elif self.camera() == 1:  # Red
@@ -135,6 +198,19 @@ class ingest_file(BasePrimitive):
         return self.get_keyword(key)
 
     def filter(self):
+        """
+        Return the filter name.
+
+        Determines which channel to use based on camera() call, then
+        uses keyword `BFILTNAM` for Blue channel and returns `None` for Red.
+
+        Raises:
+            ValueError: if the camera ID is Unknown.
+
+        Returns:
+            (str): Filter name for the given channel.
+
+        """
         if self.camera() == 0:  # Blue
             filt = self.get_keyword('BFILTNAM')
         elif self.camera() == 1:  # Red
@@ -145,6 +221,19 @@ class ingest_file(BasePrimitive):
         return filt
 
     def grangle(self):
+        """
+        Return the grating angle.
+
+        Determines which channel to use based on camera() call, then
+        uses keyword `BGRANGLE` for Blue channel and `RGRANGLE` for Red.
+
+        Raises:
+            ValueError: if the camera ID is Unknown.
+
+        Returns:
+            (float): Grating angle in degrees for the given channel.
+
+        """
         if self.camera() == 0:  # Blue
             key = 'BGRANGLE'
         elif self.camera() == 1:  # Red
@@ -155,6 +244,19 @@ class ingest_file(BasePrimitive):
         return self.get_keyword(key)
 
     def grating(self):
+        """
+        Return the grating name.
+
+        Determines which channel to use based on camera() call, then
+        uses keyword `BGRATNAM` for Blue channel and `RGRATNAM` for Red.
+
+        Raises:
+            ValueError: if the camera ID is Unknown.
+
+        Returns:
+            (str): Grating name for the given channel.
+
+        """
         if self.camera() == 0:  # Blue
             key = 'BGRATNAM'
         elif self.camera() == 1:  # Red
@@ -164,6 +266,13 @@ class ingest_file(BasePrimitive):
         return self.get_keyword(key)
 
     def adjang(self):
+        """
+        Return the adjustment angle in degrees for the current grating.
+
+        Returns:
+            (float): 180.0 for high-resolution gratings, otherwise 0.0
+
+        """
         if 'BH' in self.grating() or 'RH' in self.grating():
             return 180.0
         if 'BM' in self.grating() or 'RM' in self.grating():
@@ -172,6 +281,21 @@ class ingest_file(BasePrimitive):
             return 0.0
 
     def atsig(self):
+        """
+        Return the Gaussian sigma to use for convolving the Atlas spectrum.
+
+        Uses grating() and ifunum() to select a Gaussian sigma that when
+        convolved with the Atlas spectrum will match the resolution of the
+        observed spectrum.
+
+        Raises:
+            ValueError: if grating or ifunum canoot be determined.
+
+        Returns:
+            (float): sigma in pixels ranging from 0.75 to 14.0, or 0.0 if
+            imtype() is `BIAS`.
+
+        """
         if 'H' in self.grating():
             if self.ifunum() > 2:
                 return 0.75
@@ -197,6 +321,15 @@ class ingest_file(BasePrimitive):
                     "unable to determine atlas sigma: GRATING undefined")
 
     def rho(self):
+        """
+        Return the `rho` value (lines/mm divided by 1000) for the given grating.
+
+        Uses grating() to determine ingested grating.
+
+        Returns:
+            (float, or ``None``): `rho` value or ``None`` if grating unknown.
+
+        """
         if 'BH1' in self.grating():
             return 3.6
         elif 'BH2' in self.grating():
@@ -225,6 +358,19 @@ class ingest_file(BasePrimitive):
             return None
 
     def cwave(self):
+        """
+        Return the central wavelength in Angstroms.
+
+        Determines which channel to use based on camera() call, then
+        uses keyword `BCWAVE` for Blue channel and `RCWAVE` for Red.
+
+        Raises:
+            ValueError: if the camera ID is Unknown.
+
+        Returns:
+            (float): Central wavelength in Angstroms for the given channel.
+
+        """
         if self.camera() == 0:  # Blue
             key = 'BCWAVE'
         elif self.camera() == 1:  # Red
@@ -235,6 +381,17 @@ class ingest_file(BasePrimitive):
         return self.get_keyword(key)
 
     def dich(self):
+        """
+        Query if dichroic present for image.
+
+        Returns ``True`` for all Red channel data, but checks for the presence
+        of Red keywords in the Blue channel header to determine status of
+        dichroic.
+
+        Returns:
+            (bool): ``True`` if dichroic present, ``False`` if not.
+
+        """
         if self.camera() == 0:  # Blue
             if self.get_keyword('RCWAVE'):
                 return True
@@ -244,7 +401,18 @@ class ingest_file(BasePrimitive):
             return True
 
     def resolution(self):
-        """Return FWHM resolution in Angstroms for the given grating"""
+        """
+        Return FWHM resolution in Angstroms for the given grating.
+
+        Calls cwave(), grating(), and ifunum() to calculate resolution.
+
+        Raises:
+            ValueError: if the grating is unknown.
+
+        Returns:
+            (float): FWHM in Angstroms, or 0. if imtype() is `BIAS`.
+
+        """
         # get reference wavelength
         refwave = self.cwave()
         if refwave:
@@ -284,7 +452,18 @@ class ingest_file(BasePrimitive):
         return rez
 
     def delta_wave_out(self):
-        """Return output delta lambda in Angstroms for the given grating"""
+        """
+        Return output delta lambda in Angstroms for the given grating
+
+        Calls grating(), and ybinsize() to calculate output delta lambda.
+
+        Raises:
+            ValueError: if the grating is unknown.
+
+        Returns:
+            (float): delta lambda in Angstroms, or 0. if imtype() is `BIAS`.
+
+        """
         # Calc delta wave out from grating
         if 'BH' in self.grating():
             dw = 0.125 * float(self.ybinsize())
@@ -308,9 +487,25 @@ class ingest_file(BasePrimitive):
         return dw
 
     def namps(self):
+        """
+        Return value of `NVIDINP` FITS header keyword.
+        """
         return self.get_keyword('NVIDINP')
 
     def nasmask(self):
+        """
+        Query if mask was inserted for image.
+
+        Calls camera() to determine channel, and then uses `BNASNAM` for Blue
+        channel or `RNASNAM` for Red channel.
+
+        Raises:
+            ValueError: if channel is Unknown.
+
+        Returns:
+            (bool): ``True`` if 'Mask' in, ``False`` if not.
+
+        """
         if self.camera() == 0:  # Blue
             if 'Mask' in self.get_keyword('BNASNAM'):
                 return True
@@ -325,21 +520,27 @@ class ingest_file(BasePrimitive):
             raise ValueError("unable to determine mask: CAMERA undefined")
 
     def numopen(self):
+        """Returns value of `NUMOPEN` FITS header keyword."""
         return self.get_keyword('NUMOPEN')
 
     def shufrows(self):
+        """Returns value of `SHUFROWS` FITS header keyword."""
         return self.get_keyword('SHUFROWS')
 
     def ampmode(self):
+        """Returns value of `AMPMODE` FITS header keyword."""
         return self.get_keyword('AMPMODE')
 
     def xbinsize(self):
+        """Return X part of `BINNING` keyword value as (int)."""
         return int(self.get_keyword('BINNING').split(',')[0])
 
     def ybinsize(self):
+        """Return Y part of `BINNING` keyword value as (int)."""
         return int(self.get_keyword('BINNING').split(',')[-1])
 
     def plotlabel(self):
+        """Return label string for plot titles as (str)."""
         lab = "[ Img # %d " % self.get_keyword('FRAMENO')
         lab += "(%s) " % self.illum()
         lab += "Slicer: %s, " % self.ifuname()
@@ -350,6 +551,7 @@ class ingest_file(BasePrimitive):
         return lab
 
     def stdlabel(self):
+        """Return label string for standard star plot titles as (str)."""
         lab = "[ Img # %d " % self.get_keyword('FRAMENO')
         lab += "(%s) " % self.get_keyword('TARGNAME')
         lab += "Slicer: %s, " % self.ifuname()
@@ -360,16 +562,29 @@ class ingest_file(BasePrimitive):
         return lab
 
     def ifuname(self):
+        """Return the value of the `IFUNAM` FITS header keyword."""
         return self.get_keyword('IFUNAM')
 
     def ifunum(self):
+        """Return the value of the `IFUNUM` FITS header keyword."""
         return self.get_keyword('IFUNUM')
 
     def imtype(self):
+        """Return the value of the `IMTYPE` FITS header keyword."""
         return self.get_keyword('IMTYPE')
 
     def illum(self):
-        # set ILLUM keyword
+        """
+        Generate a string that characterizes the illumination for the frame.
+
+        Uses various FITS header keywords to determine the kind of illumination
+        that was used for the frame.  If a consistent picture of the
+        illumination cannot be determined, set the return value to `Test`.
+
+        Returns:
+            (str): Characterization of illumination for given frame.
+
+        """
         # ARCS
         if self.get_keyword('IMTYPE') == 'ARCLAMP':
             if self.get_keyword('LMP0STAT') == 1 and \
@@ -416,6 +631,17 @@ class ingest_file(BasePrimitive):
         return illum
 
     def calibration_lamp(self):
+        """
+        Determine which calibration source was used for a given frame.
+
+        Examines `LMPnSTAT` and `LMPnSHST` keywords to determine which lamp was
+        on and which shutter was open and thus providing illuminate for the
+        frame.  Returns ``None`` if not an `ARCLAMP` image type.
+
+        Returns:
+            (str, or ``None``): Which calibration lamp was active for frame.
+
+        """
         if self.get_keyword('IMTYPE') != 'ARCLAMP':
             return None
         else:
@@ -675,6 +901,16 @@ class ingest_file(BasePrimitive):
         return out_args
 
     def apply(self):
+        """
+        Apply method for class.
+
+        Checks _pre_condition().  If ``True``, then call _perform() and
+        collect output.  Then check _post_condition().
+
+        Returns:
+            output from _perform, or ``None`` if there was an exception.
+
+        """
         if self._pre_condition():
             try:
                 output = self._perform()
@@ -687,7 +923,16 @@ class ingest_file(BasePrimitive):
         return self.output
 
     def check_if_file_can_be_processed(self, imtype):
+        """
+        For a given image type, ensure that processing can proceed.
 
+        Based on `IMTYPE` keyword, makes a call to proctab to see if
+        pre-requisite images are present.
+
+        Returns:
+            (bool): ``True`` if processing can proceed, ``False`` if not.
+
+        """
         if imtype == 'OBJECT':
             # bias frames
             bias_frames = self.context.proctab.search_proctab(
@@ -738,11 +983,22 @@ class ingest_file(BasePrimitive):
 
 
 def kcwi_fits_reader(file):
-    """A reader for KeckData objects.
+    """A reader for KCCDData objects.
+
     Currently, this is a separate function, but should probably be
     registered as a reader similar to fits_ccddata_reader.
-    Arguments:
-    file -- The filename (or pathlib.Path) of the FITS file to open.
+
+    Args:
+        file (str): The filename (or pathlib.Path) of the FITS file to open.
+
+    Raises:
+        FileNotFoundError: if file not found or
+        OSError: if file not accessible
+
+    Returns:
+        (KCCDData, FITS table): All relevant frames in a single KCCDData object
+        and a FITS table of exposure events, if present otherwise ``None``.
+
     """
     try:
         hdul = fits.open(file)
@@ -799,6 +1055,14 @@ def kcwi_fits_reader(file):
 
 def write_table(output_dir=None, table=None, names=None, comment=None,
                 keywords=None, output_name=None, clobber=False):
+    """
+    Write out FITS table.
+
+    Raises:
+        FileExistsError: if cannot overwrite file or
+        OSError: if some other access exception occurred.
+
+    """
     output_file = os.path.join(output_dir, output_name)
     # check if file already exists
     if os.path.exists(output_file) and clobber is False:
@@ -826,6 +1090,18 @@ def write_table(output_dir=None, table=None, names=None, comment=None,
 
 
 def read_table(input_dir=None, file_name=None):
+    """
+    Read FITS table
+
+    Uses astropy.Table module to read in FITS table.
+
+    Raises:
+        FileNotFoundError: if file not found.
+
+    Returns:
+        (FITS Table): table read in or ``None`` if unsuccessful.
+
+    """
     # Set up return table
     input_file = os.path.join(input_dir, file_name)
     logger.info("Trying to read table: %s" % input_file)
@@ -839,7 +1115,30 @@ def read_table(input_dir=None, file_name=None):
 
 def kcwi_fits_writer(ccddata, table=None, output_file=None, output_dir=None,
                      suffix=None):
-    
+    """
+    A writer for KCCDData or CCDData objects.
+
+    Updates history in FITS header with pipeline version and git repo version
+    and date.
+
+    Converts float64 data to float32.
+
+    Uses object to_hdu() method to generate hdu list and then checks if various
+    extra frames are present (flags, noskysub) and adds them to the hdu list
+    prior to writing out with hdu list writeto() method.
+
+    Note:
+        Currently fits tables are not written out.
+
+    Args:
+        ccddata (KCCDData or CCDData): object to write out.
+        table (FITS Table): currently not used.
+        output_file (str): base filename to write to.
+        output_dir (str): directory into which to write.
+        suffix (str): a suffix to append to output_file string.
+
+
+    """
     # Determine if the version info is already in the header
     contains_version = False
     for h in ccddata.header["HISTORY"]:
@@ -905,20 +1204,43 @@ def kcwi_fits_writer(ccddata, table=None, output_file=None, output_dir=None,
 
 
 def strip_fname(filename):
+    """
+    Return pathlib.Path.stem attribute for given filename.
+
+    Args:
+        filename (str): filename to strip.
+
+    Returns:
+        (str): Path(filename).stem, or filename if error occurs.
+
+    """
     if not filename:
         logger.error(f"Failed to strip file {filename}")
-        return
+        return filename
     strip = Path(filename).stem
     return strip
 
 
 def get_master_name(tab, target_type, loc=0):
+    """
+    Add a specific tag to an output fits filename read from a proc table.
+
+    Args:
+        tab (proc table): proc table source of filename.
+        target_type (str): suffix to add after underscore.
+        loc (int): row within table in `tab`, defaults to 0.
+
+    Returns:
+        (str): constructed filename from input tab entry and target_type.
+
+    """
     res = Path(strip_fname(tab['filename'][loc]) + '_' +
                target_type.lower() + ".fits").name
     return res
 
 
 def master_bias_name(ccddata, target_type='MBIAS'):
+    # Currently NOT USED (DN, 7-Sep-2023)
     # Delivers a mbias filename that is unique for each CCD configuration
     # Any KCWI frame with a shared CCD configuration can use the same bias
     name = target_type.lower() + '_' + ccddata.header['CCDCFG'] + '.fits'
@@ -926,12 +1248,26 @@ def master_bias_name(ccddata, target_type='MBIAS'):
 
 
 def master_flat_name(ccddata, target_type):
+    # Currently NOT USED (DN, 7-Sep-2023)
     # Delivers a name that is unique across an observing block
     name = target_type.lower() + '_' + ccddata.header['STATEID'] + '.fits'
     return name
 
 
 def fix_red_header(ccddata):
+    """
+    Add FITS header keywords to Red channel data to make compatible with DRP.
+
+    Adds the following keywords that are not present in raw images
+
+    * MJD - Modified Julian Day
+    * NVIDINP - from TAPLINES keyword
+    * GAINMUL - set to 1
+    * CCDMODE - from CDSSPEED keyword
+    * AMPNUM - based on AMPMODE
+    * GAINn - from red_amp_gain dictionary
+
+    """
     # are we red?
     if 'RED' in ccddata.header['CAMERA'].upper():
         # Fix red headers during Caltech AIT
