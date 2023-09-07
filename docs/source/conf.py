@@ -12,17 +12,16 @@
 #
 import os
 import sys
-from importlib import import_module
+
 sys.path.insert(0, os.path.abspath('../../'))
-import kcwidrp.primitives
 
 
 # -- Project information -----------------------------------------------------
 
 project = 'Keck Cosmic Web Imager DRP'
-copyright = '2020, Don Neill, KCWI Team, Luca Rizzi, Max Brodheim'
+copyright = '2023, Don Neill, KCWI Team, Luca Rizzi, Max Brodheim'
 author = 'Don Neill, KCWI Team, Luca Rizzi, Max Brodheim'
-#sys.path.append(os.path.abspath('./docs/'))
+# sys.path.append(os.path.abspath('./docs/'))
 
 # The full version, including alpha/beta/rc tags
 release = '1.0'
@@ -37,11 +36,11 @@ extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.napoleon',
               'sphinx.ext.autodoc',
               'sphinx.ext.viewcode'
-]
+              ]
 napoleon_numpy_docstring = True
 # autosummary_generate = False
 
-#automodapi_toctreedirnm = 'api'
+# automodapi_toctreedirnm = 'api'
 
 # Class documentation should contain *both* the class docstring and
 # the __init__ docstring
@@ -67,7 +66,7 @@ exclude_patterns = []
 html_theme = 'sphinx_rtd_theme'
 html_theme_options = {
     'canonical_url': '',
-    'analytics_id': 'UA-XXXXXXX-1',  #  Provided by Google in your dashboard
+    'analytics_id': 'UA-XXXXXXX-1',  # Provided by Google in your dashboard
     'logo_only': True,
     'display_version': True,
     'prev_next_buttons_location': 'bottom',
