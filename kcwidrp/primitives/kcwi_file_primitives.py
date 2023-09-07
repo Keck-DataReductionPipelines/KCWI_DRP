@@ -432,21 +432,26 @@ class ingest_file(BasePrimitive):
                     return lamps_dictionary[key]
 
     def map_ccd(self, xbin, ybin):
-        """Return CCD section variables useful for processing
+        """
+        Return CCD section variables useful for processing
+
+        Args:
+            xbin (int): binning in x
+            ybin (int): binning in y
 
         Uses FITS keyword NVIDINP to determine how many amplifiers were used
         to read out the CCD.  Then reads the corresponding BSECn, and
         DSECn keywords, where n is the amplifier number.  The indices are
         converted to Python (0-biased, y axis first) indices and an array
         is constructed for each of the two useful sections of the CCD as
-        follows:
+        follows
 
-        Bsec[0][0] - First amp, y lower limit
-        Bsec[0][1] - First amp, y upper limit
-        Bsec[0][2] - First amp, x lower limit
-        Bsec[0][3] - First amp, x upper limit
-        Bsec[1][0] - Second amp, y lower limit
-        etc.
+        * Bsec[0][0] - First amp, y lower limit
+        * Bsec[0][1] - First amp, y upper limit
+        * Bsec[0][2] - First amp, x lower limit
+        * Bsec[0][3] - First amp, x upper limit
+        * Bsec[1][0] - Second amp, y lower limit
+        * etc.
 
         Bsec is the full overscan region for the given amplifier and is used
         to calculate and perform the overscan subtraction.
@@ -457,23 +462,22 @@ class ingest_file(BasePrimitive):
         Tsec accounts for trimming the image according to Dsec.
 
         Amps are assumed to be organized as follows:
-                  BLUE                          RED
-        (0,ny)	--------- (nx,ny)    (0,ny)  --------- (nx,ny)
-                | 2 | 3 |                    | 0 | 2 |
-                ---------                    ---------
-                | 0 | 1 |                    | 1 | 3 |
-        (0,0)	--------- (nx, 0)     (0,0)  --------- (nx, 0)
 
-        Args:
-        -----
-            self: instance of CcdPrimitive class (automatic)
+        .. code-block:: text
 
-        Returns:
-        --------
-            list: (int) y0, y1, x0, x1 for bias section
-            list: (int) y0, y1, x0, x1 for data section
-            list: (int) y0, y1, x0, x1 for trimmed section
-            list: (bool) y-direction, x-direction, True if forward, else False
+                      BLUE                          RED
+            (0,ny)  --------- (nx,ny)    (0,ny)  --------- (nx,ny)
+                    | 2 | 3 |                    | 0 | 2 |
+                    ---------                    ---------
+                    | 0 | 1 |                    | 1 | 3 |
+            (0,0)   --------- (nx, 0)    (0,0)   --------- (nx, 0)
+
+        :returns:
+            - list: (int) y0, y1, x0, x1 for bias section
+            - list: (int) y0, y1, x0, x1 for data section
+            - list: (int) y0, y1, x0, x1 for trimmed section
+            - list: (bool) y-direction, x-direction, True if forward, else False
+
         """
 
         namps = self.namps()    # int(self.get_keyword('NVIDINP'))
