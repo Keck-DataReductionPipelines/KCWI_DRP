@@ -32,8 +32,9 @@ def parse_imsec(section=None):
         section (str): square-bracket enclosed string with colon range
         specifiers and comma delimiters.
 
-    Returns:
-        (nested tuple of int): ((y0, y1, x0, x1), (ystride, xstride))
+    :returns:
+        - list: (int) y0, y1, x0, x1 - zero-biased (python) slice limits.
+        - list: (int) y-stride, x-stride - strides for each axis.
 
     """
     xsec = section[1:-1].split(',')[0]
@@ -670,7 +671,7 @@ class ingest_file(BasePrimitive):
         DSECn keywords, where n is the amplifier number.  The indices are
         converted to Python (0-biased, y axis first) indices and an array
         is constructed for each of the two useful sections of the CCD as
-        follows
+        follows:
 
         * Bsec[0][0] - First amp, y lower limit
         * Bsec[0][1] - First amp, y upper limit
@@ -1258,7 +1259,7 @@ def fix_red_header(ccddata):
     """
     Add FITS header keywords to Red channel data to make compatible with DRP.
 
-    Adds the following keywords that are not present in raw images
+    Adds the following keywords that are not present in raw images:
 
     * MJD - Modified Julian Day
     * NVIDINP - from TAPLINES keyword
