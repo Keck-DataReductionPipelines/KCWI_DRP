@@ -22,6 +22,10 @@ structure of the files and to the specifications of the instrument, e.g., the
 number of continuum bars. There is usually no reason to modify these parameters,
 and they are not described here.
 
+Note:
+    If a parameter in the ``kcwi.cfg`` file is not described here, then you can
+    assume that it should not be modified.
+
 The remaining parameters are used to control the processing algorithms and are
 described here.
 
@@ -30,17 +34,13 @@ Blue and Red sections of the configuration file
 
 Now that the Red channel has been installed, there is a need to specify
 different default parameters for each channel.  These are delineated in the
-config file with ``[BLUE]`` and ``[RED]`` section headers.
+config file with ``[BLUE]`` and ``[RED]`` section headers.  For example, to
+deal with cosmic rays, the Red channel uses a median stack of three continuum
+bars images and a median stack of three arc lamp images, while the Blue channel
+only requires one each of those images.
 
 Processing parameters
 ---------------------
-
-.. code-block:: python
-
- output_directory = "redux"
-
-This parameter specifies the output directory for the data products. If this directory
-is missing, it will be created automatically.
 
 .. code-block:: python
 
@@ -49,32 +49,84 @@ is missing, it will be created automatically.
  dome_min_nframes = 3
  twiflat_min_nframes = 1
  dark_min_nframes = 3
+ arc_min_nframes = 1        # = 3 for [RED]
+ contbars_min_nframes = 1   # = 3 for [RED]
+ minoscanpix = 75           # = 20 for [RED]
+ oscanbuf = 20              # = 5 for [RED]
 
-These parameters control the minimum number of bias, internal/dome/twilight flats and darks
-that the DRP expects before producing a master calibration.
-The values shown here are synchronized with the calibration scripts that we use in the
-afternoon.
+These parameters control the minimum number of bias, internal/dome/twilight
+flats and darks that the DRP expects before producing a master calibration. The
+arcs and contbars minimum numbers are different for the Blue and Red channels as
+described above.  The values shown here are synchronized with the calibration
+scripts that we use in the afternoon.
+
+The overscan parameters are based on the configuration of the Blue and Red
+detectors and we do not recommend altering these parameters.
 
 .. code-block:: python
 
- clobber = False
+ skipscat = False        # Skip subtracting scattered light?
+ skipsky = False         # Skip sky subtraction?
 
-This parameters controls the behaviour of the DRP if one of the data product has already
-been generated: set ``clobber = True`` to overwrite existing products.
+These control scattered light subtraction and sky subtraction.  Setting either
+of these to ``True`` will skip the subtraction for all subsequent runs of the
+pipeline.  Skipping sky subtraction globally can also be invoked by using
+``-k`` on the command line.
 
 .. code-block:: python
 
- skipscat = False    # Skip subtracting scattered light?
+ plot_pause = 1         # Pause time for each plot in seconds
+ saveintims = False     # Save intermediate images during basic reduction
+ verbose = 1            # Verbosity of output
 
-This parameter disables the subtraction of scatteres light if set to ``True``. In some case
-the subtraction of scattered light can produce unexpected results.
+These control various aspects of how the DRP runs: how long to pause at each
+plot if not in interactive mode (see ``plot_level`` below), whether to save
+intermediate images for diagnosis, and the verbosity level of text output.
+
+.. code-block:: python
+
+ TAPERFRAC = 0.2        # Adjusts edge taper for Atlas cross-correlation
+ TUKEYALPHA = 0.2       # Tukey alpha value for cross-correlating bars
+ FRACMAX = 0.5          # How much of line peak to use for fitting
+ MIDFRAC = -1.0         # Middle fraction or -1 to use default calculation
+ ATOFF = 0              # Atlas offset or 0 to use default calculation
+ LINELIST = ""          # Optional line list to use instead of generated
+ LINETHRESH = 100.      # Line threshhold for fitting
+
+These adjust the way in which arc line fitting is performed.  In most cases, you
+will not have to adjust these.  For the Red channel, we use these values:
+
+.. code-block:: python
+
+ TUKEYALPHA = 0.7
+ FRACMAX = 0.25
+ LINETHRESH = 10.
+
+See the ``[RED]`` section to make changes for Red channel data.
 
 .. code-block:: python
 
  default_arc_lamp = 'ThAr'
 
-KCWI has two calibration lamps, Thorium/Argon (ThAr) and Iron/Argon (FeAr). This parameter
-specifies which of the two lamps should be used by the DRP. The default is to use the ThAr lamp.
+KCWI has two calibration lamps, Thorium/Argon (ThAr) and Iron/Argon (FeAr).
+This parameter specifies which of the two lamps should be used by the DRP.
+The default is to use the ThAr lamp.
+
+Wavelength correction parameters:
+---------------------------------
+
+.. code-block:: python
+
+ radial_velocity_correction = "heliocentric"
+ air_to_vacuum = True   # Defaults to vacuum wavelengths
+
+These control the refinement of the wavelength solution.  You can specify if you
+want air wavelengths by setting ``air_to_vacuum`` to ``False``.  You can
+specify the type of radial velocity correct as one of:
+
+* heliocentric
+* barycentric
+* none
 
 
 Plotting parameters
@@ -82,38 +134,29 @@ Plotting parameters
 
 .. code-block:: python
 
- plot_pause = 1
- saveintims = False
- inter = 1
- plot_width=1000
- plot_height=600
-
  # BOKEH SERVER
  enable_bokeh = False
- plot_level = 0
+ plot_level = 1
 
-These parameters control the plotting features of the DRP. Plotting is performed using
-a combination of a Bokeh server running in the background and a browser front end.
+These parameters control the plotting features of the DRP. Plotting is
+performed using a combination of a Bokeh server running in the background and a
+browser front end.
 
-To activate the plotting features, set ``enable_bokeh = True``. When the DRP starts, it will
-check if there is an instance of the Bokeh server running or start one. A browser
-window will be opened automatically when needed.
+To activate the plotting features, set ``enable_bokeh = True``. When the DRP
+starts, it will check if there is an instance of the Bokeh server running or
+start one. A browser window will be opened automatically when needed.
 
-The ``plot_level`` parameter controls the level of interactivity. Setting it 0 will disable
-interactive fetures: the DRP will produce plots when needed but it will not interact
-with the user. A higher level will increase both the verbosity and the interactivity of the
-plots. The highest level is 3 (CHECK). At this level, the user will be provided with a plot
-of every arc line, for example, with a graphic representation of the fitting used to determine
-the central position.
+The ``plot_level`` parameter controls the level of interactivity. Setting it 0
+will disable plotting.  Setting it to 1 will enable plotting, but the DRP will
+not interact with the user. A higher level will increase both the verbosity and
+the interactivity of the plots. The highest level is 3. At this level, the user
+will be provided with a plot of every arc line, for example, with a graphic
+representation of the fitting used to determine the central position.
 
 For general use, it is advisable to leave the plot level to 1.
 
-The ``plot_pause`` parameter controls how long the DRP will pause between automatically generated
-plots (in seconds).
-Finally, the ``saventims`` parameter controls the generation of JPG diagnostics plots saved
-in the current directory.
-
-The size of the plotting window can be specified using ``plot_width`` and ``plot_height``.
+The size of the plotting window can be specified using ``plot_width`` and
+``plot_height``.
 
 Cosmic rays rejection parameters
 --------------------------------
@@ -138,13 +181,3 @@ Cosmic rays rejection parameters
 
 These parameters are used to control the CRR algorithms. See the documentation in
 `astroscrappy <https://astroscrappy.readthedocs.io/en/latest/index.html>`_ for details (PROVIDE LINK)
-
-Wavelength correction parameters:
----------------------------------
-
-The ``radial_velocity_correction`` parameter controls what reference frame to use for
-radial velocity corrections. The options are ``heliocentric``, ``barycentric``,
-or ``none``
-
-The ``air_to_vacuum`` parameter controls if the pipeline should convert
-to vacuum wavelengths from air wavelengths.
