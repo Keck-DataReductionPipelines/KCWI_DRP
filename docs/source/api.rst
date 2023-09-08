@@ -1,9 +1,6 @@
 Primitives/API
 ==============
 
-.. automodule:: kcwidrp.primitives.ApplyFlat
-   :members:
-
 .. automodule:: kcwidrp.primitives.ArcOffsets
    :members:
 
@@ -37,6 +34,9 @@ Primitives/API
 .. automodule:: kcwidrp.primitives.FitCenter
    :members:
 
+.. automodule:: kcwidrp.primitives.FlagSaturation
+   :members:
+
 .. automodule:: kcwidrp.primitives.FluxCalibrate
    :members:
 
@@ -52,13 +52,22 @@ Primitives/API
 .. automodule:: kcwidrp.primitives.MakeInvsens
    :members:
 
+.. automodule:: kcwidrp.primitives.MakeMasterArc
+   :members:
+
 .. automodule:: kcwidrp.primitives.MakeMasterBias
+   :members:
+
+.. automodule:: kcwidrp.primitives.MakeMasterContbars
    :members:
 
 .. automodule:: kcwidrp.primitives.MakeMasterDark
    :members:
 
 .. automodule:: kcwidrp.primitives.MakeMasterFlat
+   :members:
+
+.. automodule:: kcwidrp.primitives.MakeMasterObject
    :members:
 
 .. automodule:: kcwidrp.primitives.MakeMasterSky
@@ -128,6 +137,9 @@ Primitives/API
    :members:
 
 .. automodule:: kcwidrp.primitives.TrimOverscan
+   :members:
+
+.. automodule:: kcwidrp.primitives.WavelengthCorrections
    :members:
 
 .. automodule:: kcwidrp.primitives.kcwi_file_primitives
