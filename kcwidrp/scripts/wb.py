@@ -177,7 +177,7 @@ def get_log_string(ifile, batch=False):
     return lstring, cstr, lfn
 
 
-if __name__ == '__main__':
+def main():
     import sys
 
     if len(sys.argv) < 2:
@@ -206,3 +206,7 @@ if __name__ == '__main__':
             with open(cal+".txt", 'w') as cal_list:
                 for f in fnames[cal]:
                     cal_list.write(f + "\n")
+
+
+if __name__ == '__main__':
+    main()

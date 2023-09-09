@@ -34,7 +34,9 @@ entry_points = {
         "kcwi_masksky_ds9 = kcwidrp.scripts.kcwi_masksky_ds9:main",
         "smart_reduce_kcwi = kcwidrp.scripts.smart_reduce_kcwi:main",
         "modhead = kcwidrp.scripts.modhead:main",
-        "start_kcwi_rti = kcwidrp.scripts.kcwi_rti:main"
+        "start_kcwi_rti = kcwidrp.scripts.kcwi_rti:main",
+        "wb = kcwidrp.scripts.wb:main",
+        "wr = kcwidrp.scripts.wr:main"
     ]}
 
 setup(name=NAME,
