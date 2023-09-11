@@ -13,7 +13,9 @@ import os
 
 def atm_disper(w0, w1, airmass, temperature=10.0, pressure_pa=61100.0,
                humidity=50.0, co2=400.0):
-    """Calculate atmospheric dispersion at w1 relative to w0
+    """
+
+    Calculate atmospheric dispersion at w1 relative to w0
 
     Args:
         w0 (float): reference wavelength (Angstroms)
@@ -38,7 +40,19 @@ def atm_disper(w0, w1, airmass, temperature=10.0, pressure_pa=61100.0,
 
 
 class CorrectDar(BasePrimitive):
-    """Correct for Differential Atmospheric Refraction"""
+    """
+    Correct for Differential Atmospheric Refraction
+
+    Accounts for rotator orientation, zenith angle, and parallactic angle to
+    correct input data cube into a padded, DAR corrected output cube.
+    Calculates the DAR correction for each wavelength slice and adjusts position
+    in cube using scipy.nddata.shift to implement correction.
+
+    Sets flags in padded region of output cube to a value of 128.
+
+    Also corrects delta wavelength cube if it is a standard star observation.
+
+    """
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
