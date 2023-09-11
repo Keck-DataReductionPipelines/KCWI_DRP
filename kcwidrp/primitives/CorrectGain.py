@@ -4,7 +4,15 @@ from kcwidrp.primitives.kcwi_file_primitives import parse_imsec, \
 
 
 class CorrectGain(BasePrimitive):
-    """Convert raw data numbers to electrons"""
+    """
+    Convert raw data numbers to electrons.
+
+    Uses the ATSECn FITS header keywords to divide image into amp regions and
+    then corrects each region with the corresponding GAINn keyword.
+
+    Sets the BUNIT header keyword to `electron`.
+
+    """
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
