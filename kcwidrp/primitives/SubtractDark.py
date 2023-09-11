@@ -19,9 +19,9 @@ class SubtractDark(BasePrimitive):
         target_type = 'MDARK'
 
         self.logger.info("Subtracting master dark")
-        tab = self.context.proctab.search_proctab(frame=self.action.args.ccddata,
-                                             target_type=target_type,
-                                             nearest=True)
+        tab = self.context.proctab.search_proctab(
+            frame=self.action.args.ccddata, target_type=target_type,
+            nearest=True)
         self.logger.info("%d master dark frames found" % len(tab))
 
         if len(tab) > 0:

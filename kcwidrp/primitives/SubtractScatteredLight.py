@@ -34,7 +34,7 @@ class SubtractScatteredLight(BasePrimitive):
             self.action.args.ccddata.header[key] = (False, keycom)
         else:
             # Binning
-            ybin = self.action.args.ybinsize
+            # ybin = self.action.args.ybinsize
             # Get size of image
             siz = self.action.args.ccddata.data.shape
             # Get x range for scattered light

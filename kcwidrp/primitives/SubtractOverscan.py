@@ -62,17 +62,22 @@ class SubtractOverscan(BasePrimitive):
                     # generate fitted overscan vector for full range
                     osfit = np.polyval(oscoef, xx)
                     # calculate residuals
-                    resid = (osvec[50:] - osfit[50:]) * math.sqrt(nsam) * gain / 1.414
+                    resid = (osvec[50:] - osfit[50:]) * math.sqrt(nsam) * \
+                        gain / 1.414
                 else:
                     # reverse read skips last 50 px
                     oscoef = np.polyfit(xx[:-50], osvec[:-50], porder)
                     # generate fitted overscan vector for full range
                     osfit = np.polyval(oscoef, xx)
                     # calculate residuals
-                    resid = (osvec[:-50] - osfit[:-50]) * math.sqrt(nsam) * gain / 1.414
+                    resid = (osvec[:-50] - osfit[:-50]) * math.sqrt(nsam) * \
+                        gain / 1.414
 
                 sdrs = float("%.3f" % np.std(resid))
-                self.logger.info("Img # %05d, Amp %d [%d:%d, %d:%d]" % (frameno, ia, x0, x1, y0, y1))
+                self.logger.info("Img # %05d, Amp %d [%d:%d, %d:%d]" % (frameno,
+                                                                        ia,
+                                                                        x0, x1,
+                                                                        y0, y1))
                 self.logger.info("Amp%d Read noise from oscan in e-: %.3f" %
                                  (ia, sdrs))
                 self.action.args.ccddata.header['OSCNRN%d' % ia] = \

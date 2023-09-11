@@ -89,7 +89,7 @@ class CorrectDefects(BasePrimitive):
         self.logger.info(log_string)
 
         # add flags array
-        # DN 2023-may-28: commenting out mask update because it causes bad things later on
+        # DN 2023-may-28: commenting out because it causes bad things later on
         # self.action.args.ccddata.mask = flags
         self.action.args.ccddata.flags = flags
 

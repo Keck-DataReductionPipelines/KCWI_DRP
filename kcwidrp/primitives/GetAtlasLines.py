@@ -21,7 +21,8 @@ def gaus(x, a, mu, sigma):
     return a * np.exp(-(x - mu) ** 2 / (2. * sigma ** 2))
 
 
-def get_line_window(y, c, thresh=0., logger=None, strict=False, maxwin=100, frac_max=0.5):
+def get_line_window(y, c, thresh=0., logger=None, strict=False, maxwin=100,
+                    frac_max=0.5):
     """Find a window that includes the fwhm of the line"""
     verbose = logger is not None
     nx = len(y)
@@ -212,7 +213,8 @@ class GetAtlasLines(BasePrimitive):
         self.logger.info("Finding isolated atlas lines")
         verbose = (self.config.instrument.verbose > 1)
         frac_max = self.config.instrument.FRACMAX
-        self.logger.info("Finding line windows using fraction of line max of %.2f" % frac_max)
+        self.logger.info("Finding line windows using fraction of line max of "
+                         "%.2f" % frac_max)
 
         # get atlas wavelength range
         # get pixel values (no longer centered in the middle)
@@ -350,7 +352,8 @@ class GetAtlasLines(BasePrimitive):
                     line_x = [ii for ii, v in enumerate(atwave) if v >= pk][0]
                     # get window around atlas line to fit
                     minow, maxow, count = get_line_window(
-                        atspec, line_x, logger=(self.logger if verbose else None),
+                        atspec, line_x, logger=(self.logger if verbose
+                                                else None),
                         frac_max=frac_max)
                 except IndexError:
                     count = 0
@@ -382,7 +385,8 @@ class GetAtlasLines(BasePrimitive):
                     self.logger.info("Atlas Gaussian fit rejected for line "
                                      "%.3f" % pk)
                     if verbose:
-                        tb_str = traceback.format_exception(etype=type(e), value=e,
+                        tb_str = traceback.format_exception(etype=type(e),
+                                                            value=e,
                                                             tb=e.__traceback__)
                         self.logger.info("".join(tb_str))
                     continue

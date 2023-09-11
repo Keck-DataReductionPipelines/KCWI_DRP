@@ -457,7 +457,8 @@ class MakeCube(BasePrimitive):
             self.context.proctab.update_proctab(frame=self.action.args.ccddata,
                                                 suffix="icube",
                                                 filename=self.action.args.name)
-            self.context.proctab.write_proctab(tfil=self.config.instrument.procfile)
+            self.context.proctab.write_proctab(
+                tfil=self.config.instrument.procfile)
 
             # check for obj, sky outputs
             if obj is not None:

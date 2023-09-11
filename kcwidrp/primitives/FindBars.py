@@ -49,7 +49,6 @@ class FindBars(BasePrimitive):
         window = int(10 / y_binning)
         # get plot label
         plab = plotlabel(self.action.args)
-        frameno = self.action.args.ccddata.header['FRAMENO']
         # select from center rows of image
         div_fac = 2
         middle_y_row = int(y_size / div_fac)

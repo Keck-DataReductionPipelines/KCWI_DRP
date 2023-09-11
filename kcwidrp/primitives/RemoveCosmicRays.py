@@ -80,7 +80,8 @@ class RemoveCosmicRays(BasePrimitive):
                 self.config.instrument.CRR_FSMODE,
                 self.config.instrument.CRR_PSFMODEL,
                 self.config.instrument.CRR_PSFFWHM)
-            header['history'] = "Astroscrappy params: sepmed=%s minexptime=%f" % (
+            header['history'] = "Astroscrappy params: sepmed=%s " \
+                                "minexptime=%f" % (
                 self.config.instrument.CRR_SEPMED,
                 self.config.instrument.CRR_MINEXPTIME)
             # header['history'] = "LA CosmicX run on %s" % time.strftime("%c")
@@ -93,7 +94,7 @@ class RemoveCosmicRays(BasePrimitive):
             except AttributeError:
                 self.logger.warning("Flags array not found!")
             n_crs = mask.sum()
-            # DN 2023-may-28: commenting out mask update because it causes bad things
+            # DN 2023-may-28: commenting out because it causes bad things
             # self.action.args.ccddata.mask += mask
             self.action.args.ccddata.data = clean
             # update header

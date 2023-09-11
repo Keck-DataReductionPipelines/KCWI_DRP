@@ -46,7 +46,8 @@ class SolveArcs(BasePrimitive):
         # output control
         verbose = (self.config.instrument.verbose > 1)
         frac_max = self.config.instrument.FRACMAX
-        self.logger.info("Finding line windows using fraction of line max of %.2f" % frac_max)
+        self.logger.info("Finding line windows using fraction of line max of "
+                         "%.2f" % frac_max)
 
         # Bar statistics
         bar_sig = []
@@ -142,7 +143,8 @@ class SolveArcs(BasePrimitive):
                     #              [f0*1.1, np.max(xvec), 2.5])
                     # Gaussian fit
                     try:
-                        fit, _ = curve_fit(gaus, xvec, yvec, p0=par_start, maxfev=5000)
+                        fit, _ = curve_fit(gaus, xvec, yvec, p0=par_start,
+                                           maxfev=5000)
                         #  bounds=par_bounds, method='trf')
                         sp_pk_x = fit[1]
                         gaus_sig.append(fit[2])

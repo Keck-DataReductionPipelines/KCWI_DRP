@@ -1,5 +1,6 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
-from kcwidrp.primitives.kcwi_file_primitives import write_table, strip_fname, plotlabel
+from kcwidrp.primitives.kcwi_file_primitives import write_table, strip_fname,\
+    plotlabel
 from kcwidrp.core.bokeh_plotting import bokeh_plot
 from kcwidrp.core.kcwi_plotting import save_plot
 

@@ -162,7 +162,7 @@ class SolveAIT(BasePrimitive):
                 bokeh_plot(p, self.context.bokeh_session)
                 save_plot(p, filename=pfname + '_bar%d.png' % ib)
                 if self.config.instrument.plot_level >= 2:
-                    q = input("Next? <cr>: ")
+                    _ = input("Next? <cr>: ")
         specout[:, -1] = yout[:]
 
         # Pixel scales

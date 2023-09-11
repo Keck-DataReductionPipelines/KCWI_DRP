@@ -181,10 +181,10 @@ class MakeMasterFlat(BaseImg):
         newflat = stacked.data.copy()
 
         # dichroic fraction
-        try:
-            dichroic_fraction = wavemap.header['DICHFRAC']
-        except KeyError:
-            dichroic_fraction = 1.
+        # try:
+        #     dichroic_fraction = wavemap.header['DICHFRAC']
+        # except KeyError:
+        #     dichroic_fraction = 1.
 
         # get reference slice data
         q = [i for i, v in enumerate(slicemap.data.flat) if v == refslice]

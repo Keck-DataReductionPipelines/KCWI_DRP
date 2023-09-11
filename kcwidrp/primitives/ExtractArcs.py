@@ -4,7 +4,7 @@ from kcwidrp.core.bokeh_plotting import bokeh_plot
 from kcwidrp.primitives.kcwi_file_primitives import strip_fname, plotlabel
 
 import numpy as np
-from numpy.polynomial import polynomial as P
+from numpy.polynomial import polynomial as poly
 from scipy.signal import savgol_filter
 import os
 from skimage import transform as tf
@@ -93,7 +93,8 @@ class ExtractArcs(BasePrimitive):
         # This is strictly for AIT data!
         if self.config.instrument.NBARS < 60:
             # get trimmed bars image so geometry is consistent
-            barsfn = self.action.args.contbar_image.split('.fits')[0] + '_int.fits'
+            barsfn = self.action.args.contbar_image.split(
+                '.fits')[0] + '_int.fits'
             barim, bartab = kcwi_fits_reader(
                 os.path.join(self.config.instrument.output_directory, barsfn))
             arcs = []
@@ -105,12 +106,12 @@ class ExtractArcs(BasePrimitive):
                 sind = np.argsort(yp)
                 yps = yp[sind]
                 xps = xp[sind]
-                c, stats = P.polyfit(yps, xps, deg=3, full=True)
+                c, stats = poly.polyfit(yps, xps, deg=3, full=True)
                 arc = []
                 bar = []
                 bkg = []
                 for iy in range(self.action.args.ccddata.header['NAXIS2']):
-                    xv = int(P.polyval(iy, c))
+                    xv = int(poly.polyval(iy, c))
                     yy = self.action.args.ccddata.data[
                          iy, (xv - window):(xv + window + 1)]
                     byy = barim.data[iy, (xv - window):(xv + window + 1)]
@@ -150,17 +151,18 @@ class ExtractArcs(BasePrimitive):
                 self.action.args.destination_control_points, order=3)
 
             self.logger.info("Transforming arc image")
-            warped_image = tf.warp(self.action.args.ccddata.data, transformation)
+            warped_image = tf.warp(self.action.args.ccddata.data,
+                                   transformation)
             # Write warped arcs if requested
             if self.config.instrument.saveintims:
                 from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer
                 # write out warped image
                 self.action.args.ccddata.data = warped_image
-                kcwi_fits_writer(self.action.args.ccddata,
-                                 table=self.action.args.table,
-                                 output_file=self.action.args.name,
-                                 output_dir=self.config.instrument.output_directory,
-                                 suffix="warped")
+                kcwi_fits_writer(
+                    self.action.args.ccddata, table=self.action.args.table,
+                    output_file=self.action.args.name,
+                    output_dir=self.config.instrument.output_directory,
+                    suffix="warped")
                 self.logger.info("Transformed arcs produced")
             # extract arcs
             self.logger.info("Extracting arcs")
@@ -172,7 +174,8 @@ class ExtractArcs(BasePrimitive):
                 if xy[1] == middle_row:
                     xi = int(xy[0]+0.5)
                     arc = np.nanmedian(
-                        warped_image[:, (xi - window):(xi + window + 1)], axis=1)
+                        warped_image[:, (xi - window):(xi + window + 1)],
+                        axis=1)
                     # divide spectrum into sectors
                     div = int((len(arc)-100) / sectors)
                     # get minimum for each sector
@@ -192,11 +195,11 @@ class ExtractArcs(BasePrimitive):
                     bkg = np.polyval(res, xp)   # resulting model
                     # plot if requested
                     if do_plot:
-                        p = figure(title=plab + "ARC # %d" % len(arcs),
-                                   x_axis_label="Y CCD Pixel",
-                                   y_axis_label="Flux",
-                                   plot_width=self.config.instrument.plot_width,
-                                   plot_height=self.config.instrument.plot_height)
+                        p = figure(
+                            title=plab + "ARC # %d" % len(arcs),
+                            x_axis_label="Y CCD Pixel", y_axis_label="Flux",
+                            plot_width=self.config.instrument.plot_width,
+                            plot_height=self.config.instrument.plot_height)
                         p.line(xp, arc, legend_label='Arc', color='blue')
                         p.line(xp, bkg, legend_label='Bkg', color='red')
                         bokeh_plot(p, self.context.bokeh_session)

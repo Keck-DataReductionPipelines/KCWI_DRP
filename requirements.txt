@@ -1,5 +1,6 @@
 scikit-image~=0.16.2
 astropy~=4.0
+astroscrappy~=1.1.0
 ccdproc~=2.2.0
 numpy~=1.20
 scipy~=1.4.1

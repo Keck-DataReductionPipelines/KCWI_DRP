@@ -20,9 +20,9 @@ class SubtractBias(BasePrimitive):
         target_type = 'MBIAS'
 
         self.logger.info("Subtracting master bias")
-        tab = self.context.proctab.search_proctab(frame=self.action.args.ccddata,
-                                                  target_type=target_type,
-                                                  nearest=True)
+        tab = self.context.proctab.search_proctab(
+            frame=self.action.args.ccddata, target_type=target_type,
+            nearest=True)
         self.logger.info("%d master bias frames found" % len(tab))
 
         if len(tab) > 0:

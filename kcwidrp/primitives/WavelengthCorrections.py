@@ -55,24 +55,24 @@ class WavelengthCorrections(BasePrimitive):
             self.logger.error('Bad config option for radial_velocity_correction\
                 , options are ["none", "heliocentric", "barycentric"]')
             return self.action.args
-        
+
         suffix = 'icube'  # Can be ammended to handle ocube files
         obj = self.locate_object_file(suffix)
 
         if "none" in correction_mode:
             self.logger.info("Skipping radial velocity correction")
-        
+
         else:
             self.logger.info(f"Performing {correction_mode} correction")
             obj = self.heliocentric(obj, correction_mode)
-        
+
         if self.config.instrument.air_to_vacuum:
             self.logger.info("Performing Air to Vacuum Conversion")
             obj = self.air2vac(obj)
-        
+
         log_string = WavelengthCorrections.__module__
         obj.header['HISTORY'] = log_string
-        
+
         kcwi_fits_writer(obj,
                          table=self.action.args.table,
                          output_file=self.action.args.name,
@@ -85,7 +85,7 @@ class WavelengthCorrections(BasePrimitive):
 
         # Unsure here: Is this right? it seems to make DAR happy
         self.action.args.ccddata = obj
-        
+
         return self.action.args
 
     def air2vac(self, obj, mask=False):
@@ -175,7 +175,7 @@ class WavelengthCorrections(BasePrimitive):
         # Standard conversion format
         sigma_sq = (1.e4/wavelength)**2.  # wavenumber squared
         factor = 1 + (5.792105e-2/(238.0185-sigma_sq)) + \
-                 (1.67918e-3/(57.362-sigma_sq))
+            (1.67918e-3/(57.362-sigma_sq))
         # only modify above 2000A
         factor = factor*(wavelength >= 2000.) + 1.*(wavelength < 2000.)
 
@@ -216,8 +216,8 @@ class WavelengthCorrections(BasePrimitive):
             
             >>> hdu_new = heliocentric(hdu_old)
             
-            However, this resamples the wavelengths back to the original grid. To
-            use the new grid without resampling the data,
+            However, this resamples the wavelengths back to the original grid.
+            To use the new grid without resampling the data,
             
             >>> hdu_new = heliocentric(hdu_old, resample=False)
         """
@@ -291,7 +291,7 @@ class WavelengthCorrections(BasePrimitive):
                     for k in range(spc0.shape[0]):
                         spec_new[k] = max(spec_pre[k], spec_nex[k])
                 cube_new[:, j, i] = spec_new
-        
+
         obj.header['VCORR'] = vcorr
         obj.data = cube_new
         return obj
@@ -313,33 +313,36 @@ class WavelengthCorrections(BasePrimitive):
 
         # Select the appropriate axis.
         naxis = header['NAXIS']
-        flag = False
+        axis = None
         for i in range(naxis):
             # Keyword entry
-            card = "CTYPE{0}".format(i+1)
-            if not card in header:
+            card = "CTYPE{0}".format(i + 1)
+            if card not in header:
                 self.logger.warning.error(
                     "Header must contain 'CTYPE' keywords.")
-            
+
             # Possible wave types.
             if header[card] in ['AWAV', 'WAVE', 'VELO']:
-                axis = i+1
-                flag = True
+                axis = i + 1
                 break
 
         # No wavelength axis
-        if flag is False:
+        if axis is None:
             self.logger.error("Header must contain a wavelength/velocity axis.")
+            retval = None
 
-        # Get keywords defining wavelength axis
-        nwav = header["NAXIS{0}".format(axis)]
-        wav0 = header["CRVAL{0}".format(axis)]
-        dwav = header["CD{0}_{0}".format(axis)]
-        pix0 = header["CRPIX{0}".format(axis)]
+        else:
+            # Get keywords defining wavelength axis
+            nwav = header["NAXIS{0}".format(axis)]
+            wav0 = header["CRVAL{0}".format(axis)]
+            dwav = header["CD{0}_{0}".format(axis)]
+            pix0 = header["CRPIX{0}".format(axis)]
 
-        # Calculate and return
-        return np.array([wav0 + (i - pix0) * dwav for i in range(nwav)])
-    
+            # Calculate and return
+            retval = np.array([wav0 + (i - pix0) * dwav for i in range(nwav)])
+
+        return retval
+
     def locate_object_file(self, suffix):
         """
         Return FITS HDU list if current file with requested suffix can be found.

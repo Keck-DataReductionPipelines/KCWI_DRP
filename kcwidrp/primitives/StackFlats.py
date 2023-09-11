@@ -4,7 +4,6 @@ from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_reader, \
 
 import os
 import ccdproc
-import numpy as np
 
 
 class StackFlats(BaseImg):

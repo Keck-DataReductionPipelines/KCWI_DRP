@@ -145,8 +145,8 @@ class ReadAtlas(BasePrimitive):
         if atoff != 0:
             req_offset_pix = atoff
             req_offset_wav = atoff * refdisp
-            self.logger.info("Command line requested offset (px, Ang): %d, %.1f" %
-                             (req_offset_pix, req_offset_wav))
+            self.logger.info("Command line requested offset (px, Ang):"
+                             " %d, %.1f" % (req_offset_pix, req_offset_wav))
             offset_pix = req_offset_pix
             offset_wav = req_offset_wav
         else:

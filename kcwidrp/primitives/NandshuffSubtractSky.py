@@ -1,12 +1,10 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
-from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_reader, \
-    kcwi_fits_writer, strip_fname
+from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer, \
+    strip_fname
 
 import numpy as np
-import os
 
 from astropy.nddata import CCDData
-from astropy import units as u
 
 
 class NandshuffSubtractSky(BasePrimitive):
@@ -150,7 +148,8 @@ class NandshuffSubtractSky(BasePrimitive):
                 # clean images
                 self.action.args.ccddata.data[skyrow0:skyrow1+1, :] = 0.
                 self.action.args.ccddata.data[objrow1+1:-1, :] = 0.
-                self.action.args.ccddata.uncertainty.array[skyrow0:skyrow1+1, :] = 0.
+                self.action.args.ccddata.uncertainty.array[
+                    skyrow0:skyrow1+1, :] = 0.
                 self.action.args.ccddata.uncertainty.array[objrow1+1:-1, :] = 0.
                 self.action.args.ccddata.mask[skyrow0:skyrow1+1, :] = 1
                 self.action.args.ccddata.mask[objrow1+1:-1, :] = 1
@@ -233,7 +232,8 @@ class NandshuffSubtractSky(BasePrimitive):
                 # clean images
                 self.action.args.ccddata.data[objrow0:objrow1+1, :] = 0.
                 self.action.args.ccddata.data[skyrow1+1:-1, :] = 0.
-                self.action.args.ccddata.uncertainty.array[objrow0:objrow1+1, :] = 0.
+                self.action.args.ccddata.uncertainty.array[
+                    objrow0:objrow1+1, :] = 0.
                 self.action.args.ccddata.uncertainty.array[skyrow1+1:-1, :] = 0.
                 self.action.args.ccddata.mask[objrow0:objrow1+1, :] = 1
                 self.action.args.ccddata.mask[skyrow1+1:-1, :] = 1

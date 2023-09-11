@@ -1,6 +1,6 @@
 from keckdrpframework.primitives.base_img import BaseImg
 from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_reader, \
-    kcwi_fits_writer, strip_fname, get_master_name
+    kcwi_fits_writer, strip_fname  # , get_master_name
 
 import os
 import ccdproc
