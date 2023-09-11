@@ -6,7 +6,15 @@ import os
 
 
 class CorrectIllumination(BasePrimitive):
-    """Subtract master bias frame"""
+    """
+    Correct for illumination and response variations using master flat.
+
+    Currently, gives precedence for internal flats (cflat), as they are the
+    most universally applicable.  To use other flats move the cflats aside, in
+    which case any twilight flat (tflat) master would then have precedence
+    followed by any dome flat (dflat) master.
+
+    """
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)

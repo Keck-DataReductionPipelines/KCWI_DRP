@@ -12,7 +12,14 @@ from bokeh.plotting import figure
 
 
 class ExtractArcs(BasePrimitive):
-    """Use derived traces to extract arc spectra along bars"""
+    """
+    Use derived traces to extract arc spectra along continuum bars.
+
+    Reads in traces from continuum bars and then uses them to extract spectra
+    along each trace.  Also performs a background subtraction for each extracted
+    spectrum.
+
+    """
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)

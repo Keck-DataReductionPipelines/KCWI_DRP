@@ -11,7 +11,14 @@ import time
 
 
 class FindBars(BasePrimitive):
-    """Find bars in middle row of cont bars image"""
+    """
+    Find bars in middle row of cont bars image
+
+    Uses the middle row with surrounding rows to find the individual continuum
+    bar locations in the image.  Checks to be sure the correct number of bars
+    has been found (see NBARS in kcwidrp/configs/kcwi.cfg).
+
+    """
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)

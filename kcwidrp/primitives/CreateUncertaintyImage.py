@@ -7,7 +7,15 @@ import numpy as np
 
 
 class CreateUncertaintyImage(BasePrimitive):
-    """Generate a variance image based on Poisson noise plus readnoise"""
+    """
+    Generate a standard deviation uncertainty image.
+
+    Starts with pure Poisson noise and uses astropy.nddata.StdDevUncertainty to
+    generate the uncertainty frame.  If BIASRNn header keywords present, uses
+    these with the ATSECn keywords to apply the appropriate readnoise addition
+    to each amplifier region.
+
+    """
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)

@@ -8,7 +8,14 @@ import pandas as pd
 
 
 class CorrectDefects(BasePrimitive):
-    """Remove known bad columns"""
+    """
+    Remove known bad columns.
+
+    Looks for a defect list file in the data directory of kcwidrp based on the
+    CCD ampmode and x and y binning.  Keeps track of the number of pixels
+    cleaned.
+
+    """
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)

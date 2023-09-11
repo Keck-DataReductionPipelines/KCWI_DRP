@@ -6,7 +6,16 @@ from astropy.nddata import CCDData
 
 
 class CubeImage(BasePrimitive):
-    """Transform 2D images to 3D data cubes"""
+    """
+    Transform 3D data cube into 2D image.
+
+    Generates a wavelength-aligned 2d image of a 3d data cube.  This is done
+    automatically for arc lamps used for the wavelength solution as a
+    diagnostic for the wavelength fit.
+
+    Writes out image with "_icube_2d.fits" suffix.
+
+    """
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
