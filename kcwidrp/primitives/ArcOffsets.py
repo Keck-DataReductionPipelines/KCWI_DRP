@@ -12,11 +12,17 @@ from scipy import signal
 
 
 class ArcOffsets(BasePrimitive):
-    """Derive offset of each bar relative to reference bar.
+    """
+    Derive offset of each bar relative to reference bar.
 
     Using cross correlation techniques, this routine calculates the relative
     offsets between the reference bar (loaded as a parameter as
-    config.instrument.REFBAR).
+    config.instrument.REFBAR).  The other important config parameters is
+    TUKEYALPHA, which controls the roll-off of the edges of the spectra that
+    are cross-correlated.  If a bright line near the edge is throwing off the
+    cross-correlations, you can increase this parameter to lessen its impact.
+
+    See kcwidrp/configs/kcwi.cfg
 
     Arcs must be available as context.arcs.
     """

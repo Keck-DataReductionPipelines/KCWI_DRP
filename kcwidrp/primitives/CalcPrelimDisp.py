@@ -4,16 +4,26 @@ import math
 
 
 class CalcPrelimDisp(BasePrimitive):
-    """Calculate dispersion based on configuration parameters.
+    """
+    Calculate dispersion based on configuration parameters.
 
-    The parameters of the grating equation are calculates as:
+    The parameters of the grating equation are calculated as:
 
-    alpha = grating_angle - 13 - adjustment_ange (180 for BH, RH and
-            0 for all other gratings)
+    * BLUE
 
-    beta = camera_angle - alpha
+      * alpha = grating_angle - 13 - adjustment_angle
+      * adjustment_angle = (180 for BH and 0 for all other gratings)
+
+    * RED
+
+      * alpha = 155.892 - grating_angle
+
+    * BLUE & RED
+
+      * beta = camera_angle - alpha
 
     dispersion = cos(beta)/rho/focal_length x (pixel_scale x binning) * 1.e4
+
     """
 
     def __init__(self, action, context):

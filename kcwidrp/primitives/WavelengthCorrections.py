@@ -12,6 +12,18 @@ from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer, \
 
 
 class WavelengthCorrections(BasePrimitive):
+    """
+    Perform wavelength corrections
+
+    Based on the type specified in the kcwidrp/configs/kcwi.cfg file in the
+    ``radial_velocity_correction`` parameter, perform the requested correction.
+    The current options are "heliocentric", "barycentric", and "none".  The
+    default is "heliocentric".
+
+    Also, if the ``air_to_vacuum`` parameter is set to ``True`` (default),
+    apply air-to-vacuum correction.
+
+    """
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
@@ -77,7 +89,8 @@ class WavelengthCorrections(BasePrimitive):
         return self.action.args
 
     def air2vac(self, obj, mask=False):
-        """Covert wavelengths in a cube from standard air to vacuum.
+        """
+        Convert wavelengths in a cube from standard air to vacuum.
 
         Args:
             obj (astropy HDU / HDUList): Input HDU/HDUList with 3D data.
@@ -85,7 +98,8 @@ class WavelengthCorrections(BasePrimitive):
 
         Returns:
             HDU / HDUList*: Trimmed FITS object with updated header.
-            *Return type matches type of fits_in argument. 
+            *Return type matches type of obj argument.
+
         """
 
         cube = np.nan_to_num(obj.data, nan=0, posinf=0, neginf=0)
@@ -141,19 +155,18 @@ class WavelengthCorrections(BasePrimitive):
         return obj
 
     def a2v_conversion(self, wave):
-        """ Convert air-based wavelengths to vacuum
+        """
+        Convert air-based wavelengths to vacuum
 
         Adapted from wave.py in: https://github.com/pypeit/PypeIt/
         Formula from https://ui.adsabs.harvard.edu/abs/1996ApOpt..35.1566C/
 
-        Parameters
-        ----------
-        wave: Quantity array
-            Wavelengths
-        Returns
-        -------
-        wave: Quantity array
+        Args:
+            wave (ndarray): Wavelengths
+
+        Returns:
             Wavelength array corrected to vacuum wavelengths
+
         """
         # Convert to AA
         wave = wave.to(u.AA)
@@ -176,7 +189,9 @@ class WavelengthCorrections(BasePrimitive):
 
     def heliocentric(self, obj, correction_mode, mask=False, resample=True,
                      vcorr=None):
-        """Apply heliocentric correction to the cubes. 
+        """
+        Apply heliocentric correction to the cubes.
+
         *Note that this only works for KCWI data because the location of
         Keck Observatory is hard-coded in the function.*
 
@@ -326,6 +341,19 @@ class WavelengthCorrections(BasePrimitive):
         return np.array([wav0 + (i - pix0) * dwav for i in range(nwav)])
     
     def locate_object_file(self, suffix):
+        """
+        Return FITS HDU list if current file with requested suffix can be found.
+
+        Will return ``None`` if file cannot be found.
+
+        Args:
+            suffix (str): The file suffix that you want to operate on.
+
+        Returns:
+            FITS HDU List from kcwi_fits_reader routine, or ``None`` if file
+            with suffix not found.
+
+        """
         ofn = self.action.args.name
         objfn = strip_fname(ofn) + f'_{suffix}.fits'
         full_path = os.path.join(
