@@ -1,7 +1,5 @@
 """
-Created on Jul 19, 2019
-
-Test Fits to PNG pipeline with HTTP server.
+Reduce KCWI data using the KCWI DRP running on the KeckDRPFramework
 
 @author: skwok
 """
@@ -157,17 +155,9 @@ def main():
         kcwi_config_fullpath = pkg_resources.resource_filename(
             pkg, kcwi_config_file)
         kcwi_config = ConfigClass(kcwi_config_fullpath, default_section='KCWI')
-        kcwi_blue_config = ConfigClass(kcwi_config_fullpath,
-                                       default_section='BLUE')
-        kcwi_red_config = ConfigClass(kcwi_config_fullpath,
-                                      default_section='RED')
     else:
         # kcwi_config_fullpath = os.path.abspath(args.kcwi_config_file)
         kcwi_config = ConfigClass(args.kcwi_config_file, default_section='KCWI')
-        kcwi_blue_config = ConfigClass(args.kcwi_config_file,
-                                       default_section='BLUE')
-        kcwi_red_config = ConfigClass(args.kcwi_config_file,
-                                      default_section='RED')
 
     # END HANDLING OF CONFIGURATION FILES ##########
 
@@ -233,9 +223,11 @@ def main():
             framework.config.instrument.LINETHRESH = args.line_thresh
     else:
         if args.blue:
-            framework.config.instrument.LINETHRESH = kcwi_blue_config.LINETHRESH
+            framework.config.instrument.LINETHRESH = float(
+                kcwi_config.BLUE['linethresh'])
         elif args.red:
-            framework.config.instrument.LINETHRESH = kcwi_red_config.LINETHRESH
+            framework.config.instrument.LINETHRESH = float(
+                kcwi_config.RED['linethresh'])
 
     # check for tukey_alpha argument
     if args.tukey_alpha:
@@ -246,9 +238,11 @@ def main():
             framework.config.instrument.TUKEYALPHA = args.tukey_alpha
     else:
         if args.blue:
-            framework.config.instrument.TUKEYALPHA = kcwi_blue_config.TUKEYALPHA
+            framework.config.instrument.TUKEYALPHA = float(
+                kcwi_config.BLUE['tukeyalpha'])
         elif args.red:
-            framework.config.instrument.TUKEYALPHA = kcwi_red_config.TUKEYALPHA
+            framework.config.instrument.TUKEYALPHA = float(
+                kcwi_config.RED['tukeyalpha'])
 
     # check for max_frac argument
     if args.max_frac:
@@ -260,9 +254,11 @@ def main():
             framework.config.instrument.FRACMAX = args.max_frac
     else:
         if args.blue:
-            framework.config.instrument.FRACMAX = kcwi_blue_config.FRACMAX
+            framework.config.instrument.FRACMAX = float(
+                kcwi_config.BLUE['fracmax'])
         elif args.red:
-            framework.config.instrument.FRACMAX = kcwi_red_config.FRACMAX
+            framework.config.instrument.FRACMAX = float(
+                kcwi_config.RED['fracmax'])
 
     # check for atlas line list argument
     if args.atlas_line_list:
@@ -281,15 +277,47 @@ def main():
         framework.config.instrument.procfile = args.proctab
     else:
         if args.blue:
-            proctab = kcwi_blue_config.procfile
+            proctab = kcwi_config.BLUE['procfile']
         elif args.red:
-            proctab = kcwi_red_config.procfile
+            proctab = kcwi_config.RED['procfile']
         else:
             proctab = kcwi_config.procfile
         framework.context.pipeline_logger.info(
-            "Using proc table file %s" % proctab
-        )
+            "Using proc table file %s" % proctab)
         framework.config.instrument.procfile = proctab
+
+    # set up channel specific parameters
+    if args.blue:
+        framework.config.instrument.arc_min_nframes = int(
+            kcwi_config.BLUE['arc_min_nframes'])
+        framework.config.instrument.contbars_min_nframes = int(
+            kcwi_config.BLUE['contbars_min_nframes'])
+        framework.config.instrument.object_min_nframes = int(
+            kcwi_config.BLUE['object_min_nframes'])
+        framework.config.instrument.minoscanpix = int(
+            kcwi_config.BLUE['minoscanpix'])
+        framework.config.instrument.oscanbuf = int(
+            kcwi_config.BLUE['oscanbuf'])
+    elif args.red:
+        framework.config.instrument.arc_min_nframes = int(
+            kcwi_config.RED['arc_min_nframes'])
+        framework.config.instrument.contbars_min_nframes = int(
+            kcwi_config.RED['contbars_min_nframes'])
+        framework.config.instrument.object_min_nframes = int(
+            kcwi_config.RED['object_min_nframes'])
+        framework.config.instrument.minoscanpix = int(
+            kcwi_config.RED['minoscanpix'])
+        framework.config.instrument.oscanbuf = int(
+            kcwi_config.RED['oscanbuf'])
+    else:
+        framework.config.instrument.arc_min_nframes = \
+            kcwi_config.arc_min_nframes
+        framework.config.instrument.contbars_min_nframes = \
+            kcwi_config.contbars_min_nframes
+        framework.config.instrument.object_min_nframes = \
+            kcwi_config.object_min_nframes
+        framework.config.instrument.minoscanpix = kcwi_config.minoscanpix
+        framework.config.instrument.oscanbuf = kcwi_config.oscanbuf
 
     # start the bokeh server is requested by the configuration parameters
     if framework.config.instrument.enable_bokeh is True:
@@ -324,7 +352,7 @@ def main():
 
     # start queue manager only (useful for RPC)
     if args.queue_manager_only:
-        # The queue manager runs for ever.
+        # The queue manager runs forever.
         framework.logger.info("Starting queue manager only, no processing")
         framework.start_queue_manager()
 

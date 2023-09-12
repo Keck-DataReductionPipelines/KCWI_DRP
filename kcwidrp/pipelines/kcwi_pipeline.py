@@ -367,8 +367,8 @@ class Kcwi_pipeline(BasePipeline):
             contbars_args.groupid = groupid
             contbars_args.want_type = "CONTBARS"
             contbars_args.new_type = "MCBARS"
-            contbars_args.min_files = int(context.config.instrument[camera][
-                                              'contbars_min_nframes'])
+            contbars_args.min_files = \
+                context.config.instrument.contbars_min_nframes
             contbars_args.new_file_name = "master_contbars_%s.fits" % groupid
             contbars_args.in_directory = "redux"
             context.push_event("process_contbars", contbars_args)
@@ -407,8 +407,7 @@ class Kcwi_pipeline(BasePipeline):
             arc_args.groupid = groupid
             arc_args.want_type = "ARCLAMP"
             arc_args.new_type = "MARC"
-            arc_args.min_files = int(context.config.instrument[camera][
-                                         'arc_min_nframes'])
+            arc_args.min_files = context.config.instrument.arc_min_nframes
             arc_args.new_file_name = "master_arc_%s.fits" % groupid
             arc_args.in_directory = "redux"
             context.push_event("process_arc", arc_args)
@@ -419,8 +418,8 @@ class Kcwi_pipeline(BasePipeline):
                 object_args = action.args
                 # object_args.new_type = "SKY"
                 object_args.new_type = "MOBJ"
-                object_args.min_files = int(
-                    context.config.instrument[camera]['object_min_nframes'])
+                object_args.min_files = \
+                    context.config.instrument.object_min_nframes
                 object_args.in_directory = "redux"
                 context.push_event("process_object", object_args)
         return True

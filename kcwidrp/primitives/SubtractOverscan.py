@@ -28,8 +28,8 @@ class SubtractOverscan(BasePrimitive):
             porder = 2
         else:
             porder = 7
-        minoscanpix = int(self.config.instrument[camera]['minoscanpix'])
-        oscanbuf = int(self.config.instrument[camera]['oscanbuf'])
+        minoscanpix = self.config.instrument.minoscanpix
+        oscanbuf = self.config.instrument.oscanbuf
         frameno = self.action.args.ccddata.header['FRAMENO']
         # header keyword to update
         key = 'OSCANSUB'
