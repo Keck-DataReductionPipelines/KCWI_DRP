@@ -16,7 +16,7 @@ from pathlib import Path
 logger = logging.getLogger('KCWI')
 
 red_amp_dict = {'L1': 0, 'L2': 1, 'U1': 2, 'U2': 3}
-red_amp_gain = {'L1': 1.54, 'L2': 1.55, 'U1': 1.61, 'U2': 1.49}
+red_amp_gain = {'L1': 1.54, 'L2': 1.551, 'U1': 1.61, 'U2': 1.526}
 
 
 def parse_imsec(section=None):
@@ -1317,6 +1317,7 @@ def fix_red_header(ccddata):
 
             for amp in red_amp_dict.keys():
                 if amp in ampmode:
+                    # TODO: put in check for kw before updating
                     gkey = 'GAIN%d' % red_amp_dict[amp]
                     gain = red_amp_gain[amp]
                     ccddata.header[gkey] = gain
