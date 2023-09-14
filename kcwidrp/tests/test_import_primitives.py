@@ -1,11 +1,6 @@
 import pytest
 
 
-
-def test_import_ApplyFlat():
-    import kcwidrp.primitives.ApplyFlat
-
-
 def test_import_ArcOffsets():
     import kcwidrp.primitives.ArcOffsets
 
@@ -69,9 +64,16 @@ def test_import_MakeCube():
 def test_import_MakeInvsens():
     import kcwidrp.primitives.MakeInvsens
 
+def test_import_MakeMasterArc():
+    import kcwidrp.primitives.MakeMasterArc
+
 
 def test_import_MakeMasterBias():
     import kcwidrp.primitives.MakeMasterBias
+
+
+def test_import_MakeMasterContbars():
+    import kcwidrp.primitives.MakeMasterContbars
 
 
 def test_import_MakeMasterDark():
@@ -80,6 +82,10 @@ def test_import_MakeMasterDark():
 
 def test_import_MakeMasterFlat():
     import kcwidrp.primitives.MakeMasterFlat
+
+
+def test_import_MakeMasterObject():
+    import kcwidrp.primitives.MakeMasterObject
 
 
 def test_import_MakeMasterSky():
@@ -174,7 +180,14 @@ def test_import_TrimOverscan():
     import kcwidrp.primitives.TrimOverscan
 
 
+def test_import_WavelengthCorrections():
+    import kcwidrp.primitives.WavelengthCorrections
+
+
 def test_import_kcwi_file_primitives():
     import kcwidrp.primitives.kcwi_file_primitives
 
+
+def test_import_geometric():
+    import kcwidrp.primitives.geometric
 
