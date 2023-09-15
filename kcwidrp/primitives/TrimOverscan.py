@@ -16,6 +16,8 @@ class TrimOverscan(BasePrimitive):
         # parameters
         # image sections for each amp
         bsec, dsec, tsec, direc, amps, aoff = self.action.args.map_ccd
+        # handle biases
+        is_bias = ('BIAS' in self.action.args.ccddata.header['IMTYPE'])
         # header keyword to update
         key = 'OSCANTRM'
         keycom = 'Overscan trimmed?'
@@ -83,5 +85,16 @@ class TrimOverscan(BasePrimitive):
                 output_file=self.action.args.name,
                 output_dir=self.config.instrument.output_directory,
                 suffix="trim")
+        if is_bias:
+            kcwi_fits_writer(
+                self.action.args.ccddata, table=self.action.args.table,
+                output_file=self.action.args.name,
+                output_dir=self.config.instrument.output_directory,
+                suffix="intb")
+            self.context.proctab.update_proctab(
+                frame=self.action.args.ccddata, suffix="intb", newtype='BIAS',
+                filename=self.action.args.ccddata.header['OFNAME'])
+            self.context.proctab.write_proctab(
+                tfil=self.config.instrument.procfile)
         return self.action.args
     # END: class TrimOverscan()
