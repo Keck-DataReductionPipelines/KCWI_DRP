@@ -25,11 +25,6 @@ class MakeMasterBias(BaseImg):
         Checks if we can build a stacked frame based on the processing table
         :return:
         """
-        # Add to proctab
-        self.context.proctab.update_proctab(frame=self.action.args.ccddata,
-                                            suffix='RAW',
-                                            filename=self.action.args.name)
-        self.context.proctab.write_proctab(tfil=self.config.instrument.procfile)
         # Get bias count
         self.logger.info("Checking precondition for MakeMasterBias")
         self.combine_list = self.context.proctab.search_proctab(
@@ -56,13 +51,17 @@ class MakeMasterBias(BaseImg):
         mbname = strip_fname(combine_list[0]) + '_' + suffix + '.fits'
         # mbname = master_bias_name(self.action.args.ccddata)
         bsec, dsec, tsec, direc, amps, aoff = self.action.args.map_ccd
-    
+
+        # loop over amps
         stack = []
         stackf = []
         for bias in combine_list:
-            stackf.append(bias)
+            inbias = bias.split('.fits')[0] + '_intb.fits'
+            stackf.append(inbias)
             # using [0] drops the table and leaves just the image
-            stack.append(kcwi_fits_reader(bias)[0])
+            stack.append(kcwi_fits_reader(
+                os.path.join(self.context.config.instrument.cwd, 'redux',
+                             inbias))[0])
 
         stacked = ccdproc.combine(stack, method=method, sigma_clip=True,
                                   sigma_clip_low_thresh=None,
@@ -86,7 +85,7 @@ class MakeMasterBias(BaseImg):
             # get gain
             gain = stacked.header['GAIN%d' % ia]
             # get amp section
-            sec, rfor = parse_imsec(stacked.header['DSEC%d' % ia])
+            sec, rfor = parse_imsec(stacked.header['ATSEC%d' % ia])
             noise = diff[sec[0]:(sec[1]+1), sec[2]:(sec[3]+1)]
             noise = np.reshape(noise, noise.shape[0]*noise.shape[1]) * \
                 gain / 1.414
