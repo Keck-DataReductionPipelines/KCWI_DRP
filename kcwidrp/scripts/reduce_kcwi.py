@@ -112,6 +112,10 @@ def check_directory(directory):
 
 
 def main():
+    # This check can be removed once processes are siloed against each other
+    if "reduce_kcwi" in (p.name() for p in psutil.process_iter()):
+        print("DRP already running in another process, exiting")
+        sys.exit(0)
 
     def process_subset(in_subset):
         for in_frame in in_subset.index:
@@ -449,8 +453,4 @@ def main():
 
 
 if __name__ == "__main__":
-    # This check can be removed once processes are siloed against each other
-    if "reduce_kcwi" in (p.name() for p in psutil.process_iter()):
-        print("DRP already running in another process, exiting")
-    else:
-        main()
+    main()
