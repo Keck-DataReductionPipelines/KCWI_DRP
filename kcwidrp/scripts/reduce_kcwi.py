@@ -19,6 +19,7 @@ import sys
 import traceback
 import os
 import pkg_resources
+import psutil
 
 from kcwidrp.pipelines.kcwi_pipeline import Kcwi_pipeline
 from kcwidrp.core.kcwi_proctab import Proctab
@@ -448,4 +449,8 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    # This check can be removed once processes are siloed against each other
+    if "reduce_kcwi" in (p.name() for p in psutil.process_iter()):
+        print("DRP already running in another process, exiting")
+    else:
+        main()
