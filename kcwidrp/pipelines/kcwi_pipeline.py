@@ -1,13 +1,18 @@
 """
-KCWI
+Class definition for the KCWI Pipeline
 
-@author: lrizzi
+The event_table defines the recipes with each type of image having a unique
+entry point and trajectory in the table.
+
+The action_planner sets up the parameters for each image type before the event
+queue in the KeckDRPFramework gets started.
+
+@author: lrizzi, jneill
 """
 
 from keckdrpframework.pipelines.base_pipeline import BasePipeline
 from keckdrpframework.models.processing_context import ProcessingContext
 from kcwidrp.primitives.kcwi_file_primitives import *
-from kcwidrp.core.kcwi_proctab import Proctab
 
 
 class Kcwi_pipeline(BasePipeline):
@@ -32,6 +37,12 @@ class Kcwi_pipeline(BasePipeline):
         # BIAS PROCESSING
         "process_bias":              ("ProcessBias",
                                       "bias_processing_started",
+                                      "bias_subtract_overscan"),
+        "bias_subtract_overscan":    ("SubtractOverscan",
+                                      "subtract_overscan_started",
+                                      "bias_trim_overscan"),
+        "bias_trim_overscan":        ("TrimOverscan",
+                                      "trim_overscan_started",      # intb
                                       "bias_make_master"),
         "bias_make_master":          ("MakeMasterBias",
                                       "master_bias_started",        # mbias
@@ -39,15 +50,15 @@ class Kcwi_pipeline(BasePipeline):
         # DARK PROCESSING
         "process_dark":              ("ProcessDark",
                                       "dark_processing_started",
-                                      "dark_subtract_bias"),
-        "dark_subtract_bias":        ("SubtractBias",
-                                      "subtract_bias_started",
                                       "dark_subtract_overscan"),
         "dark_subtract_overscan":    ("SubtractOverscan",
                                       "subtract_overscan_started",
                                       "dark_trim_overscan"),
         "dark_trim_overscan":        ("TrimOverscan",
                                       "trim_overscan_started",
+                                      "dark_subtract_bias"),
+        "dark_subtract_bias":        ("SubtractBias",
+                                      "subtract_bias_started",
                                       "dark_correct_gain"),
         "dark_correct_gain":         ("CorrectGain",
                                       "gain_correction_started",
@@ -76,6 +87,9 @@ class Kcwi_pipeline(BasePipeline):
                                       "contbar_trim_overscan"),
         "contbar_trim_overscan":     ("TrimOverscan",
                                       "trim_overscan_started",
+                                      "contbar_subtract_bias"),
+        "contbar_subtract_bias":     ("SubtractBias",
+                                      "subtract_bias_started",
                                       "contbar_correct_gain"),
         "contbar_correct_gain":      ("CorrectGain",
                                       "gain_correction_started",
@@ -90,7 +104,7 @@ class Kcwi_pipeline(BasePipeline):
                                       "find_bars_started",
                                       "contbar_trace_bars"),
         "contbar_trace_bars":        ("TraceBars",
-                                      "trace_bars_started",     # trace
+                                      "trace_bars_started",         # trace
                                       None),
         # ARCS PROCESSING
         "process_arc":               ("ProcessArc",
@@ -101,6 +115,9 @@ class Kcwi_pipeline(BasePipeline):
                                       "arcs_trim_overscan"),
         "arcs_trim_overscan":        ("TrimOverscan",
                                       "trim_overscan_started",
+                                      "arc_subtract_bias"),
+        "arc_subtract_bias":         ("SubtractBias",
+                                      "subtract_bias_started",
                                       "arcs_correct_gain"),
         "arcs_correct_gain":         ("CorrectGain",
                                       "gain_correction_started",
@@ -153,15 +170,15 @@ class Kcwi_pipeline(BasePipeline):
         # FLAT PROCESSING
         "process_flat":              ("ProcessFlat",
                                       "flat_processing_started",
-                                      "flat_subtract_bias"),
-        "flat_subtract_bias":        ("SubtractBias",
-                                      "subtract_bias started",
                                       "flat_subtract_overscan"),
         "flat_subtract_overscan":    ("SubtractOverscan",
                                       "subtract_overscan_started",
                                       "flat_trim_overscan"),
         "flat_trim_overscan":        ("TrimOverscan",
                                       "trim_overscan_started",
+                                      "flat_subtract_bias"),
+        "flat_subtract_bias":        ("SubtractBias",
+                                      "subtract_bias started",
                                       "flat_correct_defects"),
         "flat_correct_defects":      ("CorrectDefects",
                                       "defect_correction_started",
@@ -176,10 +193,10 @@ class Kcwi_pipeline(BasePipeline):
                                       "rectification_started",      # int
                                       "flat_subtract_dark"),
         "flat_subtract_dark":        ("SubtractDark",
-                                      "subtract_dark_started",      # intd
+                                      "subtract_dark_started",
                                       "flat_subtract_scat"),
         "flat_subtract_scat":        ("SubtractScatteredLight",
-                                      "scat_subtract_started",
+                                      "scat_subtract_started",      # intd
                                       "flat_make_stack"),
         "flat_make_stack":           ("StackFlats",
                                       "stack_flats_started",        # sflat
@@ -199,15 +216,15 @@ class Kcwi_pipeline(BasePipeline):
                                       "object_flag_saturation"),
         "object_flag_saturation":    ("FlagSaturation",
                                       "object_flag_saturation_started",
-                                      "object_subtract_bias"),
-        "object_subtract_bias":      ("SubtractBias",
-                                      "subtract_bias started",
                                       "object_subtract_overscan"),
         "object_subtract_overscan":  ("SubtractOverscan",
                                       "subtract_overscan_started",
                                       "object_trim_overscan"),
         "object_trim_overscan":      ("TrimOverscan",
                                       "trim_overscan_started",
+                                      "object_subtract_bias"),
+        "object_subtract_bias":      ("SubtractBias",
+                                      "subtract_bias started",
                                       "object_correct_gain"),
         "object_correct_gain":       ("CorrectGain",
                                       "gain_correction_started",
@@ -225,16 +242,16 @@ class Kcwi_pipeline(BasePipeline):
                                       "rectification_started",      # int
                                       "object_subtract_dark"),
         "object_subtract_dark":      ("SubtractDark",
-                                      "subtract_dark started",      # intd
+                                      "subtract_dark started",
                                       "object_subtract_scat"),
         "object_subtract_scat":      ("SubtractScatteredLight",
-                                      "scat_subtract_started",
+                                      "scat_subtract_started",      # intd
                                       "object_correct_illum"),
         "object_correct_illum":      ("CorrectIllumination",
                                       "illumination_correction_started",  # intf
                                       "object_make_master"),
         "object_make_master":        ("MakeMasterObject",
-                                      "master_object_started",  # mobj
+                                      "master_object_started",      # mobj
                                       "object_make_sky"),
         "object_make_sky":           ("MakeMasterSky",
                                       "making_master_sky_started",
@@ -260,15 +277,15 @@ class Kcwi_pipeline(BasePipeline):
         # NOD AND SHUFFLE OBJECT PROCESSING
         "process_nandshuff":         ("ProcessObject",
                                       "nandshuff_processing_started",
-                                      "nandshuff_subtract_bias"),
-        "nandshuff_subtract_bias":   ("SubtractBias",
-                                      "subtract_bias started",
                                       "nandshuff_subtract_overscan"),
         "nandshuff_subtract_overscan": ("SubtractOverscan",
                                         "subtract_overscan_started",
                                         "nandshuff_trim_overscan"),
         "nandshuff_trim_overscan":   ("TrimOverscan",
                                       "trim_overscan_started",
+                                      "nandshuff_subtract_bias"),
+        "nandshuff_subtract_bias":   ("SubtractBias",
+                                      "subtract_bias started",
                                       "nandshuff_correct_gain"),
         "nandshuff_correct_gain":    ("CorrectGain",
                                       "gain_correction_started",
