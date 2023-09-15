@@ -16,7 +16,14 @@ from pathlib import Path
 logger = logging.getLogger('KCWI')
 
 red_amp_dict = {'L1': 0, 'L2': 1, 'U1': 2, 'U2': 3}
+# gains for slow readout, high gain
 red_amp_gain = {'L1': 1.54, 'L2': 1.551, 'U1': 1.61, 'U2': 1.526}
+
+# gains for slow readout gainmul by ampid
+blue_amp_gain = {1:  {0: 1.570, 1: 1.600, 2: 1.610, 3: 1.600},
+                 2:  {0: 0.785, 1: 0.800, 2: 0.805, 3: 0.800},
+                 5:  {0: 0.314, 1: 0.320, 2: 0.325, 3: 0.319},
+                 10: {0: 0.157, 1: 0.160, 2: 0.158, 3: 0.158}}
 
 
 def parse_imsec(section=None):
@@ -1033,7 +1040,7 @@ def kcwi_fits_reader(file):
     # prepare for floating point
     ccddata.data = ccddata.data.astype(np.float64)
     # Fix red headers
-    fix_red_header(ccddata)
+    fix_header(ccddata)
     # Check for CCDCFG keyword
     if 'CCDCFG' not in ccddata.header:
         ccdcfg = ccddata.header['CCDSUM'].replace(" ", "")
@@ -1255,13 +1262,17 @@ def master_flat_name(ccddata, target_type):
     return name
 
 
-def fix_red_header(ccddata):
+def fix_header(ccddata):
     """
+    Fix header keywords for DRP use.
+
+    Update GAINn keywords for Blue channel.
+
     Add FITS header keywords to Red channel data to make compatible with DRP.
 
     Adds the following keywords that are not present in raw images:
 
-    * MJD - Modified Julian Day
+    * MJD - Modified Julian Day (only for AIT data)
     * NVIDINP - from TAPLINES keyword
     * GAINMUL - set to 1
     * CCDMODE - from CDSSPEED keyword
@@ -1269,8 +1280,16 @@ def fix_red_header(ccddata):
     * GAINn - from red_amp_gain dictionary
 
     """
+    # are we blue?
+    if 'BLUE' in ccddata.header['CAMERA'].upper():
+        gainmul = ccddata.header['GAINMUL']
+        namps = ccddata.header['NVIDINP']
+        for ia in range(namps):
+            ampid = ccddata.header['AMPID%d' % (ia+1)]
+            gain = blue_amp_gain[gainmul][ampid]
+            ccddata.header['GAIN%d' % (ia+1)] = gain
     # are we red?
-    if 'RED' in ccddata.header['CAMERA'].upper():
+    elif 'RED' in ccddata.header['CAMERA'].upper():
         # Fix red headers during Caltech AIT
         if 'TELESCOP' not in ccddata.header:
             # Add DCS keywords
@@ -1321,3 +1340,5 @@ def fix_red_header(ccddata):
                     gkey = 'GAIN%d' % red_amp_dict[amp]
                     gain = red_amp_gain[amp]
                     ccddata.header[gkey] = gain
+    else:
+        print("ERROR -- illegal CAMERA keyword: %s" % ccddata.header['CAMERA'])
