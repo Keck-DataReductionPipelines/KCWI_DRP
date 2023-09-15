@@ -49,6 +49,10 @@ class SubtractOverscan(BasePrimitive):
                 x1 = bsec[iac][3] - oscanbuf
                 y0 = bsec[iac][0]
                 y1 = bsec[iac][1] + 1
+                # get overscan value to subtract
+                osval = int(np.nanmedian(
+                    self.action.args.ccddata.data[y0:y1, x0:x1]))
+                # vector to fit for determining read noise
                 osvec = np.nanmedian(
                     self.action.args.ccddata.data[y0:y1, x0:x1], axis=1)
                 nsam = x1 - x0
@@ -76,12 +80,16 @@ class SubtractOverscan(BasePrimitive):
                                                                         ia,
                                                                         x0, x1,
                                                                         y0, y1))
+                self.logger.info("Amp%d oscan counts (DN): %d" %
+                                 (ia, osval))
                 self.logger.info("Amp%d Read noise from oscan in e-: %.3f" %
                                  (ia, sdrs))
                 self.action.args.ccddata.header['OSCNRN%d' % ia] = \
                     (sdrs, "amp%d RN in e- from oscan" % ia)
+                self.action.args.ccddata.header['OSCNVAL%d' % ia] = \
+                    (osval, "amp%d oscan counts (DN)" % ia)
 
-                if self.config.instrument.plot_level >= 1:
+                if self.config.instrument.plot_level >= 2:
                     x = np.arange(len(osvec))
                     p = figure(title='Img # %05d OSCAN [%d:%d, %d:%d] '
                                      'amp %d, noise: %.3f e-/px' %
@@ -99,13 +107,17 @@ class SubtractOverscan(BasePrimitive):
                         input("Next? <cr>: ")
                     else:
                         time.sleep(self.config.instrument.plot_pause)
-                # subtract it
-                for ix in range(dsec[iac][2], dsec[iac][3] + 1):
-                    self.action.args.ccddata.data[y0:y1, ix] = \
-                        self.action.args.ccddata.data[y0:y1, ix] - osfit
+                # subtract osval
+                xx0 = dsec[iac][2]
+                xx1 = dsec[iac][3] + 1
+                self.action.args.ccddata.data[y0:y1, xx0:xx1] -= osval
+                # for ix in range(dsec[iac][2], dsec[iac][3] + 1):
+                #     self.action.args.ccddata.data[y0:y1, ix] = \
+                #         self.action.args.ccddata.data[y0:y1, ix] - osfit
                 performed = True
             else:
                 self.logger.info("not enough overscan px to fit amp %d" % ia)
+                performed = False
         if self.config.instrument.plot_level >= 3 and len(plts) > 0:
             bokeh_plot(gridplot(plts, ncols=(2 if namps > 2 else 1),
                                 plot_width=500, plot_height=300,
