@@ -33,7 +33,7 @@ class MakeMasterFlat(BaseImg):
         Checks if we can create a master flat based on the processing table
         :return:
         """
-        # get list of master flats
+        # check for flat stack to use in generating master flat
         self.logger.info("Checking precondition for MakeMasterFlat")
         tab = self.context.proctab.search_proctab(
             frame=self.action.args.ccddata,
@@ -44,7 +44,7 @@ class MakeMasterFlat(BaseImg):
                                                self.action.args.new_type))
             return False
         else:
-            self.logger.info("No %s master flat found, proceeding." %
+            self.logger.info("No %s master flat found, checking for flat stack." %
                              self.action.args.new_type)
             self.stack_list = self.context.proctab.search_proctab(
                 frame=self.action.args.ccddata,
