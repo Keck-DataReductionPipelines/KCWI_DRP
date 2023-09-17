@@ -31,6 +31,10 @@ class MakeMasterObject(BaseImg):
         else:
             if self.action.args.min_files <= 1:
                 self.logger.info(f"skipping master because only one combined")
+            else:
+                self.logger.info(f"pre condition got {len(self.combine_list)},"
+                                 f" expecting {self.action.args.min_files}")
+                self.action.new_event = None
             return False
 
     def _perform(self):
