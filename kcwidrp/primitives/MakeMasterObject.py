@@ -19,18 +19,17 @@ class MakeMasterObject(BaseImg):
         :return:
         """
         # get list of arc frames
-        self.logger.info("Checking precondition for stack_obj")
+        self.logger.info("Checking precondition for MakeMasterObject")
         self.combine_list = self.context.proctab.search_proctab(
             frame=self.action.args.ccddata, target_type='OBJECT',
             target_group=self.action.args.groupid)
-        self.logger.info(f"pre condition got {len(self.combine_list)},"
-                         f" expecting {self.action.args.min_files}")
+
         # do we meet the criterion?
         if len(self.combine_list) >= self.action.args.min_files > 1:
             return True
         else:
             if self.action.args.min_files <= 1:
-                self.logger.info(f"skipping master because only one combined")
+                self.logger.info(f"skipping stacking because only one combined")
             else:
                 self.logger.info(f"pre condition got {len(self.combine_list)},"
                                  f" expecting {self.action.args.min_files}")
