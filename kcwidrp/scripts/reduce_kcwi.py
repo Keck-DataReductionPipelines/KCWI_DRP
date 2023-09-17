@@ -19,6 +19,7 @@ import sys
 import traceback
 import os
 import pkg_resources
+import psutil
 
 from kcwidrp.pipelines.kcwi_pipeline import Kcwi_pipeline
 from kcwidrp.core.kcwi_proctab import Proctab
@@ -111,6 +112,11 @@ def check_directory(directory):
 
 
 def main():
+    # This check can be removed once processes are siloed against each other
+    plist = [p for p in psutil.process_iter() if "reduce_kcwi" in p.name()]
+    if len(plist) > 1:
+        print("DRP already running in another process, exiting")
+        sys.exit(0)
 
     def process_subset(in_subset):
         for in_frame in in_subset.index:
@@ -354,7 +360,7 @@ def main():
     if args.queue_manager_only:
         # The queue manager runs forever.
         framework.logger.info("Starting queue manager only, no processing")
-        framework.start_queue_manager()
+        framework.start(args.queue_manager_only)
 
     # in the next two ingest_data command, if we are using standard mode,
     # the first event generated is next_file.
