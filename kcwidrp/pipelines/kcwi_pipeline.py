@@ -352,9 +352,13 @@ class Kcwi_pipeline(BasePipeline):
              action.args.ccddata.header["STATEID"]))
         self.context.pipeline_logger.info("******* CAMERA is %s " % camera)
         if action.args.in_proctab:
-            self.context.pipeline_logger.warn(
-                "Already processed (already in proctab up to %s)" %
-                action.args.last_suffix)
+            if len(action.args.last_suffix) > 0:
+                self.context.pipeline_logger.warn(
+                    "Already processed (already in proctab up to %s)" %
+                    action.args.last_suffix)
+            else:
+                self.context.pipeline_logger.warn(
+                    "Already processed (already in proctab)")
         if action.args.in_proctab and not context.config.instrument.clobber:
             self.context.pipeline_logger.warn("Pushing noop to queue")
             context.push_event("noop", action.args)
