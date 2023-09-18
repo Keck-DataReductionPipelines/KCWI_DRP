@@ -819,6 +819,25 @@ class ingest_file(BasePrimitive):
 
         ccddata, table = kcwi_fits_reader(self.name)
 
+        # Are we already in proctab?
+        out_args.in_proctab = self.context.proctab.in_proctab(frame=ccddata)
+        if out_args.in_proctab:
+            out_args.last_suffix = self.context.proctab.last_suffix(
+                frame=ccddata)
+            if len(out_args.last_suffix) > 0:
+                self.logger.info("Last suffix is %s" % out_args.last_suffix)
+                out_dir = self.config.instrument.output_directory
+                last_file = os.path.join(out_dir,
+                                         self.name.split('.fits')[0] + '_' +
+                                         out_args.last_suffix + '.fits')
+                if 'icubes' not in out_args.last_suffix:
+                    self.logger.info("Ingest stub for %s" % last_file)
+                    # ccddata, table = kcwi_fits_reader(last_file)
+                else:
+                    self.logger.info("Processing completed in %s" % last_file)
+        else:
+            out_args.last_suffix = ""
+
         # save the ccd data into an object
         # that can be shared across the functions
         self.ccddata = ccddata
@@ -902,9 +921,6 @@ class ingest_file(BasePrimitive):
         out_args.calibration_lamp = self.calibration_lamp()
         # TTIME
         out_args.ttime = self.get_keyword('TTIME')
-        # Are we already in proctab?
-        out_args.in_proctab = self.context.proctab.in_proctab(
-            frame=out_args.ccddata)
 
         return out_args
 
