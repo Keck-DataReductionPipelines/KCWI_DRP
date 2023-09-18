@@ -179,13 +179,15 @@ class MakeInvsens(BasePrimitive):
                     do_plots = False
 
         # relevant slices
-        slset = 3                           # Large slicer
-        if self.action.args.ifunum == 2:  # Medium slicer
+        if self.action.args.ifunum == 1:    # Large slicer
+            slset = 3
+        elif self.action.args.ifunum == 2:  # Medium slicer
             slset = 5
         elif self.action.args.ifunum == 3:  # Small slicer
             slset = 12
         else:
-            self.logger.error("Slicer number undefined! - %d" %
+            slset = 3
+            self.logger.error("Assuming Large slicer: id undefined! - %d" %
                               self.action.args.ifunum)
         # Get set of slices needed for calculation
         sl0 = (mxsl - slset) if mxsl >= slset else 0
