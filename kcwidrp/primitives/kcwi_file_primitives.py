@@ -988,43 +988,31 @@ class ingest_file(BasePrimitive):
                 self.logger.warn(f"\tARCLAMP: {len(arclamp_frames)}")
                 return False
 
-        if imtype == 'CONTBARS':
-            # bias frames
-            bias_frames = self.context.proctab.search_proctab(
-                frame=self.ccddata, target_type='MBIAS', nearest=True)
-            if len(bias_frames) > 0:
-                return True
-            else:
-                self.logger.warn("Cannot reduce CONTBARS frame. "
-                                 "Missing master bias. ")
-                return False
-
         if imtype == 'ARCLAMP':
-            # bias frames
-            bias_frames = self.context.proctab.search_proctab(
-                frame=self.ccddata, target_type='MBIAS', nearest=True)
             # continuum bars
             contbars_frames = self.context.proctab.search_proctab(
                 frame=self.ccddata, target_type='MCBARS', nearest=True)
-            if len(contbars_frames) > 0 and len(bias_frames) > 0:
+            if len(contbars_frames) > 0:
                 return True
             else:
-                self.logger.warn("Cannot reduce ARCLAMP frame. ")
-                if len(bias_frames) <= 0:
-                    self.logger.warn("Missing master bias. ")
-                if len(contbars_frames) <= 0:
-                    self.logger.warn("Missing master continuum bars. ")
+                self.logger.warn("Cannot reduce ARCLAMP frame. "
+                                 "Missing master continuum bars. ")
                 return False
 
         if imtype in ['FLATLAMP', 'TWIFLAT', 'DOMEFLAT']:
             # bias frames
             bias_frames = self.context.proctab.search_proctab(
                 frame=self.ccddata, target_type='MBIAS', nearest=True)
-            if len(bias_frames) > 0:
+            arc_frames = self.context.proctab.search_proctab(
+                frame=self.ccddata, target_type='MARC', nearest=True)
+            if len(bias_frames) > 0 and len(arc_frames) > 0:
                 return True
             else:
-                self.logger.warn(f"Cannot reduce {imtype} frame. Missing "
-                                 f"master bias. Rescheduling for later.")
+                self.logger.warn(f"Cannot reduce {imtype} frame.")
+                if len(bias_frames) <= 0:
+                    self.logger.warn(f"Missing master bias.")
+                if len(arc_frames) <= 0:
+                    self.logger.warn(f"Missing master arc")
                 return False
 
         return True
