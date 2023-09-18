@@ -216,3 +216,27 @@ class Proctab:
             return True
         else:
             return False
+
+    def last_suffix(self, frame):
+        # get last suffix if currently in proctab
+        # check for master object first
+        tab_mobj = self.proctab[(self.proctab['TYPE'] == 'MOBJ')]
+        tab_mjd = tab_mobj[(tab_mobj['MJD'] == frame.header['MJD'])]
+        tab = tab_mjd[(tab_mjd['FRAMENO'] == frame.header['FRAMENO'])]
+
+        if len(tab) == 1:
+            return tab['SUFF'].value[0]
+        # No master object, so check simple object
+        elif len(tab) <= 0:
+            tab_obj = self.proctab[(self.proctab['TYPE'] == 'OBJECT')]
+            tab_mjd = tab_obj[(tab_obj['MJD'] == frame.header['MJD'])]
+            tab = tab_mjd[(tab_mjd['FRAMENO'] == frame.header['FRAMENO'])]
+            if len(tab) == 1:
+                return tab['SUFF'].value[0]
+            else:
+                return ""
+        else:
+            self.log.warning("Ambiguous entries for frame number %d" %
+                             frame.header['FRAMENO'])
+            return ""
+
