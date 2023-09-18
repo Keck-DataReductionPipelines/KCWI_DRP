@@ -74,7 +74,7 @@ class MakeInvsens(BasePrimitive):
                         self.logger.info("Master cal will be generated.")
                         return True
                 else:
-                    self.logger.warning("Not a KCWI standard observation.")
+                    self.logger.warning("Not a KCWI standard star observation.")
                     return False
             else:
                 self.logger.warning("DAR not corrected, cannot generate "
