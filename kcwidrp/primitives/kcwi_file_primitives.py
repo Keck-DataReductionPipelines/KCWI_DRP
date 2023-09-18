@@ -859,9 +859,17 @@ class ingest_file(BasePrimitive):
             self.action.event._reccurent = False
 
         if self.check_if_file_can_be_processed(imtype) is False:
-            # self.logger.warn("Object frame cannot be reduced. Rescheduling")
-            self.action.new_event = None
-            return None
+
+            if self.config.instrument.continuous or \
+                    self.config.instrument.wait_for_event:
+                self.logger.warn("Input frame cannot be reduced. Rescheduling")
+                self.action.new_event = None
+                return None
+            else:
+                self.logger.warn("Input frame cannot be reduced. Exiting")
+                self.action.new_event = None
+                self.action.event._recurrent = False
+                return None
         else:
             self.action.event._recurrent = False
 
@@ -974,7 +982,7 @@ class ingest_file(BasePrimitive):
                 return True
             else:
                 self.logger.warn("Cannot reduce OBJECT frame. "
-                                 "Rescheduling for later. Found:")
+                                 "Found:")
                 self.logger.warn(f"\tMBIAS: {len(bias_frames)}")
                 self.logger.warn(f"\tMFLAT: {len(masterflat_frames)}")
                 self.logger.warn(f"\tARCLAMP: {len(arclamp_frames)}")
@@ -988,8 +996,7 @@ class ingest_file(BasePrimitive):
                 return True
             else:
                 self.logger.warn("Cannot reduce CONTBARS frame. "
-                                 "Missing master bias."
-                                 "Rescheduling for later.")
+                                 "Missing master bias. ")
                 return False
 
         if imtype == 'ARCLAMP':
@@ -1002,10 +1009,9 @@ class ingest_file(BasePrimitive):
             if len(contbars_frames) > 0 and len(bias_frames) > 0:
                 return True
             else:
-                self.logger.warn("Cannot reduce ARCLAMP frame. "
-                                 "Rescheduling for later.")
+                self.logger.warn("Cannot reduce ARCLAMP frame. ")
                 if len(bias_frames) <= 0:
-                    self.logger.warn("Missing master bias.")
+                    self.logger.warn("Missing master bias. ")
                 if len(contbars_frames) <= 0:
                     self.logger.warn("Missing master continuum bars. ")
                 return False
