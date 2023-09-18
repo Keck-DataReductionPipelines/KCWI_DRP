@@ -969,23 +969,29 @@ class ingest_file(BasePrimitive):
             # bias frames
             bias_frames = self.context.proctab.search_proctab(
                 frame=self.ccddata, target_type='MBIAS', nearest=True)
-            # master flats
-            masterflat_frames = self.context.proctab.search_proctab(
-                frame=self.ccddata, target_type='MFLAT', nearest=True)
             # arclamp
             arclamp_frames = self.context.proctab.search_proctab(
                 frame=self.ccddata, target_type='MARC', nearest=True)
-            if len(bias_frames) > 0:
-                '''\
-                and len(masterflat_frames) > 0 \
-                and len(arclamp_frames) > 0:'''
+            # master flats
+            masterflat_frames = self.context.proctab.search_proctab(
+                frame=self.ccddata, target_type='MFLAT', nearest=True)
+            masterdome_frames = self.context.proctab.search_proctab(
+                frame=self.ccddata, target_type='MDOME', nearest=True)
+            mastertwif_frames = self.context.proctab.search_proctab(
+                frame=self.ccddata, target_type='MTWIF', nearest=True)
+
+            if len(bias_frames) > 0 and len(arclamp_frames) > 0 and (
+                    len(masterflat_frames) > 0 or len(masterdome_frames) > 0 or
+                    len(mastertwif_frames) > 0):
                 return True
             else:
-                self.logger.warn("Cannot reduce OBJECT frame. "
-                                 "Found:")
+                self.logger.warn("Cannot reduce OBJECT frame. Found:")
                 self.logger.warn(f"\tMBIAS: {len(bias_frames)}")
+                self.logger.warn(f"\tMARC: {len(arclamp_frames)}")
                 self.logger.warn(f"\tMFLAT: {len(masterflat_frames)}")
-                self.logger.warn(f"\tARCLAMP: {len(arclamp_frames)}")
+                self.logger.warn(f"\tMDOME: {len(masterdome_frames)}")
+                self.logger.warn(f"\tMTWIF: {len(mastertwif_frames)}")
+
                 return False
 
         if imtype == 'ARCLAMP':
