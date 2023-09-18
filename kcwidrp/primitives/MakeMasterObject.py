@@ -23,6 +23,8 @@ class MakeMasterObject(BaseImg):
         self.combine_list = self.context.proctab.search_proctab(
             frame=self.action.args.ccddata, target_type='OBJECT',
             target_group=self.action.args.groupid)
+        self.logger.info(f"pre condition got {len(self.combine_list)},"
+                         f" expecting {self.action.args.min_files}")
 
         # do we meet the criterion?
         if len(self.combine_list) >= self.action.args.min_files > 1:
@@ -31,8 +33,6 @@ class MakeMasterObject(BaseImg):
             if self.action.args.min_files <= 1:
                 self.logger.info(f"skipping stacking because only one combined")
             else:
-                self.logger.info(f"pre condition got {len(self.combine_list)},"
-                                 f" expecting {self.action.args.min_files}")
                 self.action.new_event = None
             return False
 
