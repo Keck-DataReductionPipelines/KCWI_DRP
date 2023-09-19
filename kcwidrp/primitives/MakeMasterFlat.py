@@ -16,8 +16,11 @@ import scipy as sp
 from scipy.signal import find_peaks
 
 
-def bm_ledge_position(cwave):
-    fit = [0.240742, 4044.56]
+def bm_ledge_position(cwave, dich):
+    if dich:
+        fit = [0.240742, 4060.56]
+    else:
+        fit = [0.240742, 4044.56]
     return fit[1] + fit[0] * cwave
 
 
@@ -389,7 +392,8 @@ class MakeMasterFlat(BaseImg):
 
         # correction for BM where we see a ledge
         if 'BM' in self.action.args.grating:
-            ledge_wave = bm_ledge_position(self.action.args.cwave)
+            ledge_wave = bm_ledge_position(self.action.args.cwave,
+                                           self.action.args.dich)
 
             self.logger.info("BM ledge calculated wavelength "
                              "for ref slice = %.2f (A)" % ledge_wave)
@@ -418,27 +422,31 @@ class MakeMasterFlat(BaseImg):
                 deriv = deriv[trm:-trm]
                 xvals = fpoints[trm:-trm]
                 peaks, _ = find_peaks(deriv, height=100)
+
+                p = figure(title=plab +
+                           ' Ledge', x_axis_label='Wavelength (A)',
+                           y_axis_label='Value',
+                           plot_width=self.config.instrument.plot_width,
+                           plot_height=self.config.instrument.plot_height)
+                p.circle(xledge, smyledge, fill_color='green')
+                p.line(fpoints, ylfit)
+                bokeh_plot(p, self.context.bokeh_session)
+                if self.config.instrument.plot_level >= 2:
+                    input("Next? <cr>: ")
+                else:
+                    time.sleep(self.config.instrument.plot_pause)
+                p = figure(title=plab + ' Deriv', x_axis_label='px (Wavelength)',
+                           y_axis_label='Value',
+                           plot_width=self.config.instrument.plot_width,
+                           plot_height=self.config.instrument.plot_height)
+                xx = list(range(len(deriv)))
+                ylim = get_plot_lims(deriv)
+                p.circle(xx, deriv)
+                for pk in peaks:
+                    p.line([pk, pk], ylim)
+                bokeh_plot(p, self.context.bokeh_session)
                 if len(peaks) != 1:
                     self.logger.warning("Extra peak found!")
-                    p = figure(title=plab +
-                               ' Ledge', x_axis_label='Wavelength (A)',
-                               y_axis_label='Value',
-                               plot_width=self.config.instrument.plot_width,
-                               plot_height=self.config.instrument.plot_height)
-                    p.circle(xledge, smyledge, fill_color='green')
-                    p.line(fpoints, ylfit)
-                    bokeh_plot(p, self.context.bokeh_session)
-                    input("Next? <cr>: ")
-                    p = figure(title=plab + ' Deriv', x_axis_label='px',
-                               y_axis_label='Value',
-                               plot_width=self.config.instrument.plot_width,
-                               plot_height=self.config.instrument.plot_height)
-                    xx = list(range(len(deriv)))
-                    ylim = get_plot_lims(deriv)
-                    p.circle(xx, deriv)
-                    for pk in peaks:
-                        p.line([pk, pk], ylim)
-                    bokeh_plot(p, self.context.bokeh_session)
                     print("Please indicate the integer pixel value of the peak")
                     ipk = int(input("Peak? <int>: "))
                 else:
