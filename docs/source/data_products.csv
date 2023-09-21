@@ -1,0 +1,14 @@
+File Extension,Units,Note
+int,e-/px,reduced output intensity
+intd,e-/px,dark current/scattered light removed
+wavemap,A,wavelength value at pixel
+slicemap,0-23,slice number at pixel
+posmap,0-140,slice position (px) at pixel
+intf,e-/px,instrumental variations removed
+intk,e-/px,sky subtracted
+obj,e-/px,un-sky subtracted image
+sky,e-/px,sky model image
+icube,e-/px,geometry corrected data cube
+icubed,e-/px,DAR corrected data cube
+icubew,e-/px,Wavelength corrected data cube
+icubes,flux/px,Std star calibrated data cube
