@@ -3,5 +3,7 @@ astropy
 Cython
 ref_index
 psutil
--e git://github.com/Keck-DataReductionPipelines/KeckDRPFramework.git#egg=keckdrpframework
--e git://github.com/Keck-DataReductionPipelines/KCWI_DRP.git#egg=kcwidrp
+keckdrpframework @ git+https://github.com/Keck-DataReductionPipelines/KeckDRPFramework.git
+kcwidrp @ git+https://github.com/Keck-DataReductionPipelines/KCWI_DRP.git
+# -e git://github.com/Keck-DataReductionPipelines/KeckDRPFramework.git#egg=keckdrpframework
+# -e git://github.com/Keck-DataReductionPipelines/KCWI_DRP.git#egg=kcwidrp
