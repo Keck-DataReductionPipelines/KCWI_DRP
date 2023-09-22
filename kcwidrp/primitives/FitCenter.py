@@ -14,9 +14,19 @@ import time
 
 
 def pascal_shift(coefficients=None, x0=None):
-    """Shift coefficients to a new reference value (X0)
+    """
+    Shift coefficients to a new reference value (X0)
 
-    This should probably go somewhere else, but will be needed here.
+    Use Pascal's Triangle to shift the polynomial coefficients to a new
+    reference point.  Used to transfer central fits to full-wavelength fits.
+
+    Args:
+        coefficients (list of floats): fit coef's, up to 7 elements.
+        x0 (float): New reference x value.
+
+    Returns:
+        Shifted coefficients
+
     """
     if not coefficients:
         print("Error, no coefficients for pascal_shift.")
@@ -191,7 +201,17 @@ def bar_fit_helper(argument):
 
 
 class FitCenter(BasePrimitive):
-    """ Fit central region"""
+    """
+    Perform wavelength fitting on central region.
+
+    Perform a preliminary determination of the dispersion in the central
+    region of the wavelength range.  Starts with known offsets between bars
+    and rough offset between reference bar and atlas spectrum, and the
+    calculated dispersion.
+
+    Uses config parameter TAPERFRAC to control cross-correlation roll-off.
+
+    """
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
@@ -206,10 +226,7 @@ class FitCenter(BasePrimitive):
             return False
 
     def _perform(self):
-        """At this point we have the offsets between bars and the approximate
-        offset from the reference bar to the atlas spectrum and the approximate
-        dispersion.
-        """
+
         self.logger.info("Finding wavelength solution for central region")
         # Are we interactive?
         do_inter = (self.config.instrument.plot_level >= 2)

@@ -5,7 +5,14 @@ import numpy as np
 
 
 class FlagSaturation(BasePrimitive):
-    """Remove known bad columns"""
+    """
+    Flag saturated pixels.
+
+    Currently flags pixels with values > 60,000 counts with a value of 8
+    in the flags FITS extension and updates the FITS header with a count
+    of saturated pixels in the header keyword NSATFLAG.
+
+    """
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)

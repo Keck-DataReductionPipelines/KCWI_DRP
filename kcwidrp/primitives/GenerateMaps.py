@@ -9,7 +9,20 @@ from astropy import units as u
 
 
 class GenerateMaps(BasePrimitive):
-    """Generate map images"""
+    """
+    Generate geometry map images.
+
+    Uses input geometry solution and outputs the following geometry maps
+    where the pixel value in each image indicates:
+
+    * slice - what slice the pixel is in
+    * pos - what the pixel's location is relative to the edge of the slice
+    * wave - what wavelength the pixel has
+    * del - what the delta wavelength is at the pixel
+
+    Pixels not on any slice are given as a negative value (usually -1.)
+
+    """
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)

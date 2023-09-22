@@ -13,6 +13,13 @@ from astropy.nddata import CCDData
 
 
 class FluxCalibrate(BasePrimitive):
+    """
+    Perform flux calibration.
+
+    Uses inverse sensitivity curve derived from MakeInvsens to flux calibrate
+    input observation.
+
+    """
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
@@ -21,7 +28,6 @@ class FluxCalibrate(BasePrimitive):
     def _pre_condition(self):
         """
         Checks if we can calibrate flux based on the processing table
-        :return:
         """
         self.logger.info("Checking precondition for FluxCalibrate")
         target_type = 'INVSENS'

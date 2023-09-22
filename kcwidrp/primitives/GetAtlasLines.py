@@ -17,13 +17,47 @@ import traceback
 
 
 def gaus(x, a, mu, sigma):
-    """Gaussian fitting function"""
+    """
+    Gaussian fitting function.
+
+    Args:
+        x (float): x value
+        a (float): amplitude
+        mu (float): x position of center of Gaussian
+        sigma (float): Gaussian width
+
+    Returns:
+        Gaussian value at x position
+
+    """
     return a * np.exp(-(x - mu) ** 2 / (2. * sigma ** 2))
 
 
 def get_line_window(y, c, thresh=0., logger=None, strict=False, maxwin=100,
                     frac_max=0.5):
-    """Find a window that includes the fwhm of the line"""
+    """
+    Find a window that includes the specified amount of the line.
+
+    Get a useful window on a given line to allow finding an accurate peak for
+    each line.  Start at input center and iterate above and below until the
+    window encompasses the specified fraction of the line maximum flux.
+    Rejects lines that are problematic.
+
+    Args:
+        y (list of floats): flux values
+        c (float): the nominal center of the line in pixels
+        thresh (float): threshhold for rejection (default: 0.)
+        logger (log object): logging instance for output
+        strict (bool): should we apply strict criterion? (default: False)
+        maxwin (int): largest possible window in pixels (default: 100)
+        frac_max (float): how much of the maximum flux to encompass (default: 0.5)
+
+    :returns:
+        - x0 (int): lower limit of window in pixels
+        - x1 (int): upper limit of window in pixels
+        - count (int): number of pixels in window
+
+    """
     verbose = logger is not None
     nx = len(y)
     # check edges
@@ -125,7 +159,27 @@ def get_line_window(y, c, thresh=0., logger=None, strict=False, maxwin=100,
 
 
 def findpeaks(x, y, wid, sth, ath, pkg=None, verbose=False):
-    """Find peaks in spectrum"""
+    """
+    Find peaks in spectrum
+
+    Uses a gradient to determine where peaks are and then performs some
+    cleaning of blended lines using sigma rejection.
+
+    Args:
+        x (list of floats): x values of vector
+        y (list of floats): y values of vector
+        wid (int): boxcar smoothing width in pixels
+        sth (float): slope threshhold
+        ath (float): amplitude threshhold
+        pkg (float): limit on peak wandering in pixels
+        verbose (bool): control output messages
+
+    :returns:
+        - list of peaks
+        - average sigma of cleaned peaks
+        - list of y values at peaks
+
+    """
     # derivative
     grad = np.gradient(y)
     # smooth derivative
@@ -189,7 +243,18 @@ def findpeaks(x, y, wid, sth, ath, pkg=None, verbose=False):
 
 
 class GetAtlasLines(BasePrimitive):
-    """Get relevant atlas line positions and wavelengths"""
+    """
+    Get relevant atlas line positions and wavelengths
+
+    Generates a list of well observed atlas lines for generating the final
+    wavelength solution.
+
+    Uses the following configuration parameters:
+
+    * FRACMAX: what fraction to use to determine the window for fitting (defaults to 0.5)
+    * LINELIST: an input line list to use instead of determining one on the fly
+
+    """
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
