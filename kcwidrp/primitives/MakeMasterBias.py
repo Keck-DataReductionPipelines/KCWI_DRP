@@ -14,7 +14,21 @@ import os
 
 
 class MakeMasterBias(BaseImg):
-    """Generate a master bias image from individual bias frames"""
+    """
+    Stack bias frames into a master bias frame.
+
+    Generate a master bias image from overscan-subtracted and trimmed bias
+    frames (*_intb.fits) based on the instrument config parameter
+    bias_min_nframes, which defaults to 7.  The combine method for biases is
+    'average' and so cosmic rays may be present, especially in RED channel data.
+
+    Uses the ccdproc.combine routine to peform the stacking.
+
+    Writes out a *_mbias.fits file and records a master bias frame in the proc
+    table.
+
+
+    """
 
     def __init__(self, action, context):
         BaseImg.__init__(self, action, context)
@@ -23,7 +37,7 @@ class MakeMasterBias(BaseImg):
     def _pre_condition(self):
         """
         Checks if we can build a stacked frame based on the processing table
-        :return:
+
         """
         # Get bias count
         self.logger.info("Checking precondition for MakeMasterBias")

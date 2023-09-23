@@ -17,7 +17,26 @@ from multiprocessing import Pool
 
 
 def make_cube_helper(argument):
-    """Warp each slice"""
+    """
+    Warp each slice.
+    
+    Helper program for threaded warping of all slices.
+
+    Args:
+        argument (dict): Dictionary of parameters for warping an individual slice.
+
+    :returns:
+        - int: Slice number being warped
+        - ndimage: warped intensity image
+        - ndimage: warped uncertainty image
+        - ndimage: warped mask image
+        - ndimage: warped flag image
+        - ndimage: warped image without sky subtraction
+        - ndimage: warped nod-and-shuffle object image
+        - ndimage: warped nod-and-shuffle sky image
+        - ndimage: warped delta-wavelength image
+
+    """
     logger = argument['logger']
     logger.info("Transforming image slice %d" % (argument['slice_number']+1))
     # input params
@@ -87,7 +106,24 @@ def make_cube_helper(argument):
 
 
 class MakeCube(BasePrimitive):
-    """Transform 2D images to 3D data cubes"""
+    """
+    Transform 2D images to 3D data cubes.
+
+    Uses thread pool to warp each slice in parallel and then
+    assemble a 3D image cube from the slices. Rotates RED channel
+    data by 180 degress to align with BLUE channel data.
+
+    Creates WCS keywords that reflect the new geometry of the
+    cube based on position keywords from the telescope.
+
+    Outputs FITS 3d cube images:
+
+        * icube - main cube with primary, uncertainty, mask, flag, and noskysub extensions
+        * ocube - for nod-and-shuffle, the object frame as a cube
+        * scube - for nod-and-shuffle, the sky frame as a cube
+        * dcube - the delta-wavelength cube
+
+    """
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)

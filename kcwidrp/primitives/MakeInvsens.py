@@ -19,7 +19,21 @@ import numpy as np
 
 
 class MakeInvsens(BasePrimitive):
+    """
+    Generate inverse sensitivity curve from a standard star observation.
 
+    Uses object name to determine if the observation is a standard star.  Then
+    checks that the image has been processed through DAR correction.  Reads
+    in the reference spectrum and compares it with the observed spectrum to
+    generate the inverse sensitivity curve that can be used to flux calibrate
+    science observations.
+
+    Outputs FITS inverse sensitivity spectrum along with diagnostic plots that
+    include residuals between reference spectrum and calibrated observed
+    spectrum and effective area and efficiency plots as a function of
+    wavelength.
+
+    """
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
         self.logger = context.pipeline_logger
