@@ -18,13 +18,13 @@ class MakeMasterBias(BaseImg):
     Stack bias frames into a master bias frame.
 
     Generate a master bias image from overscan-subtracted and trimmed bias
-    frames (*_intb.fits) based on the instrument config parameter
+    frames (\*_intb.fits) based on the instrument config parameter
     bias_min_nframes, which defaults to 7.  The combine method for biases is
     'average' and so cosmic rays may be present, especially in RED channel data.
 
-    Uses the ccdproc.combine routine to peform the stacking.
+    Uses the ccdproc.combine routine to perform the stacking.
 
-    Writes out a *_mbias.fits file and records a master bias frame in the proc
+    Writes out a \*_mbias.fits file and records a master bias frame in the proc
     table.
 
 

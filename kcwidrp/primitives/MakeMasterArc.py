@@ -18,7 +18,7 @@ class MakeMasterArc(BaseImg):
 
     Uses the ccdproc.combine routine to peform the stacking.
 
-    Writes out a *_marc.fits file and records a master arc frame in the proc
+    Writes out a \*_marc.fits file and records a master arc frame in the proc
     table, no matter how many frames are combined.
 
     """
