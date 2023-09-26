@@ -44,7 +44,7 @@ napoleon_numpy_docstring = True
 
 # Class documentation should contain *both* the class docstring and
 # the __init__ docstring
-autoclass_content = "both"
+autoclass_content = "class"
 
 
 master_doc = 'index'
