@@ -7,7 +7,30 @@ import ccdproc
 
 
 class StackFlats(BaseImg):
-    """Stack flat images"""
+    """
+    Stack flat images
+
+    Generate a stacked flat frame based on one of the following instrument
+    config parameters:
+
+        * flat_min_nframes: defaults to 6
+        * dome_min_nframes: defaults to 3
+        * twiflat_min_nframes: defaults to 1
+
+    It is assumed that each frame is well-exposed and the combine
+    method 'average' will be used.  A high sigma clipping of 2.0 is used to
+    help with the CRs.
+
+    Uses the ccdproc.combine routine to peform the stacking.
+
+    Writes out the following files and adds entries in the proc table depending
+    on the input IMTYPE:
+
+        * FLATLAMP - writes out \*_sflat.fits and puts SFLAT in proc table
+        * DOMEFLAT - writes out \*_sdome.fits and puts SDOME in proc table
+        * TWIFLAT -  writes out \*_stwif.fits and puts STWIF in proc table
+
+    """
 
     def __init__(self, action, context):
         BaseImg.__init__(self, action, context)
@@ -16,7 +39,6 @@ class StackFlats(BaseImg):
     def _pre_condition(self):
         """
         Checks if we can build a stacked frame based on the processing table
-        :return:
         """
         # get list of input flats
         self.logger.info("Checking precondition for StackFlats")

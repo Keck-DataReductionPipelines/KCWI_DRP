@@ -7,7 +7,18 @@ import ccdproc
 
 
 class MakeMasterDark(BaseImg):
-    """Stack dark frames into master dark"""
+    """
+    Stack dark frames into master dark
+
+    Generate a master dark frame based on the instrument config parameter
+    dark_min_nframes, which defaults to 3.  The combine method 'average' will
+    be used.  A high sigma clipping of 2.0 is used to help with the CRs.
+
+    Uses the ccdproc.combine routine to peform the stacking.
+
+    Writes out a \*_mdark.fits file and records a master dark frame in the proc
+    table, no matter how many frames are combined.
+"""
 
     def __init__(self, action, context):
         BaseImg.__init__(self, action, context)
@@ -16,10 +27,9 @@ class MakeMasterDark(BaseImg):
     def _pre_condition(self):
         """
         Checks if we can build a stacked frame based on the processing table
-        :return:
         """
         # get list of dark frames
-        self.logger.info("Checking precondition for stack_darks")
+        self.logger.info("Checking precondition for MakeMasterDark")
         self.combine_list = self.context.proctab.search_proctab(
             frame=self.action.args.ccddata, target_type='DARK',
             target_group=self.action.args.groupid)

@@ -14,7 +14,7 @@ class MakeMasterArc(BaseImg):
     arc_min_nframes, which defaults to 1 for the BLUE channel and 3 for the RED
     channel.  It is assumed that each frame is well-exposed and the combine
     method 'median' will be used to mitigate cosmic rays (especially for the RED
-    channel).
+    channel).  A high sigma clipping of 2.0 is used to help with the CRs.
 
     Uses the ccdproc.combine routine to peform the stacking.
 

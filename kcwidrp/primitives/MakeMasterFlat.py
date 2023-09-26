@@ -25,7 +25,21 @@ def bm_ledge_position(cwave, dich):
 
 
 class MakeMasterFlat(BaseImg):
-    """Stack flat images and make master flat image"""
+    """
+    Generate illumination correction from a stacked flat image.
+
+    Uses b-spline fits along with geometry maps to generate a master image for
+    illumination correction.  If the flat is internal, accounts for vignetting
+    along one edge.  Also accounts for ledge seen in BM grating.
+
+    Depending on the type of input stack, the following files are written out
+    and entries are made in the proc file:
+
+        * SFLAT - a \*_mflat.fits file and an MFLAT entry
+        * SDOME - a \*_mdome.fits file and an MDOME entry
+        * STWIF - a \*_mtwif.fits file and an MTWIF entry
+
+"""
 
     def __init__(self, action, context):
         BaseImg.__init__(self, action, context)
@@ -34,7 +48,6 @@ class MakeMasterFlat(BaseImg):
     def _pre_condition(self):
         """
         Checks if we can create a master flat based on the processing table
-        :return:
         """
         # check for flat stack to use in generating master flat
         self.logger.info("Checking precondition for MakeMasterFlat")

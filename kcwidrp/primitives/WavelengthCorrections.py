@@ -32,7 +32,6 @@ class WavelengthCorrections(BasePrimitive):
     def _pre_condition(self):
         """
         Checks if we can correct wavelengths based on the processing table
-        :return:
         """
         self.logger.info("Checking precondition for WavelengthCorrections")
         precondition = False
@@ -96,9 +95,9 @@ class WavelengthCorrections(BasePrimitive):
             obj (astropy HDU / HDUList): Input HDU/HDUList with 3D data.
             mask (bool): Set if the cube is a mask cube.
 
-        Returns:
-            HDU / HDUList*: Trimmed FITS object with updated header.
-            *Return type matches type of obj argument.
+        :returns:
+            HDU / HDUList: Trimmed FITS object with updated header.
+            Return type matches type of obj argument.
 
         """
 
@@ -206,9 +205,9 @@ class WavelengthCorrections(BasePrimitive):
             vcorr (float): Use a different correction velocity.
 
         Returns:
-            HDU / HDUList*: Trimmed FITS object with updated header.
+            HDU / HDUList: Trimmed FITS object with updated header.
             vcorr (float): (if vcorr is True) Correction velocity in km/s.
-            *Return type matches type of fits_in argument.
+            Return type matches type of fits_in argument.
             
         Examples: 
             

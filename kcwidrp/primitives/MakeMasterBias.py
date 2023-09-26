@@ -21,6 +21,7 @@ class MakeMasterBias(BaseImg):
     frames (\*_intb.fits) based on the instrument config parameter
     bias_min_nframes, which defaults to 7.  The combine method for biases is
     'average' and so cosmic rays may be present, especially in RED channel data.
+    A high sigma clipping of 2.0 is used to help with the CRs.
 
     Uses the ccdproc.combine routine to perform the stacking.
 
@@ -37,7 +38,6 @@ class MakeMasterBias(BaseImg):
     def _pre_condition(self):
         """
         Checks if we can build a stacked frame based on the processing table
-
         """
         # Get bias count
         self.logger.info("Checking precondition for MakeMasterBias")

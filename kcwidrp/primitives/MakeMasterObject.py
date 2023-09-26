@@ -7,7 +7,21 @@ import ccdproc
 
 
 class MakeMasterObject(BaseImg):
-    """Stack object frames into master object"""
+    """
+    Stack object frames into master object
+
+    Generate a master object frame based on the instrument config parameter
+    object_min_nframes, which defaults to 1 for the BLUE channel and 3 for the
+    RED channel.  The combine method 'median' will be used to mitigate cosmic
+    rays (especially for the RED channel) if object_min_nframes is 3 or less.
+    If larger than 3, then the method 'average' will be used.  A high sigma
+    clipping of 2.0 is used to help with the CRs.
+
+    Uses the ccdproc.combine routine to peform the stacking.
+
+    Writes out a \*_mobj.fits file and records a master object frame in the proc
+    table, no matter how many frames are combined.
+    """
 
     def __init__(self, action, context):
         BaseImg.__init__(self, action, context)

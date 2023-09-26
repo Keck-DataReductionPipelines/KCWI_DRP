@@ -7,7 +7,21 @@ import ccdproc
 
 
 class MakeMasterContbars(BaseImg):
-    """Stack arc frames into master arc"""
+    """
+    Stack continuum bars frames into master continuum bars
+
+    Generate a master cont bars frame based on the instrument config parameter
+    contbars_min_nframes, which defaults to 1 for the BLUE channel and 3 for
+    the RED channel.  It is assumed that each frame is well-exposed and the
+    combine method 'median' will be used to mitigate cosmic rays (especially
+    for the RED channel).  A high sigma clipping of 2.0 is used to help with
+    the CRs.
+
+    Uses the ccdproc.combine routine to peform the stacking.
+
+    Writes out a \*_mcbars.fits file and records a master cont bars frame in
+    the proc table, no matter how many frames are combined.
+"""
 
     def __init__(self, action, context):
         BaseImg.__init__(self, action, context)
@@ -16,7 +30,6 @@ class MakeMasterContbars(BaseImg):
     def _pre_condition(self):
         """
         Checks if we can build a stacked frame based on the processing table
-        :return:
         """
         # get list of arc frames
         self.logger.info("Checking precondition for stack_arcs")
