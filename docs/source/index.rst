@@ -1,8 +1,3 @@
-.. Keck Cosmic Web Imager DRP documentation master file, created by
-   sphinx-quickstart on Fri May 29 10:09:02 2020.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
-
 Keck Cosmic Web Imager DRP's
 ============================
 
@@ -10,27 +5,30 @@ KCWI_DRP is a the official data reduction pipeline (DRP) for the Keck Cosmic Web
 This DRP has been developed by the KCWI team at Caltech in
 collaboration with the W. M. Keck Observatory Scientific Software Group.
 
-Release 1.0
+Release 1.1
 ===========
 
-We are happy to announce the first official release of the KCWI pipeline. 
-This pipeline is based entirely on the glorious IDL pipeline developed by the KCWI team at Caltech and it is 
-the only pipeline supported by the W. M. Keck Observatory.
+We are excited to announce the imminent release version of 1.1.0 of the KCWI DRP, now with support for
+both the red and blue sides of the instrument. Just like version 1.0, this
+pipeline is based off of the original KCWIdrp IDL pipeline developed by the KCWI
+team at Caltech, and this pipeline continues to be the only pipeline supported
+by the W. M. Keck Observatory.
 
-What this version provides
---------------------------
+`NOTE`: This release is still in the works! The pipeline is still changing on a 
+near-daily basis, along with these documents. This page will be updated once
+the full release is ready.
 
-* Simplified installation via pip and conda environment
-* Vacuum to air and heliocentric or barycentric correction (the algorithms used here are courtesy of Yuguang Chen at Caltech)
-* Ability of using KOA file names or original file names
-* Better provenance and traceability of DRP versions and execution steps in the headers
-* Versatile sky subtraction modes including using external sky frames and ability of masking regions
+Features
+--------
+
+* Simplified installation via pip and conda environment [COMING SOON]
+* Vacuum to air and heliocentric or barycentric correction
+* Ability of using KOA file names or original file names [COMING SOON]
+* Full traceability of DRP versions and execution steps in HISTORY headers
+* Versatile sky subtraction modes including using external sky frames, ability to manually mask regions, or skipping it entirely
 * Formal support system via GitHub issues
-  
-The pipeline is available for use at WMKO. We are in the process of automating the execution and ingestion of the reduced data into KOA.
 
 For older versions, see :doc:`versions`.
-
 
 Users
 =====
@@ -64,8 +62,10 @@ Developers
 
 The DRP was developed in collaboration between:
 
-* Don Neill, Matt Matuszewki, Chris Martin and the KCWI Team at Caltech
-* Max Brodheim and Luca Rizzi at W. M. Keck Observatory
+* Don Neill, Matt Matuszewki, Nik Prusinski, Chris Martin and the KCWI Team at Caltech
+* Max Brodheim, Luca Rizzi, and Rosalie McGurk at W. M. Keck Observatory
+
+Vacuum-to-air and helio/barycentric correction algorithms provided by Yuguang Chen at Caltech.
 
 Maintenance and support of the DRP are provided as part of the Data Services Initiative (PI: John O'Meara), in collaboration with the National Aeronautics and Space Administration.
 
