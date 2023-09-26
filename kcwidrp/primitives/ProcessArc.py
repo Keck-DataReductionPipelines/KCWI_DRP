@@ -2,6 +2,12 @@ from keckdrpframework.primitives.base_primitive import BasePrimitive
 
 
 class ProcessArc(BasePrimitive):
+    """
+    Preliminary processing of arc lamp images.
+
+    Checks if the default lamp is being read in.  If not, terminates processing.
+
+    """
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)

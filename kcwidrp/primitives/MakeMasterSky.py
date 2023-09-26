@@ -16,7 +16,56 @@ from astropy.io import fits
 
 
 class MakeMasterSky(BaseImg):
-    """Make master sky image"""
+    """
+    Make master sky image.
+
+    Uses b-spline fits along with geometry maps to generate a master sky image
+    for sky subtraction.
+
+    This routine also handles the file `kcwi.sky`, which controls the master
+    sky generation.  This file consists of one line per image, with the first
+    column indicating the raw object image to be sky-subtracted.  The following
+    columns can either indicate a separate image to use for sky subtraction, the
+    filename of a mask fits image for masking object flux, or indicate that the
+    object is a continuum source and either automatically find the object, or
+    specify the location and width of the continuum source.  Below are example
+    one-line entries and what they mean:
+
+    1. Skip sky subtraction for this particular object image:
+
+        * kr230925_00075.fits skip
+
+    2. Point to a different image for the sky (this assumes the \*_sky.fits
+    image has already been generated previously:
+
+        * kr230925_00075.fits kr230925_00076.fits
+
+    3. Indicate that a mask file should be used to mask object flux when
+    deriving the sky model (see kcwi_masksky_ds9.py):
+
+        * kr230925_00075.fits kr230925_00075_smsk.fits
+
+    4. Indicate that this is a bright continuum source and automatically mask
+    the continuum source from the sky model:
+
+        * kr230925_00075.fits cont
+
+    5. Indicate that this is a faint continuum source and specify the location
+    and the width of the continuum source (in pixels):
+
+        * kr230925_00075.fits cont 45.0 7.6
+
+    If no `kcwi.sky` file exists, or there is no entry for the input object
+    frame, then the entire image is used to generate the sky model.
+
+    It is good practice to run all the data through first, then inspect the
+    sky subtraction and see which frames will benefit from masking or from a
+    dedicated sky observation.
+
+    If a sky model is generated, the routine will write out a \*_sky.fits image
+    and add a sky entry in the proc table.
+
+    """
 
     def __init__(self, action, context):
         BaseImg.__init__(self, action, context)
@@ -25,7 +74,6 @@ class MakeMasterSky(BaseImg):
     def _pre_condition(self):
         """
         Checks if we can create a master sky
-        :return:
         """
         self.logger.info("Checking precondition for MakeMasterSky")
 

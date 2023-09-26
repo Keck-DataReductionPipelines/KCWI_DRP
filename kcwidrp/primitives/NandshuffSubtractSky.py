@@ -8,6 +8,24 @@ from astropy.nddata import CCDData
 
 
 class NandshuffSubtractSky(BasePrimitive):
+    """
+    Locate object and sky panels and perform a nod-and-shuffle sky subtraction.
+
+    With a nod-and-shuffle observation, the resulting image will have a sky and
+    an object panel with interleaved exposures of the same total duration.  This
+    routine identifies those panels and does a subtraction that should eliminate
+    the sky accurately, as long as the interleaving occurs at a rate that tracks
+    the changes in sky throughout the exposure.
+
+    Writes out a \*_obj.fits and \*_sky.fits image with the panels aligned, but
+    not subtracted.  These are subsequently processed through the pipeline to
+    allow the confirmation that resulting features are not the result of sky
+    subtraction.
+
+    Also writes out the sky-subtracted image in a \*_intk.fits image and adds
+    an entry in the proc table.
+
+    """
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
@@ -16,7 +34,6 @@ class NandshuffSubtractSky(BasePrimitive):
     def _pre_condition(self):
         """
         Checks if it is a nod-and-shuffle observation
-        :return:
         """
         self.logger.info("Checking precondition for NandshuffSubtractSky")
         if self.action.args.nasmask and self.action.args.numopen > 1:
