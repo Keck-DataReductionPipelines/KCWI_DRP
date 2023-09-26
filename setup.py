@@ -16,8 +16,8 @@ conf.read(['setup.cfg'])
 metadata = dict(conf.items("metadata"))
 options = dict(conf.items("options"))
 
-NAME = 'kcwidrp'
-VERSION = '1.0.2'
+NAME = metadata['name']
+VERSION = metadata['version']
 RELEASE = 'dev' not in VERSION
 AUTHOR = metadata["author"]
 AUTHOR_EMAIL = metadata["author_email"]
@@ -52,23 +52,28 @@ setup(name=NAME,
                                 'data/extin/*', 'data/stds/*']},
       scripts=scripts,
       entry_points=entry_points,
-      install_requires=['scikit-image~=0.16.2',
+      install_requires=[
+                        'scikit-image~=0.16.2',
                         'astropy~=4.0',
+                        'astroscrappy~=1.1.0',
                         'ccdproc~=2.2.0',
                         'numpy~=1.20',
                         'scipy~=1.4.1',
+                        'pyerfa',
                         'bokeh~=2.0.0',
+                        'jinja2==3.0.3',
                         'psutil~=5.7.0',
                         'pytest~=5.4.1',
-                        # 'requests~=2.23.0',
+                        'keckdrpframework',
                         'pandas~=1.0.3',
                         'matplotlib~=3.1.3',
-                        'setuptools~=46.1.1',
+                        'setuptools',
                         'ref_index~=1.0',
-                        'pyregion~=2.0',
+                        'pyregion',
+                        'cython',
                         'selenium',
                         # 'geckodriver',
-                        'phantomjs',
-                        'keckdrpframework'],
+                        'phantomjs'
+                        ],
       python_requires="~=3.7"
       )
