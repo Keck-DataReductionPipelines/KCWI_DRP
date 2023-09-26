@@ -1,0 +1,12 @@
+File Extension,Purpose
+mbias,Master Bias
+marcs,Master Arc
+mdarks,Master Dark
+mobject,Master Object
+mcbars,Master Continuum Bars
+mflat,Master Internal Flat
+sflat,Stacked Internal Flat
+mdome,Master Dome Flat
+sdome,Stacked Dome Flat
+mtwif,Master Twilight Flat
+stwif,Stacked Twilight Flat
