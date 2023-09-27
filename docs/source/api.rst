@@ -145,3 +145,6 @@ Primitives/API
 .. automodule:: kcwidrp.primitives.kcwi_file_primitives
    :members:
 
+.. automodule:: kcwidrp.scripts.kcwi_masksky_ds9
+   :members:
+
