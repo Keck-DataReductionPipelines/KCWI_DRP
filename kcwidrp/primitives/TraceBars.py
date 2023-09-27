@@ -11,7 +11,14 @@ import time
 
 
 class TraceBars(BasePrimitive):
-    """Derive bar traces"""
+    """
+    Derive bar traces
+
+    Using the output from FindBars.py, trace each bar to the top and
+    bottom of the image.  Writes out resulting spatial control points
+    as a FITS table in \*_trace.fits.
+
+    """
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
@@ -174,6 +181,7 @@ class TraceBars(BasePrimitive):
             if self.config.instrument.saveintims:
                 from kcwidrp.primitives.kcwi_file_primitives import \
                     kcwi_fits_writer
+                # TODO: use asympolynomial from geometric.py
                 from skimage import transform as tf
                 # fit transform
                 self.logger.info("Fitting spatial control points")
