@@ -5,7 +5,18 @@ import numpy as np
 
 
 class RectifyImage(BasePrimitive):
-    """Ensure output image has a consistent orientation"""
+    """
+    Ensure output image has a consistent orientation.
+
+    For the BLUE channel, identifies the CCD amplifier configuration and applies
+    the appropriate geometric transformation to produce a consistent orientation
+    independant of amp configuration.  The RED channel is already rectified, so
+    no geometric transformation is required.
+
+    Writes out a \*_int.fits image regardless of which channel is being
+    processed and adds an entry in the proc table.
+
+    """
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)

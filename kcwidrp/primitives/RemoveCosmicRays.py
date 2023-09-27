@@ -6,7 +6,21 @@ from astroscrappy import detect_cosmics
 
 
 class RemoveCosmicRays(BasePrimitive):
-    """Remove cosmic rays and generate a flag image recording their location"""
+    """
+    Remove cosmic rays and generate a flag image recording their location.
+
+    Uses astroscrappy to detect and flag cosmic rays.  Records the number of
+    cosmic ray pixels cleaned in the FITS header keyword NCRCLEAN.
+
+    Uses the following configuration parameters:
+
+        * CRR_MINEXPTIME - exposure time below which no CR cleaning is done.
+        * CRR\_\* - see kcwi.cfg file for parameters controlling CR cleaning.
+
+    Replaces image with CR cleaned image and adds flags indicating where changes
+    were made.
+
+    """
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)

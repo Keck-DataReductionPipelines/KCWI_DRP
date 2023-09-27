@@ -5,6 +5,21 @@ import os
 
 
 class SubtractSky(BasePrimitive):
+    """
+    Subtract sky model from observation.
+
+    Reads in model of sky created in MakeMasterSky.py and subtracts it from
+    observation.  Which model is determined by the `kcwi.sky` file, if present.
+    If not, then the model generated from the observation itself will be used.
+
+    Which master sky was used will be recorded in the header keyword SKYMAST.
+    If a mask file was used to generate the sky model, it will be recorded in
+    SKYMSKF.  If scaling was required prior to subtraction due to differing
+    exposure times of observation and model, the scale value is recorded in
+    SKYSCL.
+
+    Writes out a \*_intk.fits file and adds an entry to the proc file.
+    """
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
@@ -13,7 +28,6 @@ class SubtractSky(BasePrimitive):
     def _pre_condition(self):
         """
         Checks if a master sky exists to subtract
-        :return:
         """
         self.logger.info("Checking precondition for SubtractSky")
         keycom = 'sky corrected?'

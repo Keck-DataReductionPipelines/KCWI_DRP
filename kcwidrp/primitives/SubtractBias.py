@@ -6,7 +6,14 @@ import os
 
 
 class SubtractBias(BasePrimitive):
-    """Subtract master bias frame"""
+    """
+    Subtract the master bias frame.
+
+    Reads in the master bias created by MakeMasterBias.py and performs the
+    subtraction (after verifying amplifier configuration agreement).  Records
+    the processing in the header.
+
+    """
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)

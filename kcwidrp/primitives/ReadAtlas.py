@@ -16,7 +16,26 @@ import time
 
 
 class ReadAtlas(BasePrimitive):
-    """Read in atlas spectrum and derive alignment offset"""
+    """
+    Read in atlas spectrum and derive alignment offset.
+
+    Reads in spectral atlas spectrum of observed arc lamp.  Uses instrument
+    configuration to determine convoution kernel that will match the observed
+    spectrum resolution and applies it.  Then picks a central part of the
+    observed spectrum and tapers the ends and does a cross-correlation to
+    determine the pixel offset that will align the observed and atlas spectra.
+
+    Uses the following configuration parameters:
+
+        * MIDFRAC: what central fraction to use for finding the atlas offset - defaults to 0.3.
+        * TAPERFRAC: how much of the ends to taper off (in case of bright lines at the ends) - defaults to 0.2.
+        * ATOFF: force a specific pixel offset for the atlas - defaults to 0.
+
+    Places convolved atlas spectrum with wavelength scale in the return
+    argument so subsequent processing can use it to fit the observed wavelength
+    scale accurately.
+
+    """
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)

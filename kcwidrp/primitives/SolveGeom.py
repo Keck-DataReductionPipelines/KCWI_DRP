@@ -7,7 +7,24 @@ import pickle
 
 
 class SolveGeom(BasePrimitive):
-    """Solve the overall geometry of the IFU"""
+    """
+    Solve the overall geometry of the IFU.
+
+    Takes individual bar arc spectra and generates a fit for each slice, which
+    contains five bar arc spectra each.  Given that there are only five points
+    in the 'x' or spatial direction and many more in the 'y' or wavelength
+    direction, an asymmetric polynomial is fit with order 2 in the x and order
+    4 in the y directions.  The wavelength coverage of the observation is
+    recorded in parameters with the range that includes all data being in
+    the waveall0 and waveall1 parameters, and the range that includes only
+    good data in wavegood0 and wavegood1 parameters.  The middle of the
+    wavelength range is recorded in the wavemid parameter.
+
+    Forward and inverse transforms, along with all the parameters for the
+    geometric fit are written out as a python pickled dictionary in a
+    \*_geom.pkl file.
+
+    """
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)

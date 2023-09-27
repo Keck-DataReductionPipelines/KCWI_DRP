@@ -11,7 +11,16 @@ import time
 
 
 class SubtractOverscan(BasePrimitive):
-    """Fit overscan region and subtract result from image"""
+    """
+    Determines overscan offset and subtracts it from the image.
+
+    Uses the BIASSEC header keyword to determine where to calculate the overscan
+    offset.  Subtracts the overscan offset and records the value in the header.
+    In addition, performs a polynomial fit and uses the residuals to determine
+    the read noise in the overscan.  Records the overscan readnoise in the
+    header as well.
+
+    """
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)

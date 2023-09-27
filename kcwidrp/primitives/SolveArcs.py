@@ -17,7 +17,22 @@ import time
 
 
 class SolveArcs(BasePrimitive):
-    """Solve the bar arc wavelengths"""
+    """
+    Solve individual bar arc spectra for wavelength.
+
+    For each bar, identifies the atlas lines found in GetAtlasLines.py in the
+    observed spectrum and use the pixel positions along with the atlas
+    wavelengths to determine the wavelength solution for the bar.
+
+    Uses the following configuration parameters:
+
+        * FRACMAX: fraction of line maximum to use for fitting peak.  Defaults to 0.5 for BLUE and 0.25 for RED.
+        * LINETHRESH: the threshhold intensity for finding observed lines. Defaults to 100 for BLUE and 10 for RED (can also be set on the command line).
+
+    Outputs diagnostic plots of the fitting and stores the coefficients for
+    later use.
+
+    """
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)

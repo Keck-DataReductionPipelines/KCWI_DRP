@@ -5,7 +5,13 @@ import os
 
 
 class SubtractDark(BasePrimitive):
-    """Subtract master dark frame"""
+    """
+    Subtract the master dark frame.
+
+    Checks for existence of master dark frame and, if it exists, performs
+    subtraction and records processing in the header.
+
+    """
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)

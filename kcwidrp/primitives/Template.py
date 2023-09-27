@@ -4,7 +4,7 @@ from keckdrpframework.models.arguments import Arguments
 
 class Template(BasePrimitive):
     """
-    Generic template primitive routine.
+    Generic template for primitive routines.
     """
 
     def __init__(self, action, context):

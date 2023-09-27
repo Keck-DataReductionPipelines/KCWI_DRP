@@ -10,7 +10,20 @@ import time
 
 
 class SubtractScatteredLight(BasePrimitive):
-    """Subtract scattered light between slices"""
+    """
+    Subtract scattered light between slices.
+
+    Uses the centeral, un-illuminated part of the image to generate a model of
+    the scattered light.  Subtract this model from the entire image.
+
+    Uses the following configuration parameter:
+
+        * skipscat: set to ``True`` to skip scattered light subtraction. Defaults to ``False``.
+
+    Writes out a \*_intd.fits file regardless if scattered light is subtracted
+    or not.
+
+    """
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)

@@ -10,7 +10,14 @@ from astropy.io import fits as pf
 
 
 class SolveAIT(BasePrimitive):
-    """Solve the AIT data of the IFU"""
+    """
+    Solve the AIT data of the IFU.
+
+    This routine was only used during KCRM AIT at Caltech when we only had three
+    bars to work with.  It is here only in case there is a need to reprocess the
+    AIT data.
+
+    """
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
