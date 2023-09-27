@@ -37,7 +37,8 @@ release = '1.0'
 extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.napoleon',
               'sphinx.ext.autodoc',
-              'sphinx.ext.viewcode'
+              'sphinx.ext.viewcode',
+              'sphinx_automodapi.automodapi'
               ]
 napoleon_numpy_docstring = True
 # autosummary_generate = False
