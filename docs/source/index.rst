@@ -57,6 +57,7 @@ More information
 
    pipeline_concepts
    api
+   api_test
 
 Developers
 ==========
