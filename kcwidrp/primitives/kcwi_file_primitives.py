@@ -1100,6 +1100,15 @@ def write_table(output_dir=None, table=None, names=None, comment=None,
     """
     Write out FITS table.
 
+    Args:
+        output_dir (str): output directory for table.
+        table (list of arrays): each array in list should have the same size.
+        names (list of str): one for each column in `table`.
+        comment (string): text for FITS COMMENT header record.
+        keywords (FITS keyword dict): for FITS header records.
+        output_name (str): name for output table.
+        clobber (bool): set to to ``True`` to overwrite existing table.
+
     Raises:
         FileExistsError: if cannot overwrite file or
         OSError: if some other access exception occurred.
