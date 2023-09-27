@@ -8,9 +8,18 @@ class CorrectGain(BasePrimitive):
     Convert raw data numbers to electrons.
 
     Uses the ATSECn FITS header keywords to divide image into amp regions and
-    then corrects each region with the corresponding GAINn keyword.
+    then corrects each region with the corresponding GAINn keyword.  Updates the
+    following FITS header keywords:
 
-    Sets the BUNIT header keyword to `electron`.
+        * GAINCOR: sets to ``True`` if operation performed.
+        * BUNIT: sets to `electron`.
+        * HISTORY: records the operation.
+
+    Uses the following configuration parameter:
+
+        * saveintims: if set to ``True`` write out a \*_gain.fits file with gain corrected.  Default is ``False``.
+
+    Updates image in returned arguments.
 
     """
 

@@ -9,8 +9,16 @@ class FlagSaturation(BasePrimitive):
     Flag saturated pixels.
 
     Currently flags pixels with values > 60,000 counts with a value of 8
-    in the flags FITS extension and updates the FITS header with a count
-    of saturated pixels in the header keyword NSATFLAG.
+    in the flags FITS extension and updates the following FITS header keywords:
+
+        * SATFLAG: set to ``True`` if operation is performed.
+        * NSATFLAG: set to the count of saturated pixels.
+
+    Uses the following configuration parameter:
+
+        * saveintims: if set to ``True`` write out a flagged version of image in \*_fsat.fits.  Defaults to ``False``.
+
+    Updates the flag extension of the image in the returned arguments.
 
     """
 

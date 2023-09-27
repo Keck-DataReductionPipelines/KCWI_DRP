@@ -12,8 +12,17 @@ class CorrectDefects(BasePrimitive):
     Remove known bad columns.
 
     Looks for a defect list file in the data directory of kcwidrp based on the
-    CCD ampmode and x and y binning.  Keeps track of the number of pixels
-    cleaned.
+    CCD ampmode and x and y binning.  Records the defect correction in the
+    FITS header with the following keywords:
+
+        * BPFILE: the bad pixel file used to correct defects
+        * NBPCLEAN: the number of bad pixels cleaned
+
+    Uses the following configuration parameter:
+
+        * saveintims: if set to ``True`` write out a \*_def.fits file with defects corrected.  Default is ``False``.
+
+    Updates image in returned arguments.
 
     """
 

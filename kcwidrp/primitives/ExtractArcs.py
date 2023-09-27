@@ -17,7 +17,13 @@ class ExtractArcs(BasePrimitive):
 
     Reads in traces from continuum bars and then uses them to extract spectra
     along each trace.  Also performs a background subtraction for each extracted
-    spectrum.
+    spectrum.  Adds a HISTORY record to the FITS header.
+
+    Uses the following configuration parameter:
+
+        * saveintims: if set to ``True`` write out a warped version of arc image in \*_warped.fits.  Defaults to ``False``.
+
+    Adds extracted arcs to returned arguments.
 
     """
 
@@ -146,13 +152,15 @@ class ExtractArcs(BasePrimitive):
                 arcs.append(arc)
                 bars.append(bar)
         else:
-            transformation = tf.estimate_transform(
+            # fit transform
+            # NOTE: we do not need an asymmetric polynomial for this
+            # global fit (only for per slice fitting: see SolveGeom.py)
+            tform = tf.estimate_transform(
                 'polynomial', self.action.args.source_control_points,
                 self.action.args.destination_control_points, order=3)
 
             self.logger.info("Transforming arc image")
-            warped_image = tf.warp(self.action.args.ccddata.data,
-                                   transformation)
+            warped_image = tf.warp(self.action.args.ccddata.data, tform)
             # Write warped arcs if requested
             if self.config.instrument.saveintims:
                 from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer

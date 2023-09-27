@@ -5,7 +5,24 @@ import numpy as np
 
 
 class TrimOverscan(BasePrimitive):
-    """Trim off overscan region"""
+    """
+    Trim overscan region from image.
+
+    Uses the data section (DSECn header keyword) to determine how to trim the
+    image to exclude the overscan region.
+
+    Removes raw section keywords, ASECn, BSECn, CSECn, and DSECn after trimming
+    and replaces them with the ATSECn keyword giving the image section in the
+    trimmed image for each amplifier.
+
+    Uses the following configuration parameter:
+
+        * saveintims: if set to ``True`` write out the trimmed image as \*_trim.fits.  Default is ``False``.
+
+    If the input image is a bias frames, writes out a \*_intb.fits file,
+    otherwise, just updates the image in the returned arguments.
+
+    """
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)

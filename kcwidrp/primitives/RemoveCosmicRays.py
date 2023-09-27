@@ -9,16 +9,20 @@ class RemoveCosmicRays(BasePrimitive):
     """
     Remove cosmic rays and generate a flag image recording their location.
 
-    Uses astroscrappy to detect and flag cosmic rays.  Records the number of
-    cosmic ray pixels cleaned in the FITS header keyword NCRCLEAN.
+    Uses astroscrappy to detect and flag cosmic rays.  Updates the following
+    FITS header keywords:
+
+        * CRCLEAN: set to ``True`` if operation performed.
+        * NCRCLEAN: set to the number of cosmic ray pixels cleaned.
 
     Uses the following configuration parameters:
 
+        * saveintims: if set to ``True`` write out a CR cleaned version of image in \*_crr.fits.  Defaults to ``False``.
         * CRR_MINEXPTIME - exposure time below which no CR cleaning is done.
         * CRR\_\* - see kcwi.cfg file for parameters controlling CR cleaning.
 
-    Replaces image with CR cleaned image and adds flags indicating where changes
-    were made.
+    Updates image in returned arguments with CR cleaned image and adds flags
+    indicating where changes were made.
 
     """
 
