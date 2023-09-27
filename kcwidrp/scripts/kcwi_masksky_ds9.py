@@ -1,26 +1,3 @@
-"""Creates mask image from ds9 region file.
-
-Args:
-    imagename (string): The name of a *_intf.fits image
-    regionname (string): The name of a ds9 region file
-
-Returns:
-    None
-
-Note:
-    To use this routine, process your data with kcwi_stage4flat.pro.
-    Then display the target *_intf.fits file in ds9.
-    Use region shapes to indicate non-sky pixels in image (box, circle, etc.).
-    Write out ds9 region file (*.reg).
-    Run this routine:
-
-    python ~/kderp/devel/kcwi_masksky_ds9.py kb180101_00111_intf.fits ds9.reg
-
-    (replace paths/filenames with your local paths/filenames)
-
-    This should create kb180101_00111_smsk.fits, which will be used when you
-    run kcwi_stage5sky.pro.
-"""
 from astropy.io import fits as pf
 import pyregion
 
@@ -30,6 +7,28 @@ import os
 
 
 def main():
+    """Creates mask image from ds9 region file.
+
+    To use this routine, process your data with default sky subtraction. Then
+    display the target \*_intf.fits file in ds9. Use region shapes to indicate
+    non-sky pixels in image (box, circle, etc.). Write out ds9 region file
+    (\*.reg). Then run this routine:
+
+        * ``python ~/kderp/devel/kcwi_masksky_ds9.py kb180101_00111_intf.fits ds9.reg``
+
+    (replace paths/filenames with your local paths/filenames)
+
+    This should create kb180101_00111_smsk.fits, which will be used when you
+    re-run the pipeline.
+
+    Args:
+        imagename (string): The name of a \*_intf.fits image
+        regionname (string): The name of a ds9 region file
+
+    Returns:
+        None
+
+    """
     # check args
     narg = len(sys.argv)
 
