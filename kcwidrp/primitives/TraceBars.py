@@ -19,7 +19,7 @@ class TraceBars(BasePrimitive):
 
     Uses the following configuration parameter:
 
-        * saveintims: if set to ``True`` write out a warped version of bars image.  Defaults to ``False``.
+        * saveintims: if set to ``True`` write out a warped version of bars image in \*_warped.fits.  Defaults to ``False``.
 
     Writes out resulting spatial control points as a FITS table in
     \*_trace.fits.
@@ -187,14 +187,14 @@ class TraceBars(BasePrimitive):
             if self.config.instrument.saveintims:
                 from kcwidrp.primitives.kcwi_file_primitives import \
                     kcwi_fits_writer
-                import kcwidrp.primitives.geometric as tf
-                from skimage import transform as skim_tf
+                from skimage import transform as tf
                 # fit transform
+                # NOTE: we do not need an asymmetric polynomial for this
+                # global fit (only for per slice fitting: see SolveGeom.py)
                 self.logger.info("Fitting spatial control points")
-                tform = tf.estimate_transform('asympolynomial', src, dst,
-                                              order=(2, 4))
+                tform = tf.estimate_transform('polynomial', src, dst, order=3)
                 self.logger.info("Transforming bars image")
-                warped = skim_tf.warp(self.action.args.ccddata.data, tform)
+                warped = tf.warp(self.action.args.ccddata.data, tform)
                 # write out warped image
                 self.action.args.ccddata.data = warped
                 kcwi_fits_writer(
