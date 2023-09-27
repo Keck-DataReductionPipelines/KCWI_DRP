@@ -14,9 +14,15 @@ class TraceBars(BasePrimitive):
     """
     Derive bar traces
 
-    Using the output from FindBars.py, trace each bar to the top and
-    bottom of the image.  Writes out resulting spatial control points
-    as a FITS table in \*_trace.fits.
+    Using the output from FindBars.py, trace each bar to the top and bottom of
+    the image.
+
+    Uses the following configuration parameter:
+
+        * saveintims: if set to ``True`` write out a warped version of bars image.  Defaults to ``False``.
+
+    Writes out resulting spatial control points as a FITS table in
+    \*_trace.fits.
 
     """
 
@@ -181,13 +187,14 @@ class TraceBars(BasePrimitive):
             if self.config.instrument.saveintims:
                 from kcwidrp.primitives.kcwi_file_primitives import \
                     kcwi_fits_writer
-                # TODO: use asympolynomial from geometric.py
-                from skimage import transform as tf
+                import kcwidrp.primitives.geometric as tf
+                from skimage import transform as skim_tf
                 # fit transform
                 self.logger.info("Fitting spatial control points")
-                tform = tf.estimate_transform('polynomial', src, dst, order=3)
+                tform = tf.estimate_transform('asympolynomial', src, dst,
+                                              order=(2, 4))
                 self.logger.info("Transforming bars image")
-                warped = tf.warp(self.action.args.ccddata.data, tform)
+                warped = skim_tf.warp(self.action.args.ccddata.data, tform)
                 # write out warped image
                 self.action.args.ccddata.data = warped
                 kcwi_fits_writer(
