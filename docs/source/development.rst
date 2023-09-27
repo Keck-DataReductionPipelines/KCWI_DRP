@@ -12,7 +12,6 @@ There are three persistent branches in the KCWI_DRP repo:
 
 - ``master`` (default): This branch contains the current release version of the code, and provides the source used to build the package for ``conda`` and  ``pip``. 
 - ``develop``: This branch contains new features and non-essential fixes. It should be stable at all times. A new release is triggered by this branch being merged into ``master``. Any new code should be added to this branch.
-- ``documentation``: This branch contains the documentation. Any new features or changes should be recorded here. For instructions on updating the docs, see the Updating Documentation page.
 
 When adding new code, please do your development in a branch off of ``develop``:
 
@@ -59,7 +58,7 @@ Merging ``develop`` into ``master``
 
 At the developer's discretion, ``develop`` will be merged into ``master``, which
 will signify a new sub-release. The version number should be incremented in
-``develop``, and a summary of changes should be added to CHANGES.rst. Then,
+``develop``, and a summary of changes should be added to changelog.txt. Then,
 issue and accept a pull request from ``develop`` into ``master``.
 
 Building for Release
@@ -74,7 +73,7 @@ Pip
 
 In order to upload to pip, you will need access to a PyPI account with
 owndership status for the kcwidrp project. For access to the KeckDRPs account,
-ask `Max <mbrodheim@keck.hawaii.edu>`_ or `Luca <lrizzi@keck.hawaii.edu>`_.
+ask `Max <mbrodheim@keck.hawaii.edu>`_ or the `DSI Team <dis-team@keck.hawaii.edu>`_.
 
 After your pull request is merged into master, download the changes:
 
