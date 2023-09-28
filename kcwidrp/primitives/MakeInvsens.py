@@ -330,6 +330,12 @@ class MakeInvsens(BasePrimitive):
         wlm1 = wgoo1
         # interactively set wavelength limits
         if self.config.instrument.plot_level >= 1:
+            print("CHECKING WAVELENGTH LIMITS")
+            print("Current WL limits: %.1f - %.1f Angstroms "
+                  "(blue vertical lines)" % (wlm0, wlm1))
+            print("A <cr> will accept current values, "
+                  "or enter new values to avoid edge problems (if present).")
+            print("Hover the cursor over spectrum to find wavelengths.")
             # yran = [np.min(obsspec), np.max(obsspec)]
             yran = [np.min(obsspec[wl_good]), np.max(obsspec[wl_good])]
             source = ColumnDataSource(data=dict(x=w, y=obsspec))
@@ -352,8 +358,7 @@ class MakeInvsens(BasePrimitive):
                 p.line([cwv, cwv], yran, line_color='red', legend_label='CWAV')
                 set_plot_lims(p, xlim=[wall0, wall1], ylim=yran)
                 bokeh_plot(p, self.context.bokeh_session)
-                print("WL limits: %.1f - %.1f" % (wlm0, wlm1))
-                qstr = input("New? <float> <float>, <cr> - done: ")
+                qstr = input("New values? <float> <float> (or <cr> - done): ")
                 if len(qstr) <= 0:
                     done = True
                 else:
@@ -374,12 +379,14 @@ class MakeInvsens(BasePrimitive):
         # END: interactively set wavelength limits
         # Look for mask data file
         # first in local directory
-        lmfile = os.path.basename(stdfile).split('.fits')[0] + '.lmsk'
-        if not os.path.exists(lmfile):
+        local_lmfile = os.path.basename(stdfile).split('.fits')[0] + '.lmsk'
+        if not os.path.exists(local_lmfile):
             # then in stds directory
             lmfile = stdfile.split('.fits')[0] + '.lmsk'
             if not os.path.exists(lmfile):
                 lmfile = None
+        else:
+            lmfile = local_lmfile
         # if we found a mask file, read it in
         if lmfile is None:
             self.logger.info("No line mask file found")
@@ -409,6 +416,15 @@ class MakeInvsens(BasePrimitive):
         if self.config.instrument.plot_level >= 1:
             yran = [np.min(obsspec[wl_good]), np.max(obsspec[wl_good])]
             # source = ColumnDataSource(data=dict(x=w, y=obsspec))
+            print("MASKING ABSORPTION LINES")
+            print("To mask, enter starting and stopping wavelengths "
+                  "followed by an optional comment (string) for each line "
+                  "you want to mask.")
+            print("Current masks are shown as vertical dashed yellow lines.")
+            print("Hover the cursor over spectrum to find wavelengths.")
+            print("Mask values and comments are saved to this file: %s." %
+                  local_lmfile)
+            print("A <cr> with no line limits will accept current masks.")
             done = False
             while not done:
                 p = figure(
@@ -434,8 +450,8 @@ class MakeInvsens(BasePrimitive):
                                line_dash='dashed')
                 set_plot_lims(p, xlim=[wall0, wall1], ylim=yran)
                 bokeh_plot(p, self.context.bokeh_session)
-                qstr = input("Mask line: wavelength (A) start stop comment "
-                             "<float> <float> <str> (A), <cr> - done: ")
+                qstr = input("Mask line: wavelength start stop (Ang) comment "
+                             "(str) <float> <float> <str> ( <cr> - done: ")
                 if len(qstr) <= 0:
                     done = True
                 else:
