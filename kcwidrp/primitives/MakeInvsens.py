@@ -416,7 +416,7 @@ class MakeInvsens(BasePrimitive):
         if self.config.instrument.plot_level >= 1:
             yran = [np.min(obsspec[wl_good]), np.max(obsspec[wl_good])]
             # source = ColumnDataSource(data=dict(x=w, y=obsspec))
-            print("MASKING ABSORPTION LINES")
+            print("MASKING SHARP FEATURES: ABSORPTION LINES/COSMIC RAYS")
             print("To mask, enter starting and stopping wavelengths "
                   "followed by an optional comment (string) for each line "
                   "you want to mask.")
@@ -479,8 +479,8 @@ class MakeInvsens(BasePrimitive):
                     if len(lm['com']) == 0:
                         lmf.write("%.2f %.2f\n" % (lm['w0'], lm['w1']))
                     else:
-                        lmf.write("%.2f %.2f # %s" % (lm['w0'], lm['w1'],
-                                                      lm['com']))
+                        lmf.write("%.2f %.2f # %s\n" % (lm['w0'], lm['w1'],
+                                                        lm['com']))
         # set up fitting vectors, flux, waves, measure errors
         sf = invsen[wl_good]   # dependent variable
         af = earea[wl_good]    # effective area
