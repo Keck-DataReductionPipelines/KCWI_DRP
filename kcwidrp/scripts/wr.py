@@ -6,8 +6,90 @@ else:
     import pyfits as pf
 
 
+def wr_main():
+    """
+    Generate summary log and group list files for RED channel images.
+
+    Call get_log_string to create summary entry for each image and group them
+    according to processing group.  Write out unique processing group lists
+    in \*.txt files.  These files can be input to the pipeline with the -l
+    command line parameter to allow processing of groups one at a time.  For
+    example, 2x2 Red biases taken with the L2U2 amp configuration with slow
+    readout and high gain will end up in the file bias2x2TUP01.txt.  A master
+    bias can be created by issuing the following command:
+
+        * reduce_kcwi -r -l bias2x2L2U201.txt
+
+    These group files are generated for continuum bars, arcs, flats, and all
+    objects.  Always good to type out the list file before processing it.
+
+    Examples:
+
+        >>> wr kr*.fits > whatr.list
+
+        This will generate a summary log file along with associated group list
+        files that can be used as inputs to the `reduce_kcwi` command with the
+        `-l` parameter.  An example of the resulting \*.txt files is below::
+
+            SN2023ixf2x2MedRL8000.txt     bias2x2L2U201.txt
+            allr.txt                      cbars2x2MedRL_8000_5.0.txt
+            arcs2x2MedRLFeAr8000_2.5.txt  cflat2x2MedRL_8000_5.0.txt
+            arcs2x2MedRLThAr8000_2.5.txt  dflat2x2MedRL_8000_20.0.txt
+            bd26d26062x2MedRL8000.txt
+
+        One can proceed through processing steps like this:
+
+        >>> reduce_kcwi -r -l bias2x2L2U201.txt
+        >>> reduce_kcwi -r -l cbars2x2MedRL_8000_5.0.txt
+        >>> reduce_kcwi -r -l arcs2x2MedRlThAr8000_2.5.txt
+        >>> reduce_kcwi -r -l cflat2x2MedRL_8000_5.0.txt
+        >>> reduce_kcwi -r -l bd26d26062x2MedRL8000.txt
+        >>> reduce_kcwi -r -l SN2023ixf2x2MedRL8000.txt
+
+    """
+    import sys
+
+    if len(sys.argv) < 2:
+        print("Usage - wr <fspec>")
+    else:
+        configs = []
+        fnames = {"allr": []}
+        for ifl in sys.argv[1:]:
+            logstr, cfgstr, lsfn = get_log_string(ifl, batch=True)
+            print(logstr)
+            fnames['allr'].append(ifl)
+            if lsfn:
+                if lsfn in fnames:
+                    fnames[lsfn].append(ifl)
+                else:
+                    fnames[lsfn] = [ifl]
+            if cfgstr:
+                configs.append(cfgstr)
+        # Unique configs
+        uconfigs = sorted(set(configs))
+        print("Number of unique configurations = %d" % len(uconfigs))
+        for c in uconfigs:
+            print(c)
+
+        for cal in fnames:
+            with open(cal+".txt", 'w') as cal_list:
+                for f in fnames[cal]:
+                    cal_list.write(f + "\n")
+
+
 def get_cal_list_file(hdr):
-    """Return list file name given configuration in header"""
+    """
+    Return list file name given configuration in header.
+
+    Generates the group file name apropriate for the input image header.
+
+    Args:
+        hdr (FITS header): the current image header
+
+    :returns:
+        (str): group filename
+
+    """
 
     fpre = {"ARCLAMP": "arcs", "CONTBARS": "cbars", "FLATLAMP": "cflat",
             "DOMEFLAT": "dflat", "TWIFLAT": "tflat"}
@@ -44,6 +126,21 @@ def get_cal_list_file(hdr):
 
 
 def get_log_string(ifile, batch=False):
+    """
+    Generate log entry from RED FITS header keywords.
+
+    Attempt to encapsulate the instrument configuration for each image by
+    summarizing FITS header keyword values tersely.
+
+    Args:
+        ifile (str): filename of FITS image to summarize
+        batch (bool): set to ``True`` for an abreviated record.  Defaults to ``False``.
+
+    :returns:
+        (str): Configuration summary string for the input FITS image file.
+
+    """
+
     try:
         ff = pf.open(ifile)
     except IOError:
@@ -180,36 +277,5 @@ def get_log_string(ifile, batch=False):
     return lstring, cstr, lfn
 
 
-def main():
-    import sys
-
-    if len(sys.argv) < 2:
-        print("Usage - wr <fspec>")
-    else:
-        configs = []
-        fnames = {"allr": []}
-        for ifl in sys.argv[1:]:
-            logstr, cfgstr, lsfn = get_log_string(ifl, batch=True)
-            print(logstr)
-            fnames['allr'].append(ifl)
-            if lsfn:
-                if lsfn in fnames:
-                    fnames[lsfn].append(ifl)
-                else:
-                    fnames[lsfn] = [ifl]
-            if cfgstr:
-                configs.append(cfgstr)
-        # Unique configs
-        uconfigs = sorted(set(configs))
-        print("Number of unique configurations = %d" % len(uconfigs))
-        for c in uconfigs:
-            print(c)
-
-        for cal in fnames:
-            with open(cal+".txt", 'w') as cal_list:
-                for f in fnames[cal]:
-                    cal_list.write(f + "\n")
-
-
 if __name__ == '__main__':
-    main()
+    wr_main()

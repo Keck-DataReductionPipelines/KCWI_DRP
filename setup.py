@@ -35,8 +35,8 @@ entry_points = {
         "smart_reduce_kcwi = kcwidrp.scripts.smart_reduce_kcwi:main",
         "modhead = kcwidrp.scripts.modhead:main",
         "start_kcwi_rti = kcwidrp.scripts.kcwi_rti:main",
-        "wb = kcwidrp.scripts.wb:main",
-        "wr = kcwidrp.scripts.wr:main"
+        "wb = kcwidrp.scripts.wb:wb_main",
+        "wr = kcwidrp.scripts.wr:wr_main"
     ]}
 
 setup(name=NAME,
