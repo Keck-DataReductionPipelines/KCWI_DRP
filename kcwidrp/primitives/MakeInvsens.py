@@ -396,22 +396,31 @@ class MakeInvsens(BasePrimitive):
                 lmasks_str = lmf.readlines()
             # parse file into mask list
             for lmws in lmasks_str:
+                # Collect header lines
                 if lmws.startswith('#'):
                     lmhdr.append(lmws)
                     continue
+                # Skip blank lines
+                if len(lmws) < 1:
+                    continue
                 try:
                     data = lmws.split('#')[0]
+                    # Parse comment on line
                     if '#' in lmws:
                         comm = lmws.split('#')[1].lstrip()
                     else:
                         comm = ''
+                    # Parse line mask range
                     lm = [float(v) for v in data.split()]
                 except ValueError:
                     print("bad line: %s" % lmws)
                     continue
-                if len(lm) == 2:
+                # Only collect good lines
+                if len(lm) == 2 and lm[0] < lm[1]:
                     lmdict = {'w0': lm[0], 'w1': lm[1], 'com': comm}
                     lmasks.append(lmdict)
+                else:
+                    print("bad line: %s" % lmws)
         # Now interactively identify lines if requested
         if self.config.instrument.plot_level >= 1:
             yran = [np.min(obsspec[wl_good]), np.max(obsspec[wl_good])]
