@@ -91,7 +91,7 @@ intermediate images for diagnosis, and the verbosity level of text output.
  MIDFRAC = -1.0         # Middle fraction or -1 to use default calculation
  ATOFF = 0              # Atlas offset or 0 to use default calculation
  LINELIST = ""          # Optional line list to use instead of generated
- LINETHRESH = 100.      # Line threshhold for fitting
+ LINETHRESH = 100.      # Line threshold for fitting
 
 These adjust the way in which arc line fitting is performed.  In most cases, you
 will not have to adjust these.  For the Red channel, we use these values:

@@ -13,7 +13,7 @@ please make sure to include:
 - Information on the files being processed (date of observation, filenames, frame types, etc)
 - Any steps needed to replicate the issue
 
-We discourage direct email interaction with Staff Astronmers or with the KCWI team.
+We discourage direct email interaction with Staff Astronomers or with the KCWI team.
 
 What can you expect?
 --------------------

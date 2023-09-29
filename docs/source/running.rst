@@ -131,7 +131,7 @@ Other command line options
 
 * ``-p proctable.proc``  When the DRP runs, it keeps track of the files
   processed using a processing table. Normally that table is called
-  ``kcwib.proc`` for the Blue channeld and ``kcwir.proc`` for the Red channel
+  ``kcwib.proc`` for the Blue channel and ``kcwir.proc`` for the Red channel
   and is stored in the current directory. This options is used to
   specify a different file if needed (not recommended).
 

@@ -73,7 +73,7 @@ Pip
 ^^^
 
 In order to upload to pip, you will need access to a PyPI account with
-owndership status for the kcwidrp project. For access to the KeckDRPs account,
+ownership status for the kcwidrp project. For access to the KeckDRPs account,
 ask `Max <mbrodheim@keck.hawaii.edu>`_ or `Luca <lrizzi@keck.hawaii.edu>`_.
 
 After your pull request is merged into master, download the changes:

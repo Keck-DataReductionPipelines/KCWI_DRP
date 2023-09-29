@@ -4,7 +4,7 @@ Known Issues
 
 This page contains a list of known issues related to the pipeline that are not
 currently being worked on. Only issues which cannot be fixed with a new release
-will be added to this list. Wherever possible, a link to relevent GitHub issues
+will be added to this list. Wherever possible, a link to relevant GitHub issues
 will be provided.
 
 Firefox/geckodriver cannot be found
@@ -77,7 +77,7 @@ happens. The logs will look something like ::
     Bar#: 119, Cdisp: 0.2397
 
 This step typically takes anywhere from 30 seconds to several minutes, depending
-on the resources availible to your computer. However, sometimes this step takes
+on the resources available to your computer. However, sometimes this step takes
 upwards of 20 minutes, even on a powerful machine. This appears to be caused by
 a conflict in thread allocation between various packages used by the pipeline,
 although the specifics remain unknown. 
