@@ -377,6 +377,7 @@ class MakeInvsens(BasePrimitive):
             wl_good = [i for i, v in enumerate(w) if wlm0 <= v <= wlm1]
             nwl_good = len(wl_good)
         # END: interactively set wavelength limits
+
         # Look for mask data file
         # first in local directory
         local_lmfile = os.path.basename(stdfile).split('.fits')[0] + '.lmsk'
@@ -396,12 +397,13 @@ class MakeInvsens(BasePrimitive):
                 lmasks_str = lmf.readlines()
             # parse file into mask list
             for lmws in lmasks_str:
+                lmws = lmws.strip()
                 # Collect header lines
                 if lmws.startswith('#'):
                     lmhdr.append(lmws)
                     continue
                 # Skip blank lines
-                if len(lmws) < 1:
+                if len(lmws.strip()) < 1:
                     continue
                 try:
                     data = lmws.split('#')[0]
@@ -460,14 +462,14 @@ class MakeInvsens(BasePrimitive):
                 set_plot_lims(p, xlim=[wall0, wall1], ylim=yran)
                 bokeh_plot(p, self.context.bokeh_session)
                 qstr = input("Mask line: wavelength start stop (Ang) comment "
-                             "(str) <float> <float> <str> ( <cr> - done: ")
+                             "(str) <float> <float> <str> (<cr> - done): ")
                 if len(qstr) <= 0:
                     done = True
                 else:
                     try:
                         newl = {'w0': float(qstr.split()[0]),
                                 'w1': float(qstr.split()[1]),
-                                'com': " ".join(qstr.split()[2:]).lstrip()}
+                                'com': " ".join(qstr.split()[2:]).strip()}
                         # newl = [float(val) for val in qstr.split()]
                     except ValueError:
                         print("bad line: %s" % qstr)
@@ -489,7 +491,7 @@ class MakeInvsens(BasePrimitive):
                         lmf.write("%.2f %.2f\n" % (lm['w0'], lm['w1']))
                     else:
                         lmf.write("%.2f %.2f # %s\n" % (lm['w0'], lm['w1'],
-                                                        lm['com']))
+                                                      lm['com']))
         # set up fitting vectors, flux, waves, measure errors
         sf = invsen[wl_good]   # dependent variable
         af = earea[wl_good]    # effective area
