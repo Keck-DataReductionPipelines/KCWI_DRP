@@ -2,7 +2,7 @@ from keckdrpframework.primitives.base_primitive import BasePrimitive
 from kcwidrp.primitives.kcwi_file_primitives import strip_fname
 import os
 import numpy as np
-from kcwidrp.primitives import geometric as tf
+from kcwidrp.core import geometric as tf
 import pickle
 
 

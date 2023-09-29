@@ -186,8 +186,3 @@ def test_import_WavelengthCorrections():
 
 def test_import_kcwi_file_primitives():
     import kcwidrp.primitives.kcwi_file_primitives
-
-
-def test_import_geometric():
-    import kcwidrp.primitives.geometric
-
