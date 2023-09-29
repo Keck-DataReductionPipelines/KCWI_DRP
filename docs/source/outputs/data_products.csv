@@ -1,4 +1,5 @@
 File Extension,Units,Note
+intb,DN/px,overscan subtracted and trimmed bias
 int,e-/px,reduced output intensity
 intd,e-/px,dark current/scattered light removed
 wavemap,A,wavelength value at pixel
@@ -6,8 +7,8 @@ slicemap,0-23,slice number at pixel
 posmap,0-140,slice position (px) at pixel
 intf,e-/px,instrumental variations removed
 intk,e-/px,sky subtracted
-obj,e-/px,un-sky subtracted image
-sky,e-/px,sky model image
+obj,e-/px,un-sky subtracted object panel (Nod & Shuffle)
+sky,e-/px,sky model image or sky panel (Nod & Shuffle)
 icube,e-/px,geometry corrected data cube
 icubed,e-/px,DAR corrected data cube
 icubew,e-/px,Wavelength corrected data cube

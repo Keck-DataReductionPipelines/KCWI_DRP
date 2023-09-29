@@ -5,7 +5,7 @@ mcbars,Master Continuum Bars,
 mdarks,Master Dark,
 mdome,Master Dome Flat,
 mflat,Master Internal Flat,
-mobject,Master Object,"Only created if multiple exposures of the same target are collected. Can mitigate cosmic rays, in certain situations."
+mobj,Master Object,"Only created if multiple exposures of the same target are collected. Can mitigate cosmic rays, in certain situations."
 mtwif,Master Twilight Flat,
 sdome,Stacked Dome Flat,"Stacked, but un-merged Dome Flat"
 sflat,Stacked Internal Flat,"Stacked, but un-merged Internal Flat"
