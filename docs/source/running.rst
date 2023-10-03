@@ -74,10 +74,11 @@ with the ``-g`` flag.
 Running individual steps
 ------------------------
 
-If you know what you are doing, you can in principle create individual file
+If you know what you are doing, you can, in principle, create individual file
 lists for each reduction step and process them step-wise.  This allows the user
 to check the output and quality of the reduction steps prior to proceeding with
-the next step.  This is facilitated by the `wr` and `wb` scripts.  If
+the next step.  This is facilitated by the :func:`wb <kcwidrp.scripts.wb.wb_main>`
+and :func:`wr <kcwidrp.scripts.wr.wr_main>` scripts.  If
 you run these scripts on your images, they will produce a header listing and
 a set of file lists that can be used to process each step individually.  For
 example:

@@ -9,11 +9,11 @@ The assumption is that you have a directory containing KCWI data, and that the
 names of the files are those assigned at the telescope, ``kb*.fits`` and
 ``kr*.fits``.
 
-Give a quick look at the configuration parameters for the pipeline, contained
+Give a quick look at the :doc:`configuration parameters <configuration>` for the pipeline, contained
 in the file ``kcwidrp/config/kcwi.cfg``.
 
 For a quick start, it is enough to decide if you want to see plots as the
-pipeline runs or not.  This is controlled by two parameters: ``enable_bokeh``
+pipeline runs or not.  This is controlled by :ref:`two parameters <configuration:Plotting parameters>`  ``enable_bokeh``
 and ``plot_level``. For no plotting, disable Bokeh and set the plot level to 0.
 For plotting without interaction, enable Bokeh and set the plot level to 1.
 For interactive plotting (where you have to hit <cr> to proceed after each step)
