@@ -181,3 +181,40 @@ Cosmic rays rejection parameters
 
 These parameters are used to control the CRR algorithms. See the documentation in
 `astroscrappy <https://astroscrappy.readthedocs.io/en/latest/index.html>`_ for details (PROVIDE LINK)
+
+Combining science images
+------------------------
+
+The following parameter controls what is done with science frames, including
+standard star observations.  There is one in each of the ``[BLUE]`` and ``[RED]``
+sections of the parameter file, so you can specify a non-default value for one
+channel at a time.
+
+.. code-block:: python
+
+ object_min_nframes = 1
+
+If you wish to combine images (to mitigate CRs, e.g.), you can set this to the
+number of identically positioned science images that you want to combine.  There
+is an additional step required.  The FITS header keyword GROUPID for the images
+to be combined must be identical.  This can be achieved with any FITS header
+keyword editor.  It is recommended that you combine at least three images to
+have a good chance of mitigating CRs.  In the case that three images are
+combined, the routine :class:`kcwidrp.primitives.MakeMasterObject` will use the
+``median`` method for combining the images.  If there are more than three, it
+will use the ``average`` method.  In both cases, it does a 2-sigma high clip.
+
+A master object file will be output using the base name of the first file in
+the group.  For example:
+
+``kr230605_00119_mobj.fits``
+
+This file will then be processed through the rest of the pipeline and result in
+a combined, calibrated data cube:
+
+``kr230605_00119_icubes.fits``
+
+which should have fewer CRs than an individual frame.  Be aware, however, that if
+you have only three images and use the ``median`` combine methods, the S/N ratio
+will be equivalent to a single exposure.
+
