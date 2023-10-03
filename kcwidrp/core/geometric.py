@@ -5,6 +5,15 @@ Shamelessly pilfered from scikit image _geometric, which contains all the
 transforms in the standard repertoir, but which did not include a 2D polynomial
 transform that could have different orders for X and Y.
 
+The asymmetric polynomial algorithm was ported to Python from the IDL routine,
+mod_polywarp.pro, written by M. Matuszewski.  This routine was part of the
+original IDL KCWI pipeline, which can be found at:
+
+    * https://github.com/Keck-DataReductionPipelines/KcwiDRP
+
+The resulting transform is compatible with the scikit image transform.warp
+function.
+
 """
 import math
 import numpy as np
@@ -251,28 +260,7 @@ class AsymmetricPolynomialTransform(GeometricTransform):
                 dst[:, 0] += self.params[0, pidx] * x ** (j - i) * y ** i
                 dst[:, 1] += self.params[1, pidx] * x ** (j - i) * y ** i
                 pidx += 1
-        """
-        x = coords[:, 0]
-        y = coords[:, 1]
 
-        assert len(self.params) == 2, "Must have both Kx and Ky!"
-
-        kx = self.params[0]
-        ky = self.params[1]
-
-        ordx = kx.shape[0]
-        ordy = kx.shape[1]
-
-        assert ordx == ky.shape[0], "Kx and Ky must have same shape!"
-        assert ordy == ky.shape[1], "Kx and Ky must have same shape!"
-
-        dst = np.zeros(coords.shape)
-
-        for i in range(ordy):
-            for j in range(ordx):
-                dst[:, 0] += kx[i, j] * x ** j * y ** i
-                dst[:, 1] += ky[i, j] * x ** j * y ** i
-        """
         return dst
 
     def inverse(self, coords):
@@ -351,22 +339,3 @@ def estimate_transform(ttype, src, dst, **kwargs):
     tform.estimate(src, dst, **kwargs)
 
     return tform
-
-
-def matrix_transform(coords, matrix):
-    """Apply 2D matrix transform.
-
-    Parameters
-    ----------
-    coords : (N, 2) array
-        x, y coordinates to transform
-    matrix : (3, 3) array
-        Homogeneous transformation matrix.
-
-    Returns
-    -------
-    coords : (N, 2) array
-        Transformed coordinates.
-
-    """
-    return ProjectiveTransform(matrix)(coords)
