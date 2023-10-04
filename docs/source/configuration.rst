@@ -15,7 +15,8 @@ point to that file.
 If you installed the package via ``git``, the master copy of the configuration
 file is in the installation directory, in ``kcwidrp/config/kcwi.cfg``.  This
 file can be modified in place or copied in another directory (the ``-c`` option
-of the main reduction script is used to specify the configuration file).
+of the :ref:`main reduction script <running:Other command line options>` is
+used to specify the configuration file).
 
 The configuration file contains a number of parameters connected to the
 structure of the files and to the specifications of the instrument, e.g., the
@@ -58,10 +59,11 @@ These parameters control the minimum number of bias, internal/dome/twilight
 flats and darks that the DRP expects before producing a master calibration. The
 arcs and contbars minimum numbers are different for the Blue and Red channels as
 described above.  The values shown here are synchronized with the calibration
-scripts that we use in the afternoon.
+scripts that are used at WMKO for afternoon calibrations.
 
 The overscan parameters are based on the configuration of the Blue and Red
-detectors and we do not recommend altering these parameters.
+detectors and we do not recommend altering these parameters, but show them
+here to illustrate that they differ between channels.
 
 .. code-block:: python
 
@@ -71,7 +73,7 @@ detectors and we do not recommend altering these parameters.
 These control scattered light subtraction and sky subtraction.  Setting either
 of these to ``True`` will skip the subtraction for all subsequent runs of the
 pipeline.  Skipping sky subtraction globally can also be invoked by using
-``-k`` on the command line.
+``-k`` on the :ref:`command line <running:Other command line options>`.
 
 .. code-block:: python
 
@@ -93,8 +95,12 @@ intermediate images for diagnosis, and the verbosity level of text output.
  LINELIST = ""          # Optional line list to use instead of generated
  LINETHRESH = 100.      # Line threshold for fitting
 
-These adjust the way in which arc line fitting is performed.  In most cases, you
-will not have to adjust these.  For the Red channel, we use these values:
+These adjust the way in which arc line fitting is performed.  Most of these
+parameters are also available on the
+:ref:`command line <running:Other command line options>`.
+
+In most cases, you will not have to adjust these.  For the Red channel, we use
+these default values:
 
 .. code-block:: python
 
@@ -135,7 +141,7 @@ Plotting parameters
 .. code-block:: python
 
  # BOKEH SERVER
- enable_bokeh = False
+ enable_bokeh = True
  plot_level = 1
 
 These parameters control the plotting features of the DRP. Plotting is
@@ -179,8 +185,9 @@ Cosmic rays rejection parameters
  CRR_CLEANTYPE = "meanmask"
  CRR_NITER = 4
 
-These parameters are used to control the CRR algorithms. See the documentation in
-`astroscrappy <https://astroscrappy.readthedocs.io/en/latest/index.html>`_ for details (PROVIDE LINK)
+These parameters are used to control the CRR algorithms. See the documentation
+in `astroscrappy <https://astroscrappy.readthedocs.io/en/latest/index.html>`_
+for details.
 
 Combining science images
 ------------------------
@@ -215,6 +222,8 @@ a combined, calibrated data cube:
 ``kr230605_00119_icubes.fits``
 
 which should have fewer CRs than an individual frame.  Be aware, however, that if
-you have only three images and use the ``median`` combine methods, the S/N ratio
-will be equivalent to a single exposure.
+you have only three images and use the ``median`` combine method, the S/N ratio
+will be equivalent to a single exposure.  The other frames in the group will not
+be processed beyond the point where they are combined (currently just after
+illumination correction: ``_intf.fits`` creation).
 
