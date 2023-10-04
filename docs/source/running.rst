@@ -130,19 +130,13 @@ Other command line options
   file that is stored in the installation directory in
   ``kcwidrp/config/kcwi.cfg``.
 
-* ``-p proctable.proc``  When the DRP runs, it keeps track of the files
-  processed using a processing table. Normally that table is called
-  ``kcwib.proc`` for the Blue channel and ``kcwir.proc`` for the Red channel
-  and is stored in the current directory. This options is used to
-  specify a different file if needed (not recommended).
+* ``-k`` or ``--skipsky``  Set this to skip sky subtraction for all frames
+  reduced with this command.
 
 * ``-t taper_fraction``  This option allows the user to adjust the taper
   fraction that is used to cross-correlate with the atlas spectrum.  It defaults
   to 0.2 and can be increased if there is a strong line near the edge that is
   throwing off the cross-correlation.
-
-* ``-a atlas_line_list`` Specify an input line list for the atlas instead of
-  generating it on the fly.
 
 * ``-M middle_fraction`` Specify what central fraction to use for the initial
   estimation of the central dispersion.  It defaults to 1/3 of the wavelength
@@ -161,3 +155,13 @@ Other command line options
 * ``-F line_peak_fraction`` Specify the line fitting window threshold in units
   of the peak.  It defaults to 0.5 (Half-max), but can be either extended or
   narrowed as needed.
+
+* ``-a atlas_line_list`` Specify an input line list for the atlas instead of
+  generating it on the fly.
+
+* ``-p proctable.proc``  When the DRP runs, it keeps track of the files
+  processed using a processing table. Normally that table is called
+  ``kcwib.proc`` for the Blue channel and ``kcwir.proc`` for the Red channel
+  and is stored in the current directory. This options is used to
+  specify a different file if needed (not recommended).
+
