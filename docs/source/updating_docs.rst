@@ -25,7 +25,7 @@ If you already have a local copy of the repo, instead make sure you have the lat
 Updating text
 =============
 
-The documentation is contained in ``.rst`` files in the ``documentation``
+The documentation is contained in ``.rst`` files in the ``main``
 branch. New documents can be added to the source directory, and linked to the
 correct section (usually in ``index.rst``).
 
