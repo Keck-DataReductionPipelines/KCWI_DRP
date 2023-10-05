@@ -1,5 +1,5 @@
-Keck Cosmic Web Imager DRP's
-============================
+Keck Cosmic Web Imager Data Reduction Pipeline
+==============================================
 
 KCWI_DRP is a the official data reduction pipeline (DRP) for the Keck Cosmic Web Imager.
 This DRP has been developed by the KCWI team at Caltech in

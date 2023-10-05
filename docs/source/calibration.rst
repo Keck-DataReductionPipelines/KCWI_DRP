@@ -15,7 +15,7 @@ star list to narrow down the list of available standards during your observing
 run, and then examine the plots to be sure that any standard you select
 is well sampled and covers the wavelength range of your configuration.
 
-You can also examine them from this web page by following `this link <https://github.com/Keck-DataReductionPipelines/KCWI_DRP/tree/master/kcwidrp/data/stds>`_.
+You can also examine them from this web page by following `this link <https://github.com/Keck-DataReductionPipelines/KCWI_DRP/tree/kcrm_merge/kcwidrp/data/stds>`_.
 Click on the \*.png files and they should display in your browser with flux
 versus wavelength and the reference samples indicated by plus (+) signs.
 

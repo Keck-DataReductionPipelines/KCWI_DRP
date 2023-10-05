@@ -2,61 +2,56 @@
 Updating documentation
 ======================
 
-The documenation is generated automatically by ReadTheDocs, and triggerd by
-pushing commits to the ``documentation`` branch.
+The documentation is generated automatically by ReadTheDocs, and triggerd by
+pushing commits to the ``main`` branch of the
+`KCWI_DRP-Docs <https://github.com/Keck-DataReductionPipelines/KCWI_DRP-Docs/tree/main>`_ repository.
 
-Note that the entire documentation infrastructure only exists in the
-``documentation`` branch: the ``docs`` directory is not and should not
-be checked into any branch other than the documentaiton branch.
-
-Make sure you are in the ``documentation`` branch at all times when
-updating documentation. If you accidentally make changes to the code
-or to other parts of the repository while in the ``documenation``
-branch, do not push your changes.
-
-If you don't have the ``documentation`` branch in your repository,
-use:
+To update the documentation, first clone the documentation repo:
 
 .. code-block:: bash
 
-    git checkout --track origin/documentation
+    git clone https://github.com/Keck-DataReductionPipelines/KCWI_DRP-Docs.git
     
+If you already have a local copy of the repo, instead make sure you have the latest version:
+
+.. code-block:: bash
+
+   cd KCWI_DRP-Docs
+   git checkout main
+   git pull
+
+
 
 Updating text
 =============
 
-The documentation is contained in ``.rst`` files in the ``documentation``
-branch. The ``docs`` subdirectory is only present in this branch. New documents
-can be added to the source directory, and linked to the correct section (usually
-in ``index.rst``).
+The documentation is contained in ``.rst`` files in the ``main``
+branch. New documents can be added to the source directory, and linked to the
+correct section (usually in ``index.rst``).
+
+Any non-``.rst`` files should be placed in a sub-directory. For example, ``.csv``
+files that describe the data outputs are inside a ``outputs`` directory. Screenshots
+or plots should be placed inside the ``_static`` directory.
 
 Once the new document (or a modified document) is ready, follow this procedure:
 
 
 .. code-block:: bash
 
-   git checkout documentation
+   git checkout main
    git pull
    git add new_document.rst
-   git commit -m "I have added a new document"
+   git commit -m "Description of the new document or change"
    git push
-   git checkout master (or develop or any other working branch)
 
-Keeping the documentation branch up to date
-===========================================
+Legacy Documentation
+====================
 
-Because the documentation uses autodoc methods (such as ``automodule``) to
-extract doc strings from the functions and classes, it is important to keep the
-``documenation`` branch in sync with the master branch (or with any other active
-branch). To to this, follow this procedure:
+It may be the case that specific versions of the documentation should be kept 
+around after the codebase has changed. For example, a copy of the blue-side-only
+documentation is permanently available.
 
-.. code-block:: bash
-
-   git checkout documentation
-   git pull
-   git rebase master (or develop or other active branches)
-   git push --force
-   git checkout master (or develop or other working branches)
-
-   
+To preserve a locked version of the documentation, the documentation source code
+should be put into a separate branch and tagged on GitHub. Then, the `DSI Team <dsi-team@keck.hawaii.edi>`_
+can configure ReadTheDocs to display that branch as a version option.
 
