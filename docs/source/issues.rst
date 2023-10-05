@@ -1,14 +1,36 @@
-============
+==================
+FAQ / Known Issues
+==================
+
+This page contains a list of Frequently asked questions, and known issues related
+the operations of the pipeline that are not likely to be fixed in the short term.
+Only issues which will not be fixed with a new release of the pipeline within 
+around a month will be added to this list. Wherever possible, a link to relevant
+GitHub issues will be provided.
+
+Frequently Asked Questions
+==========================
+
+Why are my output cubes reduced with this pipeline slightly offset from cubes made with the IDL pipeline?
+---------------------------------------------------------------------------------------------------------
+
+This version of the pipeline includes functionality that the IDL pipeline did not,
+notably an air-to-vacuum wavelength correction, and a barycentric wavelength
+correction. These, predictably, result in small but noticable offsets between 
+new and old cubes.
+
+What are all of these output files?
+-----------------------------------
+
+Please reference the :doc:`data_products` page for information on what files are
+produced by the pipeline.
+
+
 Known Issues
 ============
 
-This page contains a list of known issues related to the pipeline that are not
-currently being worked on. Only issues which cannot be fixed with a new release
-will be added to this list. Wherever possible, a link to relevant GitHub issues
-will be provided.
-
 Pipeline Ingests Blue Files as Red, and Vice Versa
-==================================================
+--------------------------------------------------
 
 There is a known bug in the Keck DRP framework that prevents two instances of
 the DRP from running at the same time. This can be inconvenient, as this means
@@ -17,7 +39,7 @@ Until this bug gets fixed, the only solution is to run through your data first
 for one set of blue/red data, then the other.
 
 Firefox/geckodriver cannot be found
-===================================
+-----------------------------------
 
 Error message:
 
@@ -72,7 +94,7 @@ These instructions assume you are using :code:`conda` to manage your environment
         python setup.py install
 
 Massive Slowdown When Calculating Central Dispersion
-====================================================
+----------------------------------------------------
 
 This issue does not throw an error, but can be identified by the logs as it
 happens. The logs will look something like ::
