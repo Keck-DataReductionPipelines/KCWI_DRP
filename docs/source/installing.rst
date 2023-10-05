@@ -35,6 +35,7 @@ The :code:`pip` step will install all the requirements needed for the pipeline.
 
         git clone https://github.com/Keck-DataReductionPipelines/KCWI_DRP.git
         cd KCWI_DRP
+        git checkout kcrm_merge
         pip install .
 
 ..
