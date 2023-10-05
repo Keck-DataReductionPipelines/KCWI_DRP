@@ -7,6 +7,15 @@ currently being worked on. Only issues which cannot be fixed with a new release
 will be added to this list. Wherever possible, a link to relevant GitHub issues
 will be provided.
 
+Pipeline Ingests Blue Files as Red, and Vice Versa
+==================================================
+
+There is a known bug in the Keck DRP framework that prevents two instances of
+the DRP from running at the same time. This can be inconvenient, as this means
+you cannot reduce red and blue side data at the same time on the same machine.
+Until this bug gets fixed, the only solution is to run through your data first
+for one set of blue/red data, then the other.
+
 Firefox/geckodriver cannot be found
 ===================================
 
