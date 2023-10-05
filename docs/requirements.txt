@@ -6,4 +6,4 @@ psutil
 sphinx-automodapi
 sphinx_rtd_theme
 keckdrpframework @ git+https://github.com/Keck-DataReductionPipelines/KeckDRPFramework.git
-kcwidrp @ git+https://github.com/Keck-DataReductionPipelines/KCWI_DRP.git
+kcwidrp @ git+https://github.com/Keck-DataReductionPipelines/KCWI_DRP.git@kcrm_merge
