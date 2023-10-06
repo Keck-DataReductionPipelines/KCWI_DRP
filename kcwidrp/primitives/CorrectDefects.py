@@ -61,7 +61,7 @@ class CorrectDefects(BasePrimitive):
             self.logger.info("Reading defect list in: %s" % full_path)
             defect_table = pd.read_csv(full_path, sep=r'\s+')
             # range of pixels for calculating good value
-            pixel_range_for_good_value = 5
+            pixel_range_for_good_value = 2
             for index, row in defect_table.iterrows():
                 # Get coords and adjust for python zero bias
                 x0 = row['X0'] - 1
@@ -75,10 +75,10 @@ class CorrectDefects(BasePrimitive):
                                   x0-pixel_range_for_good_value:x0])
                     # sample on high side
                     values.extend(self.action.args.ccddata.data[by,
-                                  x1+1:x1+pixel_range_for_good_value+1])
+                                  x1:x1+pixel_range_for_good_value])
                     # get replacement value
                     good_values = np.nanmedian(np.asarray(values))
-                    # Replace baddies with gval
+                    # Replace baddies with good_values
                     for bx in range(x0, x1):
                         self.action.args.ccddata.data[by, bx] = good_values
                         flags[by, bx] += 2
