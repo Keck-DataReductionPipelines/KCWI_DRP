@@ -112,8 +112,16 @@ def check_directory(directory):
 
 
 def main():
-    # This check can be removed once processes are siloed against each other
-    plist = [p for p in psutil.process_iter() if "reduce_kcwi" in p.name()]
+    # This check can be removed once reduce_kcwi processes are siloed against each other
+    plist = []
+    for p in psutil.process_iter():
+        try:
+            if "reduce_kcwi" in p.name():
+                plist.append(p)
+        except psutil.NoSuchProcess:
+            continue
+
+    # plist = [p for p in psutil.process_iter() if "reduce_kcwi" in p.name()]
     if len(plist) > 1:
         print("DRP already running in another process, exiting")
         sys.exit(0)
