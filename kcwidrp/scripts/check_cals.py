@@ -41,7 +41,7 @@ def parse_args():
 
     return parser.parse_args()
 
-def check_cal_type(ccd_frame, setup_frame, targ_type, minimum, logger):
+def check_cal_type(proctab, ccd_frame, setup_frame, targ_type, minimum, logger):
     found_list = proctab.search_proctab(frame=ccd_frame, target_type=targ_type) #target_group=setup_frame['GRPID']
     logger.debug(f"For setup {setup_frame['CID']}, found {len(found_list)} {targ_type} frames, need {minimum}")
     if len(found_list) >= minimum:
@@ -49,7 +49,7 @@ def check_cal_type(ccd_frame, setup_frame, targ_type, minimum, logger):
     else:
         return f"{len(found_list)}, NEEDED {minimum}"
 
-if __name__ == "__main__":
+def main():
 
     # Parse arguments
     args = parse_args()
@@ -142,10 +142,10 @@ if __name__ == "__main__":
             "all_pass": False
             # "STANDARDS" : "UNCHECKED"
         }
-        results["BIAS"] = check_cal_type(ccd_frame, setup_frame, "BIAS", bias_min_frames, logger)
-        results["CONTBARS"] = check_cal_type(ccd_frame, setup_frame, "CONTBARS", cont_min_frames, logger)
-        results["ARCS"] = check_cal_type(ccd_frame, setup_frame, "ARCLAMP", arc_min_frames, logger)
-        results["FLATS"] = check_cal_type(ccd_frame, setup_frame, "FLATLAMP", flat_min_frames, logger)
+        results["BIAS"] = check_cal_type(proctab, ccd_frame, setup_frame, "BIAS", bias_min_frames, logger)
+        results["CONTBARS"] = check_cal_type(proctab, ccd_frame, setup_frame, "CONTBARS", cont_min_frames, logger)
+        results["ARCS"] = check_cal_type(proctab, ccd_frame, setup_frame, "ARCLAMP", arc_min_frames, logger)
+        results["FLATS"] = check_cal_type(proctab, ccd_frame, setup_frame, "FLATLAMP", flat_min_frames, logger)
         results["all_pass"] = (results["BIAS"] == "PASSED" and 
                             results["CONTBARS"] == "PASSED" and
                             results["ARCS"] == "PASSED" and
@@ -171,3 +171,6 @@ if __name__ == "__main__":
         for fail in fails:
             logger.info(pprint.pprint(fail))
 
+
+if __name__ == "__main__":
+    main()
