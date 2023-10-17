@@ -36,7 +36,8 @@ entry_points = {
         "modhead = kcwidrp.scripts.modhead:main",
         "start_kcwi_rti = kcwidrp.scripts.kcwi_rti:main",
         "wb = kcwidrp.scripts.wb:wb_main",
-        "wr = kcwidrp.scripts.wr:wr_main"
+        "wr = kcwidrp.scripts.wr:wr_main",
+        "check_cals = kcwidrp.scripts.check_cals:main"
     ]}
 
 setup(name=NAME,
