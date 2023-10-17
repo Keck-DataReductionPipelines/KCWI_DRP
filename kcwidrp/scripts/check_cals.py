@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 """
 This script scans a given directory and returns a report on whether the cals
 inside the directory meet the minimum requirements needed to reduce the science
@@ -7,7 +9,7 @@ frames found inside. It follows the following logic:
 configurations are needed. This is saved in an internal "Proc table"
 2. Searches for BIAS and CONTBARS frames for needed setups (1x1 and 2x2)
 3. Searches for ARCS in the right wavelength range
-4. Optionally, checks for STANDARDS
+4. Optionally, checks for STANDARDS -- TODO
 """
 
 from pathlib import Path
@@ -15,7 +17,6 @@ import argparse
 import logging
 import warnings
 import pkg_resources
-import pprint
 
 
 from astropy.nddata import CCDData
@@ -23,7 +24,7 @@ from astropy.utils.exceptions import AstropyWarning
 
 from kcwidrp.core.kcwi_proctab import Proctab
 from keckdrpframework.config.framework_config import ConfigClass
-from kcwidrp.core.kcwi_get_std import is_file_kcwi_std
+# from kcwidrp.core.kcwi_get_std import is_file_kcwi_std
 
 
 
@@ -31,12 +32,11 @@ warnings.simplefilter('ignore', category=AstropyWarning)
 
 def parse_args():
 
-    parser = argparse.ArgumentParser(description="DESC")
+    parser = argparse.ArgumentParser(description="Checks a directory of data to see if the OBJECTs within have the required cals.")
 
     parser.add_argument('-d', '--data_dir', dest="data_dir", help="Directory with data in it")
-    parser.add_argument('-f', '--file_pattern', dest="file_glob", default="*.fits")
-    parser.add_argument('-v', '--verbose', dest="verbose", action="store_true")
-    parser.add_argument('-s', '--silent', dest="silent", action="store_true")
+    parser.add_argument('-f', '--file_pattern', dest="file_glob", default="*.fits", help="File pattern to match (e.g. KB*.fits)")
+    parser.add_argument('-v', '--verbose', dest="verbose", action="store_true", help="Print exhaustive information")
     parser.add_argument('-c', '--config', dest="config", type=str, help="KCWI configuration file", default=None)
 
     return parser.parse_args()
@@ -61,8 +61,6 @@ def main():
 
     if args.verbose:
         logger.setLevel("DEBUG")
-    elif args.silent:
-        logger.setLevel("WARNING")
     else:
         logger.setLevel("INFO")
     
@@ -77,23 +75,23 @@ def main():
         config = ConfigClass(args.config, default_section='KCWI')
 
     logger.debug(f"Loaded KCWI config")
-    #pprint.pprint({section: dict(config[section]) for section in config.sections()})
 
 
-
+    # Find files
     logger.debug(f"Looking for files matching {args.data_dir}/{args.file_glob}")
     data_dir = Path(args.data_dir)
 
+    # Set up proc table. Use a dummy logger, since we don't want its messages
     proc_logger = logging.getLogger("proc_logger")
     proctab = Proctab(proc_logger)
     proctab.read_proctab("temp.proc")
 
 
-    # Load all files into a proctable
+    # Load all files into the proctable
     files = list(data_dir.glob(args.file_glob))
     frames = {}
     standards = {}
-    logger.info(f"Found {len(files)} files to process")
+    logger.info(f"Found {len(files)} files to inspect")
     for file in files:
         try:
             frame = CCDData.read(file, unit='adu')
@@ -114,6 +112,7 @@ def main():
             DIDs.add(obj["DID"])
             unique_setups.append(obj)
 
+
     # Log results
     logger.info(f"Found {len(unique_setups)} individual setups")
 
@@ -121,6 +120,7 @@ def main():
     logger.debug(f"{'Config ID': <25}{'Detector ID': <15}{'Camera': <10}{'IFU': <10}{'Grating': <10}{'Grating Angle': <15}{'Central Wavelength': <20}{'Binning': <10}")
     for obj in unique_setups:
         logger.debug(f"{obj['CID']: <25}{obj['DID']: <15}{obj['CAM']: <10}{obj['IFU']: <10}{obj['GRAT']: <10}{obj['GANG']: <15}{obj['CWAVE']: <20}{obj['BIN']: <10}")
+
 
     # Check cals for each setup:
     report = {}
@@ -146,7 +146,7 @@ def main():
         results["CONTBARS"] = check_cal_type(proctab, ccd_frame, setup_frame, "CONTBARS", cont_min_frames, logger)
         results["ARCS"] = check_cal_type(proctab, ccd_frame, setup_frame, "ARCLAMP", arc_min_frames, logger)
         results["FLATS"] = check_cal_type(proctab, ccd_frame, setup_frame, "FLATLAMP", flat_min_frames, logger)
-        results["all_pass"] = (results["BIAS"] == "PASSED" and 
+        results["all_pass"] = bool(results["BIAS"] == "PASSED" and 
                             results["CONTBARS"] == "PASSED" and
                             results["ARCS"] == "PASSED" and
                             results["FLATS"] == "PASSED")
@@ -154,6 +154,7 @@ def main():
         # Check standards:
         # results["STANDARDS"] = ""
         report[setup_frame['CID']] = results
+
 
     # Print results, passes then fails
     passes = []
@@ -169,8 +170,10 @@ def main():
     if len(fails) > 0:
         logger.info("Following setups FAILED:")
         for fail in fails:
-            logger.info(pprint.pprint(fail))
-
+            logger.info(f"{fail}:")
+            for key in report[fail].keys():
+                if key == "all_pass" : continue
+                logger.info(f"\t{key: <10}\t{report[fail][key]: <20}")
 
 if __name__ == "__main__":
     main()
