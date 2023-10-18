@@ -195,7 +195,17 @@ def main():
         # Check the standards list from earlier for matching setups
         matching_standards = standards.get(setup_frame["CID"], None)
         if matching_standards is not None:
-            results["STANDARDS"] = ", ".join(matching_standards["names"])
+            out = {}
+            for (name, file) in zip(matching_standards["names"], matching_standards["files"]):
+                if out.get(name, None):
+                    out[name].append(file)
+                else:
+                    out[name] = [file]
+            out_str = ""
+            for name in out.keys():
+                out_str += f"{name} ({', '.join(out[name])})"
+            # results["STANDARDS"] = ", ".join(matching_standards["names"])
+            results["STANDARDS"] = out_str
             standards_result = True
         else:
             results["STANDARDS"] = "FAILED"
@@ -240,10 +250,10 @@ def main():
             for key in report[fail].keys():
                 if key == "all_pass" : continue
                 logger.info(f"\t{key: <10}\t{report[fail][key]: <20}")
-            logger.info(f"This effects the following OBJECT frames:")
-            logger.info(objects[objects["CID"] == fail]['filename', 'TARGNAME'])
+            logger.info("\n\tThis effects the following OBJECT frames:")
+            logger.info('\t' + str(objects[objects["CID"] == fail]['filename', 'TARGNAME']).replace('\n', '\n\t'))
     else:
-        logger.info("\033[32mNo failures to report.\033[0m:")
+        logger.info("\033[32mNo failures to report.\033[0m")
 
 if __name__ == "__main__":
     main()
