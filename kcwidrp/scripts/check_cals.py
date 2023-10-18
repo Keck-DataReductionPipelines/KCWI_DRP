@@ -120,6 +120,11 @@ def main():
 
     # Load all files into the proctable
     files = list(data_dir.glob(args.file_glob))
+    
+    if len(files) == 0:
+        logger.error("No files found! Exiting...")
+        return
+    
     frames = {}
     logger.info(f"Found {len(files)} files to inspect")
     for file in files:
