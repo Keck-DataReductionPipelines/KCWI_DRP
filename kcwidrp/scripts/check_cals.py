@@ -17,14 +17,14 @@ import argparse
 import logging
 import warnings
 import pkg_resources
-
+import pprint
 
 from astropy.nddata import CCDData
 from astropy.utils.exceptions import AstropyWarning
 
 from kcwidrp.core.kcwi_proctab import Proctab
 from keckdrpframework.config.framework_config import ConfigClass
-# from kcwidrp.core.kcwi_get_std import is_file_kcwi_std
+from kcwidrp.core.kcwi_get_std import kcwi_get_std
 
 
 
@@ -47,7 +47,7 @@ def check_cal_type(proctab, ccd_frame, setup_frame, targ_type, minimum, logger):
     if len(found_list) >= minimum:
         return "PASSED"
     else:
-        return f"{len(found_list)}, NEEDED {minimum}"
+        return f"FAILED: found {len(found_list): <3}, needed {minimum: <3}"
 
 def main():
 
@@ -82,15 +82,14 @@ def main():
     data_dir = Path(args.data_dir)
 
     # Set up proc table. Use a dummy logger, since we don't want its messages
-    proc_logger = logging.getLogger("proc_logger")
-    proctab = Proctab(proc_logger)
+    dummy_logger = logging.getLogger("dummy_logger")
+    proctab = Proctab(dummy_logger)
     proctab.read_proctab("temp.proc")
 
 
     # Load all files into the proctable
     files = list(data_dir.glob(args.file_glob))
     frames = {}
-    standards = {}
     logger.info(f"Found {len(files)} files to inspect")
     for file in files:
         try:
@@ -103,23 +102,38 @@ def main():
     # Get all the unique OBJECT setups:
     objects = proctab.proctab[proctab.proctab["TYPE"] == "OBJECT"]
 
+    standards = {}
     CIDs = set()
     DIDs = set()
     unique_setups = []
     for obj in objects:
+        # See if the setup is unique
         if obj["CID"] not in CIDs or obj["DID"] not in DIDs:
             CIDs.add(obj["CID"])
             DIDs.add(obj["DID"])
             unique_setups.append(obj)
-
+        
+        # While we're here, compile a dict with all standard stars ordered by CID for later
+        stdfile, _ = kcwi_get_std(obj["TARGNAME"], logger=dummy_logger)
+        if stdfile is not None:
+            CID = standards.get(obj["CID"], None)
+            if CID is None:
+                standards[obj["CID"]] = {"files" : [], "names" : []}
+                CID = standards[obj["CID"]]
+            CID["files"].append(obj['filename'])
+            CID["names"].append(obj['TARGNAME'])
 
     # Log results
-    logger.info(f"Found {len(unique_setups)} individual setups")
+    logger.info(f"\nFound {len(unique_setups)} individual setups:")
 
-    logger.debug("Found setups:")
-    logger.debug(f"{'Config ID': <25}{'Detector ID': <15}{'Camera': <10}{'IFU': <10}{'Grating': <10}{'Grating Angle': <15}{'Central Wavelength': <20}{'Binning': <10}")
+    logger.info(f"{'Config ID': <25}{'Detector ID': <15}{'Camera': <10}{'IFU': <10}{'Grating': <10}{'Grating Angle': <15}{'Central Wavelength': <20}{'Binning': <10}{'Standards': <25}")
     for obj in unique_setups:
-        logger.debug(f"{obj['CID']: <25}{obj['DID']: <15}{obj['CAM']: <10}{obj['IFU']: <10}{obj['GRAT']: <10}{obj['GANG']: <15}{obj['CWAVE']: <20}{obj['BIN']: <10}")
+        matching_standards = standards.get(obj["CID"], None)
+        if matching_standards:
+            standards_str = ", ".join(set(matching_standards["names"]))
+        else:
+            standards_str = "NA"
+        logger.info(f"{obj['CID']: <25}{obj['DID']: <15}{obj['CAM']: <10}{obj['IFU']: <10}{obj['GRAT']: <10}{obj['GANG']: <15}{obj['CWAVE']: <20}{obj['BIN']: <10}{standards_str: <25}")
 
 
     # Check cals for each setup:
@@ -139,41 +153,66 @@ def main():
             "CONTBARS" : "UNCHECKED",
             "ARCS" : "UNCHECKED",
             "FLATS" : "UNCHECKED",
-            "all_pass": False
-            # "STANDARDS" : "UNCHECKED"
+            "all_pass": False,
+            "STANDARDS" : "UNCHECKED"
         }
         results["BIAS"] = check_cal_type(proctab, ccd_frame, setup_frame, "BIAS", bias_min_frames, logger)
         results["CONTBARS"] = check_cal_type(proctab, ccd_frame, setup_frame, "CONTBARS", cont_min_frames, logger)
         results["ARCS"] = check_cal_type(proctab, ccd_frame, setup_frame, "ARCLAMP", arc_min_frames, logger)
         results["FLATS"] = check_cal_type(proctab, ccd_frame, setup_frame, "FLATLAMP", flat_min_frames, logger)
+        
+        # Check the standards list from earlier for matching setups
+        matching_standards = standards.get(setup_frame["CID"], None)
+        if matching_standards is not None:
+            results["STANDARDS"] = ", ".join(matching_standards["names"])
+            standards_result = True
+        else:
+            results["STANDARDS"] = "FAILED"
+            standards_result = False
+        
+        # Collate a final "are we good here" boolean for the report
         results["all_pass"] = bool(results["BIAS"] == "PASSED" and 
                             results["CONTBARS"] == "PASSED" and
                             results["ARCS"] == "PASSED" and
-                            results["FLATS"] == "PASSED")
+                            results["FLATS"] == "PASSED" and
+                            standards_result)
         
-        # Check standards:
-        # results["STANDARDS"] = ""
         report[setup_frame['CID']] = results
 
 
     # Print results, passes then fails
     passes = []
     fails = []
+    logger.info("")
+    
+    # Collect the passes and fails into their own lists
     for setup_id in report.keys():
         if report[setup_id]['all_pass']:
             passes.append(setup_id)
         else:
             fails.append(setup_id)
+    
+    # Log info on passes (in green text)
     if len(passes) > 0:
-        logger.info("Following setups PASSED:")
+        logger.info("Following setups \033[32mPASSED\033[0m:")
         logger.info(", ".join(passes))
+        if args.verbose:
+            for p in passes:
+                logger.debug(f"Setup {p} will use the following standard stars:")
+                logger.debug(report[p]["STANDARDS"])
+    
+    # Log info on all the fails (in red text)
     if len(fails) > 0:
-        logger.info("Following setups FAILED:")
+        logger.info("Following setups \033[31mFAILED\033[0m:")
         for fail in fails:
             logger.info(f"{fail}:")
             for key in report[fail].keys():
                 if key == "all_pass" : continue
                 logger.info(f"\t{key: <10}\t{report[fail][key]: <20}")
+            logger.info(f"This effects the following OBJECT frames:")
+            logger.info(objects[objects["CID"] == fail]['filename', 'TARGNAME'])
+    else:
+        logger.info("\033[32mNo failures to report.\033[0m:")
 
 if __name__ == "__main__":
     main()
