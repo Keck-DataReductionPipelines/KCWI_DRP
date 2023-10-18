@@ -41,8 +41,7 @@ def parse_args():
 
     parser = argparse.ArgumentParser(description="Checks a directory of data to see if the OBJECTs within have the required cals.")
 
-    parser.add_argument('-d', '--data_dir', dest="data_dir", help="Directory with data in it")
-    parser.add_argument('-f', '--file_pattern', dest="file_glob", default="*.fits", help="File pattern to match (e.g. KB*.fits)")
+    parser.add_argument('filepaths', help="Files to inspect", nargs="+")
     parser.add_argument('-v', '--verbose', dest="verbose", action="store_true", help="Print exhaustive information")
     parser.add_argument('-c', '--config', dest="config", type=str, help="KCWI configuration file", default=None)
 
@@ -107,10 +106,13 @@ def main():
 
     logger.debug(f"Loaded KCWI config")
 
+    # Prepare to read files
+    files = [Path(file) for file in args.filepaths]
+    if len(files) == 0:
+        logger.error("No files found! Exiting...")
+        return
+    logger.info(f"Found {len(files)} files to inspect")
 
-    # Find files
-    logger.debug(f"Looking for files matching {args.data_dir}/{args.file_glob}")
-    data_dir = Path(args.data_dir)
 
     # Set up proc table. Use a dummy logger, since we don't want its messages
     dummy_logger = logging.getLogger("dummy_logger")
@@ -119,14 +121,7 @@ def main():
 
 
     # Load all files into the proctable
-    files = list(data_dir.glob(args.file_glob))
-    
-    if len(files) == 0:
-        logger.error("No files found! Exiting...")
-        return
-    
     frames = {}
-    logger.info(f"Found {len(files)} files to inspect")
     for file in files:
         try:
             frame = CCDData.read(file, unit='adu')
