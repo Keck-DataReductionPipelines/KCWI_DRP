@@ -8,8 +8,9 @@ frames found inside. It follows the following logic:
 1. Finds all OBJECT frames. It uses these to determine what instrument
 configurations are needed. This is saved in an internal "Proc table"
 2. Searches for BIAS and CONTBARS frames for needed setups (1x1 and 2x2)
-3. Searches for ARCS in the right wavelength range
-4. Optionally, checks for STANDARDS -- TODO
+3. Searches for ARCS and FLATS
+4. Searches for matching standard stars for the setup
+
 """
 
 from pathlib import Path
@@ -17,7 +18,6 @@ import argparse
 import logging
 import warnings
 import pkg_resources
-import pprint
 
 from astropy.nddata import CCDData
 from astropy.utils.exceptions import AstropyWarning
@@ -31,6 +31,13 @@ from kcwidrp.core.kcwi_get_std import kcwi_get_std
 warnings.simplefilter('ignore', category=AstropyWarning)
 
 def parse_args():
+    """Parse arguments passed into this script from the command line
+
+    Returns
+    -------
+    argparse
+        Dict-like object with parsed args
+    """
 
     parser = argparse.ArgumentParser(description="Checks a directory of data to see if the OBJECTs within have the required cals.")
 
@@ -41,7 +48,31 @@ def parse_args():
 
     return parser.parse_args()
 
+
 def check_cal_type(proctab, ccd_frame, setup_frame, targ_type, minimum, logger):
+    """Checks the given proctab for calibrations matching the input frame
+
+    Parameters
+    ----------
+    proctab : Proctab
+        Proccessing table instance to search through
+    ccd_frame : CCDData
+        Astropy CCDData (or kcwidrp KCCDData) object that we want to match cals to
+    setup_frame : astropy.Table row
+        Proctab row corresponding to an OBJECT setup we are looking for
+    targ_type : str
+        Type of calibration being looked for
+    minimum : int
+        Minimum number of this type of cal required
+    logger : logging.Logger
+        Logger for debuging
+
+    Returns
+    -------
+    str
+        String representing the results of the search. PASSED if enough matching cals were found, FAILED otherwise
+    """
+
     found_list = proctab.search_proctab(frame=ccd_frame, target_type=targ_type) #target_group=setup_frame['GRPID']
     logger.debug(f"For setup {setup_frame['CID']}, found {len(found_list)} {targ_type} frames, need {minimum}")
     if len(found_list) >= minimum:
