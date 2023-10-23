@@ -92,7 +92,7 @@ class CorrectDar(BasePrimitive):
         wgoo0 = self.action.args.ccddata.header['WAVGOOD0']
         wgoo1 = self.action.args.ccddata.header['WAVGOOD1']
         wref = self.action.args.ccddata.header['WAVMID']
-        self.logger.info("Ref WL = %.1f, good WL range = (%.1f - %.1f" %
+        self.logger.info("Ref WL = %.1f, good WL range = (%.1f - %.1f)" %
                          (wref, wgoo0, wgoo1))
 
         # spatial scales in arcsec/item

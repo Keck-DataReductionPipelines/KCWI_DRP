@@ -109,6 +109,10 @@ class WavelengthCorrections(BasePrimitive):
 
         wave_air = self.get_wav_axis(obj.header) * u.AA
         wave_vac = self.a2v_conversion(wave_air)
+        cwave_air = wave_air[int(wave_air.shape[0] / 2)]
+        cwave_vac = wave_vac[int(wave_vac.shape[0] / 2)]
+        self.logger.info("Air to Vacuum for (%.3f) gives %.3f" % (cwave_air.value,
+                                                                  cwave_vac.value))
 
         # resample to uniform grid
         cube_new = np.zeros_like(cube)
@@ -175,6 +179,9 @@ class WavelengthCorrections(BasePrimitive):
         sigma_sq = (1.e4/wavelength)**2.  # wavenumber squared
         factor = 1 + (5.792105e-2/(238.0185-sigma_sq)) + \
             (1.67918e-3/(57.362-sigma_sq))
+        rind = factor[int(factor.shape[0] / 2)]
+        rwav = wavelength[int(wavelength.shape[0] / 2)]
+        self.logger.info("Refractive index = %.10f at %.3f Ang" % (rind, rwav))
         # only modify above 2000A
         factor = factor*(wavelength >= 2000.) + 1.*(wavelength < 2000.)
 
@@ -266,6 +273,8 @@ class WavelengthCorrections(BasePrimitive):
 
         wav_old = self.get_wav_axis(obj.header)
         wav_hel = wav_old * (1 + v_tot / 2.99792458e5)
+        cwave_hel = self.action.args.cwave * (1 + v_tot / 2.99792458e5)
+        self.logger.info("Vcorr for CWAVE (%.3f) gives %.3f" % (self.action.args.cwave, cwave_hel))
 
         # resample to uniform grid
         self.logger.info("Resampling to uniform grid")
