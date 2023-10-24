@@ -4,6 +4,8 @@ from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_reader, \
 
 import os
 import ccdproc
+import numpy as np
+from astropy.stats import mad_std
 
 
 class MakeMasterObject(BaseImg):
@@ -56,6 +58,7 @@ class MakeMasterObject(BaseImg):
         """
         args = self.action.args
         method = 'median'   # default for 3 or fewer images
+        sig_up = 2.0        # default upper sigma rejection limit
         suffix = args.new_type.lower()
         log_string = MakeMasterObject.__module__
 
@@ -65,6 +68,8 @@ class MakeMasterObject(BaseImg):
         nstack = len(combine_list)
         if nstack > 3:
             method = 'average'
+
+        self.logger.info("Combining Master Object with method %s" % method)
 
         # get master arc output name
         maname = strip_fname(combine_list[0]) + '_' + suffix + '.fits'
@@ -81,11 +86,14 @@ class MakeMasterObject(BaseImg):
 
             stacked = ccdproc.combine(stack, method=method, sigma_clip=True,
                                       sigma_clip_low_thresh=None,
-                                      sigma_clip_high_thresh=2.0)
+                                      sigma_clip_high_thresh=sig_up,
+                                      sigma_clip_func=np.ma.median,
+                                      sigma_clip_dev_func=mad_std)
             stacked.unit = stack[0].unit
             stacked.header['IMTYPE'] = args.new_type
             stacked.header['NSTACK'] = (nstack, 'number of images stacked')
             stacked.header['STCKMETH'] = (method, 'method used for stacking')
+            stacked.header['STCKSIGU'] = (sig_up, 'Upper sigma rejection for stacking')
             for ii, fname in enumerate(stacko):
                 stacked.header['STACKF%d' % (ii + 1)] = (fname,
                                                          "stack input file")
