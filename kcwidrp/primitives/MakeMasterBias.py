@@ -9,6 +9,7 @@ from bokeh.plotting import figure
 import ccdproc
 import numpy as np
 from scipy.stats import sigmaclip
+from astropy.stats import mad_std
 import time
 import os
 
@@ -57,6 +58,7 @@ class MakeMasterBias(BaseImg):
         Returns an Argument() with the parameters that depends on this operation
         """
         method = 'average'
+        sig_up = 2.0        # default upper sigma rejection limit
         suffix = self.action.args.new_type.lower()
 
         combine_list = list(self.combine_list['filename'])
@@ -79,11 +81,15 @@ class MakeMasterBias(BaseImg):
 
         stacked = ccdproc.combine(stack, method=method, sigma_clip=True,
                                   sigma_clip_low_thresh=None,
-                                  sigma_clip_high_thresh=2.0)
+                                  sigma_clip_high_thresh=sig_up,
+                                  sigma_clip_func=np.ma.median,
+                                  sigma_clip_dev_func=mad_std)
         stacked.header['IMTYPE'] = self.action.args.new_type
         stacked.header['NSTACK'] = (len(combine_list),
                                     'number of images stacked')
         stacked.header['STCKMETH'] = (method, 'method used for stacking')
+        stacked.header['STCKSIGU'] = (sig_up,
+                                      'Upper sigma rejection for stacking')
         for ii, fname in enumerate(stackf):
             fname_base = os.path.basename(fname)
             stacked.header['STACKF%d' % (ii + 1)] = (fname_base,

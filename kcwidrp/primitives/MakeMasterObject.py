@@ -93,7 +93,8 @@ class MakeMasterObject(BaseImg):
             stacked.header['IMTYPE'] = args.new_type
             stacked.header['NSTACK'] = (nstack, 'number of images stacked')
             stacked.header['STCKMETH'] = (method, 'method used for stacking')
-            stacked.header['STCKSIGU'] = (sig_up, 'Upper sigma rejection for stacking')
+            stacked.header['STCKSIGU'] = (sig_up,
+                                          'Upper sigma rejection for stacking')
             for ii, fname in enumerate(stacko):
                 stacked.header['STACKF%d' % (ii + 1)] = (fname,
                                                          "stack input file")
