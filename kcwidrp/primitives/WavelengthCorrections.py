@@ -153,7 +153,7 @@ class WavelengthCorrections(BasePrimitive):
 
                 cube_new[:, j, i] = spec_new
 
-        obj.header['CTYPE3'] = 'WAVE'
+        obj.header['CTYPE3'] = ('WAVE', 'Vacuum Wavelengths')
         obj.data = cube_new
         return obj
 
