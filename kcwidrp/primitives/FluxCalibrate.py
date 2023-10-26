@@ -88,6 +88,7 @@ class FluxCalibrate(BasePrimitive):
                 expt = self.action.args.ccddata.header['TTIME']
                 if expt <= 0:
                     self.logger.warning("No valid exposure time found, using 1s")
+                    expt = 1.0
             # resample onto object waves, if needed
             if w0 != mcw0 or dw != mcdw or wav[-1] != mcwav[-1] or \
                     sz[0] != mcsz[0]:
