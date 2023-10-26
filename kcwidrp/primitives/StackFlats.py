@@ -98,7 +98,7 @@ class StackFlats(BaseImg):
             f.mask = None
             # get scale
             fmed = float(np.median(f))
-            self.logger.info("%s - median: %f.2" % (flat, fmed))
+            self.logger.info("%s - median: %.2f" % (flat, fmed))
             fmeds.append(fmed)
             stack.append(f)
 
