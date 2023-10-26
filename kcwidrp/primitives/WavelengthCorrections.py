@@ -60,6 +60,8 @@ class WavelengthCorrections(BasePrimitive):
 
         if "none" in correction_mode:
             self.logger.info("Skipping radial velocity correction")
+            obj.header['VCORR'] = (0.0, 'km/s')
+            obj.header['VCORRTYP'] = (correction_mode, 'Vcorr type')
 
         else:
             self.logger.info(f"Performing {correction_mode} correction")
@@ -268,7 +270,8 @@ class WavelengthCorrections(BasePrimitive):
         if not resample:
             obj.header['CRVAL3'] *= (1 + v_tot / 2.99792458e5)
             obj.header['CD3_3'] *= (1 + v_tot / 2.99792458e5)
-            obj.header['VCORR'] = vcorr
+            obj.header['VCORR'] = (vcorr, 'km/s')
+            obj.header['VCORRTYP'] = (correction_mode, 'Vcorr type')
             return obj
 
         wav_old = self.get_wav_axis(obj.header)
@@ -300,7 +303,8 @@ class WavelengthCorrections(BasePrimitive):
                         spec_new[k] = max(spec_pre[k], spec_nex[k])
                 cube_new[:, j, i] = spec_new
 
-        obj.header['VCORR'] = vcorr
+        obj.header['VCORR'] = (vcorr, 'km/s')
+        obj.header['VCORRTYP'] = (correction_mode, 'Vcorr type')
         obj.data = cube_new
         return obj
 
