@@ -276,13 +276,12 @@ class MakeInvsens(BasePrimitive):
         if sroi[-1] < (len(swl)-1):
             sroi.append(sroi[-1]+1)
             nsroi += 1
+        # how many points?
+        self.logger.info("Number of standard points = %d" % nsroi)
         # very sparsely sampled w.r.t. object
-        if nsroi <= 1:
+        if nsroi <= 5:
             self.logger.error("Not enough standard points")
             return self.action.args
-        self.logger.info("Number of standard point = %d" % nsroi)
-        # how many points?
-        # do_line = nsroi > 20
 
         swl = swl[sroi]
         sflx = sflx[sroi]
