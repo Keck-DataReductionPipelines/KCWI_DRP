@@ -4,6 +4,8 @@ from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_reader, \
 
 import os
 import ccdproc
+import numpy as np
+from astropy.stats import mad_std
 
 
 class MakeMasterContbars(BaseImg):
@@ -50,6 +52,7 @@ class MakeMasterContbars(BaseImg):
         """
         args = self.action.args
         method = 'median'
+        sig_up = 2.0
         suffix = args.new_type.lower()
         log_string = MakeMasterContbars.__module__
 
@@ -68,12 +71,16 @@ class MakeMasterContbars(BaseImg):
 
             stacked = ccdproc.combine(stack, method=method, sigma_clip=True,
                                       sigma_clip_low_thresh=None,
-                                      sigma_clip_high_thresh=2.0)
+                                      sigma_clip_high_thresh=sig_up,
+                                      sigma_clip_func=np.ma.median,
+                                      sigma_clip_dev_func=mad_std)
             stacked.unit = stack[0].unit
             stacked.header['IMTYPE'] = args.new_type
             stacked.header['NSTACK'] = (len(combine_list),
                                         'number of images stacked')
             stacked.header['STCKMETH'] = (method, 'method used for stacking')
+            stacked.header['STCKSIGU'] = (sig_up,
+                                          'Upper sigma rejection for stacking')
             for ii, fname in enumerate(stackf):
                 stacked.header['STACKF%d' % (ii + 1)] = (fname,
                                                          "stack input file")
