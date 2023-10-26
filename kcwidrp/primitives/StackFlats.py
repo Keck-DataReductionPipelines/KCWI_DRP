@@ -8,6 +8,10 @@ import numpy as np
 from astropy.stats import mad_std
 
 
+def inv_median(a):
+    return 1.0/np.median(a)
+
+
 class StackFlats(BaseImg):
     """
     Stack flat images
@@ -81,6 +85,7 @@ class StackFlats(BaseImg):
         stname = strip_fname(combine_list[0]) + '_' + suffix + '.fits'
         stack = []
         stackf = []
+        scales = []
         for flat in combine_list:
             # get flat intensity (int) image file name in redux directory
             stackf.append(strip_fname(flat) + '_intd.fits')
@@ -91,13 +96,21 @@ class StackFlats(BaseImg):
             f = kcwi_fits_reader(flatfn)[0]
             # Set mask to None to prevent ccdproc.combine from masking
             f.mask = None
+            # get scale
+            scale = inv_median(f)
+            self.logger.info("%s - scale: %.5g" % (flat, scale))
+            scales.append(scale)
             stack.append(f)
 
         stacked = ccdproc.combine(stack, method=method, sigma_clip=True,
+                                  scale=inv_median,
                                   sigma_clip_low_thresh=None,
                                   sigma_clip_high_thresh=sig_up,
                                   sigma_clip_func=np.ma.median,
                                   sigma_clip_dev_func=mad_std)
+
+        # re-scale stacked image
+        stacked.data = stacked.data / np.median(scales)
 
         # Get the bad pixel mask out of one of the flats (is the same for all)
         # and add it to the stacked flat as the stack's mask
