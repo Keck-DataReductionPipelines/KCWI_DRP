@@ -85,7 +85,7 @@ class StackFlats(BaseImg):
         stname = strip_fname(combine_list[0]) + '_' + suffix + '.fits'
         stack = []
         stackf = []
-        scales = []
+        fmeds = []
         for flat in combine_list:
             # get flat intensity (int) image file name in redux directory
             stackf.append(strip_fname(flat) + '_intd.fits')
@@ -97,9 +97,9 @@ class StackFlats(BaseImg):
             # Set mask to None to prevent ccdproc.combine from masking
             f.mask = None
             # get scale
-            scale = inv_median(f)
-            self.logger.info("%s - scale: %.5g" % (flat, scale))
-            scales.append(scale)
+            fmed = float(np.median(f))
+            self.logger.info("%s - median: %f.2" % (flat, fmed))
+            fmeds.append(fmed)
             stack.append(f)
 
         stacked = ccdproc.combine(stack, method=method, sigma_clip=True,
@@ -110,7 +110,7 @@ class StackFlats(BaseImg):
                                   sigma_clip_dev_func=mad_std)
 
         # re-scale stacked image
-        stacked.data = stacked.data / np.median(scales)
+        stacked.data = stacked.data * np.median(fmeds)
 
         # Get the bad pixel mask out of one of the flats (is the same for all)
         # and add it to the stacked flat as the stack's mask
