@@ -154,6 +154,10 @@ def get_log_string(ifile, batch=False):
             is_bias = False
             if 'OFNAME' not in header:
                 header['OFNAME'] = ifile
+            if 'STATEID' not in header:
+                header['CONFIGID'] = '----'
+            else:
+                header['CONFIGID'] = header['STATEID'][-4:]
             if 'AMPMODE' not in header:
                 header['AMPMODE'] = '-'
             if 'BINNING' not in header:
@@ -242,7 +246,7 @@ def get_log_string(ifile, batch=False):
             except KeyError:
                 pass
             try:
-                lstring = "%(OFNAME)19s (%(AMPMODE)8s/%(BINNING)3s/%(CDSSPEED)1d/" \
+                lstring = "%(OFNAME)19s %(CONFIGID)4s (%(AMPMODE)8s/%(BINNING)3s/%(CDSSPEED)1d/" \
                           "%(ADCGAINS)1d/%(NUMOPEN)2d/%(EXPTIME)6.1f s), (%(IFUNAM)3s/" \
                           "%(RFILTNAM)5s/%(RGRATNAM)4s/%(RGROTNAM)9s dg/" \
                           "%(RCWAVE)6.1f/%(CALMNAM)5s/%(CALPNAM)5s/%(CALLANG)5.1f dg), " \
