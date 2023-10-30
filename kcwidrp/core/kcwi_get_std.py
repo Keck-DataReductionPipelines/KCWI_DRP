@@ -32,6 +32,6 @@ def is_file_kcwi_std(filename, logger=None):
                 if stdfile is not None:
                     return True
         return False
-    except FileNotFoundError as e:
+    except FileNotFoundError:
         logger.error(f"Could not find file at {filename}")
         return False
