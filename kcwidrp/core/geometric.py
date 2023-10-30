@@ -288,6 +288,10 @@ def estimate_transform(ttype, src, dst, **kwargs):
     ----------
     ttype : {'asympolynomial'}
         Type of transform.
+    src : (N, 2) array
+        Source coordinates.
+    dst : (N, 2) array
+        Destination coordinates.
     kwargs : array or int
         Function parameters (src, dst, n, angle)::
 
