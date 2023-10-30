@@ -128,7 +128,7 @@ class MakeInvsens(BasePrimitive):
         if wgoo0 < 3650:
             wgoo0 = 3650.
         wgoo1 = self.action.args.ccddata.header['WAVGOOD1']
-        # get all inclusive wavelength range
+        # get all-inclusive wavelength range
         wall0 = self.action.args.ccddata.header['WAVALL0']
         wall1 = self.action.args.ccddata.header['WAVALL1']
         # get DAR padding in y
