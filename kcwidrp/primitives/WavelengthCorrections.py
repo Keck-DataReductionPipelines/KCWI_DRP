@@ -113,8 +113,8 @@ class WavelengthCorrections(BasePrimitive):
         wave_vac = self.a2v_conversion(wave_air)
         cwave_air = wave_air[int(wave_air.shape[0] / 2)]
         cwave_vac = wave_vac[int(wave_vac.shape[0] / 2)]
-        self.logger.info("Air to Vacuum for (%.3f) gives %.3f" % (cwave_air.value,
-                                                                  cwave_vac.value))
+        self.logger.info("Air to Vacuum for (%.3f) gives %.3f" %
+                         (cwave_air.value, cwave_vac.value))
 
         # resample to uniform grid
         cube_new = np.zeros_like(cube)
@@ -277,7 +277,8 @@ class WavelengthCorrections(BasePrimitive):
         wav_old = self.get_wav_axis(obj.header)
         wav_hel = wav_old * (1 + v_tot / 2.99792458e5)
         cwave_hel = self.action.args.cwave * (1 + v_tot / 2.99792458e5)
-        self.logger.info("Vcorr for CWAVE (%.3f) gives %.3f" % (self.action.args.cwave, cwave_hel))
+        self.logger.info("Vcorr for CWAVE (%.3f) gives %.3f" %
+                         (self.action.args.cwave, cwave_hel))
 
         # resample to uniform grid
         self.logger.info("Resampling to uniform grid")

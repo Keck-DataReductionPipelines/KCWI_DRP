@@ -112,7 +112,8 @@ def check_directory(directory):
 
 
 def main():
-    # This check can be removed once reduce_kcwi processes are siloed against each other
+    # This check can be removed once reduce_kcwi processes are
+    # siloed against each other
     plist = []
     for p in psutil.process_iter():
         try:

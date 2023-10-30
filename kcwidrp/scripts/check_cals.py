@@ -27,8 +27,8 @@ from keckdrpframework.config.framework_config import ConfigClass
 from kcwidrp.core.kcwi_get_std import kcwi_get_std
 
 
-
 warnings.simplefilter('ignore', category=AstropyWarning)
+
 
 def parse_args():
     """Parse arguments passed into this script from the command line
@@ -39,11 +39,15 @@ def parse_args():
         Dict-like object with parsed args
     """
 
-    parser = argparse.ArgumentParser(description="Checks a directory of data to see if the OBJECTs within have the required cals.")
+    parser = argparse.ArgumentParser(
+        description="Checks a directory of data to see if the OBJECTs within "
+                    "have the required cals.")
 
     parser.add_argument('filepaths', help="Files to inspect", nargs="+")
-    parser.add_argument('-v', '--verbose', dest="verbose", action="store_true", help="Print exhaustive information")
-    parser.add_argument('-c', '--config', dest="config", type=str, help="KCWI configuration file", default=None)
+    parser.add_argument('-v', '--verbose', dest="verbose", action="store_true",
+                        help="Print exhaustive information")
+    parser.add_argument('-c', '--config', dest="config", type=str,
+                        help="KCWI configuration file", default=None)
 
     return parser.parse_args()
 
@@ -56,7 +60,7 @@ def check_cal_type(proctab, ccd_frame, setup_frame, targ_type, minimum, logger):
     proctab : Proctab
         Proccessing table instance to search through
     ccd_frame : CCDData
-        Astropy CCDData (or kcwidrp KCCDData) object that we want to match cals to
+        Astropy CCDData (or kcwidrp KCCDData) object we want to match cals to
     setup_frame : astropy.Table row
         Proctab row corresponding to an OBJECT setup we are looking for
     targ_type : str

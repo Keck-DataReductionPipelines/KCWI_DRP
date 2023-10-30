@@ -20,4 +20,3 @@ class Template(BasePrimitive):
 
         return self.action.args
     # END: class Template()
-

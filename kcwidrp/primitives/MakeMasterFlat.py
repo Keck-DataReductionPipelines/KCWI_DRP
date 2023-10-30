@@ -60,7 +60,8 @@ class MakeMasterFlat(BaseImg):
                                                self.action.args.new_type))
             return False
         else:
-            self.logger.info("No %s master flat found, checking for flat stack." %
+            self.logger.info("No %s master flat found, "
+                             "checking for flat stack." %
                              self.action.args.new_type)
             self.stack_list = self.context.proctab.search_proctab(
                 frame=self.action.args.ccddata,
@@ -448,7 +449,8 @@ class MakeMasterFlat(BaseImg):
                     input("Next? <cr>: ")
                 else:
                     time.sleep(self.config.instrument.plot_pause)
-                p = figure(title=plab + ' Deriv', x_axis_label='px (Wavelength)',
+                p = figure(title=plab + ' Deriv',
+                           x_axis_label='px (Wavelength)',
                            y_axis_label='Value',
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height)

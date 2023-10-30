@@ -23,7 +23,7 @@ def make_cube_helper(argument):
     Helper program for threaded warping of all slices.
 
     Args:
-        argument (dict): Dictionary of parameters for warping an individual slice.
+        argument (dict): Dictionary of params for warping an individual slice.
 
     :returns:
         - int: Slice number being warped

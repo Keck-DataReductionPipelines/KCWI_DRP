@@ -490,7 +490,7 @@ class MakeInvsens(BasePrimitive):
                         lmf.write("%.2f %.2f\n" % (lm['w0'], lm['w1']))
                     else:
                         lmf.write("%.2f %.2f # %s\n" % (lm['w0'], lm['w1'],
-                                                      lm['com']))
+                                                        lm['com']))
         # set up fitting vectors, flux, waves, measure errors
         sf = invsen[wl_good]   # dependent variable
         af = earea[wl_good]    # effective area

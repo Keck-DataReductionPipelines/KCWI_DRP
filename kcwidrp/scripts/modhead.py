@@ -13,10 +13,14 @@ def _parse_arguments(in_args: list) -> argparse.Namespace:
     parser = argparse.ArgumentParser(prog=f"{in_args[0]}",
                                      description=description)
 
-    parser.add_argument('infile', type=str, default=None, help="Input FITS file")
-    parser.add_argument('-k', '--keyword', type=str, default=None, help="Keyword to modify")
-    parser.add_argument('-v', '--value', type=str, default=None, help="Value for keyword")
-    parser.add_argument('-s', '--safe', action='store_true', default=False, help="Keep original file")
+    parser.add_argument('infile', type=str, default=None,
+                        help="Input FITS file")
+    parser.add_argument('-k', '--keyword', type=str, default=None,
+                        help="Keyword to modify")
+    parser.add_argument('-v', '--value', type=str, default=None,
+                        help="Value for keyword")
+    parser.add_argument('-s', '--safe', action='store_true', default=False,
+                        help="Keep original file")
 
     out_args = parser.parse_args(in_args[1:])
     return out_args

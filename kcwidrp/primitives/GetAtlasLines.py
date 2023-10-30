@@ -50,7 +50,7 @@ def get_line_window(y, c, thresh=0., logger=None, strict=False, maxwin=100,
         logger (log object): logging instance for output
         strict (bool): should we apply strict criterion? (default: False)
         maxwin (int): largest possible window in pixels (default: 100)
-        frac_max (float): how much of the maximum flux to encompass (default: 0.5)
+        frac_max (float): fraction of maximum flux to encompass (default: 0.5)
 
     :returns:
         - x0 (int): lower limit of window in pixels
@@ -251,7 +251,7 @@ class GetAtlasLines(BasePrimitive):
 
     Uses the following configuration parameters:
 
-    * FRACMAX: what fraction to use to determine the window for fitting (defaults to 0.5)
+    * FRACMAX: fraction of max to use for window for fitting (defaults to 0.5)
     * LINELIST: an input line list to use instead of determining one on the fly
 
     """

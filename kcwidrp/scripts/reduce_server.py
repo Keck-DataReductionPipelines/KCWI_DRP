@@ -1,20 +1,20 @@
-'''
+"""
 Created on Jul 19, 2019
 
 Test Fits to PNG pipeline with HTTP server.
 
 @author: skwok
-'''
+"""
 import json
 import socket
 
 from keckdrpframework.utils.easyHTTP import EasyHTTPHandler, EasyHTTPServer, EasyHTTPServerThreaded
-#from utils.try_wrapper import tryEx
+# from utils.try_wrapper import tryEx
 
 import traceback
 
 import sys
-#sys.path.append('/Users/lrizzi/Python_Projects/Framework/prototype')
+# sys.path.append('/Users/lrizzi/Python_Projects/Framework/prototype')
 import os.path
 import glob
 
@@ -37,7 +37,8 @@ def reduce(file_name):
     if dirname == '':
         cwd = os.getcwd()
         file_name = os.path.join(cwd, file_name)
-    r = requests.get('http://127.0.0.1:50100/add_next_file_event?file_name=%s' % file_name)
+    r = requests.get('http://127.0.0.1:50100/add_next_file_event?file_name=%s'
+                     % file_name)
     
 
 def main():
@@ -48,6 +49,7 @@ def main():
     args = parser.parse_args()
 
     reduce(args.frame[0])
+
 
 if __name__ == "__main__":
     main()
