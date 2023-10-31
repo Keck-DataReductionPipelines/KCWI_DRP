@@ -5,7 +5,7 @@ import logging
 
 class Proctab:
 
-    def __init__(self, logger):
+    def __init__(self):
         self.log = logging.getLogger('KCWI')
         self.proctab = None
 
@@ -140,10 +140,11 @@ class Proctab:
         self.proctab = unique(self.proctab, keys=['CID', 'FRAMENO', 'TYPE'],
                               keep='last')
         self.proctab.sort('FRAMENO')
-        self.log.info(f"proctable updated with {frame.header['OFNAME']} and {filename}")
+        self.log.info(
+            f"proctable updated with {frame.header['OFNAME']} and {filename}")
 
     def search_proctab(self, frame, target_type=None, target_group=None,
-                       nearest=False, return_ofname=True):
+                       nearest=False):
         if target_type is not None and self.proctab is not None:
             self.log.info('Looking for %s frames' % target_type)
             # get relevant camera (blue or red)
@@ -239,4 +240,3 @@ class Proctab:
             self.log.warning("Ambiguous entries for frame number %d" %
                              frame.header['FRAMENO'])
             return ""
-
