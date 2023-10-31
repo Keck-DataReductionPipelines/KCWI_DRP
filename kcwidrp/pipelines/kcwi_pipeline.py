@@ -324,13 +324,14 @@ class Kcwi_pipeline(BasePipeline):
         self.cnt = 0
 
     def add_to_dataframe_only(self, action, context):
+        self.context.pipeline_logger.info("******* ADD to DATAFRAME ONLY: %s" % action.args.name)
         return action.args
 
     def action_planner(self, action, context):
         try:
             self.context.pipeline_logger.info(
                 "******* FILE TYPE DETERMINED AS %s" % action.args.imtype)
-        except:
+        except (AttributeError, TypeError, ValueError):
             self.context.pipeline_logger.warn(
                 "******* FILE TYPE is NOT determined. "
                 "No processing is possible.")
