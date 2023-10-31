@@ -147,6 +147,12 @@ def main():
               "       RED  with -r or --red\n")
         sys.exit(0)
 
+    if args.file_list:
+        if '.fits' in args.file_list:
+            print("\nERROR - trying to read in fits file as file list\n\n"
+                  "Please use -f or --frames for direct input of fits files\n")
+            sys.exit(0)
+
     # START HANDLING OF CONFIGURATION FILES ##########
     pkg = 'kcwidrp'
 
