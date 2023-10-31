@@ -186,7 +186,7 @@ def main():
         # shell=True)
 
     # initialize the proctab and read it
-    framework.context.proctab = Proctab(framework.logger)
+    framework.context.proctab = Proctab()
     framework.context.proctab.read_proctab(tfil=args.proctab)
 
     framework.logger.info("Framework initialized")
