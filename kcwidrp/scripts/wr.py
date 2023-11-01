@@ -122,6 +122,14 @@ def get_cal_list_file(hdr):
         lfname += str(hdr['CDSSPEED'])
         lfname += str(hdr['ADCGAINS'])
         lfname += "_" + hdr['CONFIGID']
+    elif 'DARK' in imtype:
+        lfname = 'dark'
+        lfname += hdr['BINNING'].replace(',', 'x')
+        lfname += hdr['AMPMODE']
+        lfname += str(hdr['CDSSPEED'])
+        lfname += str(hdr['ADCGAINS'])
+        lfname += "_%.1f" % hdr['EXPTIME']
+        lfname += "_" + hdr['CONFIGID']
     elif 'OBJECT' in imtype:
         lfname = hdr['TARGNAME']
         lfname += hdr['BINNING'].replace(',', 'x')
@@ -247,6 +255,9 @@ def get_log_string(ifile, batch=False):
                 if 'BIAS' in header['IMTYPE']:
                     if not is_bias:
                         header['IMTYPE'] = 'DARK'
+                if 'DARK' in header['IMTYPE']:
+                    if is_bias:
+                        header['IMTYPE'] = 'BIAS'
                 if not batch:
                     if 'object' not in header['CALTYPE']:
                         header['OBJECT'] = header['OBJECT'] + header['ILLUME']
