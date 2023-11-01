@@ -20,6 +20,7 @@ import traceback
 import os
 import pkg_resources
 import psutil
+import shutil
 
 from kcwidrp.pipelines.kcwi_pipeline import Kcwi_pipeline
 from kcwidrp.core.kcwi_proctab import Proctab
@@ -34,6 +35,9 @@ def _parse_arguments(in_args: list) -> argparse.Namespace:
                                      description=description)
     parser.add_argument('-c', '--config', dest="kcwi_config_file", type=str,
                         help="KCWI configuration file", default=None)
+    parser.add_argument('--write_config', dest="write_config",
+                        help="Write out an editable config file in current dir"
+                        " (kcwi.cfg)", action="store_true", default=False)
     parser.add_argument('-f', '--frames', nargs='*', type=str,
                         help='input image files (full path, list ok)',
                         default=None)
@@ -112,6 +116,25 @@ def check_directory(directory):
 
 
 def main():
+
+    # Package
+    pkg = 'kcwidrp'
+
+    # get arguments
+    args = _parse_arguments(sys.argv)
+
+    if args.write_config:
+        dest = os.path.join(os.getcwd(), 'kcwi.cfg')
+        if os.path.exists(dest):
+            print("Config file kcwi.cfg already exists in current dir")
+        else:
+            kcwi_config_file = 'configs/kcwi.cfg'
+            kcwi_config_fullpath = pkg_resources.resource_filename(
+                pkg, kcwi_config_file)
+            shutil.copy(kcwi_config_fullpath, os.getcwd())
+            print("Copied kcwi.cfg into current dir.  Edit and use with -c")
+        sys.exit(0)
+
     # This check can be removed once reduce_kcwi processes are
     # siloed against each other
     plist = []
@@ -121,7 +144,6 @@ def main():
                 plist.append(p)
         except psutil.NoSuchProcess:
             continue
-
     # plist = [p for p in psutil.process_iter() if "reduce_kcwi" in p.name()]
     if len(plist) > 1:
         print("DRP already running in another process, exiting")
@@ -136,8 +158,6 @@ def main():
         for in_frame in in_list:
             arguments = Arguments(name=in_frame)
             framework.append_event('next_file', arguments, recurrent=True)
-
-    args = _parse_arguments(sys.argv)
 
     # make sure user has selected a channel
     if not args.blue and not args.red:
@@ -154,7 +174,6 @@ def main():
             sys.exit(0)
 
     # START HANDLING OF CONFIGURATION FILES ##########
-    pkg = 'kcwidrp'
 
     # check for the logs diretory
     check_directory("logs")
