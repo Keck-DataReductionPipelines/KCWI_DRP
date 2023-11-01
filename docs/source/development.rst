@@ -8,7 +8,7 @@ KCWI_DRP.
 Managing Git
 ------------
 
-There are three persistent branches in the KCWI_DRP repo:
+There are two persistent branches in the KCWI_DRP repo:
 
 - ``master`` (default): This branch contains the current release version of the code, and provides the source used to build the package for ``conda`` and  ``pip``. 
 - ``develop``: This branch contains new features and non-essential fixes. It should be stable at all times. A new release is triggered by this branch being merged into ``master``. Any new code should be added to this branch.
@@ -73,7 +73,7 @@ Pip
 
 In order to upload to pip, you will need access to a PyPI account with
 owndership status for the kcwidrp project. For access to the KeckDRPs account,
-ask the `DSI Team <dis-team@keck.hawaii.edu>`_.
+ask the `DSI Team <dsi-team@keck.hawaii.edu>`_.
 
 After your pull request is merged into master, download the changes:
 
