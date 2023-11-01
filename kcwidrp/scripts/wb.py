@@ -18,10 +18,14 @@ def wb_main():
     readout with gainmul 10 will end up in the file bias2x2TUP010.txt.  A
     master bias can be created by issuing the following command:
 
-        * reduce_kcwi -b -l bias2x2TUP010.txt
+        * reduce_kcwi -b -l bias2x2TUP010_0.txt
 
     These group files are generated for continuum bars, arcs, flats, and all
-    objects.  Always good to type out the list file before processing it.
+    objects.  The filenames are all appended with the last four characters of
+    the STATEID header keyword, so identical configurations from different
+    states can be distinguished.
+
+    Always good to type out the list file before processing it.
 
     Examples:
 
@@ -31,20 +35,20 @@ def wb_main():
         files that can be used as inputs to the `reduce_kcwi` command with the
         `-l` parameter.  An example of the resulting \*.txt files is below::
 
-            SN2023ixf2x2MedKBlueBL4500.txt      bias2x2TUP010.txt
-            allb.txt                            cbars2x2MedKBlueBL_4500_0.7.txt
-            arcs2x2MedKBlueBLFeAr4500_10.0.txt  cflat2x2MedKBlueBL_4500_0.7.txt
-            arcs2x2MedKBlueBLThAr4500_20.0.txt  dflat2x2MedKBlueBL_4500_14.0.txt
-            bd26d26062x2MedKBlueBL4500.txt
+            SN2023ixf2x2MedKBlueBL4500_75fe.txt      bias2x2TUP010_0.txt
+            allb.txt                                 cbars2x2MedKBlueBL_4500_0.7_75fe.txt
+            arcs2x2MedKBlueBLFeAr4500_10.0_75fe.txt  cflat2x2MedKBlueBL_4500_0.7_75fe.txt
+            arcs2x2MedKBlueBLThAr4500_20.0_75fe.txt  dflat2x2MedKBlueBL_4500_14.0_75fe.txt
+            bd26d26062x2MedKBlueBL4500_75fe.txt
 
         One can proceed through processing steps like this:
 
-        >>> reduce_kcwi -b -l bias2x2TUP010.txt
-        >>> reduce_kcwi -b -l cbars2x2MedKBlueBL_4500_0.7.txt
-        >>> reduce_kcwi -b -l arcs2x2MedKBlueBLThAr4500_20.0.txt
-        >>> reduce_kcwi -b -l cflat2x2MedKBlueBL_4500_0.7.txt
-        >>> reduce_kcwi -b -l bd26d26062x2MedKBlueBL4500.txt
-        >>> reduce_kcwi -b -l SN2023ixf2x2MedKBlueBL4500.txt
+        >>> reduce_kcwi -b -l bias2x2TUP010_0.txt
+        >>> reduce_kcwi -b -l cbars2x2MedKBlueBL_4500_0.7_75fe.txt
+        >>> reduce_kcwi -b -l arcs2x2MedKBlueBLThAr4500_20.0_75fe.txt
+        >>> reduce_kcwi -b -l cflat2x2MedKBlueBL_4500_0.7_75fe.txt
+        >>> reduce_kcwi -b -l bd26d26062x2MedKBlueBL4500_75fe.txt
+        >>> reduce_kcwi -b -l SN2023ixf2x2MedKBlueBL4500_75fe.txt
 
     """
     import sys

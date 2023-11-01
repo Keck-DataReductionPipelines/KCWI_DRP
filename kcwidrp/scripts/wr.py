@@ -18,10 +18,14 @@ def wr_main():
     readout and high gain will end up in the file bias2x2TUP01.txt.  A master
     bias can be created by issuing the following command:
 
-        * reduce_kcwi -r -l bias2x2L2U201.txt
+        * reduce_kcwi -r -l bias2x2L2U201_0.txt
 
     These group files are generated for continuum bars, arcs, flats, and all
-    objects.  Always good to type out the list file before processing it.
+    objects.  The filenames are all appended with the last four characters of
+    the STATEID header keyword, so identical configurations from different
+    states can be distinguished.
+
+    Always good to type out the list file before processing it.
 
     Examples:
 
@@ -31,20 +35,20 @@ def wr_main():
         files that can be used as inputs to the `reduce_kcwi` command with the
         `-l` parameter.  An example of the resulting \*.txt files is below::
 
-            SN2023ixf2x2MedRL8000.txt     bias2x2L2U201.txt
-            allr.txt                      cbars2x2MedRL_8000_5.0.txt
-            arcs2x2MedRLFeAr8000_2.5.txt  cflat2x2MedRL_8000_5.0.txt
-            arcs2x2MedRLThAr8000_2.5.txt  dflat2x2MedRL_8000_20.0.txt
-            bd26d26062x2MedRL8000.txt
+            SN2023ixf2x2MedRL8000_75fe.txt     bias2x2L2U201_0.txt
+            allr.txt                           cbars2x2MedRL_8000_5.0_75fe.txt
+            arcs2x2MedRLFeAr8000_2.5_75fe.txt  cflat2x2MedRL_8000_5.0_75fe.txt
+            arcs2x2MedRLThAr8000_2.5_75fe.txt  dflat2x2MedRL_8000_20.0_75fe.txt
+            bd26d26062x2MedRL8000_75fe.txt
 
         One can proceed through processing steps like this:
 
-        >>> reduce_kcwi -r -l bias2x2L2U201.txt
-        >>> reduce_kcwi -r -l cbars2x2MedRL_8000_5.0.txt
-        >>> reduce_kcwi -r -l arcs2x2MedRlThAr8000_2.5.txt
-        >>> reduce_kcwi -r -l cflat2x2MedRL_8000_5.0.txt
-        >>> reduce_kcwi -r -l bd26d26062x2MedRL8000.txt
-        >>> reduce_kcwi -r -l SN2023ixf2x2MedRL8000.txt
+        >>> reduce_kcwi -r -l bias2x2L2U201_0.txt
+        >>> reduce_kcwi -r -l cbars2x2MedRL_8000_5.0_75fe.txt
+        >>> reduce_kcwi -r -l arcs2x2MedRlThAr8000_2.5_75fe.txt
+        >>> reduce_kcwi -r -l cflat2x2MedRL_8000_5.0_75fe.txt
+        >>> reduce_kcwi -r -l bd26d26062x2MedRL8000_75fe.txt
+        >>> reduce_kcwi -r -l SN2023ixf2x2MedRL8000_75fe.txt
 
     """
     import sys
