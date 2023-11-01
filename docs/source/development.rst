@@ -8,7 +8,7 @@ KCWI_DRP.
 Managing Git
 ------------
 
-There are two persistent branches in the KCWI_DRP repo:
+There are three persistent branches in the KCWI_DRP repo:
 
 - ``master`` (default): This branch contains the current release version of the code, and provides the source used to build the package for ``conda`` and  ``pip``. 
 - ``develop``: This branch contains new features and non-essential fixes. It should be stable at all times. A new release is triggered by this branch being merged into ``master``. Any new code should be added to this branch.
@@ -73,7 +73,7 @@ Pip
 
 In order to upload to pip, you will need access to a PyPI account with
 owndership status for the kcwidrp project. For access to the KeckDRPs account,
-ask the `DSI Team <dsi-team@keck.hawaii.edu>`_.
+ask `Max <mbrodheim@keck.hawaii.edu>`_ or the `DSI Team <dis-team@keck.hawaii.edu>`_.
 
 After your pull request is merged into master, download the changes:
 
@@ -82,8 +82,8 @@ After your pull request is merged into master, download the changes:
     git checkout master
     git pull
 
-Next, ensure that the ``dist`` directory is empty, or does not exist. If any
-previous versions exist in the ``dist`` directory, they will conflict with the upload to PyPI):
+Then, after ensuring the ``dist`` directory is empty (ensure no previous
+versions exist; these will conflict with the upload to PyPI):
 
 .. code-block:: bash
 
@@ -96,23 +96,7 @@ previous versions exist in the ``dist`` directory, they will conflict with the u
     # Test the upload by uploading to TestPyPI
     twine upload --repository-url https://test.pypi.org/legacy/ dist/*
 
-Make sure that the test upload worked using the following command, replacing
-``VERSION`` with the version number in ``setup.py``
-
-.. code-block:: bash
-
-    pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple kcwidrp==VERSION
-
-Setting ``--index-url`` tells pip where to find our package (in this case, the
-test server). ``--extra-index-url`` tells pip to install all *other* packages
-(i.e. requirements) from the default server.
-
-Ensure that the pipeline is built correctly, requirements were installed, and 
-that you are able to reduce a test dataset. If all went well, finalize the
-upload to PyPI (``pip``) with 
-
-.. code-block:: bash
-
+    #If all went well with the test, upload to the permanent PyPI
     twine upload dist/*
 
 
