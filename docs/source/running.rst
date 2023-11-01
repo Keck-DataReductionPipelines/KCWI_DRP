@@ -114,6 +114,11 @@ Other command line options
   file that is stored in the installation directory in
   ``kcwidrp/config/kcwi.cfg``.
 
+* ``--write_config`` If this option is set, an editable copy of the default DRP
+  configuration file is written to wherever the command was invoked from. This
+  file can then be used to modify the behavior of the pipeline using the ``-c``
+  option.
+
 * ``-k`` or ``--skipsky``  Set this to skip sky subtraction for all frames
   reduced with this command.
 
