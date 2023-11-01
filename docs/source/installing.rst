@@ -4,13 +4,20 @@ Installing KCWI_DRP
 
 This document describes how to install KCWI_DRP, for both users and developers.
 
-Creating a Conda environment
-----------------------------
+Environment and External Dependencies
+=====================================
+
+This section describes how to set up your Python environment for the KCWI DRP,
+and covers a few external dependencies. 
 
 We highly recommend that you use `Anaconda <https://www.anaconda.com/>`_ for this
 installation. Using a ``conda`` environment ensures that the DRP's requirements
 will not conflict with other software and packages you have installed on your
 machine, among other benefits.
+
+
+Creating the Conda environment
+------------------------------
 
 .. warning::
     If you have previously installed the DRP from source, and especially if it
@@ -24,7 +31,6 @@ machine, among other benefits.
 
         conda remove --name kcwidrp --all
 
-
 The following will create a :code:`conda` environment called :code:`kcwidrp`,
 and activate it.
 
@@ -33,8 +39,27 @@ and activate it.
         conda create --name kcwidrp python=3.7
         conda activate kcwidrp
 
-Getting and Installing the Code
--------------------------------
+
+Firefox
+-------
+
+The KCWI DRP uses `bokeh <http://bokeh.org/>`_ for plotting, which requires access
+to a web browser. We recommend installing `Firefox <https://www.mozilla.org/en-US/firefox/new/>`_
+for this purpose, as it is the browser used for testing and validating the DRP.
+Other browsers have been reported to work, but we haven't tested them ourselves.
+
+If you are running the DRP on a headless system and run into issues with driver
+support, see :ref:`firefox/geckodriver issues <issues:Firefox/geckodriver cannot be found>`.
+
+Getting and Installing the DRP
+==============================
+
+The following sections describe how to install the pipeline into your new 
+environment. We recommend most users follow the ``pip`` section. If you
+plan on editing the pipeline, follow the Installing Manually section.
+
+Installing with ``pip`` (recommended)
+-------------------------------------
 
 Next, we install the pipeline using ``pip``. This step will automatically install
 all the requirements needed for the pipeline.
@@ -63,4 +88,5 @@ installing using :code:`python setup.py` directly can lead to conflicts if you
 later install using ``pip``. If you need to install using ``pip`` later, it is
 highly recommended that you create a new conda environment first.
 
-If you do not plan on editing the code, instead use :code:`pip install .`
+If you do not plan on editing the code, instead use :code:`pip install .` from
+inside the source code directory.
