@@ -107,22 +107,6 @@ For an even finer control, each file in the bias list could be run individually,
 and only when enough bias frames are present and reduced, the DRP will generate
 a master bias.
 
-Monitor directories
--------------------
-
-The DRP has the ability to monitor a specified directory. When files appear,
-they are ingested and processed. To start the DRP in this mode use:
-
-.. code-block:: shell
-
-   reduce_kcwi -b -d /home/mydata -i kb*.fits -m
-
-The ``-i kb*.fits`` is the filter used to recognize the correct files. If it is
-not specified, the pipeline will ingest all files in the directory, and
-will fail if any of those files are not KCWI frames.  The ``-d`` and the
-following parameter specify the directory to monitor, and ``-m`` specifies
-monitor mode.
-
 Other command line options
 --------------------------
 
@@ -165,3 +149,19 @@ Other command line options
   and is stored in the current directory. This options is used to
   specify a different file if needed (not recommended).
 
+..
+    Monitor directories
+    -------------------
+
+    The DRP has the ability to monitor a specified directory. When files appear,
+    they are ingested and processed. To start the DRP in this mode use:
+
+    .. code-block:: shell
+
+      reduce_kcwi -b -d /home/mydata -i kb*.fits -m
+
+    The ``-i kb*.fits`` is the filter used to recognize the correct files. If it is
+    not specified, the pipeline will ingest all files in the directory, and
+    will fail if any of those files are not KCWI frames.  The ``-d`` and the
+    following parameter specify the directory to monitor, and ``-m`` specifies
+    monitor mode.
