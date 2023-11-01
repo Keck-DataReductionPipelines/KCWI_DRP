@@ -69,24 +69,8 @@ all the requirements needed for the pipeline.
         pip install kcwidrp
 
 
-Installing Manually
--------------------
+Installing From Source
+----------------------
 
-In some cases, it may be preferable to install the code manually, such as when
-you are actively working on the pipeline. You can install the pipeline directly
-from source by doing the following:
-
-    .. code-block:: bash
-
-        git clone https://github.com/Keck-DataReductionPipelines/KCWI_DRP.git
-        cd KCWI_DRP
-        python setup.py develop
-
-Using :code:`python setup.py develop` makes the installation editable. This means
-that any changes you make to the code will take effect immediately. Note that
-installing using :code:`python setup.py` directly can lead to conflicts if you
-later install using ``pip``. If you need to install using ``pip`` later, it is
-highly recommended that you create a new conda environment first.
-
-If you do not plan on editing the code, instead use :code:`pip install .` from
-inside the source code directory.
+To install directly from the source code, see the :ref:`developer install<development:Installing for Development>`
+instructions.
