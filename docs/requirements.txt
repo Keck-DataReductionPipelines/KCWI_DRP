@@ -17,10 +17,6 @@ setuptools~=46.1.1
 ref_index~=1.0
 pyregion
 cython
-selenium
-geckodriver
-firefox
-phantomjs
 sphinx-automodapi
 sphinx_rtd_theme
 keckdrpframework @ git+https://github.com/Keck-DataReductionPipelines/KeckDRPFramework.git
