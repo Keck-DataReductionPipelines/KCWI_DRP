@@ -5,10 +5,15 @@ Running the pipeline
 ====================
 
 The DRP is run using a startup script that offers several
-command line options and different execution modes.  Now that the Red channel
-has been added, the user must specify which channel to process with the
-``-b`` or ``--blue`` command line flag, or ``-r`` or ``--red`` command line
-flag.  If neither channel is specified, the script will not run.
+command line options and different execution modes.
+
+.. warning::
+
+  Now that the Red channel
+  has been added, the user must specify which channel to process with the
+  ``-b`` or ``--blue`` command line flag, or ``-r`` or ``--red`` command line
+  flag.  If neither channel is specified, the script will not run.
+
 
 Process files, file lists and entire directories
 ------------------------------------------------
@@ -107,28 +112,17 @@ For an even finer control, each file in the bias list could be run individually,
 and only when enough bias frames are present and reduced, the DRP will generate
 a master bias.
 
-Monitor directories
--------------------
-
-The DRP has the ability to monitor a specified directory. When files appear,
-they are ingested and processed. To start the DRP in this mode use:
-
-.. code-block:: shell
-
-   reduce_kcwi -b -d /home/mydata -i kb*.fits -m
-
-The ``-i kb*.fits`` is the filter used to recognize the correct files. If it is
-not specified, the pipeline will ingest all files in the directory, and
-will fail if any of those files are not KCWI frames.  The ``-d`` and the
-following parameter specify the directory to monitor, and ``-m`` specifies
-monitor mode.
-
 Other command line options
 --------------------------
 
 * ``-c config_file.cfg``  This options overrides the standard configuration
   file that is stored in the installation directory in
   ``kcwidrp/config/kcwi.cfg``.
+
+* ``--write_config`` If this option is set, an editable copy of the default DRP
+  configuration file is written to wherever the command was invoked from. This
+  file can then be used to modify the behavior of the pipeline using the ``-c``
+  option.
 
 * ``-k`` or ``--skipsky``  Set this to skip sky subtraction for all frames
   reduced with this command.
@@ -165,3 +159,19 @@ Other command line options
   and is stored in the current directory. This options is used to
   specify a different file if needed (not recommended).
 
+..
+    Monitor directories
+    -------------------
+
+    The DRP has the ability to monitor a specified directory. When files appear,
+    they are ingested and processed. To start the DRP in this mode use:
+
+    .. code-block:: shell
+
+      reduce_kcwi -b -d /home/mydata -i kb*.fits -m
+
+    The ``-i kb*.fits`` is the filter used to recognize the correct files. If it is
+    not specified, the pipeline will ingest all files in the directory, and
+    will fail if any of those files are not KCWI frames.  The ``-d`` and the
+    following parameter specify the directory to monitor, and ``-m`` specifies
+    monitor mode.

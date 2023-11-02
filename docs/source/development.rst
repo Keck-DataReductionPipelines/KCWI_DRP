@@ -5,6 +5,36 @@ Development Procedure
 The following document describes the procedure to follow for making changes to
 KCWI_DRP.
 
+Installing for Development
+==========================
+
+We recommend installing directly from the source code if you plan on working on
+the pipeline.
+
+    .. code-block:: bash
+
+        git clone git@github.com:Keck-DataReductionPipelines/KCWI_DRP.git
+        cd KCWI_DRP
+        pip install -e .
+
+.. note::
+
+    We are using ``ssh`` to clone from GitHub, this is
+    required if you plan on making pushes directly to the repository. You may use 
+    HTTPS (i.e. ``git clone https://github.com/Keck-DataReductionPipelines/KCWI_DRP.git``)
+    if needed for your setup.
+
+Using the ``-e`` flag with ``pip`` makes the installation editable. This means
+that any changes you make to the code will take effect immediately, and you will
+not need to re-install the pipeline after each change.
+
+.. warning::
+
+    Installing using :code:`setup.py` directly can lead to conflicts if you
+    later try using ``pip``. If you need to install using ``pip`` later, it is
+    highly recommended that you create a new conda environment first. It is possible
+    to uninstall the ``kcwidrp`` module, but it is not 100% reliable.
+
 Managing Git
 ------------
 
@@ -34,7 +64,7 @@ While developing, it is important to stay up-to-date with any changes in the
 Alternatively, you can do your own development in your own fork of the repo.
 
 Pull Requests
-^^^^^^^^^^^^^
+-------------
 
 Once your new feature is ready for merging into the develop branch, you need to
 issue a pull request. The pull request must contain the following:
@@ -54,7 +84,7 @@ If your pull request meets all of the above, it will be merged into ``develop``
 during the next developer meeting.
 
 Merging ``develop`` into ``master``
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+-----------------------------------
 
 At the developer's discretion, ``develop`` will be merged into ``master``, which
 will signify a new sub-release. The version number should be incremented in
@@ -62,14 +92,14 @@ will signify a new sub-release. The version number should be incremented in
 issue and accept a pull request from ``develop`` into ``master``.
 
 Building for Release
---------------------
+====================
 
 These instructions summarize the steps required to build a new release of 
 kcwidrp for conda or pip. These steps should be followed every time ``master``
 is updated.
 
 Pip 
-^^^
+---
 
 In order to upload to pip, you will need access to a PyPI account with
 owndership status for the kcwidrp project. For access to the KeckDRPs account,
@@ -101,7 +131,7 @@ versions exist; these will conflict with the upload to PyPI):
 
 
 Conda
-^^^^^
+-----
 
 Eventually, these steps will be rendered obsolete by the use of conda-forge. In
 the meantime, the following instructions will build a conda package from the pip

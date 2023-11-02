@@ -8,20 +8,17 @@ collaboration with the W. M. Keck Observatory Scientific Software Group.
 Release 1.1
 ===========
 
-We are excited to announce the imminent release version of 1.1.0 of the KCWI DRP, now with support for
+We are excited to announce the release version of 1.1.0 of the KCWI DRP, now with support for
 both the red and blue sides of the instrument. Just like version 1.0, this
 pipeline is based off of the original KCWIdrp IDL pipeline developed by the KCWI
 team at Caltech, and this pipeline continues to be the only pipeline supported
 by the W. M. Keck Observatory.
 
-`NOTE`: This release is still in the works! The pipeline is still changing on a 
-near-daily basis, along with these documents. This page will be updated once
-the full release is ready.
 
 Features
 --------
 
-* Simplified installation via pip and conda environment [COMING SOON]
+* Simplified installation via pip and conda environment
 * Vacuum to air and heliocentric or barycentric correction
 * Ability of using KOA file names or original file names [COMING SOON]
 * Full traceability of DRP versions and execution steps in HISTORY headers
@@ -45,6 +42,7 @@ Follow the documentation in this section to reduce KCWI data.
    sky_subtraction
    calibration
    data_products
+   scripts
    help
    versions
 

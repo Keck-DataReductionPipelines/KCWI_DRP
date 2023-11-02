@@ -4,9 +4,12 @@ Installing KCWI_DRP
 
 This document describes how to install KCWI_DRP, for both users and developers.
 
-Since version 1.1 is still not officially released, users MUST install the DRP
-directly from GitHub. These instructions will change once the DRP is released to
-PyPI, which will allow users to install the DRP with :code:`pip`.
+If you encounter any issues beyond what is described on this page, see the
+:ref:`Issues <issues:FAQ / Known Issues>` page. If nothing there helps you, see
+:ref:`help <help:Support>`.
+
+Environment and External Dependencies
+=====================================
 
 Installing Dependencies
 =======================
@@ -38,9 +41,9 @@ The :code:`pip` step will install all the requirements needed for the pipeline.
         git checkout kcrm_merge
         pip install .
 
-..
-    Installing Dependencies
-    =======================
+
+Getting and Installing the DRP
+==============================
 
     We highly recommend that you use Anaconda for the majority
     of these installations. 
@@ -63,37 +66,8 @@ The :code:`pip` step will install all the requirements needed for the pipeline.
     This creates an environment called kcwidrp that contains most of the required 
     dependencies. 
 
+Installing From Source
+----------------------
 
-    Installing Manually
-    -------------------
-
-    This pipeline currently runs on `python <http://www.python.org>`_ 3.7.
-    Instructions for installing the other dependencies are below:
-
-    .. code-block:: bash
-
-    conda install bokeh
-    conda install -c conda-forge selenium geckodriver firefox phantomjs
-    conda install -c astropy ccdproc pyregion
-    conda install psutil
-    conda install requests
-    conda install pytest
-    conda install cython
-    conda install pandas
-    pip install ref_index
-    pip install keckdrpframework
-    pip install kcwidrp
-
-
-    Installing for Development
-    --------------------------
-
-    If you want to alter the pipeline, you can install it directly from source by
-    skipping :code:`pip install kcwidrp` during the requirements section above, and
-    instead running:
-
-    .. code-block:: bash
-
-        git clone https://github.com/Keck-DataReductionPipelines/KCWI_DRP.git
-        cd KCWI_DRP
-        python setup.py develop
+To install directly from the source code, see the :ref:`developer install<development:Installing for Development>`
+instructions.

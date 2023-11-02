@@ -2,7 +2,7 @@
 FAQ / Known Issues
 ==================
 
-This page contains a list of Frequently asked questions, and known issues related
+This page contains a list of Frequently Asked Questions, and known issues related
 the operations of the pipeline that are not likely to be fixed in the short term.
 Only issues which will not be fixed with a new release of the pipeline within 
 around a month will be added to this list. Wherever possible, a link to relevant
@@ -25,6 +25,14 @@ What are all of these output files?
 Please reference the :doc:`data_products` page for information on what files are
 produced by the pipeline.
 
+I think I might be missing some calibration files, but I'm not sure. How do I check?
+------------------------------------------------------------------------------------
+
+There is a script installed with the pipeline called ``check_cals`` that can
+help you here. It scans a data directory and pipeline config, and outputs a 
+report about what calibrations it matched with what science frames. If any are
+missing, it tells you which, and how many are needed. More details can be found
+:ref:`here <scripts:check_cals>`.
 
 Known Issues
 ============
@@ -125,3 +133,22 @@ your terminal:
 
 This will not persist between terminal sessions, so you should add it to your
 :code:`.bashrc` file.
+
+
+PyQt5
+-----
+
+Some users have reported an issue where ``PyQt5`` is required to run the DRP, which
+looks like 
+
+.. code-block:: console
+
+    Failed to import any Qt binding
+
+If this is the case, run
+
+.. code-block:: bash
+
+    pip install pyqt5
+
+and the issue should be fixed.

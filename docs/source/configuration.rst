@@ -6,24 +6,30 @@ A number of reduction parameters can be changed using entries in the
 configuration file.
 
 If you installed the pipeline with ``pip``, the configuration file will not be
-easy to find, since it will be stored with installed ``pip`` packages. If you 
-need to modify the configuration, we advise that you download a copy of the 
-`config file <https://github.com/Keck-DataReductionPipelines/KCWI_DRP/blob/master/kcwidrp/configs/kcwi.cfg>`_,
-saving it to some easy to remember location, and using the ``-c`` option to
-point to that file.
+easy to find, since it will be stored with installed ``pip`` packages. We recommend
+editing a copy of the config instead. You can create a copy of the config file
+by invoking the pipeline with the ``--write_config`` option:
 
-If you installed the package via ``git``, the master copy of the configuration
-file is in the installation directory, in ``kcwidrp/config/kcwi.cfg``.  This
-file can be modified in place or copied in another directory (the ``-c`` option
-of the :ref:`main reduction script <running:Other command line options>` is
-used to specify the configuration file).
+    .. code-block:: bash
+
+        reduce_kcwi --write_config
+
+This will create an editable file wherever you run the command from. You can
+make whatever changes you need to this file, and then run the pipeline with the
+``-c`` option (see :ref:`main reduction script <running:Other command line options>`)
+pointing to that file. For example,
+
+    .. code-block:: bash
+
+        reduce_kcwi -r -c PATH/TO/CONFIG/kcwi.cfg -f kb0001.fits
 
 The configuration file contains a number of parameters connected to the
 structure of the files and to the specifications of the instrument, e.g., the
 number of continuum bars. There is usually no reason to modify these parameters,
 and they are not described here.
 
-Note:
+.. note::
+
     If a parameter in the ``kcwi.cfg`` file is not described here, then you can
     assume that it should not be modified.
 
