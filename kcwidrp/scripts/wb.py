@@ -15,15 +15,15 @@ def wb_main():
     in \*.txt files.  These files can be input to the pipeline with the -l
     command line parameter to allow processing of groups one at a time.  For
     example, 2x2 Blue biases taken with the TUP amp configuration in slow
-    readout with gainmul 10 will end up in the file bias2x2TUP010.txt.  A
+    readout with gainmul 10 will end up in the file bias2x2TUP010_0.txt.  A
     master bias can be created by issuing the following command:
 
         >>> reduce_kcwi -b -l bias2x2TUP010_0.txt
 
-    These group files are generated for continuum bars, arcs, flats, and all
-    objects.  The filenames are all appended with the last four characters of
-    the STATEID header keyword, so identical configurations from different
-    states can be distinguished.
+    These group files are generated for biases, darks, continuum bars, arcs,
+    flats, and all objects.  The filenames are all appended with the last four
+    characters of the STATEID header keyword, so identical configurations from
+    different states can be distinguished.
 
     Always good to type out the list file before processing it.
 
