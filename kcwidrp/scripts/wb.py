@@ -93,6 +93,7 @@ def get_cal_list_file(hdr):
     :returns:
         (str): group filename
 
+    :meta private:
     """
 
     fpre = {"ARCLAMP": "arcs", "CONTBARS": "cbars", "FLATLAMP": "cflat",
@@ -156,6 +157,7 @@ def get_log_string(ifile, batch=False):
     :returns:
         (str): Configuration summary string for the input FITS image file.
 
+    :meta private:
     """
 
     try:
