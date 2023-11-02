@@ -5,8 +5,7 @@ This script scans a given directory and returns a report on whether the cals
 inside the directory meet the minimum requirements needed to reduce the science
 frames found inside. It follows the following logic:
 
-#. Finds all OBJECT frames. It uses these to determine what instrument
-configurations are needed. This is saved in an internal "Proc table"
+#. Finds all OBJECT frames. It uses these to determine what instrument configurations are needed. This is saved in an internal "Proc table"
 
 #. Searches for BIAS and CONTBARS frames for needed setups (1x1 and 2x2)
 
