@@ -138,3 +138,22 @@ your terminal:
 
 This will not persist between terminal sessions, so you should add it to your
 :code:`.bashrc` file.
+
+
+PyQt5
+-----
+
+Some users have reported an issue where ``PyQt5`` is required to run the DRP, which
+looks like 
+
+.. code-block:: console
+
+    Failed to import any Qt binding
+
+If this is the case, run
+
+.. code-block:: bash
+
+    pip install pyqt5
+
+and the issue should be fixed.

@@ -4,6 +4,10 @@ Installing KCWI_DRP
 
 This document describes how to install KCWI_DRP, for both users and developers.
 
+If you encounter any issues beyond what is described on this page, see the
+:ref:`Issues <issues:FAQ / Known Issues>` page. If nothing there helps you, see
+:ref:`help <help:Support>`.
+
 Environment and External Dependencies
 =====================================
 
@@ -50,6 +54,7 @@ Other browsers have been reported to work, but we haven't tested them ourselves.
 
 If you are running the DRP on a headless system and run into issues with driver
 support, see :ref:`firefox/geckodriver issues <issues:Firefox/geckodriver cannot be found>`.
+
 
 Getting and Installing the DRP
 ==============================
