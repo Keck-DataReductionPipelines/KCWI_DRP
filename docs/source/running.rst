@@ -5,10 +5,15 @@ Running the pipeline
 ====================
 
 The DRP is run using a startup script that offers several
-command line options and different execution modes.  Now that the Red channel
-has been added, the user must specify which channel to process with the
-``-b`` or ``--blue`` command line flag, or ``-r`` or ``--red`` command line
-flag.  If neither channel is specified, the script will not run.
+command line options and different execution modes.
+
+.. warning::
+
+  Now that the Red channel
+  has been added, the user must specify which channel to process with the
+  ``-b`` or ``--blue`` command line flag, or ``-r`` or ``--red`` command line
+  flag.  If neither channel is specified, the script will not run.
+
 
 Process files, file lists and entire directories
 ------------------------------------------------
