@@ -18,7 +18,7 @@ def wb_main():
     readout with gainmul 10 will end up in the file bias2x2TUP010.txt.  A
     master bias can be created by issuing the following command:
 
-        * reduce_kcwi -b -l bias2x2TUP010_0.txt
+        >>> reduce_kcwi -b -l bias2x2TUP010_0.txt
 
     These group files are generated for continuum bars, arcs, flats, and all
     objects.  The filenames are all appended with the last four characters of
