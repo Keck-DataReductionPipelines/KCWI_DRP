@@ -5,11 +5,14 @@ This script scans a given directory and returns a report on whether the cals
 inside the directory meet the minimum requirements needed to reduce the science
 frames found inside. It follows the following logic:
 
-1. Finds all OBJECT frames. It uses these to determine what instrument
+#. Finds all OBJECT frames. It uses these to determine what instrument
 configurations are needed. This is saved in an internal "Proc table"
-2. Searches for BIAS and CONTBARS frames for needed setups (1x1 and 2x2)
-3. Searches for ARCS and FLATS
-4. Searches for matching standard stars for the setup
+
+#. Searches for BIAS and CONTBARS frames for needed setups (1x1 and 2x2)
+
+#. Searches for ARCS and FLATS
+
+#. Searches for matching standard stars for the setup
 
 """
 
@@ -37,6 +40,8 @@ def parse_args():
     -------
     argparse
         Dict-like object with parsed args
+
+    :meta private:
     """
 
     parser = argparse.ArgumentParser(
@@ -74,6 +79,8 @@ def check_cal_type(proctab, ccd_frame, setup_frame, targ_type, minimum, logger):
     -------
     str
         String representing the results of the search. PASSED if enough matching cals were found, FAILED otherwise
+    
+    :meta private:
     """
 
     found_list = proctab.search_proctab(frame=ccd_frame, target_type=targ_type) #target_group=setup_frame['GRPID']
