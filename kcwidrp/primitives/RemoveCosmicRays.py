@@ -6,7 +6,25 @@ from astroscrappy import detect_cosmics
 
 
 class RemoveCosmicRays(BasePrimitive):
-    """Remove cosmic rays and generate a flag image recording their location"""
+    """
+    Remove cosmic rays and generate a flag image recording their location.
+
+    Uses astroscrappy to detect and flag cosmic rays.  Updates the following
+    FITS header keywords:
+
+        * CRCLEAN: set to ``True`` if operation performed.
+        * NCRCLEAN: set to the number of cosmic ray pixels cleaned.
+
+    Uses the following configuration parameters:
+
+        * saveintims: if set to ``True`` write out a CR cleaned version of image in \*_crr.fits.  Defaults to ``False``.
+        * CRR_MINEXPTIME - exposure time below which no CR cleaning is done.
+        * CRR\_\* - see kcwi.cfg file for parameters controlling CR cleaning.
+
+    Updates image in returned arguments with CR cleaned image and adds flags
+    indicating where changes were made.
+
+    """
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
@@ -14,7 +32,7 @@ class RemoveCosmicRays(BasePrimitive):
 
     def _perform(self):
         # TODO: implement parameter options from kcwi_stage1.pro
-        self.logger.info("Finding and masking cosmic rays")
+        self.logger.info("Cleaning and flagging cosmic rays")
 
         # Header keyword to update
         key = 'CRCLEAN'
@@ -22,15 +40,24 @@ class RemoveCosmicRays(BasePrimitive):
 
         header = self.action.args.ccddata.header
 
-        if header['XPOSURE'] >= self.config.instrument.CRR_MINEXPTIME:
+        exptime = header['TELAPSE']
+        nshuf = header['NSHFUP']
+        ttime = header['TTIME']
+        if nshuf * ttime > exptime:
+            exptime = nshuf * ttime
+
+        if exptime >= self.config.instrument.CRR_MINEXPTIME:
 
             namps = header['NVIDINP']
+            bsec, dsec, tsec, direc, amps, aoff = self.action.args.map_ccd
             read_noise = 0.
-            for ia in range(namps):
-                if 'BIASRN%d' % (ia + 1) in header:
-                    read_noise += header['BIASRN%d' % (ia + 1)]
-                elif 'OSCNRN%d' % (ia + 1) in header:
-                    read_noise += header['OSCNRN%d' % (ia + 1)]
+            if len(amps) != namps:
+                self.logger.warning("Amp count disagreement!")
+            for ia in amps:
+                if 'BIASRN%d' % ia in header:
+                    read_noise += header['BIASRN%d' % ia]
+                elif 'OSCNRN%d' % ia in header:
+                    read_noise += header['OSCNRN%d' % ia]
                 else:
                     read_noise += 3.
             read_noise /= float(namps)
@@ -71,7 +98,8 @@ class RemoveCosmicRays(BasePrimitive):
                 self.config.instrument.CRR_FSMODE,
                 self.config.instrument.CRR_PSFMODEL,
                 self.config.instrument.CRR_PSFFWHM)
-            header['history'] = "Astroscrappy params: sepmed=%s minexptime=%f" % (
+            header['history'] = "Astroscrappy params: sepmed=%s " \
+                                "minexptime=%f" % (
                 self.config.instrument.CRR_SEPMED,
                 self.config.instrument.CRR_MINEXPTIME)
             # header['history'] = "LA CosmicX run on %s" % time.strftime("%c")
@@ -84,7 +112,8 @@ class RemoveCosmicRays(BasePrimitive):
             except AttributeError:
                 self.logger.warning("Flags array not found!")
             n_crs = mask.sum()
-            self.action.args.ccddata.mask += mask
+            # DN 2023-may-28: commenting out because it causes bad things
+            # self.action.args.ccddata.mask += mask
             self.action.args.ccddata.data = clean
             # update header
             header[key] = (True, keycom)

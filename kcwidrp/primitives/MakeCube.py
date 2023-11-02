@@ -17,7 +17,26 @@ from multiprocessing import Pool
 
 
 def make_cube_helper(argument):
-    """Warp each slice"""
+    """
+    Warp each slice.
+    
+    Helper program for threaded warping of all slices.
+
+    Args:
+        argument (dict): Dictionary of params for warping an individual slice.
+
+    :returns:
+        - int: Slice number being warped
+        - ndimage: warped intensity image
+        - ndimage: warped uncertainty image
+        - ndimage: warped mask image
+        - ndimage: warped flag image
+        - ndimage: warped image without sky subtraction
+        - ndimage: warped nod-and-shuffle object image
+        - ndimage: warped nod-and-shuffle sky image
+        - ndimage: warped delta-wavelength image
+
+    """
     logger = argument['logger']
     logger.info("Transforming image slice %d" % (argument['slice_number']+1))
     # input params
@@ -29,9 +48,13 @@ def make_cube_helper(argument):
     xl1 = argument['geom']['xl1'][slice_number]
     # slice data
     slice_img = argument['img'][:, xl0:xl1]
-    slice_var = argument['std'][:, xl0:xl1]
+    slice_unc = argument['std'][:, xl0:xl1]
     slice_msk = argument['msk'][:, xl0:xl1]
     slice_flg = argument['flg'][:, xl0:xl1]
+    if 'nsk' in argument:
+        slice_nsk = argument['nsk'][:, xl0:xl1]
+    else:
+        slice_nsk = None
     if 'obj' in argument:
         slice_obj = argument['obj'][:, xl0:xl1]
     else:
@@ -47,12 +70,18 @@ def make_cube_helper(argument):
     # do the warping
     warped = tf.warp(slice_img, tform, order=3,
                      output_shape=(ysize, xsize))
-    varped = tf.warp(slice_var, tform, order=3,
+    uarped = tf.warp(slice_unc, tform, order=3,
                      output_shape=(ysize, xsize))
     marped = tf.warp(slice_msk, tform, order=3,
                      output_shape=(ysize, xsize))
     farped = tf.warp(slice_flg, tform, order=3,
                      output_shape=(ysize, xsize), preserve_range=True)
+
+    if slice_nsk is not None:
+        karped = tf.warp(slice_nsk, tform, order=3,
+                         output_shape=(ysize, xsize))
+    else:
+        karped = None
 
     if slice_obj is not None:
         oarped = tf.warp(slice_obj, tform, order=3,
@@ -72,12 +101,29 @@ def make_cube_helper(argument):
     else:
         darped = None
 
-    return argument['slice_number'], warped, varped, marped, farped, \
+    return argument['slice_number'], warped, uarped, marped, farped, karped, \
         oarped, sarped, darped
 
 
 class MakeCube(BasePrimitive):
-    """Transform 2D images to 3D data cubes"""
+    """
+    Transform 2D images to 3D data cubes.
+
+    Uses thread pool to warp each slice in parallel and then
+    assemble a 3D image cube from the slices. Rotates RED channel
+    data by 180 degress to align with BLUE channel data.
+
+    Creates WCS keywords that reflect the new geometry of the
+    cube based on position keywords from the telescope.
+
+    Outputs FITS 3d cube images:
+
+        * icube - main cube with primary, uncertainty, mask, flag, and noskysub extensions
+        * ocube - for nod-and-shuffle, the object frame as a cube
+        * scube - for nod-and-shuffle, the sky frame as a cube
+        * dcube - the delta-wavelength cube
+
+    """
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
@@ -95,9 +141,9 @@ class MakeCube(BasePrimitive):
             do_inter = False
         self.logger.info("Generating data cube")
         # Find and read geometry transformation
-        tab = self.context.proctab.search_proctab(frame=self.action.args.ccddata,
-                                             target_type='ARCLAMP',
-                                             nearest=True)
+        tab = self.context.proctab.search_proctab(
+                frame=self.action.args.ccddata, target_type='MARC',
+                nearest=True)
         if not len(tab):
             self.logger.error("No reference geometry, cannot make cube!")
             self.action.args.ccddata.header['GEOMCOR'] = (False,
@@ -118,7 +164,7 @@ class MakeCube(BasePrimitive):
             xsize = geom['xsize']
             ysize = geom['ysize']
             out_cube = np.zeros((ysize, xsize, 24), dtype=np.float64)
-            out_vube = np.zeros((ysize, xsize, 24), dtype=np.float64)
+            out_uube = np.zeros((ysize, xsize, 24), dtype=np.float64)
             out_mube = np.zeros((ysize, xsize, 24), dtype=np.uint8)
             out_fube = np.zeros((ysize, xsize, 24), dtype=np.uint8)
             out_oube = np.zeros((ysize, xsize, 24), dtype=np.float64)
@@ -129,6 +175,13 @@ class MakeCube(BasePrimitive):
             data_std = self.action.args.ccddata.uncertainty.array
             data_msk = self.action.args.ccddata.mask
             data_flg = self.action.args.ccddata.flags
+            # check for noskysub property
+            if self.action.args.ccddata.noskysub is not None:
+                out_kube = np.zeros((ysize, xsize, 24), dtype=np.float64)
+                data_nsk = self.action.args.ccddata.noskysub
+            else:
+                data_nsk = None
+                out_kube = None
             # check for obj, sky images
             obj = None
             data_obj = None
@@ -152,7 +205,7 @@ class MakeCube(BasePrimitive):
                 if os.path.exists(full_path):
                     sky = kcwi_fits_reader(full_path)[0]
                     data_sky = sky.data
-            # check for geometry maps
+            # check for delta wavelength map
             dew = None
             data_dew = None
             if 'ARCLAMP' in self.action.args.imtype:
@@ -178,6 +231,8 @@ class MakeCube(BasePrimitive):
                     'ysize': ysize,
                     'logger': self.logger
                 }
+                if data_nsk is not None:
+                    arguments['nsk'] = data_nsk
                 if obj is not None:
                     arguments['obj'] = data_obj
                 if sky is not None:
@@ -194,15 +249,17 @@ class MakeCube(BasePrimitive):
             for partial_cube in results:
                 slice_number = partial_cube[0]
                 out_cube[:, :, slice_number] = partial_cube[1]
-                out_vube[:, :, slice_number] = partial_cube[2]
+                out_uube[:, :, slice_number] = partial_cube[2]
                 out_mube[:, :, slice_number] = partial_cube[3]
                 out_fube[:, :, slice_number] = partial_cube[4]
+                if data_nsk is not None:
+                    out_kube[:, :, slice_number] = partial_cube[5]
                 if obj is not None:
-                    out_oube[:, :, slice_number] = partial_cube[5]
+                    out_oube[:, :, slice_number] = partial_cube[6]
                 if sky is not None:
-                    out_sube[:, :, slice_number] = partial_cube[6]
+                    out_sube[:, :, slice_number] = partial_cube[7]
                 if dew is not None:
-                    out_dube[:, :, slice_number] = partial_cube[7]
+                    out_dube[:, :, slice_number] = partial_cube[8]
 
             if self.config.instrument.plot_level >= 3:
                 for isl in range(0, 24):
@@ -225,6 +282,21 @@ class MakeCube(BasePrimitive):
                             do_inter = False
                     else:
                         time.sleep(self.config.instrument.plot_pause)
+
+            # Rotate RED data by 180 to align with Blue
+            if 'RED' in self.action.args.ccddata.header['CAMERA'].upper():
+                out_cube = np.rot90(out_cube, 2, (1, 2))
+                out_uube = np.rot90(out_uube, 2, (1, 2))
+                out_mube = np.rot90(out_mube, 2, (1, 2))
+                out_fube = np.rot90(out_fube, 2, (1, 2))
+                if data_nsk is not None:
+                    out_kube = np.rot90(out_kube, 2, (1, 2))
+                if obj is not None:
+                    out_oube = np.rot90(out_oube, 2, (1, 2))
+                if sky is not None:
+                    out_sube = np.rot90(out_sube, 2, (1, 2))
+                if dew is not None:
+                    out_dube = np.rot90(out_dube, 2, (1, 2))
 
             # Calculate some WCS parameters
             # Get object pointing
@@ -406,9 +478,11 @@ class MakeCube(BasePrimitive):
             # write out cube
             self.action.args.ccddata.header['HISTORY'] = log_string
             self.action.args.ccddata.data = out_cube
-            self.action.args.ccddata.uncertainty.array = out_vube
+            self.action.args.ccddata.uncertainty.array = out_uube
             self.action.args.ccddata.mask = out_mube
             self.action.args.ccddata.flags = out_fube
+            if data_nsk is not None:
+                self.action.args.ccddata.noskysub = out_kube
 
             # write out int image
             kcwi_fits_writer(self.action.args.ccddata,
@@ -419,7 +493,8 @@ class MakeCube(BasePrimitive):
             self.context.proctab.update_proctab(frame=self.action.args.ccddata,
                                                 suffix="icube",
                                                 filename=self.action.args.name)
-            self.context.proctab.write_proctab()
+            self.context.proctab.write_proctab(
+                tfil=self.config.instrument.procfile)
 
             # check for obj, sky outputs
             if obj is not None:

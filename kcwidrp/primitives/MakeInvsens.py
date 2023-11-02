@@ -19,7 +19,21 @@ import numpy as np
 
 
 class MakeInvsens(BasePrimitive):
+    """
+    Generate inverse sensitivity curve from a standard star observation.
 
+    Uses object name to determine if the observation is a standard star.  Then
+    checks that the image has been processed through DAR correction.  Reads
+    in the reference spectrum and compares it with the observed spectrum to
+    generate the inverse sensitivity curve that can be used to flux calibrate
+    science observations.
+
+    Outputs FITS inverse sensitivity spectrum along with diagnostic plots that
+    include residuals between reference spectrum and calibrated observed
+    spectrum and effective area and efficiency plots as a function of
+    wavelength.
+
+    """
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
         self.logger = context.pipeline_logger
@@ -46,8 +60,13 @@ class MakeInvsens(BasePrimitive):
         # have we been processed correctly?
         if 'DARCOR' in self.action.args.ccddata.header:
             if self.action.args.ccddata.header['DARCOR']:
-                # check pre condition
+                # does the standard file exist?
                 if self.action.args.stdfile is not None:
+                    # have we been stacked?
+                    if 'NSTACK' in self.action.args.ccddata.header:
+                        nstack = self.action.args.ccddata.header['NSTACK']
+                    else:
+                        nstack = 0
                     # does file already exist?
                     ofn = self.action.args.name
                     msname = strip_fname(ofn) + '_invsens.fits'
@@ -56,14 +75,20 @@ class MakeInvsens(BasePrimitive):
                                             rdir,
                                             msname)
                     if os.path.exists(invsensf):
-                        self.logger.warning("Master cal already exists: %s" %
-                                            invsensf)
-                        return False
+                        if nstack <= 0:
+                            self.logger.warning("Master cal already exists: %s"
+                                                % invsensf)
+                            return False
+                        else:
+                            os.unlink(invsensf)
+                            self.logger.info("Master cal will re-generated "
+                                             "from stacked image")
+                            return True
                     else:
                         self.logger.info("Master cal will be generated.")
                         return True
                 else:
-                    self.logger.warning("Not a KCWI standard observation.")
+                    self.logger.warning("Not a KCWI standard star observation.")
                     return False
             else:
                 self.logger.warning("DAR not corrected, cannot generate "
@@ -78,6 +103,8 @@ class MakeInvsens(BasePrimitive):
 
         suffix = 'invsens'
         stdname = self.action.args.stdname
+
+        do_plots = self.config.instrument.plot_level >= 3
 
         # get size
         sz = self.action.args.ccddata.data.shape
@@ -101,13 +128,16 @@ class MakeInvsens(BasePrimitive):
         if wgoo0 < 3650:
             wgoo0 = 3650.
         wgoo1 = self.action.args.ccddata.header['WAVGOOD1']
-        # get all inclusive wavelength range
+        # get all-inclusive wavelength range
         wall0 = self.action.args.ccddata.header['WAVALL0']
         wall1 = self.action.args.ccddata.header['WAVALL1']
         # get DAR padding in y
         pad_y = self.action.args.ccddata.header['DARPADY']
         # get sky subtraction status
-        skycor = self.action.args.ccddata.header['SKYCOR']
+        if 'SKYCOR' in self.action.args.ccddata.header:
+            skycor = self.action.args.ccddata.header['SKYCOR']
+        else:
+            skycor = False
         # get telescope and atm. correction
         if 'TELESCOP' in self.action.args.ccddata.header:
             tel = self.action.args.ccddata.header['TELESCOP']
@@ -144,15 +174,44 @@ class MakeInvsens(BasePrimitive):
             if tstd > mxsg:
                 mxsg = tstd
                 mxsl = i
+            # plot slice data, if requested
+            if do_plots:
+                py = tot[:, i]
+                px = np.arange(len(py))
+                p = figure(
+                    title=self.action.args.stdlabel +
+                    ' Std Slice %d (DAR padded)' % i,
+                    x_axis_label="Position along slice",
+                    y_axis_label="Flux summed over WLs",
+                    plot_width=self.config.instrument.plot_width,
+                    plot_height=self.config.instrument.plot_height)
+                p.scatter(px, py, marker='x')
+                bokeh_plot(p, self.context.bokeh_session)
+                print("sl, std: %02d, %.3f" % (i, tstd))
+                qstr = input("Next? <cr>, q - quit: ")
+                if 'Q' in qstr.upper():
+                    do_plots = False
 
         # relevant slices
-        sl0 = (mxsl - 3) if mxsl >= 3 else 0
-        sl1 = (mxsl + 3) if (mxsl + 3) <= sz[2]-1 else sz[2]-1
+        if self.action.args.ifunum == 1:    # Large slicer
+            slset = 3
+        elif self.action.args.ifunum == 2:  # Medium slicer
+            slset = 5
+        elif self.action.args.ifunum == 3:  # Small slicer
+            slset = 12
+        else:
+            slset = 3
+            self.logger.error("Assuming Large slicer: id undefined! - %d" %
+                              self.action.args.ifunum)
+        # Get set of slices needed for calculation
+        sl0 = (mxsl - slset) if mxsl >= slset else 0
+        sl1 = (mxsl + slset) if (mxsl + slset) <= sz[2]-1 else sz[2]-1
         # get y position of std
         cy, _ = find_peaks(tot[:, mxsl], height=np.nanmean(tot[:, mxsl]))
         cy = int(cy[0]) + gy0
         # log results
-        self.logger.info("Std lices: max, sl0, sl1, spatial cntrd: "
+        self.logger.info("Std slices (DAR padded): "
+                         "max, sl0, sl1, spatial cntrd: "
                          "%d, %d, %d, %.2f" % (mxsl, sl0, sl1, cy))
         # get dwave spectrum
         ofn = self.action.args.name
@@ -198,7 +257,8 @@ class MakeInvsens(BasePrimitive):
             obsmean = np.nanmean(obsspec)
             obsspec[zeros] = obsmean
         # read in standard star spectrum
-        hdul = pf.open(self.action.args.stdfile)
+        stdfile = self.action.args.stdfile
+        hdul = pf.open(stdfile)
         swl = hdul[1].data['WAVELENGTH']
         sflx = hdul[1].data['FLUX']
         sfw = hdul[1].data['FWHM']
@@ -216,13 +276,12 @@ class MakeInvsens(BasePrimitive):
         if sroi[-1] < (len(swl)-1):
             sroi.append(sroi[-1]+1)
             nsroi += 1
+        # how many points?
+        self.logger.info("Number of standard points = %d" % nsroi)
         # very sparsely sampled w.r.t. object
-        if nsroi <= 1:
+        if nsroi <= 5:
             self.logger.error("Not enough standard points")
             return self.action.args
-        self.logger.info("Number of standard point = %d" % nsroi)
-        # how many points?
-        # do_line = nsroi > 20
 
         swl = swl[sroi]
         sflx = sflx[sroi]
@@ -240,16 +299,15 @@ class MakeInvsens(BasePrimitive):
         earea = ubsspec / rspho
         # correct to native bins
         earea *= dw/dwspec
-        # Balmer lines
-        blines = [6563., 4861., 4341., 4102., 3970., 3889., 3835.]
+        # Line masks
+        lmasks = []
+        # Header for line mask file
+        lmhdr = []
         # default values (for BM)
-        bwid = 0.008    # fractional width to mask
         ford = 9        # fit order
         if 'BL' in self.action.args.grating:
-            bwid = 0.004
             ford = 7
         elif 'BH' in self.action.args.grating:
-            bwid = 0.012
             ford = 9
         # Adjust for dichroic fraction
         try:
@@ -260,7 +318,6 @@ class MakeInvsens(BasePrimitive):
         if ford < 3:
             ford = 3
         self.logger.info("Fitting Invsens with polynomial order %d" % ford)
-        bwids = [bl * bwid for bl in blines]
         # fit inverse sensitivity and effective area
         # get initial region of interest
         wl_good = [i for i, v in enumerate(w) if wgoo0 <= v <= wgoo1]
@@ -272,13 +329,20 @@ class MakeInvsens(BasePrimitive):
         wlm1 = wgoo1
         # interactively set wavelength limits
         if self.config.instrument.plot_level >= 1:
-            yran = [np.min(obsspec), np.max(obsspec)]
+            print("CHECKING WAVELENGTH LIMITS")
+            print("Current WL limits: %.1f - %.1f Angstroms "
+                  "(blue vertical lines)" % (wlm0, wlm1))
+            print("A <cr> will accept current values, "
+                  "or enter new values to avoid edge problems (if present).")
+            print("Hover the cursor over spectrum to find wavelengths.")
+            # yran = [np.min(obsspec), np.max(obsspec)]
+            yran = [np.min(obsspec[wl_good]), np.max(obsspec[wl_good])]
             source = ColumnDataSource(data=dict(x=w, y=obsspec))
             done = False
             while not done:
                 p = figure(
                     tooltips=[("x", "@x{0,0.0}"), ("y", "@y{0,0.0}")],
-                    title=self.action.args.plotlabel + ' Obs Spec',
+                    title=self.action.args.stdlabel + ' Obs Spec',
                     x_axis_label='Wave (A)',
                     y_axis_label='Intensity (e-)',
                     plot_width=self.config.instrument.plot_width,
@@ -293,8 +357,7 @@ class MakeInvsens(BasePrimitive):
                 p.line([cwv, cwv], yran, line_color='red', legend_label='CWAV')
                 set_plot_lims(p, xlim=[wall0, wall1], ylim=yran)
                 bokeh_plot(p, self.context.bokeh_session)
-                print("WL limits: %.1f - %.1f" % (wlm0, wlm1))
-                qstr = input("New? <float> <float>, <cr> - done: ")
+                qstr = input("New values? <float> <float> (or <cr> - done): ")
                 if len(qstr) <= 0:
                     done = True
                 else:
@@ -313,15 +376,70 @@ class MakeInvsens(BasePrimitive):
             wl_good = [i for i, v in enumerate(w) if wlm0 <= v <= wlm1]
             nwl_good = len(wl_good)
         # END: interactively set wavelength limits
-        # Now interactively identify lines
+
+        # Look for mask data file
+        # first in local directory
+        local_lmfile = os.path.basename(stdfile).split('.fits')[0] + '.lmsk'
+        if not os.path.exists(local_lmfile):
+            # then in stds directory
+            lmfile = stdfile.split('.fits')[0] + '.lmsk'
+            if not os.path.exists(lmfile):
+                lmfile = None
+        else:
+            lmfile = local_lmfile
+        # if we found a mask file, read it in
+        if lmfile is None:
+            self.logger.info("No line mask file found")
+        else:
+            self.logger.info("Using line mask file %s" % lmfile)
+            with open(lmfile) as lmf:
+                lmasks_str = lmf.readlines()
+            # parse file into mask list
+            for lmws in lmasks_str:
+                lmws = lmws.strip()
+                # Collect header lines
+                if lmws.startswith('#'):
+                    lmhdr.append(lmws)
+                    continue
+                # Skip blank lines
+                if len(lmws.strip()) < 1:
+                    continue
+                try:
+                    data = lmws.split('#')[0]
+                    # Parse comment on line
+                    if '#' in lmws:
+                        comm = lmws.split('#')[1].lstrip()
+                    else:
+                        comm = ''
+                    # Parse line mask range
+                    lm = [float(v) for v in data.split()]
+                except ValueError:
+                    print("bad line: %s" % lmws)
+                    continue
+                # Only collect good lines
+                if len(lm) == 2 and lm[0] < lm[1]:
+                    lmdict = {'w0': lm[0], 'w1': lm[1], 'com': comm}
+                    lmasks.append(lmdict)
+                else:
+                    print("bad line: %s" % lmws)
+        # Now interactively identify lines if requested
         if self.config.instrument.plot_level >= 1:
-            yran = [np.min(obsspec), np.max(obsspec)]
+            yran = [np.min(obsspec[wl_good]), np.max(obsspec[wl_good])]
             # source = ColumnDataSource(data=dict(x=w, y=obsspec))
+            print("MASKING SHARP FEATURES: ABSORPTION LINES/COSMIC RAYS")
+            print("To mask, enter starting and stopping wavelengths "
+                  "followed by an optional comment (string) for each line "
+                  "you want to mask.")
+            print("Current masks are shown as vertical dashed yellow lines.")
+            print("Hover the cursor over spectrum to find wavelengths.")
+            print("Mask values and comments are saved to this file: %s." %
+                  local_lmfile)
+            print("A <cr> with no line limits will accept current masks.")
             done = False
             while not done:
                 p = figure(
                     tooltips=[("x", "@x{0.0}"), ("y", "@y{0.0}")],
-                    title=self.action.args.plotlabel + ' Obs Spec',
+                    title=self.action.args.stdlabel + ' Obs Spec',
                     x_axis_label='Wave (A)',
                     y_axis_label='Intensity (e-)',
                     plot_width=self.config.instrument.plot_width,
@@ -334,32 +452,45 @@ class MakeInvsens(BasePrimitive):
                        legend_label='LIMITS')
                 p.line([wlm1, wlm1], yran, line_color='blue')
                 p.line([cwv, cwv], yran, line_color='red', legend_label='CWAV')
-                for il, bl in enumerate(blines):
-                    if wall0 < bl < wall1:
-                        p.line([bl, bl], yran, line_color='orange')
-                        p.line([bl-bwids[il], bl-bwids[il]], yran,
-                               line_color='orange', line_dash='dashed')
-                        p.line([bl + bwids[il], bl + bwids[il]], yran,
-                               line_color='orange', line_dash='dashed')
+                for ml in lmasks:
+                    if wall0 < ml['w0'] < wall1 and wall0 < ml['w1'] < wall1:
+                        p.line([ml['w0'], ml['w0']], yran, line_color='orange',
+                               line_dash='dashed')
+                        p.line([ml['w1'], ml['w1']], yran, line_color='orange',
+                               line_dash='dashed')
                 set_plot_lims(p, xlim=[wall0, wall1], ylim=yran)
                 bokeh_plot(p, self.context.bokeh_session)
-                qstr = input("New lines? <float> [<float>] ... (A), "
-                             "<cr> - done: ")
+                qstr = input("Mask line: wavelength start stop (Ang) comment "
+                             "(str) <float> <float> <str> (<cr> - done): ")
                 if len(qstr) <= 0:
                     done = True
                 else:
-                    for lstr in qstr.split():
-                        try:
-                            new_line = float(lstr)
-                        except ValueError:
-                            print("bad line: %s" % lstr)
-                            continue
-                        if wlm0 < new_line < wlm1:
-                            blines.append(new_line)
-                            bwids.append(bwid * new_line)
-                        else:
-                            print("line outside range: %s" % lstr)
+                    try:
+                        newl = {'w0': float(qstr.split()[0]),
+                                'w1': float(qstr.split()[1]),
+                                'com': " ".join(qstr.split()[2:]).strip()}
+                        # newl = [float(val) for val in qstr.split()]
+                    except ValueError:
+                        print("bad line: %s" % qstr)
+                        continue
+                    if wlm0 < newl['w0'] < wlm1 and wlm0 < newl['w1'] < wlm1:
+                        lmasks.append(newl)
+                    else:
+                        print("line mask outside wl range: %s" % qstr)
         # END: interactively identify lines
+        # Write out a local copy of line masks so user can edit
+        if len(lmasks) > 0:
+            local_lmfile = os.path.basename(
+                stdfile).split('.fits')[0] + '.lmsk'
+            with open(local_lmfile, 'w') as lmf:
+                for lmh in lmhdr:
+                    lmf.write(lmh)
+                for lm in lmasks:
+                    if len(lm['com']) == 0:
+                        lmf.write("%.2f %.2f\n" % (lm['w0'], lm['w1']))
+                    else:
+                        lmf.write("%.2f %.2f # %s\n" % (lm['w0'], lm['w1'],
+                                                        lm['com']))
         # set up fitting vectors, flux, waves, measure errors
         sf = invsen[wl_good]   # dependent variable
         af = earea[wl_good]    # effective area
@@ -368,15 +499,14 @@ class MakeInvsens(BasePrimitive):
         rf = rsflx[wl_good]    # reference flux
         mw = np.ones(nwl_good, dtype=float)     # weights
         use = np.ones(nwl_good, dtype=int)      # toggles for usage
-        # loop over Balmer lines
-        for il, bl in enumerate(blines):
-            roi = [i for i, v in enumerate(wf)
-                   if (bl - bwids[il]) <= v <= (bl + bwids[il])]
+        # loop over line masks and apply them
+        for ml in lmasks:
+            roi = [i for i, v in enumerate(wf) if ml['w0'] <= v <= ml['w1']]
             nroi = len(roi)
             if nroi > 0:
                 use[roi] = 0
-                self.logger.info("Masking line at %.1f +- %.4f (A)"
-                                 % (bl, bwids[il]))
+                self.logger.info("Masking line at %.2f to %.2f (A)"
+                                 % (ml['w0'], ml['w1']))
         # ignore bad points by setting large errors
         mf = []
         ef = []
@@ -426,7 +556,7 @@ class MakeInvsens(BasePrimitive):
                 effmax = np.nanmax(100.*fearea/area)
                 effmean = np.nanmean(100.*fearea/area)
                 peff = figure(
-                    title=self.action.args.plotlabel + ' Efficiency',
+                    title=self.action.args.stdlabel + ' Efficiency',
                     x_axis_label='Wave (A)',
                     y_axis_label='Effective Efficiency (%)',
                     plot_width=self.config.instrument.plot_width,
@@ -452,7 +582,7 @@ class MakeInvsens(BasePrimitive):
 
                 yran = [np.min(sf), np.max(sf)]
                 pivs = figure(
-                    title=self.action.args.plotlabel + ' Inverse sensitivity',
+                    title=self.action.args.stdlabel + ' Inverse sensitivity',
                     x_axis_label='Wave (A)',
                     y_axis_label='Invserse Sensitivity (Flux/e-/s)',
                     y_axis_type='log',
@@ -473,7 +603,7 @@ class MakeInvsens(BasePrimitive):
 
                 yran = [np.min(calspec[wl_good]), np.max(calspec[wl_good])]
                 pcal = figure(
-                    title=self.action.args.plotlabel + ' Calibrated',
+                    title=self.action.args.stdlabel + ' Calibrated',
                     x_axis_label='Wave (A)',
                     y_axis_label='Flux (ergs/s/cm^2/A)',
                     plot_width=self.config.instrument.plot_width,
@@ -492,7 +622,7 @@ class MakeInvsens(BasePrimitive):
 
                 yran = [np.min(resid), np.max(resid)]
                 prsd = figure(
-                    title=self.action.args.plotlabel +
+                    title=self.action.args.stdlabel +
                     ' Residuals = %.1f +- %.1f (%%)' % (rsd_mean, rsd_stdv),
                     x_axis_label='Wave (A)',
                     y_axis_label='Obs - Ref / Ref (%)',

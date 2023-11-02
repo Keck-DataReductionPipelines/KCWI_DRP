@@ -1,7 +1,8 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from kcwidrp.core.bokeh_plotting import bokeh_plot
 from kcwidrp.core.kcwi_plotting import get_plot_lims, oplot_slices, \
-    set_plot_lims
+    set_plot_lims, save_plot
+from kcwidrp.primitives.kcwi_file_primitives import plotlabel
 
 from bokeh.plotting import figure
 import numpy as np
@@ -13,9 +14,19 @@ import time
 
 
 def pascal_shift(coefficients=None, x0=None):
-    """Shift coefficients to a new reference value (X0)
+    """
+    Shift coefficients to a new reference value (X0)
 
-    This should probably go somewhere else, but will be needed here.
+    Use Pascal's Triangle to shift the polynomial coefficients to a new
+    reference point.  Used to transfer central fits to full-wavelength fits.
+
+    Args:
+        coefficients (list of floats): fit coef's, up to 7 elements.
+        x0 (float): New reference x value.
+
+    Returns:
+        Shifted coefficients
+
     """
     if not coefficients:
         print("Error, no coefficients for pascal_shift.")
@@ -190,21 +201,36 @@ def bar_fit_helper(argument):
 
 
 class FitCenter(BasePrimitive):
-    """ Fit central region"""
+    """
+    Perform wavelength fitting on central region.
+
+    Perform a preliminary determination of the dispersion in the central
+    region of the wavelength range.  Starts with known offsets between bars
+    and rough offset between reference bar and atlas spectrum, and the
+    calculated dispersion.
+
+    Uses config parameter TAPERFRAC to control cross-correlation roll-off.
+
+    """
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
         self.logger = context.pipeline_logger
         self.action.args.twkcoeff = []
 
+    def _pre_condition(self):
+        self.logger.info("Checking for master arc")
+        if 'MARC' in self.action.args.ccddata.header['IMTYPE']:
+            return True
+        else:
+            return False
+
     def _perform(self):
-        """At this point we have the offsets between bars and the approximate
-        offset from the reference bar to the atlas spectrum and the approximate
-        dispersion.
-        """
+
         self.logger.info("Finding wavelength solution for central region")
         # Are we interactive?
         do_inter = (self.config.instrument.plot_level >= 2)
+        plab = plotlabel(self.action.args)
 
         # y binning
         y_binning = self.action.args.ybinsize
@@ -295,7 +321,7 @@ class FitCenter(BasePrimitive):
                               shifted_coefficients[1]))
             if do_inter and ir == next_bar_to_plot:
                 # plot maxima
-                p = figure(title=self.action.args.plotlabel +
+                p = figure(title=plab +
                            "CENTRAL DISPERSION FIT for Bar: %d Slice: %d" %
                            (b, int(b / 5)),
                            plot_width=self.config.instrument.plot_width,
@@ -322,17 +348,18 @@ class FitCenter(BasePrimitive):
         self.action.args.twkcoeff = twkcoeff
         # Plot results
         if self.config.instrument.plot_level >= 1:
+            nbars = self.config.instrument.NBARS
             # Plot central wavelength
-            p = figure(title=self.action.args.plotlabel + "CENTRAL VALUES",
+            p = figure(title=plab + "CENTRAL VALUES",
                        x_axis_label="Bar #",
                        y_axis_label="Central Wavelength (A)",
                        plot_width=self.config.instrument.plot_width,
                        plot_height=self.config.instrument.plot_height)
             x = range(len(centwave))
             p.scatter(x, centwave, marker='x', legend_label='bar wave')
-            p.line([0, 120], [self.action.args.cwave, self.action.args.cwave],
+            p.line([0, nbars], [self.action.args.cwave, self.action.args.cwave],
                    color='red', legend_label='CWAVE')
-            xlim = [-1, 120]
+            xlim = [-1, nbars]
             ylim = get_plot_lims(centwave)
             p.xgrid.grid_line_color = None
             oplot_slices(p, ylim)
@@ -343,18 +370,24 @@ class FitCenter(BasePrimitive):
                 input("Next? <cr>: ")
             else:
                 time.sleep(self.config.instrument.plot_pause)
+            # save plots of central wavelengths
+            pfname = "arc_%05d_%s_%s_%s" % (
+                self.action.args.ccddata.header['FRAMENO'],
+                self.action.args.illum, self.action.args.grating,
+                self.action.args.ifuname)
+            save_plot(p, filename=pfname + '_cwaves.png')
             # Plot central dispersion
-            p = figure(title=self.action.args.plotlabel + "CENTRAL VALUES",
+            p = figure(title=plab + "CENTRAL VALUES",
                        x_axis_label="Bar #",
                        y_axis_label="Central Dispersion (A)",
                        plot_width=self.config.instrument.plot_width,
                        plot_height=self.config.instrument.plot_height)
             x = range(len(centdisp))
             p.scatter(x, centdisp, marker='x', legend_label='bar disp')
-            p.line([0, 120], [self.context.prelim_disp,
-                              self.context.prelim_disp], color='red',
+            p.line([0, nbars], [self.context.prelim_disp,
+                                self.context.prelim_disp], color='red',
                    legend_label='Calc Disp')
-            xlim = [-2, 121]
+            xlim = [-2, nbars+1]
             ylim = get_plot_lims(centdisp)
             p.xgrid.grid_line_color = None
             oplot_slices(p, ylim)
@@ -365,6 +398,7 @@ class FitCenter(BasePrimitive):
                 input("Next? <cr>: ")
             else:
                 time.sleep(self.config.instrument.plot_pause)
+            save_plot(p, filename=pfname + '_cdisp.png')
 
         log_string = FitCenter.__module__
         self.action.args.ccddata.header['HISTORY'] = log_string

@@ -5,7 +5,13 @@ import os
 
 
 class SubtractDark(BasePrimitive):
-    """Subtract master dark frame"""
+    """
+    Subtract the master dark frame.
+
+    Checks for existence of master dark frame and, if it exists, performs
+    subtraction and records processing in the header.
+
+    """
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
@@ -19,9 +25,9 @@ class SubtractDark(BasePrimitive):
         target_type = 'MDARK'
 
         self.logger.info("Subtracting master dark")
-        tab = self.context.proctab.search_proctab(frame=self.action.args.ccddata,
-                                             target_type=target_type,
-                                             nearest=True)
+        tab = self.context.proctab.search_proctab(
+            frame=self.action.args.ccddata, target_type=target_type,
+            nearest=True)
         self.logger.info("%d master dark frames found" % len(tab))
 
         if len(tab) > 0:

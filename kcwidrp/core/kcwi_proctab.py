@@ -5,7 +5,7 @@ import logging
 
 class Proctab:
 
-    def __init__(self, logger):
+    def __init__(self):
         self.log = logging.getLogger('KCWI')
         self.proctab = None
 
@@ -66,6 +66,8 @@ class Proctab:
                       'mbias': 1,
                       'int': 1,
                       'intd': 2,
+                      'mcbars': 3,
+                      'marc': 3,
                       'mflat': 4,
                       'sflat': 4,
                       'intf': 4,
@@ -86,10 +88,14 @@ class Proctab:
                 frame.header['STATEID'] = 'NONE'
             if 'GROUPID' not in frame.header:
                 frame.header['GROUPID'] = "NONE"
-            #    dto = self.frame.header['DATE-OBS']
-            #    fno = self.frame.header['FRAMENO']
-            #    self.frame.header['GROUPID'] = "%s-%s" % (dto, fno)
-            cam = frame.header['CAMERA']
+            else:
+                grpid = frame.header['GROUPID'].strip()
+                if len(grpid) <= 0:
+                    frame.header['GROUPID'] = "NONE"
+            #    dto = frame.header['DATE-OBS']
+            #    fno = frame.header['FRAMENO']
+            #    frame.header['GROUPID'] = "%s-%s" % (dto, fno)
+            cam = frame.header['CAMERA'].upper()
             if 'BLUE' in cam:
                 grnam = frame.header['BGRATNAM']
                 grang = frame.header['BGRANGLE']
@@ -134,25 +140,25 @@ class Proctab:
         self.proctab = unique(self.proctab, keys=['CID', 'FRAMENO', 'TYPE'],
                               keep='last')
         self.proctab.sort('FRAMENO')
-        self.log.info(f"proctable updated with {frame.header['OFNAME']} and {filename}")
+        self.log.info(
+            f"proctable updated with {frame.header['OFNAME']} and {filename}")
 
     def search_proctab(self, frame, target_type=None, target_group=None,
-                  nearest=False, return_ofname=True):
-        self.frame = frame
+                       nearest=False):
         if target_type is not None and self.proctab is not None:
             self.log.info('Looking for %s frames' % target_type)
             # get relevant camera (blue or red)
-            self.log.info('Camera is %s' % self.frame.header['CAMERA'])
+            self.log.info('Camera is %s' % frame.header['CAMERA'])
             tab = self.proctab[(self.proctab['CAM'] ==
-                                self.frame.header['CAMERA'].strip())]
+                                frame.header['CAMERA'].upper().strip())]
             # get target type images
             tab = tab[(self.proctab['TYPE'] == target_type)]
             self.log.info('Target type is %s' % target_type)
             # BIASES must have the same CCDCFG
             if 'BIAS' in target_type:
                 self.log.info('Looking for frames with CCDCFG = %s' %
-                              self.frame.header['CCDCFG'])
-                tab = tab[(tab['DID'] == int(self.frame.header['CCDCFG']))]
+                              frame.header['CCDCFG'])
+                tab = tab[(tab['DID'] == int(frame.header['CCDCFG']))]
                 if target_group is not None:
                     self.log.info('Looking for frames with GRPID = %s' %
                                   target_group)
@@ -160,10 +166,10 @@ class Proctab:
             # raw DARKS must have the same CCDCFG and TTIME
             elif target_type == 'DARK':
                 self.log.info('Looking for frames with CCDCFG = %s and '
-                              'TTIME = %f' % (self.frame.header['CCDCFG'],
-                                              self.frame.header['TTIME']))
-                tab = tab[tab['DID'] == int(self.frame.header['CCDCFG'])]
-                tab = tab[tab['TTIME'] == float(self.frame.header['TTIME'])]
+                              'TTIME = %f' % (frame.header['CCDCFG'],
+                                              frame.header['TTIME']))
+                tab = tab[tab['DID'] == int(frame.header['CCDCFG'])]
+                tab = tab[tab['TTIME'] == float(frame.header['TTIME'])]
                 if target_group is not None:
                     self.log.info('Looking for frames with GRPID = %s' %
                                   target_group)
@@ -171,15 +177,20 @@ class Proctab:
             # MDARKS must have the same CCDCFG, will be scaled to match TTIME
             elif target_type == 'MDARK':
                 self.log.info('Looking for frames with CCDCFG = %s' %
-                              self.frame.header['CCDCFG'])
-                tab = tab[(tab['DID'] == int(self.frame.header['CCDCFG']))]
+                              frame.header['CCDCFG'])
+                tab = tab[(tab['DID'] == int(frame.header['CCDCFG']))]
+            elif target_type == 'OBJECT':
+                self.log.info('Looking for frames with GRPID = %s' %
+                              target_group)
+                tab = tab[tab['GRPID'] == target_group]
             else:
                 self.log.info('Looking for frames with STATEID = %s (%s)' %
-                              (self.frame.header['STATEID'], self.frame.header['STATENAM']))
-                tab = tab[(tab['CID'] == self.frame.header['STATEID'])]
+                              (frame.header['STATEID'],
+                               frame.header['STATENAM']))
+                tab = tab[(tab['CID'] == frame.header['STATEID'])]
             # Check if nearest entry is requested
             if nearest and len(tab) > 1:
-                tfno = self.frame.header['MJD']
+                tfno = frame.header['MJD']
                 minoff = 99999
                 trow = None
                 for row in tab:
@@ -198,12 +209,34 @@ class Proctab:
         return tab
 
     def in_proctab(self, frame):
-        self.frame = frame
         # get relevant camera (blue or red)
         tab = self.proctab[(self.proctab['CAM'] ==
-                            self.frame.header['CAMERA'].strip())]
+                            frame.header['CAMERA'].upper().strip())]
         imno_list = tab['MJD']
-        if self.frame.header['MJD'] in imno_list:
+        if frame.header['MJD'] in imno_list:
             return True
         else:
             return False
+
+    def last_suffix(self, frame):
+        # get last suffix if currently in proctab
+        # check for master object first
+        tab_mobj = self.proctab[(self.proctab['TYPE'] == 'MOBJ')]
+        tab_mjd = tab_mobj[(tab_mobj['MJD'] == frame.header['MJD'])]
+        tab = tab_mjd[(tab_mjd['FRAMENO'] == frame.header['FRAMENO'])]
+
+        if len(tab) == 1:
+            return tab['SUFF'].value[0]
+        # No master object, so check simple object
+        elif len(tab) <= 0:
+            tab_obj = self.proctab[(self.proctab['TYPE'] == 'OBJECT')]
+            tab_mjd = tab_obj[(tab_obj['MJD'] == frame.header['MJD'])]
+            tab = tab_mjd[(tab_mjd['FRAMENO'] == frame.header['FRAMENO'])]
+            if len(tab) == 1:
+                return tab['SUFF'].value[0]
+            else:
+                return ""
+        else:
+            self.log.warning("Ambiguous entries for frame number %d" %
+                             frame.header['FRAMENO'])
+            return ""

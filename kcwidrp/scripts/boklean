@@ -1,0 +1,21 @@
+#!/bin/csh
+echo "Killing bokeh, geckodriver, and marionette processes"
+echo -n "Are you sure? (Y/n): "
+set q = $<
+if ( $q =~ [Nn] ) exit
+echo "Cleaning bokeh"
+foreach pid (`ps gauwx | grep bokeh | grep -v grep | awk '{print $2}'`)
+	echo $pid
+	if ( $1 == "") kill -9 $pid
+end
+echo "Cleaning geckodriver"
+foreach pid (`ps gauwx | grep geckodriver | grep -v grep | awk '{print $2}'`)
+	echo $pid
+	if ( $1 == "") kill -9 $pid
+end
+echo "Cleaning marionette"
+foreach pid (`ps gauwx | grep marionette | grep -v grep | awk '{print $2}'`)
+	echo $pid
+	if ( $1 == "") kill -9 $pid
+end
+

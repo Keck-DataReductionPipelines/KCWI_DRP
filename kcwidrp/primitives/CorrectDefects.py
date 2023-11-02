@@ -8,7 +8,23 @@ import pandas as pd
 
 
 class CorrectDefects(BasePrimitive):
-    """Remove known bad columns"""
+    """
+    Remove known bad columns.
+
+    Looks for a defect list file in the data directory of kcwidrp based on the
+    CCD ampmode and x and y binning.  Records the defect correction in the
+    FITS header with the following keywords:
+
+        * BPFILE: the bad pixel file used to correct defects
+        * NBPCLEAN: the number of bad pixels cleaned
+
+    Uses the following configuration parameter:
+
+        * saveintims: if set to ``True`` write out a \*_def.fits file with defects corrected.  Default is ``False``.
+
+    Updates image in returned arguments.
+
+    """
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
@@ -22,7 +38,11 @@ class CorrectDefects(BasePrimitive):
         keycom = 'cleaned bad pixels?'
 
         # Create flags for bad columns fixed
-        flags = np.zeros(self.action.args.ccddata.data.shape, dtype=np.uint8)
+        if self.action.args.ccddata.flags is None:
+            self.action.args.ccddata.flags = np.zeros(
+                self.action.args.ccddata.data.shape, dtype=np.uint8)
+
+        flags = self.action.args.ccddata.flags
 
         # Nod and Shuffle?
         if self.action.args.nasmask and self.action.args.numopen > 1:
@@ -41,7 +61,7 @@ class CorrectDefects(BasePrimitive):
             self.logger.info("Reading defect list in: %s" % full_path)
             defect_table = pd.read_csv(full_path, sep=r'\s+')
             # range of pixels for calculating good value
-            pixel_range_for_good_value = 5
+            pixel_range_for_good_value = 2
             for index, row in defect_table.iterrows():
                 # Get coords and adjust for python zero bias
                 x0 = row['X0'] - 1
@@ -55,10 +75,10 @@ class CorrectDefects(BasePrimitive):
                                   x0-pixel_range_for_good_value:x0])
                     # sample on high side
                     values.extend(self.action.args.ccddata.data[by,
-                                  x1+1:x1+pixel_range_for_good_value+1])
+                                  x1:x1+pixel_range_for_good_value])
                     # get replacement value
                     good_values = np.nanmedian(np.asarray(values))
-                    # Replace baddies with gval
+                    # Replace baddies with good_values
                     for bx in range(x0, x1):
                         self.action.args.ccddata.data[by, bx] = good_values
                         flags[by, bx] += 2
@@ -78,7 +98,8 @@ class CorrectDefects(BasePrimitive):
         self.logger.info(log_string)
 
         # add flags array
-        self.action.args.ccddata.mask = flags
+        # DN 2023-may-28: commenting out because it causes bad things later on
+        # self.action.args.ccddata.mask = flags
         self.action.args.ccddata.flags = flags
 
         if self.config.instrument.saveintims:

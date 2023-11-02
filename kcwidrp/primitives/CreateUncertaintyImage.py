@@ -7,7 +7,15 @@ import numpy as np
 
 
 class CreateUncertaintyImage(BasePrimitive):
-    """Generate a variance image based on Poisson noise plus readnoise"""
+    """
+    Generate a standard deviation uncertainty image.
+
+    Starts with pure Poisson noise and uses astropy.nddata.StdDevUncertainty to
+    generate the uncertainty frame.  If BIASRNn header keywords present, uses
+    these with the ATSECn keywords to apply the appropriate readnoise addition
+    to each amplifier region.
+
+    """
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
@@ -25,14 +33,22 @@ class CreateUncertaintyImage(BasePrimitive):
         self.action.args.ccddata.uncertainty = StdDevUncertainty(
             np.sqrt(np.abs(self.action.args.ccddata.data)), copy=True)
         # add readnoise, if known
-        if 'BIASRN1' in self.action.args.ccddata.header:
+        have_bias = False
+        bsec, dsec, tsec, direc, amps, aoff = self.action.args.map_ccd
+        for amp in amps:
+            if 'BIASRN%d' % amp in self.action.args.ccddata.header:
+                have_bias = True
+        if have_bias:
             number_of_amplifiers = self.action.args.ccddata.header['NVIDINP']
-            for amplifier in range(number_of_amplifiers):
+            namps = len(amps)
+            if namps != number_of_amplifiers:
+                self.logger.warning("Amp count disagreement!")
+            for amplifier in amps:
                 # get amp parameters
                 bias_readnoise = self.action.args.ccddata.header[
-                    'BIASRN%d' % (amplifier + 1)]
+                    'BIASRN%d' % amplifier]
                 section = self.action.args.ccddata.header['ATSEC%d' %
-                                                          (amplifier + 1)]
+                                                          amplifier]
                 parsed_section, read_forward = parse_imsec(section)
                 self.action.args.ccddata.uncertainty.array[
                     parsed_section[0]:(parsed_section[1]+1),

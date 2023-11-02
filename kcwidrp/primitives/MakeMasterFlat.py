@@ -1,6 +1,6 @@
 from keckdrpframework.primitives.base_img import BaseImg
 from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_reader, \
-    kcwi_fits_writer, strip_fname, get_master_name
+    kcwi_fits_writer, strip_fname, plotlabel
 from kcwidrp.core.kcwi_plotting import get_plot_lims
 from kcwidrp.core.bokeh_plotting import bokeh_plot
 from kcwidrp.core.kcwi_plotting import save_plot
@@ -16,13 +16,30 @@ import scipy as sp
 from scipy.signal import find_peaks
 
 
-def bm_ledge_position(cwave):
-    fit = [0.240742, 4044.56]
+def bm_ledge_position(cwave, dich):
+    if dich:
+        fit = [0.240742, 4060.56]
+    else:
+        fit = [0.240742, 4044.56]
     return fit[1] + fit[0] * cwave
 
 
 class MakeMasterFlat(BaseImg):
-    """Stack flat images and make master flat image"""
+    """
+    Generate illumination correction from a stacked flat image.
+
+    Uses b-spline fits along with geometry maps to generate a master image for
+    illumination correction.  If the flat is internal, accounts for vignetting
+    along one edge.  Also accounts for ledge seen in BM grating.
+
+    Depending on the type of input stack, the following files are written out
+    and entries are made in the proc file:
+
+        * SFLAT - a \*_mflat.fits file and an MFLAT entry
+        * SDOME - a \*_mdome.fits file and an MDOME entry
+        * STWIF - a \*_mtwif.fits file and an MTWIF entry
+
+"""
 
     def __init__(self, action, context):
         BaseImg.__init__(self, action, context)
@@ -31,9 +48,8 @@ class MakeMasterFlat(BaseImg):
     def _pre_condition(self):
         """
         Checks if we can create a master flat based on the processing table
-        :return:
         """
-        # get list of master flats
+        # check for flat stack to use in generating master flat
         self.logger.info("Checking precondition for MakeMasterFlat")
         tab = self.context.proctab.search_proctab(
             frame=self.action.args.ccddata,
@@ -44,7 +60,8 @@ class MakeMasterFlat(BaseImg):
                                                self.action.args.new_type))
             return False
         else:
-            self.logger.info("No %s master flat found, proceeding." %
+            self.logger.info("No %s master flat found, "
+                             "checking for flat stack." %
                              self.action.args.new_type)
             self.stack_list = self.context.proctab.search_proctab(
                 frame=self.action.args.ccddata,
@@ -63,6 +80,7 @@ class MakeMasterFlat(BaseImg):
         Returns an Argument() with the parameters that depends on this operation
         """
         self.logger.info("Creating master illumination correction")
+        olab = plotlabel(self.action.args)
 
         suffix = self.action.args.new_type.lower()
         insuff = self.action.args.stack_type.lower()
@@ -70,12 +88,12 @@ class MakeMasterFlat(BaseImg):
         stack_list = list(self.stack_list['filename'])
 
         if len(stack_list) <= 0:
-            self.logger.warning("No flats found!")
+            self.logger.warning("No flat stack found!")
             return self.action.args
 
         # get root for maps
         tab = self.context.proctab.search_proctab(
-            frame=self.action.args.ccddata, target_type='ARCLAMP',
+            frame=self.action.args.ccddata, target_type='MARC',
             target_group=self.action.args.groupid)
         if len(tab) <= 0:
             self.logger.error("Geometry not solved!")
@@ -87,30 +105,29 @@ class MakeMasterFlat(BaseImg):
         wmf = mroot + '_wavemap.fits'
         self.logger.info("Reading image: %s" % wmf)
         wavemap = kcwi_fits_reader(
-            os.path.join(self.config.instrument.cwd, 'redux',
-                         wmf))[0]
+            os.path.join(self.config.instrument.cwd, 'redux', wmf))[0]
 
         # Slice map image
         slf = mroot + '_slicemap.fits'
         self.logger.info("Reading image: %s" % slf)
         slicemap = kcwi_fits_reader(os.path.join(
-            self.config.instrument.cwd, 'redux',
-                         slf))[0]
+            self.config.instrument.cwd, 'redux', slf))[0]
 
         # Position map image
         pof = mroot + '_posmap.fits'
         self.logger.info("Reading image: %s" % pof)
         posmap = kcwi_fits_reader(os.path.join(
-            self.config.instrument.cwd, 'redux',
-                         pof))[0]
+            self.config.instrument.cwd, 'redux', pof))[0]
 
         # Read in stacked flat image
         stname = strip_fname(stack_list[0]) + '_' + insuff + '.fits'
 
         self.logger.info("Reading image: %s" % stname)
         stacked = kcwi_fits_reader(os.path.join(
-            self.config.instrument.cwd, 'redux',
-                         stname))[0]
+            self.config.instrument.cwd, 'redux', stname))[0]
+        plab = " ".join(olab.split()[0:3]) + (
+            " %d " % stacked.header['FRAMENO']
+        ) + " ".join(olab.split()[4:])
 
         # get type of flat
         internal = ('SFLAT' in stacked.header['IMTYPE'])
@@ -138,17 +155,39 @@ class MakeMasterFlat(BaseImg):
 
         # Parameters for fitting
 
-        # vignetted slice position range
-        fitl = int(4/xbin)
-        fitr = int(24/xbin)
+        if self.action.args.camera == 0:  # Blue
+            # vignetted slice position range
+            fitl = int(4/xbin)
+            fitr = int(24/xbin)
+
+            # flat fitting slice position range
+            ffleft = int(10 / xbin)
+            ffright = int(70 / xbin)
+
+            corlim = 0
+
+            # ymap not needed for Blue
+            ymap = None
+        else:   # Red
+            # vignetted slice position range
+            fitl = int(114 / xbin)
+            fitr = int(134 / xbin)
+
+            # flat fitting slice position range
+            ffleft = int(70 / xbin)
+            ffright = int(130 / xbin)
+
+            corlim = int(140 / xbin)
+
+            # Get ymap for trimming junk at ends
+            ymap = posmap.copy()
+            for i in range(ny):
+                ymap.data[i, :] = float(i)
 
         # un-vignetted slice position range
-        flatl = int(34/xbin)
-        flatr = int(72/xbin)
+        flatl = int(34 / xbin)
+        flatr = int(72 / xbin)
 
-        # flat fitting slice position range
-        ffleft = int(10/xbin)
-        ffright = int(70/xbin)
         nrefx = int(ffright - ffleft)
 
         buffer = 6.0/float(xbin)
@@ -159,10 +198,10 @@ class MakeMasterFlat(BaseImg):
         newflat = stacked.data.copy()
 
         # dichroic fraction
-        try:
-            dichroic_fraction = wavemap.header['DICHFRAC']
-        except KeyError:
-            dichroic_fraction = 1.
+        # try:
+        #     dichroic_fraction = wavemap.header['DICHFRAC']
+        # except KeyError:
+        #     dichroic_fraction = 1.
 
         # get reference slice data
         q = [i for i, v in enumerate(slicemap.data.flat) if v == refslice]
@@ -186,7 +225,8 @@ class MakeMasterFlat(BaseImg):
                 self.logger.warning("Camera keyword not defined")
                 wmin = waves[0]
                 wmax = waves[1]
-            dw = (wmax - wmin) / 30.0
+            # Use central fraction to calculate vignetting
+            dw = (wmax - wmin) / 30.0   # fraction of full wavelength range
             wavemin = (wmin+wmax) / 2.0 - dw
             wavemax = (wmin+wmax) / 2.0 + dw
             self.logger.info("Using %.1f - %.1f A of slice %d" % (wavemin,
@@ -217,7 +257,7 @@ class MakeMasterFlat(BaseImg):
             wslfit = np.polyval(wavelinfit, wflat-ww0)
             # plot slope fit
             if self.config.instrument.plot_level >= 1:
-                p = figure(title=self.action.args.plotlabel + ' WAVE SLOPE FIT',
+                p = figure(title=plab + ' WAVE SLOPE FIT',
                            x_axis_label='wave px',
                            y_axis_label='counts',
                            plot_width=self.config.instrument.plot_width,
@@ -266,7 +306,7 @@ class MakeMasterFlat(BaseImg):
             xinter = -(resflat[1] - resfit[1]) / (resflat[0] - resfit[0])
             # plot slice profile and fits
             if self.config.instrument.plot_level >= 1:
-                p = figure(title=self.action.args.plotlabel + ' Vignetting',
+                p = figure(title=plab + ' Vignetting',
                            x_axis_label='Slice Pos (px)',
                            y_axis_label='Ratio',
                            plot_width=self.config.instrument.plot_width,
@@ -293,8 +333,12 @@ class MakeMasterFlat(BaseImg):
                     time.sleep(self.config.instrument.plot_pause)
 
             # figure out where the correction applies
-            qcor = [i for i, v in enumerate(posmap.data.flat)
-                    if 0 <= v <= (xinter-buffer)]
+            if self.action.args.camera == 0:
+                qcor = [i for i, v in enumerate(posmap.data.flat)
+                        if corlim <= v <= (xinter-buffer)]
+            else:
+                qcor = [i for i, v in enumerate(posmap.data.flat)
+                        if (xinter + buffer) <= v <= corlim]
             # apply the correction!
             self.logger.info("Applying vignetting correction...")
             for i in qcor:
@@ -319,7 +363,7 @@ class MakeMasterFlat(BaseImg):
             buffit = np.polyfit(xbuff, ybuff, 3)
             # plot buffer fit
             if self.config.instrument.plot_level >= 1:
-                p = figure(title=self.action.args.plotlabel + ' Buffer Region',
+                p = figure(title=plab + ' Buffer Region',
                            x_axis_label='Slice Pos (px)',
                            y_axis_label='Ratio',
                            plot_width=self.config.instrument.plot_width,
@@ -344,7 +388,12 @@ class MakeMasterFlat(BaseImg):
         self.logger.info("Fitting master illumination")
         # now fit master flat
         # get reference slice points
-        qref = [i for i in q if ffleft <= posmap.data.flat[i] <= ffright]
+        if ymap is not None:
+            self.logger.info("Using ymap to limit yrange of data in qref")
+            qref = [i for i in q if ffleft <= posmap.data.flat[i] <= ffright and
+                    50 <= ymap.data.flat[i] <= (ny-50)]
+        else:
+            qref = [i for i in q if ffleft <= posmap.data.flat[i] <= ffright]
         xfr = wavemap.data.flat[qref]
         yfr = newflat.flat[qref]
         # sort on wavelength
@@ -357,7 +406,8 @@ class MakeMasterFlat(BaseImg):
 
         # correction for BM where we see a ledge
         if 'BM' in self.action.args.grating:
-            ledge_wave = bm_ledge_position(self.action.args.cwave)
+            ledge_wave = bm_ledge_position(self.action.args.cwave,
+                                           self.action.args.dich)
 
             self.logger.info("BM ledge calculated wavelength "
                              "for ref slice = %.2f (A)" % ledge_wave)
@@ -386,28 +436,32 @@ class MakeMasterFlat(BaseImg):
                 deriv = deriv[trm:-trm]
                 xvals = fpoints[trm:-trm]
                 peaks, _ = find_peaks(deriv, height=100)
+
+                p = figure(title=plab +
+                           ' Ledge', x_axis_label='Wavelength (A)',
+                           y_axis_label='Value',
+                           plot_width=self.config.instrument.plot_width,
+                           plot_height=self.config.instrument.plot_height)
+                p.circle(xledge, smyledge, fill_color='green')
+                p.line(fpoints, ylfit)
+                bokeh_plot(p, self.context.bokeh_session)
+                if self.config.instrument.plot_level >= 2:
+                    input("Next? <cr>: ")
+                else:
+                    time.sleep(self.config.instrument.plot_pause)
+                p = figure(title=plab + ' Deriv',
+                           x_axis_label='px (Wavelength)',
+                           y_axis_label='Value',
+                           plot_width=self.config.instrument.plot_width,
+                           plot_height=self.config.instrument.plot_height)
+                xx = list(range(len(deriv)))
+                ylim = get_plot_lims(deriv)
+                p.circle(xx, deriv)
+                for pk in peaks:
+                    p.line([pk, pk], ylim)
+                bokeh_plot(p, self.context.bokeh_session)
                 if len(peaks) != 1:
                     self.logger.warning("Extra peak found!")
-                    p = figure(title=self.action.args.plotlabel +
-                               ' Ledge', x_axis_label='Wavelength (A)',
-                               y_axis_label='Value',
-                               plot_width=self.config.instrument.plot_width,
-                               plot_height=self.config.instrument.plot_height)
-                    p.circle(xledge, smyledge, fill_color='green')
-                    p.line(fpoints, ylfit)
-                    bokeh_plot(p, self.context.bokeh_session)
-                    input("Next? <cr>: ")
-                    p = figure(title=self.action.args.plotlabel +
-                               ' Deriv', x_axis_label='px',
-                               y_axis_label='Value',
-                               plot_width=self.config.instrument.plot_width,
-                               plot_height=self.config.instrument.plot_height)
-                    xx = list(range(len(deriv)))
-                    ylim = get_plot_lims(deriv)
-                    p.circle(xx, deriv)
-                    for pk in peaks:
-                        p.line([pk, pk], ylim)
-                    bokeh_plot(p, self.context.bokeh_session)
                     print("Please indicate the integer pixel value of the peak")
                     ipk = int(input("Peak? <int>: "))
                 else:
@@ -415,7 +469,7 @@ class MakeMasterFlat(BaseImg):
                 apk = xvals[ipk]
                 if self.config.instrument.plot_level >= 3:
                     p = figure(
-                        title=self.action.args.plotlabel + ' Peak of ledge',
+                        title=plab + ' Peak of ledge',
                         x_axis_label='Wave (A)',
                         y_axis_label='Value',
                         plot_width=self.config.instrument.plot_width,
@@ -450,7 +504,7 @@ class MakeMasterFlat(BaseImg):
                 # plot BM ledge
                 if self.config.instrument.plot_level >= 1:
                     p = figure(
-                        title=self.action.args.plotlabel + ' BM Ledge Region',
+                        title=plab + ' BM Ledge Region',
                         x_axis_label='Wave (A)',
                         y_axis_label='Value',
                         plot_width=self.config.instrument.plot_width,
@@ -492,7 +546,7 @@ class MakeMasterFlat(BaseImg):
         if twiflat:
             knots = int(ny * knotspp)
         else:
-            knots = 100
+            knots = 1000
         self.logger.info("Using %d knots for bspline fit" % knots)
 
         # generate a fit from ref slice points
@@ -503,7 +557,10 @@ class MakeMasterFlat(BaseImg):
         yfitr, _ = sftr.value(xfr)
 
         # generate a blue slice spectrum bspline fit
-        blueslice = 12
+        if self.action.args.camera == 0:  # Blue
+            blueslice = 12
+        else:
+            blueslice = 11
         blueleft = 60 / xbin
         blueright = 80 / xbin
         qb = [i for i, v in enumerate(slicemap.data.flat) if v == blueslice]
@@ -520,7 +577,10 @@ class MakeMasterFlat(BaseImg):
         yfitb, _ = sftb.value(xfb)
 
         # generate a red slice spectrum bspline fit
-        redslice = 23
+        if self.action.args.camera == 0:  # Blue
+            redslice = 23
+        else:
+            redslice = 0
         redleft = 60 / xbin
         redright = 80 / xbin
         qr = [i for i, v in enumerate(slicemap.data.flat) if v == redslice]
@@ -548,7 +608,7 @@ class MakeMasterFlat(BaseImg):
         if self.config.instrument.plot_level >= 1:
             # output filename stub
             rbfnam = "redblue_%05d_%s_%s_%s" % \
-                      (self.action.args.ccddata.header['FRAMENO'],
+                      (stacked.header['FRAMENO'],
                        self.action.args.illum, self.action.args.grating,
                        self.action.args.ifuname)
             if xbin == 1:
@@ -567,7 +627,7 @@ class MakeMasterFlat(BaseImg):
             ydplt = yfitd[::stride]
             ydplt_d = yfd[::stride]
             p = figure(
-                title=self.action.args.plotlabel + ' Blue/Red fits',
+                title=plab + ' Blue/Red fits',
                 x_axis_label='Wave (A)',
                 y_axis_label='Flux (e-)',
                 plot_width=self.config.instrument.plot_width,
@@ -636,7 +696,7 @@ class MakeMasterFlat(BaseImg):
             if nqb > 1:
                 # plot blue fits
                 p = figure(
-                    title=self.action.args.plotlabel + ' Blue fits',
+                    title=plab + ' Blue fits',
                     x_axis_label='Wave (A)',
                     y_axis_label='Flux (e-)',
                     plot_width=self.config.instrument.plot_width,
@@ -654,7 +714,7 @@ class MakeMasterFlat(BaseImg):
                     time.sleep(self.config.instrument.plot_pause)
                 # plot blue ratios
                 p = figure(
-                    title=self.action.args.plotlabel + ' Blue ratios',
+                    title=plab + ' Blue ratios',
                     x_axis_label='Wave (A)',
                     y_axis_label='Ratio',
                     plot_width=self.config.instrument.plot_width,
@@ -675,7 +735,7 @@ class MakeMasterFlat(BaseImg):
             if nqr > 1:
                 # plot red fits
                 p = figure(
-                    title=self.action.args.plotlabel + ' Red fits',
+                    title=plab + ' Red fits',
                     x_axis_label='Wave (A)',
                     y_axis_label='Flux (e-)',
                     plot_width=self.config.instrument.plot_width,
@@ -693,7 +753,7 @@ class MakeMasterFlat(BaseImg):
                     time.sleep(self.config.instrument.plot_pause)
                 # plot red ratios
                 p = figure(
-                    title=self.action.args.plotlabel + ' Red ratios',
+                    title=plab + ' Red ratios',
                     x_axis_label='Wave (A)',
                     y_axis_label='Ratio',
                     plot_width=self.config.instrument.plot_width,
@@ -781,7 +841,7 @@ class MakeMasterFlat(BaseImg):
         if self.config.instrument.plot_level >= 1:
             # output filename stub
             fltfnam = "flat_%05d_%s_%s_%s" % \
-                      (self.action.args.ccddata.header['FRAMENO'],
+                      (stacked.header['FRAMENO'],
                        self.action.args.illum, self.action.args.grating,
                        self.action.args.ifuname)
             if xbin == 1:
@@ -794,7 +854,7 @@ class MakeMasterFlat(BaseImg):
             fplt = yfitall[::stride]
             yran = [np.nanmin(ally), np.nanmax(ally)]
             p = figure(
-                title=self.action.args.plotlabel + ' Master Illumination',
+                title=plab + ' Master Illumination',
                 x_axis_label='Wave (A)',
                 y_axis_label='Flux (e-)',
                 plot_width=self.config.instrument.plot_width,
@@ -862,8 +922,9 @@ class MakeMasterFlat(BaseImg):
                          output_dir=self.config.instrument.output_directory)
         self.context.proctab.update_proctab(frame=stacked, suffix=suffix,
                                             newtype=self.action.args.new_type,
-                                            filename=self.action.args.name)
-        self.context.proctab.write_proctab()
+                                            filename=stacked.header['OFNAME'])
+        self.context.proctab.write_proctab(tfil=self.config.instrument.procfile)
+        self.action.args.name = stacked.header['OFNAME']
 
         self.logger.info(log_string)
         return self.action.args

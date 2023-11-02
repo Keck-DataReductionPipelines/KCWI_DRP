@@ -8,6 +8,7 @@ dependencies:
   - scipy~=1.4.1
   - pyerfa
   - bokeh~=2.0.0
+  - jinja2~=3.0.3
   - psutil~=5.7.0
   - pandas~=1.0.3
   - matplotlib~=3.1.3

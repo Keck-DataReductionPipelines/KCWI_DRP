@@ -1,10 +1,12 @@
 scikit-image~=0.16.2
 astropy~=4.0
+astroscrappy~=1.1.0
 ccdproc~=2.2.0
 numpy~=1.20
 scipy~=1.4.1
 pyerfa
 bokeh~=2.0.0
+jinja2~=3.0.3
 psutil~=5.7.0
 pytest~=5.4.1
 keckdrpframework

@@ -8,6 +8,8 @@ Created on Aug 8, 2019
 from bokeh.plotting import output_file, save
 from bokeh.plotting.figure import Figure
 from bokeh.models import Column
+from bokeh.plotting.figure import figure
+from bokeh.layouts import column
 import psutil
 # import subprocess
 import os
@@ -18,12 +20,21 @@ def bokeh_plot(plot, session):
 
     # NOT TESTED YET
 
-    figure = session.document.select_one(selector=dict(type=Figure))
+    new_figure = session.document.select_one(selector=dict(type=Figure))
     layout = session.document.select_one(selector=dict(type=Column))
 
-    layout.children.remove(figure)
+    layout.children.remove(new_figure)
     layout.children.insert(0, plot)
     session.push()
+
+
+def bokeh_clear(session):
+
+    session.document.clear()
+    p = figure()
+    c = column(children=[p])
+    session.document.clear()
+    session.document.add_root(c)
 
 
 def check_running_process(process=None):

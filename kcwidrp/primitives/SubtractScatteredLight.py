@@ -10,7 +10,20 @@ import time
 
 
 class SubtractScatteredLight(BasePrimitive):
-    """Subtract scattered light between slices"""
+    """
+    Subtract scattered light between slices.
+
+    Uses the centeral, un-illuminated part of the image to generate a model of
+    the scattered light.  Subtract this model from the entire image.
+
+    Uses the following configuration parameter:
+
+        * skipscat: set to ``True`` to skip scattered light subtraction. Defaults to ``False``.
+
+    Writes out a \*_intd.fits file regardless if scattered light is subtracted
+    or not.
+
+    """
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
@@ -22,6 +35,9 @@ class SubtractScatteredLight(BasePrimitive):
         key = 'SCATSUB'
         keycom = "was scattered light subtracted?"
 
+        # get camera
+        camera = self.action.args.ccddata.header['CAMERA'].upper()
+
         # Skip if nod-and-shuffle
         if self.action.args.nasmask:
             self.logger.info("NAS Mask: skipping scattered light subtraction")
@@ -31,7 +47,7 @@ class SubtractScatteredLight(BasePrimitive):
             self.action.args.ccddata.header[key] = (False, keycom)
         else:
             # Binning
-            ybin = self.action.args.ybinsize
+            # ybin = self.action.args.ybinsize
             # Get size of image
             siz = self.action.args.ccddata.data.shape
             # Get x range for scattered light
@@ -46,9 +62,14 @@ class SubtractScatteredLight(BasePrimitive):
             # Y data values
             yvals = np.nanmedian(self.action.args.ccddata.data[y0:y3, x0:x1],
                                  axis=1)
-            # Fix extreme values
-            yvals[0] = np.nanmedian(yvals[1:10])
-            yvals[-1] = np.nanmedian(yvals[-11:-2])
+            # Fix extreme edge values
+            if 'RED' in camera:
+                if np.nanmax(yvals) > 100:
+                    yvals[:10] = yvals[10:20]
+                    yvals[-10:] = yvals[-21:-11]
+            else:
+                yvals[0] = np.nanmedian(yvals[1:10])
+                yvals[-1] = np.nanmedian(yvals[-11:-2])
             # X data values
             xvals = np.arange(len(yvals), dtype=np.float)
             # filter window
@@ -107,7 +128,7 @@ class SubtractScatteredLight(BasePrimitive):
         self.context.proctab.update_proctab(frame=self.action.args.ccddata,
                                             suffix="intd", 
                                             filename=self.action.args.name)
-        self.context.proctab.write_proctab()
+        self.context.proctab.write_proctab(tfil=self.config.instrument.procfile)
 
         return self.action.args
     # END: SubtractScatteredLight()

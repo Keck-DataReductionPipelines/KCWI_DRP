@@ -2,12 +2,29 @@ from keckdrpframework.primitives.base_primitive import BasePrimitive
 from kcwidrp.primitives.kcwi_file_primitives import strip_fname
 import os
 import numpy as np
-from skimage import transform as tf
+from kcwidrp.core import geometric as tf
 import pickle
 
 
 class SolveGeom(BasePrimitive):
-    """Solve the overall geometry of the IFU"""
+    """
+    Solve the overall geometry of the IFU.
+
+    Takes individual bar arc spectra and generates a fit for each slice, which
+    contains five bar arc spectra each.  Given that there are only five points
+    in the 'x' or spatial direction and many more in the 'y' or wavelength
+    direction, an asymmetric polynomial is fit with order 2 in the x and order
+    4 in the y directions.  The wavelength coverage of the observation is
+    recorded in parameters with the range that includes all data being in
+    the waveall0 and waveall1 parameters, and the range that includes only
+    good data in wavegood0 and wavegood1 parameters.  The middle of the
+    wavelength range is recorded in the wavemid parameter.
+
+    Forward and inverse transforms, along with all the parameters for the
+    geometric fit are written out as a python pickled dictionary in a
+    \*_geom.pkl file.
+
+    """
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
@@ -21,6 +38,13 @@ class SolveGeom(BasePrimitive):
         self.action.args.waveall1 = None
         self.action.args.wavemid = None
         self.logger = context.pipeline_logger
+
+    def _pre_condition(self):
+        self.logger.info("Checking for master arc")
+        if 'MARC' in self.action.args.ccddata.header['IMTYPE']:
+            return True
+        else:
+            return False
 
     def _perform(self):
         self.logger.info("Solving overall geometry")
@@ -157,8 +181,10 @@ class SolveGeom(BasePrimitive):
             dst = np.column_stack((xit, yi))
             src = np.column_stack((xw, yw))
             self.logger.info("Fitting wavelength and spatial control points")
-            tform = tf.estimate_transform('polynomial', src, dst, order=3)
-            invtf = tf.estimate_transform('polynomial', dst, src, order=3)
+            tform = tf.estimate_transform('asympolynomial', src, dst,
+                                          order=(2, 4))
+            invtf = tf.estimate_transform('asympolynomial', dst, src,
+                                          order=(2, 4))
             # Store for output
             tform_list.append(tform)
             invtf_list.append(invtf)
@@ -178,7 +204,7 @@ class SolveGeom(BasePrimitive):
             dichroic_fraction = 1.
 
         # Package geometry data
-        ofname = self.action.args.name
+        ofname = self.action.args.ccddata.header['OFNAME']
         self.action.args.geometry_file = os.path.join(
             self.config.instrument.output_directory,
             strip_fname(ofname) + '_geom.pkl')

@@ -3,6 +3,7 @@ from kcwidrp.core.bokeh_plotting import bokeh_plot
 from kcwidrp.core.kcwi_plotting import get_plot_lims, oplot_slices, \
     set_plot_lims, save_plot
 from kcwidrp.primitives.GetAtlasLines import get_line_window, gaus
+from kcwidrp.primitives.kcwi_file_primitives import plotlabel
 
 import numpy as np
 from scipy.signal.windows import boxcar
@@ -16,7 +17,22 @@ import time
 
 
 class SolveArcs(BasePrimitive):
-    """Solve the bar arc wavelengths"""
+    """
+    Solve individual bar arc spectra for wavelength.
+
+    For each bar, identifies the atlas lines found in GetAtlasLines.py in the
+    observed spectrum and use the pixel positions along with the atlas
+    wavelengths to determine the wavelength solution for the bar.
+
+    Uses the following configuration parameters:
+
+        * FRACMAX: fraction of line maximum to use for fitting peak.  Defaults to 0.5 for BLUE and 0.25 for RED.
+        * LINETHRESH: the threshhold intensity for finding observed lines. Defaults to 100 for BLUE and 10 for RED (can also be set on the command line).
+
+    Outputs diagnostic plots of the fitting and stores the coefficients for
+    later use.
+
+    """
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
@@ -28,20 +44,31 @@ class SolveArcs(BasePrimitive):
         self.action.args.av_bar_nls = []
         self.action.args.st_bar_nls = []
 
+    def _pre_condition(self):
+        self.logger.info("Checking for master arc")
+        if 'MARC' in self.action.args.ccddata.header['IMTYPE']:
+            return True
+        else:
+            return False
+
     def _perform(self):
         """Solve individual arc bar spectra for wavelength"""
         self.logger.info("Solving individual arc spectra")
         # plot control booleans
         master_inter = (self.config.instrument.plot_level >= 2)
         do_inter = (self.config.instrument.plot_level >= 3)
+        plab = plotlabel(self.action.args)
         # output control
         verbose = (self.config.instrument.verbose > 1)
+        frac_max = self.config.instrument.FRACMAX
+        self.logger.info("Finding line windows using fraction of line max of "
+                         "%.2f" % frac_max)
 
         # Bar statistics
         bar_sig = []
         bar_nls = []
         # set thresh for finding lines
-        hgt = 50.
+        hgt = self.config.instrument.LINETHRESH
         self.logger.info("line thresh = %.2f" % hgt)
         # get relevant part of atlas spectrum
         atwave = self.action.args.refwave[self.action.args.atminrow:
@@ -56,8 +83,16 @@ class SolveArcs(BasePrimitive):
             self.context.arcs[self.config.instrument.REFBAR]))
         # loop over arcs and generate a wavelength solution for each
         next_bar_to_plot = 0
-        poly_order = 4
+        # Get poly order
+        if self.action.args.dichroic_fraction <= 0.6:
+            def_poly_order = 2
+        elif 0.6 < self.action.args.dichroic_fraction < 0.75:
+            def_poly_order = 3
+        else:
+            def_poly_order = 4
+        poly_order = def_poly_order
         for ib, b in enumerate(self.context.arcs):
+            self.logger.info("FITTING BAR %d" % ib)
             # Starting with pascal shifted coeffs from fit_center()
             coeff = self.action.args.twkcoeff[ib]
             # get bar wavelengths
@@ -93,7 +128,8 @@ class SolveArcs(BasePrimitive):
                     # get window for arc line
                     minow, maxow, count = get_line_window(
                         bspec, line_x, thresh=hgt,
-                        logger=(self.logger if verbose else None))
+                        logger=(self.logger if verbose else None),
+                        frac_max=frac_max)
                     # do we have enough points to fit?
                     if count < 5 or not minow or not maxow:
                         rej_wave.append(aw)
@@ -104,7 +140,7 @@ class SolveArcs(BasePrimitive):
                                              % aw)
                         continue
                     # check if window no longer contains initial value
-                    if minow > line_x > maxow:
+                    if line_x < minow or line_x > maxow:
                         rej_wave.append(aw)
                         rej_flux.append(self.action.args.at_flux[iw])
                         nrej += 1
@@ -118,11 +154,12 @@ class SolveArcs(BasePrimitive):
                     wvec = bw[minow:maxow + 1]
                     f0 = max(yvec)
                     par_start = [f0, np.nanmean(xvec), 1.0]
-                    par_bounds = ([f0*0.9, np.min(xvec), 0.5],
-                                  [f0*1.1, np.max(xvec), 2.5])
+                    # par_bounds = ([f0*0.9, np.min(xvec), 0.5],
+                    #              [f0*1.1, np.max(xvec), 2.5])
                     # Gaussian fit
                     try:
-                        fit, _ = curve_fit(gaus, xvec, yvec, p0=par_start)
+                        fit, _ = curve_fit(gaus, xvec, yvec, p0=par_start,
+                                           maxfev=5000)
                         #  bounds=par_bounds, method='trf')
                         sp_pk_x = fit[1]
                         gaus_sig.append(fit[2])
@@ -150,7 +187,7 @@ class SolveArcs(BasePrimitive):
                     # calculate centroid
                     cent = np.sum(xvec * yvec) / np.sum(yvec)
                     # how different is the centroid from the peak?
-                    if abs(cent - peak) > 0.7:
+                    if abs(cent - peak) > 0.8:
                         # keep track of rejected line
                         rej_wave.append(aw)
                         rej_flux.append(self.action.args.at_flux[iw])
@@ -160,7 +197,7 @@ class SolveArcs(BasePrimitive):
                                              "rejected for line %.3f" %
                                              (abs(cent - peak), aw))
                         continue
-                    if plt_line[max_index] < 100:
+                    if plt_line[max_index] < hgt:
                         # keep track of rejected line
                         rej_wave.append(aw)
                         rej_flux.append(self.action.args.at_flux[iw])
@@ -187,8 +224,7 @@ class SolveArcs(BasePrimitive):
                                 if v >= max(wvec)][0]
                         atnorm = np.nanmax(yvec) / np.nanmax(atspec[atx0:atx1])
                         p = figure(
-                            title=self.action.args.plotlabel +
-                            "ATLAS/ARC LINE FITS" + ptitle,
+                            title=plab + "ATLAS/ARC LINE FITS" + ptitle,
                             x_axis_label="Wavelength (A)",
                             y_axis_label="Relative Flux",
                             plot_width=self.config.instrument.plot_width,
@@ -242,17 +278,24 @@ class SolveArcs(BasePrimitive):
                     rej_flux.append(self.action.args.at_flux[iw])
                     nrej += 1
             self.logger.info("")
+            n_points = len(arc_pix_dat)
             self.logger.info("Fitting wavelength solution starting with %d "
                              "lines after rejecting %d lines" %
-                             (len(arc_pix_dat), nrej))
+                             (n_points, nrej))
             # Fit wavelengths
-            # Get poly order
-            if self.action.args.dichroic_fraction <= 0.6:
-                poly_order = 2
-            elif 0.6 < self.action.args.dichroic_fraction < 0.75:
-                poly_order = 3
+            if n_points < 2:
+                self.logger.warning("Not enough points for wavelength "
+                                    "solution!  Using central coeffs")
+                # store final fit coefficients
+                self.action.args.fincoeff.append(coeff)
+                # store statistics
+                bar_sig.append(0.0)
+                bar_nls.append(n_points)
+                continue
+            elif n_points < def_poly_order:
+                poly_order = n_points - 1
             else:
-                poly_order = 4
+                poly_order = def_poly_order
             self.logger.info("Fitting with polynomial order %d" % poly_order)
             # Initial fit
             wfit = np.polyfit(arc_pix_dat, at_wave_dat, poly_order)
@@ -271,49 +314,53 @@ class SolveArcs(BasePrimitive):
             rej_rsd_flux = []   # rejected line fluxes
             # iteratively remove outliers
             it = 0
-            while max_resid > 2.5 * wsig and it < 25:
-                arc_dat = []    # arc line pixel values
-                arc_fdat = []   # arc line flux data
-                at_dat = []     # atlas line wavelength values
-                at_fdat = []    # atlas line flux data
-                # trim largest outlier
-                for il, rsd in enumerate(resid):
-                    if abs(rsd) < max_resid:
-                        # append data for line that passed cut
-                        arc_dat.append(arc_pix_dat[il])
-                        arc_fdat.append(arc_int_dat[il])
-                        at_dat.append(at_wave_dat[il])
-                        at_fdat.append(at_flux_dat[il])
-                    else:
-                        if verbose:
-                            self.logger.info("It%d REJ: %d, %.2f, %.3f, %.3f" %
-                                             (it, il, arc_pix_dat[il],
-                                              at_wave_dat[il], rsd))
-                        # keep track of rejected lines
-                        rej_rsd_wave.append(at_wave_dat[il])
-                        rej_rsd_flux.append(at_flux_dat[il])
-                        rej_rsd.append(rsd)
-                # copy cleaned data back into input arrays
-                arc_pix_dat = arc_dat.copy()
-                arc_int_dat = arc_fdat.copy()
-                at_wave_dat = at_dat.copy()
-                at_flux_dat = at_fdat.copy()
-                # refit cleaned data
-                wfit = np.polyfit(arc_pix_dat, at_wave_dat, poly_order)
-                # new wavelength function
-                pwfit = np.poly1d(wfit)
-                # new wavelengths for arc lines
-                arc_wave_fit = pwfit(arc_pix_dat)
-                # calculate residuals of arc lines
-                resid = arc_wave_fit - at_wave_dat
-                # get statistics
-                resid_c, low, upp = sigmaclip(resid, low=3., high=3.)
-                wsig = resid_c.std()
-                # maximum outlier
-                max_resid = np.max(abs(resid))
-                # wsig = np.nanstd(resid)
-                it += 1
-            # END while max_resid > 3.5 * wsig and it < 5:
+            # only reject if we have enough points
+            if len(arc_pix_dat) > (poly_order + 1):
+                while (max_resid > 2.5 * wsig or max_resid >= 10.) and it < 25:
+                    arc_dat = []    # arc line pixel values
+                    arc_fdat = []   # arc line flux data
+                    at_dat = []     # atlas line wavelength values
+                    at_fdat = []    # atlas line flux data
+                    # trim largest outlier
+                    for il, rsd in enumerate(resid):
+                        if abs(rsd) < max_resid and abs(rsd) < 10.:
+                            # append data for line that passed cut
+                            arc_dat.append(arc_pix_dat[il])
+                            arc_fdat.append(arc_int_dat[il])
+                            at_dat.append(at_wave_dat[il])
+                            at_fdat.append(at_flux_dat[il])
+                        else:
+                            if verbose:
+                                self.logger.info("It%d REJ: %d, %.2f, %.3f, "
+                                                 "%.3f" % (it, il,
+                                                           arc_pix_dat[il],
+                                                           at_wave_dat[il],
+                                                           rsd))
+                            # keep track of rejected lines
+                            rej_rsd_wave.append(at_wave_dat[il])
+                            rej_rsd_flux.append(at_flux_dat[il])
+                            rej_rsd.append(rsd)
+                    # copy cleaned data back into input arrays
+                    arc_pix_dat = arc_dat.copy()
+                    arc_int_dat = arc_fdat.copy()
+                    at_wave_dat = at_dat.copy()
+                    at_flux_dat = at_fdat.copy()
+                    # refit cleaned data
+                    wfit = np.polyfit(arc_pix_dat, at_wave_dat, poly_order)
+                    # new wavelength function
+                    pwfit = np.poly1d(wfit)
+                    # new wavelengths for arc lines
+                    arc_wave_fit = pwfit(arc_pix_dat)
+                    # calculate residuals of arc lines
+                    resid = arc_wave_fit - at_wave_dat
+                    # get statistics
+                    resid_c, low, upp = sigmaclip(resid, low=3., high=3.)
+                    wsig = resid_c.std()
+                    # maximum outlier
+                    max_resid = np.max(abs(resid))
+                    # wsig = np.nanstd(resid)
+                    it += 1
+                # END while max_resid > 3.5 * wsig and it < 5:
             # log arc bar results
             self.logger.info("")
             self.logger.info("BAR %03d, Slice = %02d, RMS = %.3f, N = %d" %
@@ -327,6 +374,9 @@ class SolveArcs(BasePrimitive):
             self.logger.info("Coefs: " + ' '.join(['%.6g' % (c,)
                                                    for c in reversed(wfit)]))
             # store final fit coefficients
+            if poly_order < def_poly_order:
+                nins = def_poly_order - poly_order
+                wfit = np.insert(wfit, 0, np.zeros(nins, dtype=float))
             self.action.args.fincoeff.append(wfit)
             # store statistics
             bar_sig.append(wsig)
@@ -336,31 +386,33 @@ class SolveArcs(BasePrimitive):
                 # plot bar fit residuals
                 ptitle = " for Bar %03d, Slice %02d, RMS = %.3f, N = %d" % \
                          (ib, int(ib / 5), wsig, len(arc_pix_dat))
-                p = figure(title=self.action.args.plotlabel +
-                           "RESIDUALS" + ptitle,
+                p = figure(title=plab + "RESIDUALS" + ptitle,
                            x_axis_label="Wavelength (A)",
                            y_axis_label="Fit - Inp (A)",
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height)
-                p.diamond(at_wave_dat, resid, legend_label='Rsd', size=8)
+                p.diamond(at_wave_dat, resid, color='green',
+                          legend_label='Kept', size=8)
                 if rej_rsd_wave:
                     p.diamond(rej_rsd_wave, rej_rsd, color='orange',
-                              legend_label='Rej', size=8)
+                              legend_label='RejRsd', size=8)
+                if rej_wave:
+                    p.diamond(rej_wave, np.zeros(len(rej_wave)),
+                              color='red', legend_label='RejFit', size=6)
                 xlim = [self.action.args.atminwave, self.action.args.atmaxwave]
-                ylim = [np.nanmin(list(resid)+list(rej_rsd)),
-                        np.nanmax(list(resid)+list(rej_rsd))]
+                ylim = get_plot_lims(list(resid)+list(rej_rsd))
                 p.line(xlim, [0., 0.], color='black', line_dash='dotted')
                 p.line(xlim, [wsig, wsig], color='gray', line_dash='dashdot')
                 p.line(xlim, [-wsig, -wsig], color='gray', line_dash='dashdot')
                 p.line([self.action.args.cwave, self.action.args.cwave],
                        ylim, legend_label='CWAV', color='magenta',
                        line_dash='dashdot')
+                set_plot_lims(p, xlim=xlim, ylim=ylim)
                 bokeh_plot(p, self.context.bokeh_session)
                 input("Next? <cr>: ")
 
                 # overplot atlas and bar using fit wavelengths
-                p = figure(title=self.action.args.plotlabel +
-                           "ATLAS/ARC FIT" + ptitle,
+                p = figure(title=plab + "ATLAS/ARC FIT" + ptitle,
                            x_axis_label="Wavelength (A)",
                            y_axis_label="Flux",
                            plot_width=self.config.instrument.plot_width,
@@ -393,7 +445,7 @@ class SolveArcs(BasePrimitive):
                         next_bar_to_plot = ib + 1
 
         # Plot final results
-
+        nbars = self.config.instrument.NBARS
         # plot output name stub
         pfname = "arc_%05d_%s_%s_%s_tf%02d" % (
             self.action.args.ccddata.header['FRAMENO'],
@@ -404,21 +456,35 @@ class SolveArcs(BasePrimitive):
         if self.config.instrument.plot_level >= 1:
             ylabs = ['Ang/px^4', 'Ang/px^3', 'Ang/px^2', 'Ang/px',
                      'Ang']
-            ylabs = ylabs[-(poly_order+1):]
+            ylabs = ylabs[-(def_poly_order+1):]
             for ic in reversed(
                     range(len(self.action.args.fincoeff[0]))):
+                # collect bar values for this particular coefficient
+                coef = []
+                for c in self.action.args.fincoeff:
+                    try:
+                        coef.append(c[ic])
+                    except IndexError:
+                        coef.append(0.0)
+                # some stats
+                cf_av = float(np.nanmean(coef))
+                cf_st = float(np.nanstd(coef))
                 cn = poly_order - ic
-                ptitle = self.action.args.plotlabel + "COEF %d VALUES" % cn
+                if cn > 0:
+                    ptitle = plab + "COEF %d VALUES <C%d> = " \
+                                    "%.3g +- %.3g" % (cn, cn, cf_av, cf_st)
+                else:
+                    ptitle = plab + "COEF %d VALUES <C%d> = " \
+                                    "%.2f +- %.2f" % (cn, cn, cf_av, cf_st)
+                self.logger.info(ptitle)
                 p = figure(title=ptitle, x_axis_label="Bar #",
                            y_axis_label="Coef %d (%s)" % (cn, ylabs[ic]),
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height)
-                coef = []
-                for c in self.action.args.fincoeff:
-                    coef.append(c[ic])
-                p.diamond(list(range(120)), coef, size=8)
-                xlim = [-1, 120]
-                ylim = get_plot_lims(coef)
+
+                p.diamond(list(range(nbars)), coef, size=8)
+                xlim = [-1, nbars]
+                ylim = get_plot_lims(coef, clip=False)
                 p.xgrid.grid_line_color = None
                 oplot_slices(p, ylim)
                 set_plot_lims(p, xlim=xlim, ylim=ylim)
@@ -433,15 +499,15 @@ class SolveArcs(BasePrimitive):
         # Plot number of lines fit
         self.action.args.av_bar_nls = float(np.nanmean(bar_nls))
         self.action.args.st_bar_nls = float(np.nanstd(bar_nls))
-        ptitle = self.action.args.plotlabel + \
+        ptitle = plab + \
             "FIT STATS <Nlns> = %.1f +- %.1f" % (self.action.args.av_bar_nls,
                                                  self.action.args.st_bar_nls)
         p = figure(title=ptitle, x_axis_label="Bar #",
                    y_axis_label="N Lines",
                    plot_width=self.config.instrument.plot_width,
                    plot_height=self.config.instrument.plot_height)
-        p.diamond(list(range(120)), bar_nls, size=8)
-        xlim = [-1, 120]
+        p.diamond(list(range(nbars)), bar_nls, size=8)
+        xlim = [-1, nbars]
         ylim = get_plot_lims(bar_nls)
         self.logger.info("<N Lines> = %.1f +- %.1f" %
                          (self.action.args.av_bar_nls,
@@ -477,14 +543,14 @@ class SolveArcs(BasePrimitive):
                          (self.action.args.av_bar_sig,
                           self.action.args.st_bar_sig))
 
-        ptitle = self.action.args.plotlabel + \
+        ptitle = plab + \
             "FIT STATS <RMS> = %.3f +- %.3f" % (self.action.args.av_bar_sig,
                                                 self.action.args.st_bar_sig)
         p = figure(title=ptitle, x_axis_label="Bar #", y_axis_label="RMS (A)",
                    plot_width=self.config.instrument.plot_width,
                    plot_height=self.config.instrument.plot_height)
-        p.diamond(list(range(120)), bar_sig, size=8)
-        xlim = [-1, 120]
+        p.diamond(list(range(nbars)), bar_sig, size=8)
+        xlim = [-1, nbars]
         ylim = get_plot_lims(bar_sig)
         p.line(xlim, [self.action.args.av_bar_sig,
                       self.action.args.av_bar_sig], color='red')

@@ -13,6 +13,13 @@ from astropy.nddata import CCDData
 
 
 class FluxCalibrate(BasePrimitive):
+    """
+    Perform flux calibration.
+
+    Uses inverse sensitivity curve derived from MakeInvsens to flux calibrate
+    input observation.
+
+    """
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
@@ -21,13 +28,12 @@ class FluxCalibrate(BasePrimitive):
     def _pre_condition(self):
         """
         Checks if we can calibrate flux based on the processing table
-        :return:
         """
         self.logger.info("Checking precondition for FluxCalibrate")
         target_type = 'INVSENS'
-        tab = self.context.proctab.search_proctab(frame=self.action.args.ccddata,
-                                             target_type=target_type,
-                                             nearest=True)
+        tab = self.context.proctab.search_proctab(
+            frame=self.action.args.ccddata, target_type=target_type,
+            nearest=True)
         self.logger.info("pre condition got %d invsens files, expected >= 1"
                          % len(tab))
         if len(tab) <= 0:
@@ -46,9 +52,9 @@ class FluxCalibrate(BasePrimitive):
         sky = None
 
         self.logger.info("Calibrating object flux")
-        tab = self.context.proctab.search_proctab(frame=self.action.args.ccddata,
-                                             target_type=target_type,
-                                             nearest=True)
+        tab = self.context.proctab.search_proctab(
+            frame=self.action.args.ccddata, target_type=target_type,
+            nearest=True)
         self.logger.info("%d invsens files found" % len(tab))
 
         if self.action.args.invsname is not None:
@@ -77,6 +83,13 @@ class FluxCalibrate(BasePrimitive):
             wav = w0 + np.arange(sz[0]) * dw
             # get exposure time
             expt = self.action.args.ccddata.header['XPOSURE']
+            if expt <= 0:
+                self.logger.warning("XPOSURE at 0.0, trying TTIME")
+                expt = self.action.args.ccddata.header['TTIME']
+                if expt <= 0:
+                    self.logger.warning("No valid exposure time found, "
+                                        "using 1s")
+                    expt = 1.0
             # resample onto object waves, if needed
             if w0 != mcw0 or dw != mcdw or wav[-1] != mcwav[-1] or \
                     sz[0] != mcsz[0]:
@@ -96,6 +109,8 @@ class FluxCalibrate(BasePrimitive):
             for isl in range(sz[2]):
                 for ix in range(sz[1]):
                     self.action.args.ccddata.data[:, ix, isl] *= mscal
+                    if self.action.args.ccddata.noskysub is not None:
+                        self.action.args.ccddata.noskysub[:, ix, isl] *= mscal
                     self.action.args.ccddata.uncertainty.array[:, ix, isl] *= \
                         mscal
 
@@ -155,7 +170,7 @@ class FluxCalibrate(BasePrimitive):
         self.context.proctab.update_proctab(frame=self.action.args.ccddata,
                                             suffix="icubes",
                                             filename=self.action.args.name)
-        self.context.proctab.write_proctab()
+        self.context.proctab.write_proctab(tfil=self.config.instrument.procfile)
 
         # check for sky, obj cube
         if obj is not None:

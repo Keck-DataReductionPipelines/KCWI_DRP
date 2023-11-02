@@ -1,5 +1,6 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
-from kcwidrp.primitives.kcwi_file_primitives import write_table, strip_fname
+from kcwidrp.primitives.kcwi_file_primitives import write_table, strip_fname,\
+    plotlabel
 from kcwidrp.core.bokeh_plotting import bokeh_plot
 from kcwidrp.core.kcwi_plotting import save_plot
 
@@ -10,11 +11,31 @@ import time
 
 
 class TraceBars(BasePrimitive):
-    """Derive bar traces"""
+    """
+    Derive bar traces
+
+    Using the output from FindBars.py, trace each bar to the top and bottom of
+    the image.
+
+    Uses the following configuration parameter:
+
+        * saveintims: if set to ``True`` write out a warped version of bars image in \*_warped.fits.  Defaults to ``False``.
+
+    Writes out resulting spatial control points as a FITS table in
+    \*_trace.fits.
+
+    """
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
         self.logger = context.pipeline_logger
+
+    def _pre_condition(self):
+        self.logger.info("Checking for master contbars")
+        if 'MCBARS' in self.action.args.ccddata.header['IMTYPE']:
+            return True
+        else:
+            return False
 
     def _perform(self):
         self.logger.info("Tracing continuum bars")
@@ -28,6 +49,7 @@ class TraceBars(BasePrimitive):
             self.logger.error("No threshold for tracing")
         else:
             # initialize
+            plab = plotlabel(self.action.args)
             samp = int(80 / self.action.args.ybinsize)
             win = self.action.args.window
             bar_thresh = self.action.args.bar_avg
@@ -104,19 +126,19 @@ class TraceBars(BasePrimitive):
             src = np.column_stack((xo, yo))
             if do_plot:
                 # output filename stub
+                nbars = self.config.instrument.NBARS
                 trcfnam = "bars_%05d_%s_%s_%s" % \
                           (self.action.args.ccddata.header['FRAMENO'],
                            self.action.args.illum, self.action.args.grating,
                            self.action.args.ifuname)
                 # plot them
-                p = figure(title=self.action.args.plotlabel +
-                           'SPATIAL CONTROL POINTS',
+                p = figure(title=plab + 'SPATIAL CONTROL POINTS',
                            x_axis_label="CCD X (px)", y_axis_label="CCD Y (px)",
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height)
                 p.scatter(xi, yi, marker='x', size=2, color='blue')
                 p.scatter(self.action.args.middle_centers,
-                          [self.action.args.middle_row]*120, color='red')
+                          [self.action.args.middle_row]*nbars, color='red')
                 bokeh_plot(p, self.context.bokeh_session)
                 if self.config.instrument.plot_level >= 2:
                     input("Next? <cr>: ")
@@ -167,6 +189,8 @@ class TraceBars(BasePrimitive):
                     kcwi_fits_writer
                 from skimage import transform as tf
                 # fit transform
+                # NOTE: we do not need an asymmetric polynomial for this
+                # global fit (only for per slice fitting: see SolveGeom.py)
                 self.logger.info("Fitting spatial control points")
                 tform = tf.estimate_transform('polynomial', src, dst, order=3)
                 self.logger.info("Transforming bars image")

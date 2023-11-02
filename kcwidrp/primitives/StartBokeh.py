@@ -6,6 +6,13 @@ from bokeh.layouts import column
 
 
 class StartBokeh(BasePrimitive):
+    """
+    Start the bokeh server for the KCWI DRP.
+
+    This is enabled through the ``enable_bokeh`` instrument configuration
+    parameter in the `kcwi.cfg` file.  Set to ``True`` to enable plots.
+
+    """
 
     def __init__(self, action, context):
         """

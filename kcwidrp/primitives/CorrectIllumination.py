@@ -6,7 +6,15 @@ import os
 
 
 class CorrectIllumination(BasePrimitive):
-    """Subtract master bias frame"""
+    """
+    Correct for illumination and response variations using master flat.
+
+    Currently, gives precedence for internal flats (cflat), as they are the
+    most universally applicable.  To use other flats move the cflats aside, in
+    which case any twilight flat (tflat) master would then have precedence
+    followed by any dome flat (dflat) master.
+
+    """
 
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
@@ -21,21 +29,20 @@ class CorrectIllumination(BasePrimitive):
         self.logger.info("Checking precondition for CorrectIllumination")
         # first check for internal flat
         target_type = 'MFLAT'
-        tab = self.context.proctab.search_proctab(frame=self.action.args.ccddata,
-                                             target_type=target_type,
-                                             nearest=True)
+        tab = self.context.proctab.search_proctab(
+            frame=self.action.args.ccddata, target_type=target_type,
+            nearest=True)
         if len(tab) <= 0:
             # next look for twilight flat
             target_type = 'MTWIF'
-            tab = self.context.proctab.search_proctab(frame=self.action.args.ccddata,
-                                                 target_type=target_type,
-                                                 nearest=True)
+            tab = self.context.proctab.search_proctab(
+                frame=self.action.args.ccddata, target_type=target_type,
+                nearest=True)
             if len(tab) <= 0:
                 # finally look for dome flat
                 target_type = 'MDOME'
                 tab = self.context.proctab.search_proctab(
-                    frame=self.action.args.ccddata,
-                    target_type=target_type,
+                    frame=self.action.args.ccddata, target_type=target_type,
                     nearest=True)
                 if len(tab) <= 0:
                     precondition = False
@@ -126,7 +133,7 @@ class CorrectIllumination(BasePrimitive):
         self.context.proctab.update_proctab(frame=self.action.args.ccddata,
                                             suffix="intf",
                                             filename=self.action.args.name)
-        self.context.proctab.write_proctab()
+        self.context.proctab.write_proctab(tfil=self.config.instrument.procfile)
 
         # check for obj, sky images
         if obj is not None:
