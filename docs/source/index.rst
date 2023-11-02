@@ -42,6 +42,7 @@ Follow the documentation in this section to reduce KCWI data.
    sky_subtraction
    calibration
    data_products
+   scripts
    help
    versions
 
