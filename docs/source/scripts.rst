@@ -9,11 +9,19 @@ script, ``reduce_kcwi``. This page details their usage and purpose.
 wb
 --
 
+.. code-block:: console
+
+    usage: wb <fspec>
+
 .. automodule:: kcwidrp.scripts.wb
    :members:
 
 wr
 --
+
+.. code-block:: console
+
+    usage: wr <fspec>
 
 .. automodule:: kcwidrp.scripts.wr
    :members:
