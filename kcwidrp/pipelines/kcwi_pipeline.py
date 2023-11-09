@@ -307,6 +307,9 @@ class Kcwi_pipeline(BasePipeline):
                                       "nandshuff_make_cube"),
         "nandshuff_make_cube":       ("MakeCube",
                                       "making_cube_started",        # icube
+                                      "nandshuff_wavelengthcorr"),
+        "nandshuff_wavelengthcorr":  ("WavelengthCorrections",
+                                      "wavelength_correction_started",  # icubew
                                       "nandshuff_correct_dar"),
         "nandshuff_correct_dar":     ("CorrectDar",
                                       "correcting_dar_started",     # icubed
@@ -327,7 +330,8 @@ class Kcwi_pipeline(BasePipeline):
         self.cnt = 0
 
     def add_to_dataframe_only(self, action, context):
-        self.context.pipeline_logger.info("******* ADD to DATAFRAME ONLY: %s" % action.args.name)
+        self.context.pipeline_logger.info("******* ADD to DATAFRAME ONLY: %s" %
+                                          action.args.name)
         return action.args
 
     def action_planner(self, action, context):
