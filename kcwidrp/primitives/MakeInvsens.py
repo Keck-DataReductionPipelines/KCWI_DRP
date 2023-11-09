@@ -138,6 +138,11 @@ class MakeInvsens(BasePrimitive):
             skycor = self.action.args.ccddata.header['SKYCOR']
         else:
             skycor = False
+        # get wavelength correction status
+        if 'CTYPE3' in self.action.args.ccddata.header:
+            wavecor = ('WAVE' in self.action.args.ccddata.header['CTYPE3'])
+        else:
+            wavecor = False
         # get telescope and atm. correction
         if 'TELESCOP' in self.action.args.ccddata.header:
             tel = self.action.args.ccddata.header['TELESCOP']
@@ -256,7 +261,7 @@ class MakeInvsens(BasePrimitive):
         if len(zeros) > 0:
             obsmean = np.nanmean(obsspec)
             obsspec[zeros] = obsmean
-        # read in standard star spectrum
+        # read in standard star reference spectrum
         stdfile = self.action.args.stdfile
         hdul = pf.open(stdfile)
         swl = hdul[1].data['WAVELENGTH']
@@ -752,7 +757,10 @@ class MakeInvsens(BasePrimitive):
 
         # set wavelength axis WCS values
         hdr['WCSDIM'] = 1
-        hdr['CTYPE1'] = ('AWAV', 'Air Wavelengths')
+        if wavecor:
+            hdr['CTYPE1'] = ('WAVE', 'Vacuum Wavelengths')
+        else:
+            hdr['CTYPE1'] = ('AWAV', 'Air Wavelengths')
         hdr['CUNIT1'] = ('Angstrom', 'Wavelength units')
         hdr['CNAME1'] = ('KCWI INVSENS Wavelength', 'Wavelength name')
         hdr['CRVAL1'] = (w0, 'Wavelength zeropoint')
