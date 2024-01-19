@@ -405,7 +405,7 @@ class MakeMasterFlat(BaseImg):
         wavegood1 = wavemap.header['WAVGOOD1']
 
         # correction for BM where we see a ledge (except for twilights)
-        if 'BM' in self.action.args.grating and "twi" not in insuff:
+        if 'BM' in self.action.args.grating and not twiflat:
             ledge_wave = bm_ledge_position(self.action.args.cwave,
                                            self.action.args.dich)
 
@@ -467,7 +467,10 @@ class MakeMasterFlat(BaseImg):
                 if len(peaks) != 1:
                     self.logger.warning("Single peak not found!")
                     print("Please indicate the integer pixel value of the peak")
-                    ipk = int(input("Peak? <int>: "))
+                    spk = input("Peak? <int>: ")
+                    while not spk.isnumeric():
+                        spk = input("Peak? <int>: ")
+                    ipk = int(spk)
                 else:
                     ipk = peaks[0]
                 apk = xvals[ipk]
