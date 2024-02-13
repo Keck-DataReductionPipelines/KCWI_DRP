@@ -404,8 +404,8 @@ class MakeMasterFlat(BaseImg):
         wavegood0 = wavemap.header['WAVGOOD0']
         wavegood1 = wavemap.header['WAVGOOD1']
 
-        # correction for BM where we see a ledge
-        if 'BM' in self.action.args.grating:
+        # correction for BM where we see a ledge (except for twilights)
+        if 'BM' in self.action.args.grating and not twiflat:
             ledge_wave = bm_ledge_position(self.action.args.cwave,
                                            self.action.args.dich)
 
@@ -435,7 +435,8 @@ class MakeMasterFlat(BaseImg):
                 trm = int(len(deriv)/5)
                 deriv = deriv[trm:-trm]
                 xvals = fpoints[trm:-trm]
-                peaks, _ = find_peaks(deriv, height=100)
+                peaks, _ = find_peaks(deriv, height=20)
+                self.logger.info("%d Peak(s) found" % len(peaks))
 
                 p = figure(title=plab +
                            ' Ledge', x_axis_label='Wavelength (A)',
@@ -444,6 +445,8 @@ class MakeMasterFlat(BaseImg):
                            plot_height=self.config.instrument.plot_height)
                 p.circle(xledge, smyledge, fill_color='green')
                 p.line(fpoints, ylfit)
+                ylim = get_plot_lims(ylfit)
+                p.line([ledge_wave, ledge_wave], ylim, color='red')
                 bokeh_plot(p, self.context.bokeh_session)
                 if self.config.instrument.plot_level >= 2:
                     input("Next? <cr>: ")
@@ -457,13 +460,17 @@ class MakeMasterFlat(BaseImg):
                 xx = list(range(len(deriv)))
                 ylim = get_plot_lims(deriv)
                 p.circle(xx, deriv)
+                p.line([len(xx)/2, len(xx)/2], ylim, color='green')
                 for pk in peaks:
-                    p.line([pk, pk], ylim)
+                    p.line([pk, pk], ylim, color='red')
                 bokeh_plot(p, self.context.bokeh_session)
                 if len(peaks) != 1:
-                    self.logger.warning("Extra peak found!")
+                    self.logger.warning("Single peak not found!")
                     print("Please indicate the integer pixel value of the peak")
-                    ipk = int(input("Peak? <int>: "))
+                    spk = input("Peak? <int>: ")
+                    while not spk.isnumeric():
+                        spk = input("Peak? <int>: ")
+                    ipk = int(spk)
                 else:
                     ipk = peaks[0]
                 apk = xvals[ipk]
@@ -626,10 +633,13 @@ class MakeMasterFlat(BaseImg):
             xdplt = xfd[::stride]
             ydplt = yfitd[::stride]
             ydplt_d = yfd[::stride]
+            ymax = np.max(yrplt_d)
+            ylim = [0, ymax + ymax * 0.1]
             p = figure(
                 title=plab + ' Blue/Red fits',
                 x_axis_label='Wave (A)',
                 y_axis_label='Flux (e-)',
+                y_range=ylim,
                 plot_width=self.config.instrument.plot_width,
                 plot_height=self.config.instrument.plot_height)
             p.line(xrplt, yrplt, line_color='black', legend_label='Ref')
@@ -852,11 +862,12 @@ class MakeMasterFlat(BaseImg):
             yplt = ally[::stride]
             fxplt = allx[::stride]
             fplt = yfitall[::stride]
-            yran = [np.nanmin(ally), np.nanmax(ally)]
+            yran = [0, np.nanmax(ally)]
             p = figure(
                 title=plab + ' Master Illumination',
                 x_axis_label='Wave (A)',
                 y_axis_label='Flux (e-)',
+                y_range=yran,
                 plot_width=self.config.instrument.plot_width,
                 plot_height=self.config.instrument.plot_height)
             p.circle(xplt, yplt, size=1, line_alpha=0., fill_color='black',

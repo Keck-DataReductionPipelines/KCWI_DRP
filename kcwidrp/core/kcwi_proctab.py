@@ -5,8 +5,8 @@ import logging
 
 class Proctab:
 
-    def __init__(self):
-        self.log = logging.getLogger('KCWI')
+    def __init__(self, logger=None):
+        self.log = logger if logger is not None else logging.getLogger('KCWI')
         self.proctab = None
 
     def new_proctab(self):
