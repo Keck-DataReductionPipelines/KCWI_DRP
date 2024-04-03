@@ -118,8 +118,9 @@ class MakeMasterBias(BaseImg):
                 (float("%.3f" % bias_rn), "RN in e- from bias")
             if self.config.instrument.plot_level >= 1:
                 # output filename stub
-                biasfnam = "bias_%05d_amp%d_rdnoise" % \
-                          (stacked.header['FRAMENO'], ia)
+                biasfnam = "bias_%05d_%s_amp%d_rdnoise" % \
+                          (stacked.header['FRAMENO'],
+                           stacked.header['AMPMODE'], ia)
                 plabel = '[ Img # %d' % stacked.header['FRAMENO']
                 plabel += ' (Bias)'
                 plabel += ' %s' % self.action.args.ccddata.header['BINNING']
