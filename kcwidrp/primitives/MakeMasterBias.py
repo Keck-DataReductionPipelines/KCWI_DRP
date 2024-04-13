@@ -48,8 +48,6 @@ class MakeMasterBias(BaseImg):
         self.logger.info(f"pre condition got {len(self.combine_list)},"
                          f" expecting {self.action.args.min_files}")
         # Did we meet our pre-condition?
-        print("Combine list: ", self.combine_list)
-        print("\n\n\n\n")
         if len(self.combine_list) >= self.action.args.min_files:
             return True
         else:
@@ -166,14 +164,9 @@ class MakeMasterBias(BaseImg):
 
         kcwi_fits_writer(stacked, output_file=mbname,
                          output_dir=self.config.instrument.output_directory)
-        print("STACKED: ", stacked)
-        print("\n\n\n\n")
-        # self.context.proctab.update_proctab(frame=stacked, suffix=suffix,
-        #                                     newtype=self.action.args.new_type,
-        #                                     filename=stacked.header['OFNAME'])
         self.context.proctab.update_proctab(frame=stacked, suffix=suffix,
                                             newtype=self.action.args.new_type,
-                                            filename=self.action.args.name) ### HERE
+                                            filename=self.action.args.name)
         self.context.proctab.write_proctab(tfil=self.config.instrument.procfile)
         return Arguments(name=mbname)
     # END: class ProcessBias()

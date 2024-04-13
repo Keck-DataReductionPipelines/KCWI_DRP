@@ -69,9 +69,6 @@ class MakeMasterFlat(BaseImg):
                 target_group=self.action.args.groupid)
             self.logger.info(f"pre condition got {len(self.stack_list)},"
                              f" expecting {self.action.args.min_files}")
-            print("SFLAT LIST:\n\n\n\n")
-            print(self.stack_list)
-            print("\n\n\n\n")
             # do we meet the criterion?
             if len(self.stack_list) >= 1:
                 return True

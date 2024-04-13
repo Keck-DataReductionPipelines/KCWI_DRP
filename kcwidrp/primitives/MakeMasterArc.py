@@ -87,8 +87,6 @@ class MakeMasterArc(BaseImg):
             stacked.header['HISTORY'] = log_string
             self.action.args.ccddata = stacked
             # maname = get_unique_STATEID_master_name(stacked, suffix)
-            print("Combine list (MMA): ")
-            print(combine_list)
             maname = strip_fname(combine_list[0]) + '_' + suffix + '.fits'
 
             kcwi_fits_writer(stacked, output_file=maname,

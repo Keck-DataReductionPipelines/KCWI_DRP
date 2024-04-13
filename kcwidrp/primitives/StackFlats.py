@@ -81,12 +81,7 @@ class StackFlats(BaseImg):
         self.logger.info("Stacking flats using method %s" % method)
 
         combine_list = list(self.combine_list['filename'])
-        # get flat stack output name
-        print("\n\n\nCOMBINE_LIST: ", combine_list)
-        print("PICKING: ", strip_fname(combine_list[0]))
-        print("NAME: ", self.action.args.name)
-        print("\n\n\n")
-        
+        # get flat stack output name        
         stname = strip_fname(combine_list[0]) + '_' + suffix + '.fits'
         # stname = get_unique_STATEID_master_name(self.action.args.ccddata, suffix)
         stack = []
