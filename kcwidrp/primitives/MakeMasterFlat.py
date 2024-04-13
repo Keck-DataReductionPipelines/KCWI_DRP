@@ -69,6 +69,9 @@ class MakeMasterFlat(BaseImg):
                 target_group=self.action.args.groupid)
             self.logger.info(f"pre condition got {len(self.stack_list)},"
                              f" expecting {self.action.args.min_files}")
+            print("SFLAT LIST:\n\n\n\n")
+            print(self.stack_list)
+            print("\n\n\n\n")
             # do we meet the criterion?
             if len(self.stack_list) >= 1:
                 return True
@@ -99,7 +102,7 @@ class MakeMasterFlat(BaseImg):
             self.logger.error("Geometry not solved!")
             return self.action.args
 
-        mroot = strip_fname(tab['filename'][-1])
+        mroot = strip_fname(tab['filename'][-1]) # ??????????????????
 
         # Wavelength map image
         wmf = mroot + '_wavemap.fits'
@@ -933,9 +936,10 @@ class MakeMasterFlat(BaseImg):
                          output_dir=self.config.instrument.output_directory)
         self.context.proctab.update_proctab(frame=stacked, suffix=suffix,
                                             newtype=self.action.args.new_type,
-                                            filename=stacked.header['OFNAME'])
+                                            filename=stack_list[0]) ### HERE
         self.context.proctab.write_proctab(tfil=self.config.instrument.procfile)
-        self.action.args.name = stacked.header['OFNAME']
+        # self.action.args.name = stacked.header['OFNAME']
+        # self.action.args.name = mfname
 
         self.logger.info(log_string)
         return self.action.args

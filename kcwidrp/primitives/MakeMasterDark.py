@@ -1,6 +1,6 @@
 from keckdrpframework.primitives.base_img import BaseImg
 from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_reader, \
-    kcwi_fits_writer, strip_fname  # , get_master_name
+    kcwi_fits_writer, strip_fname, get_unique_STATEID_master_name  # , get_master_name
 
 import os
 import ccdproc
@@ -54,7 +54,8 @@ class MakeMasterDark(BaseImg):
 
         combine_list = list(self.combine_list['filename'])
         # get master dark output name
-        mdname = strip_fname(combine_list[0]) + '_' + suffix + '.fits'
+        # mdname = strip_fname(combine_list[0]) + '_' + suffix + '.fits'
+        mdname = get_unique_STATEID_master_name(self.action.args.ccddata, suffix="mdark")
         stack = []
         stackf = []
         for dark in combine_list:
@@ -87,7 +88,7 @@ class MakeMasterDark(BaseImg):
                          output_dir=self.config.instrument.output_directory)
         self.context.proctab.update_proctab(frame=stacked, suffix=suffix,
                                             newtype=args.new_type,
-                                            filename=stacked.header['OFNAME'])
+                                            filename=self.action.args.name) ### HERE
         self.context.proctab.write_proctab(tfil=self.config.instrument.procfile)
         return self.action.args
     # END: class MakeMasterDark()

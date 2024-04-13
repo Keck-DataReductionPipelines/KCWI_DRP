@@ -1,7 +1,7 @@
 from keckdrpframework.models.arguments import Arguments
 from keckdrpframework.primitives.base_img import BaseImg
 from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_reader, \
-    kcwi_fits_writer, parse_imsec, strip_fname
+    kcwi_fits_writer, parse_imsec, strip_fname, get_unique_CCD_master_name
 from kcwidrp.core.bokeh_plotting import bokeh_plot
 from kcwidrp.core.kcwi_plotting import save_plot
 
@@ -48,6 +48,8 @@ class MakeMasterBias(BaseImg):
         self.logger.info(f"pre condition got {len(self.combine_list)},"
                          f" expecting {self.action.args.min_files}")
         # Did we meet our pre-condition?
+        print("Combine list: ", self.combine_list)
+        print("\n\n\n\n")
         if len(self.combine_list) >= self.action.args.min_files:
             return True
         else:
@@ -64,7 +66,8 @@ class MakeMasterBias(BaseImg):
         combine_list = list(self.combine_list['filename'])
         # get master bias output name
         # mbname = combine_list[-1].split('.fits')[0] + '_' + suffix + '.fits'
-        mbname = strip_fname(combine_list[0]) + '_' + suffix + '.fits'
+        # mbname = strip_fname(combine_list[0]) + '_' + suffix + '.fits'
+
         # mbname = master_bias_name(self.action.args.ccddata)
         bsec, dsec, tsec, direc, amps, aoff = self.action.args.map_ccd
 
@@ -158,11 +161,19 @@ class MakeMasterBias(BaseImg):
         stacked.header['HISTORY'] = log_string
         self.logger.info(log_string)
 
+        mbname = get_unique_CCD_master_name(stacked)
+
+
         kcwi_fits_writer(stacked, output_file=mbname,
                          output_dir=self.config.instrument.output_directory)
+        print("STACKED: ", stacked)
+        print("\n\n\n\n")
+        # self.context.proctab.update_proctab(frame=stacked, suffix=suffix,
+        #                                     newtype=self.action.args.new_type,
+        #                                     filename=stacked.header['OFNAME'])
         self.context.proctab.update_proctab(frame=stacked, suffix=suffix,
                                             newtype=self.action.args.new_type,
-                                            filename=stacked.header['OFNAME'])
+                                            filename=self.action.args.name) ### HERE
         self.context.proctab.write_proctab(tfil=self.config.instrument.procfile)
         return Arguments(name=mbname)
     # END: class ProcessBias()

@@ -132,6 +132,8 @@ class GenerateMaps(BasePrimitive):
             # output maps
             header = self.action.args.ccddata.header
 
+            print("\n\n\n" + self.action.args.name + "\n\n\n")
+
             kcwi_fits_writer(CCDData(wave_map_img, meta=header,
                                      unit=u.angstrom),
                              output_file=self.action.args.name,

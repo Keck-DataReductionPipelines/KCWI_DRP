@@ -55,8 +55,10 @@ class CorrectIllumination(BasePrimitive):
 
         self.logger.info("pre condition got %d %s flats, expected 1"
                          % (len(tab), target_type))
+        print("\n\t\tCORRECT ILLUM FLAT NAME TAB: ", tab)
         if precondition:
             self.action.args.master_flat = get_master_name(tab, target_type)
+            print("\n\t\tCORRECT ILLUM FLAT NAME: ", self.action.args.master_flat)
         return precondition
 
     def _perform(self):
