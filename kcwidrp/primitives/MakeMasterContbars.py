@@ -63,8 +63,8 @@ class MakeMasterContbars(BaseImg):
             stackf = []
             for cbs in combine_list:
                 # get arc intensity (int) image file name in redux directory
-                stackf.append(cbs.split('.fits')[0] + '_int.fits')
-                cbsfn = os.path.join(args.in_directory, stackf[-1])
+                stackf.append(strip_fname(cbs) + '_int.fits')
+                cbsfn = os.path.join(self.config.instrument.cwd, self.config.instrument.output_directory, stackf[-1])
                 # using [0] gets just the image data
                 stack.append(kcwi_fits_reader(cbsfn)[0])
 

@@ -915,7 +915,7 @@ class MakeMasterFlat(BaseImg):
             ratio.flat[qq] = 1.0
 
         # get master flat output name
-        mfname = stack_list[0].split('.fits')[0] + '_' + suffix + '.fits'
+        mfname = strip_fname(stack_list[0]) + '_' + suffix + '.fits'
 
         log_string = MakeMasterFlat.__module__
         stacked.header['IMTYPE'] = self.action.args.new_type

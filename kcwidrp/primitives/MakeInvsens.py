@@ -387,7 +387,8 @@ class MakeInvsens(BasePrimitive):
         local_lmfile = os.path.basename(stdfile).split('.fits')[0] + '.lmsk'
         if not os.path.exists(local_lmfile):
             # then in stds directory
-            lmfile = stdfile.split('.fits')[0] + '.lmsk'
+            # lmfile = stdfile.split('.fits')[0] + '.lmsk'
+            lmfile = strip_fname(stdfile) + '.lmsk'
             if not os.path.exists(lmfile):
                 lmfile = None
         else:

@@ -73,7 +73,8 @@ class MakeMasterBias(BaseImg):
         stack = []
         stackf = []
         for bias in combine_list:
-            inbias = bias.split('.fits')[0] + '_intb.fits'
+            # inbias = bias.split('.fits')[0] + '_intb.fits'
+            inbias = strip_fname(bias) + '_intb.fits'
             stackf.append(inbias)
             # using [0] drops the table and leaves just the image
             stack.append(kcwi_fits_reader(

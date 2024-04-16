@@ -176,7 +176,7 @@ class MakeMasterSky(BaseImg):
         # Do we have a sky alternate?
         if skyfile:
             # Generate sky file name
-            msname = skyfile.split('.fits')[0] + '_' + suffix + '.fits'
+            msname = strip_fname(skyfile) + '_' + suffix + '.fits'
             mskyf = os.path.join(rdir, msname)
             # Does it exist?
             if os.path.exists(mskyf):
