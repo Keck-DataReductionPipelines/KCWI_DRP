@@ -110,6 +110,7 @@ class MakeMasterObject(BaseImg):
             # self.action.args.name = mobj_name
             # self.action.args.name = stacked.header['OFNAME']
         else:
+            mobj_name = get_master_name(combine_list, "mobj")
             self.action.args.ccddata.header['IMTYPE'] = args.new_type
             self.action.args.ccddata.header['HISTORY'] = log_string
             kcwi_fits_writer(self.action.args.ccddata, output_file=mobj_name,

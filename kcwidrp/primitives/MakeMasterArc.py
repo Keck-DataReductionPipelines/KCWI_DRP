@@ -98,6 +98,7 @@ class MakeMasterArc(BaseImg):
             # self.action.args.name = maname
             # self.action.args.name = stacked.header['OFNAME']
         else:
+            maname = strip_fname(combine_list[0]) + '_' + suffix + '.fits'
             self.action.args.ccddata.header['IMTYPE'] = args.new_type
             self.action.args.ccddata.header['HISTORY'] = log_string
             kcwi_fits_writer(self.action.args.ccddata, output_file=maname,
