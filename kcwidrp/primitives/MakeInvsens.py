@@ -333,7 +333,7 @@ class MakeInvsens(BasePrimitive):
         wlm0 = wgoo0
         wlm1 = wgoo1
         # interactively set wavelength limits
-        if self.config.instrument.plot_level >= 1:
+        if self.config.instrument.plot_level > 1:
             print("CHECKING WAVELENGTH LIMITS")
             print("Current WL limits: %.1f - %.1f Angstroms "
                   "(blue vertical lines)" % (wlm0, wlm1))
