@@ -35,6 +35,7 @@ def _parse_arguments(in_args: list) -> argparse.Namespace:
                                      description=description)
     parser.add_argument('-c', '--config', dest="kcwi_config_file", type=str,
                         help="KCWI configuration file", default=None)
+    parser.add_argument('--rti-cfg', dest="rti_config_file", type=str, help="RTI configuration file", default=None)
     parser.add_argument('--write_config', dest="write_config",
                         help="Write out an editable config file in current dir"
                         " (kcwi.cfg)", action="store_true", default=False)
@@ -185,9 +186,13 @@ def main():
         # kcwi_config_fullpath = os.path.abspath(args.kcwi_config_file)
         kcwi_config = ConfigClass(args.kcwi_config_file, default_section='KCWI')
 
-    rti_config_file = "configs/rti.cfg"
-    rti_config_fullpath = pkg_resources.resource_filename(pkg, rti_config_file)
+    if args.rti_config_file is None:
+        rti_config_file = "configs/rti.cfg"
+        rti_config_fullpath = pkg_resources.resource_filename(pkg, rti_config_file)
+    else:
+        rti_config_fullpath = args.rti_config_file
     rti_config = ConfigClass(rti_config_fullpath, default_section='RTI')
+
     # END HANDLING OF CONFIGURATION FILES ##########
 
     # Add current working directory to config info
