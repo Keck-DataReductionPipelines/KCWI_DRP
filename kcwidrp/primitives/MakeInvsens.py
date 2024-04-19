@@ -429,7 +429,7 @@ class MakeInvsens(BasePrimitive):
                 else:
                     print("bad line: %s" % lmws)
         # Now interactively identify lines if requested
-        if self.config.instrument.plot_level >= 1:
+        if self.config.instrument.plot_level >= 2:
             yran = [np.min(obsspec[wl_good]), np.max(obsspec[wl_good])]
             # source = ColumnDataSource(data=dict(x=w, y=obsspec))
             print("MASKING SHARP FEATURES: ABSORPTION LINES/COSMIC RAYS")
