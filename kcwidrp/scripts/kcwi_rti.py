@@ -401,6 +401,7 @@ def main():
 
     # single frame processing
     elif args.frames:
+        frames = []
         for frame in args.frames:
             # Verify we have the correct channel selected
             if args.blue and ('kr' in frame or 'KR' in frame):
