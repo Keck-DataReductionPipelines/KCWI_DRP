@@ -581,7 +581,7 @@ class MakeInvsens(BasePrimitive):
                           line_color='black', line_dash='dashdot')
                 set_plot_lims(peff, xlim=[wall0, wall1], ylim=yran)
                 bokeh_plot(peff, self.context.bokeh_session)
-                if self.config.instrument.plot_level >= 1:
+                if self.config.instrument.plot_level >= 2:
                     input("Next? <cr>: ")
                 else:
                     time.sleep(2. * self.config.instrument.plot_pause)
@@ -602,7 +602,7 @@ class MakeInvsens(BasePrimitive):
                 pivs.line([wlm1, wlm1], yran, line_color='green')
                 set_plot_lims(pivs, xlim=[wall0, wall1], ylim=yran)
                 bokeh_plot(pivs, self.context.bokeh_session)
-                if self.config.instrument.plot_level >= 1:
+                if self.config.instrument.plot_level >= 2:
                     input("Next? <cr>: ")
                 else:
                     time.sleep(2. * self.config.instrument.plot_pause)
@@ -621,7 +621,7 @@ class MakeInvsens(BasePrimitive):
                 pcal.line([wlm1, wlm1], yran, line_color='green')
                 set_plot_lims(pcal, xlim=[wall0, wall1], ylim=yran)
                 bokeh_plot(pcal, self.context.bokeh_session)
-                if self.config.instrument.plot_level >= 1:
+                if self.config.instrument.plot_level >= 2:
                     input("Next? <cr>: ")
                 else:
                     time.sleep(2. * self.config.instrument.plot_pause)
@@ -651,7 +651,7 @@ class MakeInvsens(BasePrimitive):
                           line_color='black', line_dash='dashed')
                 set_plot_lims(prsd, xlim=[wall0, wall1], ylim=yran)
                 bokeh_plot(prsd, self.context.bokeh_session)
-                if self.config.instrument.plot_level >= 1:
+                if self.config.instrument.plot_level >= 2:
                     qstr = input("Current fit order = %d, "
                                  "New fit order? <int>, <cr> - done: " % ford)
                     if len(qstr) <= 0:
