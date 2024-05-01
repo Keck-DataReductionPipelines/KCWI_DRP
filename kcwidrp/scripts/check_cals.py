@@ -51,6 +51,8 @@ def parse_args():
     parser.add_argument('filepaths', help="Files to inspect", nargs="+")
     parser.add_argument('-v', '--verbose', dest="verbose", action="store_true",
                         help="Print exhaustive information")
+    parser.add_Argument('-a', '--auto', dest="auto", action="store_true",
+                        help='For autonomy mode, only returns PASSED or FAILED.')
     parser.add_argument('-c', '--config', dest="config", type=str,
                         help="KCWI configuration file", default=None)
 
@@ -100,10 +102,13 @@ def main():
     logger = logging.getLogger("Logger")
     logger.addHandler(logging.StreamHandler())
 
-    if args.verbose:
-        logger.setLevel("DEBUG")
+    if args.auto:
+        logger.setLevel("ERROR")
     else:
-        logger.setLevel("INFO")
+        if args.verbose:
+            logger.setLevel("DEBUG")
+        else:
+            logger.setLevel("INFO")
     
 
     # Load config
@@ -272,6 +277,12 @@ def main():
             logger.info('\t' + str(objects[objects["CID"] == fail]['filename', 'TARGNAME']).replace('\n', '\n\t'))
     else:
         logger.info("\033[32mNo failures to report.\033[0m")
+    
+    if args.auto:
+        if len(passes) > 0 and len(fails) == 0:
+            print("PASSED")
+        else:
+            print("FAILED")
 
 if __name__ == "__main__":
     main()
