@@ -27,6 +27,7 @@ from astropy.utils.exceptions import AstropyWarning
 from kcwidrp.core.kcwi_proctab import Proctab
 from keckdrpframework.config.framework_config import ConfigClass
 from kcwidrp.core.kcwi_get_std import kcwi_get_std
+from kcwidrp.primitives.kcwi_file_primitives import fix_header
 
 
 warnings.simplefilter('ignore', category=AstropyWarning)
@@ -135,6 +136,7 @@ def main():
     for file in files:
         try:
             frame = CCDData.read(file, unit='adu')
+            fix_header(frame)
             if 'CCDCFG' not in frame.header:
                 ccdcfg = frame.header['CCDSUM'].replace(" ", "")
                 ccdcfg += "%1d" % frame.header['CCDMODE']
