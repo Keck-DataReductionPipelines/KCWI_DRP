@@ -135,6 +135,12 @@ def main():
     for file in files:
         try:
             frame = CCDData.read(file, unit='adu')
+            if 'CCDCFG' not in frame.header:
+                ccdcfg = frame.header['CCDSUM'].replace(" ", "")
+                ccdcfg += "%1d" % frame.header['CCDMODE']
+                ccdcfg += "%02d" % frame.header['GAINMUL']
+                ccdcfg += "%02d" % frame.header['AMPMNUM']
+                frame.header['CCDCFG'] = ccdcfg
         except FileNotFoundError as e:
             logger.error(f"Failed to open {file}")
         proctab.update_proctab(frame, filename=file.name)
