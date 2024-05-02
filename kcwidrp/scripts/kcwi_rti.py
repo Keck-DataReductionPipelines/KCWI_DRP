@@ -196,7 +196,6 @@ def main():
     else:
         rti_config_fullpath = args.rti_config_file
     rti_config = ConfigClass(rti_config_fullpath, default_section='RTI')
-    rti_config['rti_ingesttype'] = args.rti_ingesttype
     # END HANDLING OF CONFIGURATION FILES ##########
 
     # Add current working directory to config info
@@ -211,6 +210,7 @@ def main():
         logging.config.fileConfig(framework_logcfg_fullpath)
         framework.config.instrument = kcwi_config
         framework.config.rti = rti_config
+        framework.config.rti.rti_ingesttype = args.rti_ingesttype
     except Exception as e:
         print("Failed to initialize framework, exiting ...", e)
         traceback.print_exc()
