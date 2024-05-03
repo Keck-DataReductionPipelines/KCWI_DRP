@@ -51,7 +51,7 @@ def parse_args():
     parser.add_argument('filepaths', help="Files to inspect", nargs="+")
     parser.add_argument('-v', '--verbose', dest="verbose", action="store_true",
                         help="Print exhaustive information")
-    parser.add_Argument('-a', '--auto', dest="auto", action="store_true",
+    parser.add_argument('-a', '--auto', dest="auto", action="store_true",
                         help='For autonomy mode, only returns PASSED or FAILED.')
     parser.add_argument('-c', '--config', dest="config", type=str,
                         help="KCWI configuration file", default=None)
