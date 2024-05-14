@@ -95,7 +95,7 @@ class FluxCalibrate(BasePrimitive):
                     sz[0] != mcsz[0]:
                 self.logger.warning("wavelength scales not identical, "
                                     "resampling standard")
-                print(w0, mcw0, dw, mcdw, wav[-1], mcwav[-1], sz[0], mcsz[0])
+                self.logger.info(w0, mcw0, dw, mcdw, wav[-1], mcwav[-1], sz[0], mcsz[0])
                 mcint = interp1d(mcwav, mcal, kind='cubic',
                                  fill_value='extrapolate')
                 mscal = mcint(wav) * 1.e16 / expt

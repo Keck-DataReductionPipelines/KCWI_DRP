@@ -99,7 +99,7 @@ class MakeMasterFlat(BaseImg):
             self.logger.error("Geometry not solved!")
             return self.action.args
 
-        mroot = strip_fname(tab['filename'][-1])
+        mroot = strip_fname(tab['filename'][-1]) # ??????????????????
 
         # Wavelength map image
         wmf = mroot + '_wavemap.fits'
@@ -435,7 +435,7 @@ class MakeMasterFlat(BaseImg):
                 trm = int(len(deriv)/5)
                 deriv = deriv[trm:-trm]
                 xvals = fpoints[trm:-trm]
-                peaks, _ = find_peaks(deriv, height=20)
+                peaks, properties = find_peaks(deriv, height=20)
                 self.logger.info("%d Peak(s) found" % len(peaks))
 
                 p = figure(title=plab +
@@ -466,11 +466,16 @@ class MakeMasterFlat(BaseImg):
                 bokeh_plot(p, self.context.bokeh_session)
                 if len(peaks) != 1:
                     self.logger.warning("Single peak not found!")
-                    print("Please indicate the integer pixel value of the peak")
-                    spk = input("Peak? <int>: ")
-                    while not spk.isnumeric():
+                    if self.config.instrument.plot_level >= 2:
+                        print("Please indicate the integer pixel value of the peak")
                         spk = input("Peak? <int>: ")
-                    ipk = int(spk)
+                        while not spk.isnumeric():
+                            spk = input("Peak? <int>: ")
+                        ipk = int(spk)
+                    else:
+                        # Pick the highest peak, using the peaks properties
+                        self.logger.warning("Picking the highest peak. This may not be the correct peak!")
+                        ipk = properties['peak_heights'].argmax()
                 else:
                     ipk = peaks[0]
                 apk = xvals[ipk]
@@ -915,7 +920,7 @@ class MakeMasterFlat(BaseImg):
             ratio.flat[qq] = 1.0
 
         # get master flat output name
-        mfname = stack_list[0].split('.fits')[0] + '_' + suffix + '.fits'
+        mfname = strip_fname(stack_list[0]) + '_' + suffix + '.fits'
 
         log_string = MakeMasterFlat.__module__
         stacked.header['IMTYPE'] = self.action.args.new_type
@@ -933,9 +938,10 @@ class MakeMasterFlat(BaseImg):
                          output_dir=self.config.instrument.output_directory)
         self.context.proctab.update_proctab(frame=stacked, suffix=suffix,
                                             newtype=self.action.args.new_type,
-                                            filename=stacked.header['OFNAME'])
+                                            filename=stack_list[0]) ### HERE
         self.context.proctab.write_proctab(tfil=self.config.instrument.procfile)
-        self.action.args.name = stacked.header['OFNAME']
+        # self.action.args.name = stacked.header['OFNAME']
+        # self.action.args.name = mfname
 
         self.logger.info(log_string)
         return self.action.args

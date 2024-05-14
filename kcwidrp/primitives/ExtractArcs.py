@@ -87,7 +87,8 @@ class ExtractArcs(BasePrimitive):
         self.action.args.contbar_image_number = self.context.trace['CBARSNO']
         self.action.args.contbar_image = self.context.trace['CBARSFL']
         self.action.args.arc_number = self.action.args.ccddata.header['FRAMENO']
-        self.action.args.arc_image = self.action.args.ccddata.header['OFNAME']
+        self.action.args.arc_image = self.action.args.name
+        # self.action.args.arc_image = self.action.args.ccddata.header['OFNAME']
 
         self.action.args.source_control_points = trace['src']
         self.action.args.destination_control_points = trace['dst']

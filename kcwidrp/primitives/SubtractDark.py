@@ -32,7 +32,7 @@ class SubtractDark(BasePrimitive):
 
         if len(tab) > 0:
             mdname = get_master_name(tab, target_type)
-            print("*************** READING IMAGE: %s" % mdname)
+            self.logger.info("*************** READING IMAGE: %s" % mdname)
             mdark = kcwi_fits_reader(
                 os.path.join(self.config.instrument.cwd, 'redux',
                              mdname))[0]

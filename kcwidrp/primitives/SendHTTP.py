@@ -28,8 +28,8 @@ class SendHTTP(BasePrimitive):
             self.logger.error(f"Encountered a file with no KOA ID: {self.action.args.name}")
             return self.action.args
         
-        data_directory = os.path.join(self.config.rti.cwd,
-                                      self.config.rti.output_directory)
+        data_directory = os.path.join(self.config.instrument.cwd,
+                                      self.config.instrument.output_directory)
         
         self.logger.info(f"Alerting RTI that {strip_fname(self.action.args.name)} is ready for ingestion")
 

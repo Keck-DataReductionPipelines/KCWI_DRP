@@ -13,11 +13,14 @@ from kcwidrp.core.kcwi_get_std import is_file_kcwi_std
 
 import subprocess
 import time
+import datetime
 import argparse
 import sys
 import traceback
 import os
 import pkg_resources
+import psutil
+import shutil
 
 from kcwidrp.pipelines.keck_rti_pipeline import Keck_RTI_Pipeline
 from kcwidrp.core.kcwi_proctab import Proctab
@@ -32,6 +35,14 @@ def _parse_arguments(in_args: list) -> argparse.Namespace:
                                      description=description)
     parser.add_argument('-c', '--config', dest="kcwi_config_file", type=str,
                         help="KCWI configuration file", default=None)
+    
+    parser.add_argument('--rti-cfg', dest="rti_config_file", type=str,
+                        help="RTI configuration file", default=None)
+    parser.add_argument('--rti-ingesttype', choices=['lev1', 'lev2'], dest="rti_ingesttype", type=str,
+                        help="RTI ingest type", default=None, required=True)
+    parser.add_argument('--write_config', dest="write_config",
+                        help="Write out an editable config file in current dir"
+                        " (kcwi.cfg)", action="store_true", default=False)
     parser.add_argument('-f', '--frames', nargs='*', type=str,
                         help='input image files (full path, list ok)',
                         default=None)
@@ -47,6 +58,21 @@ def _parse_arguments(in_args: list) -> argparse.Namespace:
                         default=None)
     parser.add_argument('-a', '--atlas_line_list', dest='atlas_line_list',
                         type=str, help="Atlas line list file", default=None)
+    parser.add_argument('-M', '--middle_fraction', dest='middle_fraction',
+                        type=float, help="Fraction of middle to use",
+                        default=None)
+    parser.add_argument('-o', '--atlas_offset', dest='atlas_offset',
+                        type=int, help="Atlas offset (px)", default=None)
+    parser.add_argument('-e', '--line_thresh', dest='line_thresh',
+                        type=float, help="Line Cleaning Threshold (e-)",
+                        default=None)
+    parser.add_argument('-u', '--tukey_alpha', dest='tukey_alpha',
+                        type=float, help="Tukey Window Alpha (0.0 - 1.0)",
+                        default=None)
+    parser.add_argument('-F', '--max_frac', dest='max_frac',
+                        type=float, default=None,
+                        help="Fraction of line max for fitting window "
+                             "(default: 0.5)")
 
     # in this case, we are loading an entire directory,
     # and ingesting all the files in that directory
@@ -74,9 +100,15 @@ def _parse_arguments(in_args: list) -> argparse.Namespace:
                         dest="queue_manager_only", action="store_true",
                         help="Starts queue manager only, no processing",)
 
-    # kcwi specific parameter
+    # kcwi specific parameters
     parser.add_argument("-p", "--proctab", dest='proctab', help='Proctab file',
-                        default='kcwi.proc')
+                        default=None)
+    parser.add_argument("-b", "--blue", dest='blue', action="store_true",
+                        default=False, help="KCWI Blue processing")
+    parser.add_argument("-r", "--red", dest='red', action="store_true",
+                        default=False, help="KCWI Red processing")
+    parser.add_argument("-k", "--skipsky", dest='skipsky', action="store_true",
+                        default=False, help="Skip sky subtraction")
 
     out_args = parser.parse_args(in_args[1:])
     return out_args
@@ -90,6 +122,24 @@ def check_directory(directory):
 
 def main():
 
+    # Package
+    pkg = 'kcwidrp'
+    
+    # get arguments
+    args = _parse_arguments(sys.argv)
+
+    if args.write_config:
+        dest = os.path.join(os.getcwd(), 'kcwi.cfg')
+        if os.path.exists(dest):
+            print("Config file kcwi.cfg already exists in current dir")
+        else:
+            kcwi_config_file = 'configs/kcwi.cfg'
+            kcwi_config_fullpath = pkg_resources.resource_filename(
+                pkg, kcwi_config_file)
+            shutil.copy(kcwi_config_fullpath, os.getcwd())
+            print("Copied kcwi.cfg into current dir.  Edit and use with -c")
+        sys.exit(0)
+
     def process_subset(in_subset):
         for in_frame in in_subset.index:
             arguments = Arguments(name=in_frame)
@@ -100,10 +150,21 @@ def main():
             arguments = Arguments(name=in_frame)
             framework.append_event('next_file', arguments, recurrent=True)
 
-    args = _parse_arguments(sys.argv)
+    # make sure user has selected a channel
+    if not args.blue and not args.red:
+        print("\nERROR - DRP can process only one channel at a time\n\n"
+              "Please indicate a channel to process:\n"
+              "Either BLUE with -b or --blue or\n"
+              "       RED  with -r or --red\n")
+        sys.exit(0)
+
+    if args.file_list:
+        if '.fits' in args.file_list:
+            print("\nERROR - trying to read in fits file as file list\n\n"
+                  "Please use -f or --frames for direct input of fits files\n")
+            sys.exit(0)
 
     # START HANDLING OF CONFIGURATION FILES ##########
-    pkg = 'kcwidrp'
 
     # check for the logs diretory
     check_directory("logs")
@@ -129,8 +190,11 @@ def main():
         # kcwi_config_fullpath = os.path.abspath(args.kcwi_config_file)
         kcwi_config = ConfigClass(args.kcwi_config_file, default_section='KCWI')
 
-    rti_config_file = "configs/rti.cfg"
-    rti_config_fullpath = pkg_resources.resource_filename(pkg, rti_config_file)
+    if args.rti_config_file is None:
+        rti_config_file = "configs/rti.cfg"
+        rti_config_fullpath = pkg_resources.resource_filename(pkg, rti_config_file)
+    else:
+        rti_config_fullpath = args.rti_config_file
     rti_config = ConfigClass(rti_config_fullpath, default_section='RTI')
     # END HANDLING OF CONFIGURATION FILES ##########
 
@@ -146,6 +210,7 @@ def main():
         logging.config.fileConfig(framework_logcfg_fullpath)
         framework.config.instrument = kcwi_config
         framework.config.rti = rti_config
+        framework.config.rti.rti_ingesttype = args.rti_ingesttype
     except Exception as e:
         print("Failed to initialize framework, exiting ...", e)
         traceback.print_exc()
@@ -158,6 +223,13 @@ def main():
     if args.infiles is not None:
         framework.config.file_type = args.infiles
 
+    # check for skipsky argument
+    if args.skipsky:
+        def_sk = getattr(framework.config.instrument, 'skipsky', None)
+        if def_sk is not None:
+            framework.context.pipeline_logger.info("Skipping sky subtraction")
+            framework.config.instrument.skipsky = args.skipsky
+
     # check for taperfrac argument
     if args.taperfrac:
         def_tf = getattr(framework.config.instrument, 'TAPERFRAC', None)
@@ -165,6 +237,68 @@ def main():
             framework.context.pipeline_logger.info(
                 "Setting new taperfrac = %.3f" % args.taperfrac)
             framework.config.instrument.TAPERFRAC = args.taperfrac
+
+    # check for middle_fraction argument
+    if args.middle_fraction:
+        def_mf = getattr(framework.config.instrument, 'MIDFRAC', None)
+        if def_mf is not None:
+            framework.context.pipeline_logger.info(
+                "Setting new middle_fraction = %.2f" % args.middle_fraction)
+            framework.config.instrument.MIDFRAC = args.middle_fraction
+
+    # check for atlas_offset argument
+    if args.atlas_offset:
+        def_ao = getattr(framework.config.instrument, 'ATOFF', None)
+        if def_ao is not None:
+            framework.context.pipeline_logger.info(
+                "Setting new atlas offset = %.2f" % args.atlas_offset)
+            framework.config.instrument.ATOFF = args.atlas_offset
+
+    # check for line_thresh argument
+    if args.line_thresh:
+        def_lt = getattr(framework.config.instrument, 'LINETHRESH', None)
+        if def_lt is not None:
+            framework.context.pipeline_logger.info(
+                "Setting new line thresh = %.2f" % args.line_thresh)
+            framework.config.instrument.LINETHRESH = args.line_thresh
+    else:
+        if args.blue:
+            framework.config.instrument.LINETHRESH = float(
+                kcwi_config.BLUE['linethresh'])
+        elif args.red:
+            framework.config.instrument.LINETHRESH = float(
+                kcwi_config.RED['linethresh'])
+
+    # check for tukey_alpha argument
+    if args.tukey_alpha:
+        def_ta = getattr(framework.config.instrument, 'TUKEYALPHA', None)
+        if def_ta is not None:
+            framework.context.pipeline_logger.info(
+                "Setting new tukey alpha = %.2f" % args.tukey_alpha)
+            framework.config.instrument.TUKEYALPHA = args.tukey_alpha
+    else:
+        if args.blue:
+            framework.config.instrument.TUKEYALPHA = float(
+                kcwi_config.BLUE['tukeyalpha'])
+        elif args.red:
+            framework.config.instrument.TUKEYALPHA = float(
+                kcwi_config.RED['tukeyalpha'])
+
+    # check for max_frac argument
+    if args.max_frac:
+        def_fm = getattr(framework.config.instrument, 'FRACMAX', None)
+        if def_fm is not None:
+            framework.context.pipeline_logger.info(
+                "Setting new line windowing max fraction = %.2f" %
+                args.max_frac)
+            framework.config.instrument.FRACMAX = args.max_frac
+    else:
+        if args.blue:
+            framework.config.instrument.FRACMAX = float(
+                kcwi_config.BLUE['fracmax'])
+        elif args.red:
+            framework.config.instrument.FRACMAX = float(
+                kcwi_config.RED['fracmax'])
 
     # check for atlas line list argument
     if args.atlas_line_list:
@@ -175,10 +309,62 @@ def main():
                 args.atlas_line_list)
             framework.config.instrument.LINELIST = args.atlas_line_list
 
+    # update proc table argument
+    if args.proctab:
+        framework.context.pipeline_logger.info(
+            "Using proc table file %s" % args.proctab
+        )
+        framework.config.instrument.procfile = args.proctab
+    else:
+        if args.blue:
+            proctab = kcwi_config.BLUE['procfile']
+        elif args.red:
+            proctab = kcwi_config.RED['procfile']
+        else:
+            proctab = kcwi_config.procfile
+        framework.context.pipeline_logger.info(
+            "Using proc table file %s" % proctab)
+        framework.config.instrument.procfile = proctab
+
+    # set up channel specific parameters
+    if args.blue:
+        framework.config.instrument.arc_min_nframes = int(
+            kcwi_config.BLUE['arc_min_nframes'])
+        framework.config.instrument.contbars_min_nframes = int(
+            kcwi_config.BLUE['contbars_min_nframes'])
+        framework.config.instrument.object_min_nframes = int(
+            kcwi_config.BLUE['object_min_nframes'])
+        framework.config.instrument.minoscanpix = int(
+            kcwi_config.BLUE['minoscanpix'])
+        framework.config.instrument.oscanbuf = int(
+            kcwi_config.BLUE['oscanbuf'])
+    elif args.red:
+        framework.config.instrument.arc_min_nframes = int(
+            kcwi_config.RED['arc_min_nframes'])
+        framework.config.instrument.contbars_min_nframes = int(
+            kcwi_config.RED['contbars_min_nframes'])
+        framework.config.instrument.object_min_nframes = int(
+            kcwi_config.RED['object_min_nframes'])
+        framework.config.instrument.minoscanpix = int(
+            kcwi_config.RED['minoscanpix'])
+        framework.config.instrument.oscanbuf = int(
+            kcwi_config.RED['oscanbuf'])
+    else:
+        framework.config.instrument.arc_min_nframes = \
+            kcwi_config.arc_min_nframes
+        framework.config.instrument.contbars_min_nframes = \
+            kcwi_config.contbars_min_nframes
+        framework.config.instrument.object_min_nframes = \
+            kcwi_config.object_min_nframes
+        framework.config.instrument.minoscanpix = kcwi_config.minoscanpix
+        framework.config.instrument.oscanbuf = kcwi_config.oscanbuf
+
     # start the bokeh server is requested by the configuration parameters
     if framework.config.instrument.enable_bokeh is True:
         if check_running_process(process='bokeh') is False:
-            subprocess.Popen('bokeh serve', shell=True)
+            with open("bokeh_output.txt", "wb") as out:
+                subprocess.Popen('bokeh serve', shell=True, stderr=out,
+                                 stdout=out)
             # --session-ids=unsigned --session-token-expiration=86400',
             # shell=True)
             time.sleep(5)
@@ -187,7 +373,7 @@ def main():
 
     # initialize the proctab and read it
     framework.context.proctab = Proctab()
-    framework.context.proctab.read_proctab(tfil=args.proctab)
+    framework.context.proctab.read_proctab(framework.config.instrument.procfile)
 
     framework.logger.info("Framework initialized")
     framework.logger.info(f"RTI url is {framework.config.rti.rti_url}")
@@ -209,7 +395,7 @@ def main():
     if args.queue_manager_only:
         # The queue manager runs for ever.
         framework.logger.info("Starting queue manager only, no processing")
-        framework.start_queue_manager()
+        framework.start(args.queue_manager_only)
 
     # in the next two ingest_data command, if we are using standard mode,
     # the first event generated is next_file.
@@ -219,6 +405,22 @@ def main():
 
     # single frame processing
     elif args.frames:
+        frames = []
+        for frame in args.frames:
+            # Verify we have the correct channel selected
+            if args.blue and ('kr' in frame or 'KR' in frame):
+                print('Blue channel requested, but red files in list')
+                qstr = input('Proceed? <cr>=yes or Q=quit: ')
+                if 'Q' in qstr.upper():
+                    frames = []
+                    break
+            if args.red and ('kb' in frame or 'KB' in frame):
+                print('Red channel requested, but blue files in list')
+                qstr = input('Proceed? <cr>=yes or Q=quit: ')
+                if 'Q' in qstr.upper():
+                    frames = []
+                    break
+            frames.append(frame)
         framework.ingest_data(None, args.frames, False)
 
     # processing of a list of files contained in a file
@@ -227,8 +429,25 @@ def main():
         with open(args.file_list) as file_list:
             for frame in file_list:
                 if "#" not in frame:
+                    # Verify we have the correct channel selected
+                    if args.blue and ('kr' in frame or 'KR' in frame):
+                        print('Blue channel requested, but red files in list')
+                        qstr = input('Proceed? <cr>=yes or Q=quit: ')
+                        if 'Q' in qstr.upper():
+                            frames = []
+                            break
+                    if args.red and ('kb' in frame or 'KB' in frame):
+                        print('Red channel requested, but blue files in list')
+                        qstr = input('Proceed? <cr>=yes or Q=quit: ')
+                        if 'Q' in qstr.upper():
+                            frames = []
+                            break
                     frames.append(frame.strip('\n'))
         framework.ingest_data(None, frames, False)
+
+        with open(args.file_list + '_ingest', 'w') as ingest_f:
+            ingest_f.write('Files ingested at: ' +
+                           datetime.datetime.now().isoformat())
 
     # ingest an entire directory, trigger "next_file" (which is an option
     # specified in the config file) on each file,
