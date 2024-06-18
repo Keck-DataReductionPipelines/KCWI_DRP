@@ -930,6 +930,12 @@ class ingest_file(BasePrimitive):
         out_args.calibration_lamp = self.calibration_lamp()
         # TTIME
         out_args.ttime = self.get_keyword('TTIME')
+        # WXOUTHUM
+        print(self.get_keyword('WXOUTHUM'))
+        # WXOUTTMP
+        print(self.get_keyword('WXOUTTMP'))
+        # WXPRESS
+        print(self.get_keyword('WXPRESS'))
 
         return out_args
 
