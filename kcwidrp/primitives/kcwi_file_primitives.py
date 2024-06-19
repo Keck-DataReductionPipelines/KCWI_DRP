@@ -931,11 +931,11 @@ class ingest_file(BasePrimitive):
         # TTIME
         out_args.ttime = self.get_keyword('TTIME')
         # WXOUTHUM
-        print("Outside humidity: ", self.get_keyword('WXOUTHUM'))
+        out_args.dome_hum = self.get_keyword('WXDOMHUM')
         # WXOUTTMP
-        print("Outside temperature: ", self.get_keyword('WXOUTTMP'))
+        out_args.dome_temp = self.get_keyword('WXDOMTMP')
         # WXPRESS
-        print("Pressure: ", self.get_keyword('WXPRESS'))
+        out_args.pres = self.get_keyword('WXPRESS')
 
         return out_args
 

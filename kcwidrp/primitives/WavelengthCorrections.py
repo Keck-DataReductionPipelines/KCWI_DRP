@@ -10,7 +10,6 @@ from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer, \
                                                     kcwi_fits_reader, \
                                                     strip_fname
 
-
 class WavelengthCorrections(BasePrimitive):
     """
     Perform wavelength corrections
@@ -177,20 +176,225 @@ class WavelengthCorrections(BasePrimitive):
         wave = wave.to(u.AA)
         wavelength = wave.value
 
+        sigma = (1.e4/wavelength)
+        sigma_sq = sigma**2
+
+        # Variables from args
+        # convert from % to decimal
+        h = self.action.args.dome_hum / 100
+        # convert from [C] to [K]
+        T = self.action.args.dome_temp + 273.15
+        # convert from mmHg to Pa
+        p = self.action.args.pres * 100
+        # ppm of CO2
+        x_c = 450
+
+        def x_w_func(T, p, h):
+            """
+
+            Returns the molar fraction of water vapor in moist air. From Section 3
+            below Equation (4)
+
+            Args:
+                T (float): temperature in Kelvin [K]
+                p (float): pressure in Pascals [Pa]
+                h (float): fractional humidity 
+
+            Returns:
+                Molar fraction of water vapor in moist air
+
+            """
+
+            # temperature [C]
+            t = T - 273.15
+
+            # constants for f from Appendix A
+            alpha = 1.00062
+            beta = 3.14 * 10e-8
+            gamma  = 5.6 * 10e-7
+
+            # enchancement factor
+            f = alpha + beta * p + gamma * t**2
+
+            # constants for svp from Appendix A
+            A = 1.2378847 * 10e-5
+            B = -1.9121316 * 10e-2
+            C = 33.93711047
+            D = -6.3431645 * 10e3 
+
+            # saturation vapor pressure (svp) of water vapor in air at temperature, T [Pa]
+            svp = np.exp((A * T**2 + B * T + C + D/T))
+
+            # molar fraction of water vapor in moist air
+            x_w = f * h * (svp/p)
+
+            return x_w 
+        
+        x_w = x_w_func(T, p, h)
+
+        # Constants for equation (1) from Appendix A
+        k0 = 238.0185
+        k1 = 5792105
+        k2 = 57.362
+        k3 = 167917
+
+        # The equation used for index of refraction for standard air is:
+        # 10^8(factor - 1) = k1/(k0 - sigma_sq)  + k3/(k2 - sigma_sq)
+
+        # Index of refraction for standard air. From equation (1)
+        n_as = ((k1 / (k0 - sigma_sq) + k3 / (k2 - sigma_sq)) / 10e8) + 1
+
+        # Index of refraction for standard air with x_c ppm CO2. From equation (2)
+        n_axs = ((n_as - 1) * (1 + 0.534 * 10e-6 * (x_c - 450))) + 1
+
+
         # Standard conversion format
-        sigma_sq = (1.e4/wavelength)**2.  # wavenumber squared
+        # Leaving this here to test 
         factor = 1 + (5.792105e-2/(238.0185-sigma_sq)) + \
             (1.67918e-3/(57.362-sigma_sq))
-        rind = factor[int(factor.shape[0] / 2)]
+
+
+        # Constants for equation (3) from Appendix A
+        cf = 1.022 # correction factor
+        w0 = 295.235
+        w1 = 2.6422
+        w2 = -0.032380
+        w3 = 0.004028
+
+        # The equation used for the index of refraction for standard water vapor is:
+        # 10^8(n_ws - 1) = cf(w0 + w1(sigma^2) + w2(sigma^4) + w3(sigma^6))
+        # From equation (3)
+
+        # Index of refraction for standard water vapor.
+        n_ws = ((cf * (w0 + (w1 * sigma**2) + (w2 * sigma**4) + (w3 * sigma**6))) / 10e8) + 1
+        
+        def Z_func(T, p, x_w):
+            """
+
+            Returns the compressability of moist air. Adapted from equation (12) in Appendix A.
+
+            Args:
+                T (float): temperature in Kelvin [K]
+                p (float): pressure in Pascals [Pa]
+                x_w (float): molar fraction of water vapor in moist air
+
+            Returns:
+                Compresability of the moist air
+
+            """
+
+            # t = temperature [C]
+            t = T - 273.15
+
+            # constants for Z from Appendix A
+            a0 = 1.58123 * 10e-6
+            a1 = -2.9331 * 10e-8
+            a2 = 1.1043 * 10e-10
+            b0 = 5.707 * 10e-6
+            b1 = -2.051 * 10e-8
+            c0 = 1.9898 * 10e-4
+            c1 = -2.376 * 10e-6
+            d = 1.83 * 10e-11
+            e = -0.765 * 10e-8
+
+            # Compresibility of moist air
+            # From equation (12) in Appendix A
+            Z = 1 - (p/T) * (a0 + a1*t + a2 * t**2 + (b0 + b1*t) * x_w + (c0 + c1*t) * x_w**2) + (p/T)**2 * (d + e * x_w**2)
+            return Z
+        
+        def density_func(T, p, h, x_c, x_w=None):
+            """
+            Return the density of moist air given. Adapted from equation (4)
+
+            Args:
+                T (float): temperature in Kelvin [K]
+                p (float): pressure in Pascals [Pa]
+                h (float): fractional humidity 
+                x_c (int): ppm of CO2
+                x_w (int): optional parameter for molar fraction of water vapor in moist air
+
+            Returns:
+                Density of the moist air
+
+            """
+
+            # molar mass of water vapor [kg/mol]
+            M_w = 0.018015
+            # molar mass of dry air with x_c ppm of CO2 [kg/mol]
+            M_a = 10e-3 * (28.9635 + 12.011 * 10e-6 * (x_c - 400))
+            # gas constant [J/(mol*K)]
+            R = 8.314510
+
+            # molar fraction of water vapor in moist air
+            if x_w is None:
+                x_w = x_w_func(T, p, h)
+
+            # compresibility of moist air
+            Z = Z_func(T, p, x_w)
+
+            # density of moist air
+            # From equation (4)
+            rho = (p * M_a / Z * R * T) * (1 - x_w * (1 - M_w / M_a))
+            
+            return rho
+        
+        def n_prop_func(T, p, h, x_c):
+
+            # molar mass of water vapor [kg/mol]
+            M_w = 0.018015
+            # molar mass of dry air with x_c ppm of CO2 [kg/mol]
+            M_a = 10e-3 * (28.9635 + 12.011 * 10e-6 * (x_c - 400))
+            # gas constant [J/(mol*K)]
+            R = 8.314510
+
+            # density of standard dry air (15 deg C, 101325 Pa, x_w = 0, 450 ppm CO2)
+            rho_axs = density_func(288.15, 101315, 0, 450, 0)
+            # density of standard water vapor (20 deg C, 1333 Pa, x_w = 1)
+            rho_ws = density_func(293.15, 1333, 1, 0, 1)
+            # molar fraction of water vapor in moist air
+            x_w = x_w_func(T, p, h)
+            # compressability of moist air
+            Z = Z_func(T, p, x_w)
+
+            # density of dry air component of moist air with actual conditions
+            # From step 8. in Appendix B
+            rho_a = p * M_a * (1 - x_w) / Z * R * T 
+            # density of water vapor component of moist air with actual conditons 
+            # From step 9. in Appendix B
+            rho_w = p * M_w * x_w / Z * R * T
+
+            # refractive index of moist air
+            # From Equation (5)
+            n_prop = 1 + ((rho_a/rho_axs) * (n_axs - 1) + (rho_w/rho_ws) * (n_ws - 1))
+
+            return n_prop
+        
+        # refractive index
+        n_prop = n_prop_func(T, p, h, x_c)
+
+        old_rind = factor[int(factor.shape[0] / 2)]
         rwav = wavelength[int(wavelength.shape[0] / 2)]
-        self.logger.info("Refractive index = %.10f at %.3f Ang" % (rind, rwav))
+        self.logger.info("Old Refractive index = %.10f at %.3f Ang" % (old_rind, rwav))
+
+        new_rind = n_prop[int(n_prop.shape[0] / 2)]
+        self.logger.info("New Refractive index = %.10f at %.3f Ang" % (new_rind, rwav))
+        
         # only modify above 2000A
         factor = factor*(wavelength >= 2000.) + 1.*(wavelength < 2000.)
+        n_prop = n_prop*(wavelength >= 2000.) + 1.*(wavelength < 2000.)
 
         # Convert
-        wavelength = wavelength*factor
+        old_wavelength = wavelength*factor
+        new_wavelength = wavelength*n_prop
+
+        print("Old wavelength: ", old_wavelength[int(wavelength.shape[0] / 2)])
+        print("New wavelength: ", new_wavelength[int(wavelength.shape[0] / 2)])
+
+        v = ((new_wavelength - wavelength)/ wavelength) * 3.0 * 10e8
+        print("v: ", v[int(wavelength.shape[0] / 2)])
+
         # Units
-        new_wave = wavelength*u.AA
+        new_wave = new_wavelength*u.AA
         new_wave.to(wave.unit)
 
         return new_wave
