@@ -210,17 +210,17 @@ class WavelengthCorrections(BasePrimitive):
 
             # constants for f from Appendix A
             alpha = 1.00062
-            beta = 3.14 * 10e-8
-            gamma  = 5.6 * 10e-7
+            beta = 3.14 * 10**-8
+            gamma  = 5.6 * 10**-7
 
             # enchancement factor
             f = alpha + beta * p + gamma * t**2
 
             # constants for svp from Appendix A
-            A = 1.2378847 * 10e-5
-            B = -1.9121316 * 10e-2
+            A = 1.2378847 * 10**-5
+            B = -1.9121316 * 10**-2
             C = 33.93711047
-            D = -6.3431645 * 10e3 
+            D = -6.3431645 * 10**3 
 
             # saturation vapor pressure (svp) of water vapor in air at temperature, T [Pa]
             svp = np.exp((A * T**2 + B * T + C + D/T))
@@ -242,16 +242,16 @@ class WavelengthCorrections(BasePrimitive):
         # 10^8(factor - 1) = k1/(k0 - sigma_sq)  + k3/(k2 - sigma_sq)
 
         # Index of refraction for standard air. From equation (1)
-        n_as = ((k1 / (k0 - sigma_sq) + k3 / (k2 - sigma_sq)) / 10e8) + 1
+        n_as = ((k1 / (k0 - sigma_sq) + k3 / (k2 - sigma_sq)) / 10**8) + 1
 
         # Index of refraction for standard air with x_c ppm CO2. From equation (2)
-        n_axs = ((n_as - 1) * (1 + 0.534 * 10e-6 * (x_c - 450))) + 1
+        n_axs = ((n_as - 1) * (1 + 0.534 * 10**-6 * (x_c - 450))) + 1
 
 
         # Standard conversion format
         # Leaving this here to test 
-        factor = 1 + (5.792105e-2/(238.0185-sigma_sq)) + \
-            (1.67918e-3/(57.362-sigma_sq))
+        factor = 1 + (5.792105**-2 / (238.0185-sigma_sq)) + \
+            (1.67918**-3 / (57.362-sigma_sq))
 
 
         # Constants for equation (3) from Appendix A
@@ -287,15 +287,15 @@ class WavelengthCorrections(BasePrimitive):
             t = T - 273.15
 
             # constants for Z from Appendix A
-            a0 = 1.58123 * 10e-6
-            a1 = -2.9331 * 10e-8
-            a2 = 1.1043 * 10e-10
-            b0 = 5.707 * 10e-6
-            b1 = -2.051 * 10e-8
-            c0 = 1.9898 * 10e-4
-            c1 = -2.376 * 10e-6
-            d = 1.83 * 10e-11
-            e = -0.765 * 10e-8
+            a0 = 1.58123 * 10**-6
+            a1 = -2.9331 * 10**-8
+            a2 = 1.1043 * 10**-10
+            b0 = 5.707 * 10**-6
+            b1 = -2.051 * 10**-8
+            c0 = 1.9898 * 10**-4
+            c1 = -2.376 * 10**-6
+            d = 1.83 * 10**-11
+            e = -0.765 * 10**-8
 
             # Compresibility of moist air
             # From equation (12) in Appendix A
@@ -321,7 +321,7 @@ class WavelengthCorrections(BasePrimitive):
             # molar mass of water vapor [kg/mol]
             M_w = 0.018015
             # molar mass of dry air with x_c ppm of CO2 [kg/mol]
-            M_a = 10e-3 * (28.9635 + 12.011 * 10e-6 * (x_c - 400))
+            M_a = 10**-3 * (28.9635 + 12.011 * 10**-6 * (x_c - 400))
             # gas constant [J/(mol*K)]
             R = 8.314510
 
@@ -343,7 +343,7 @@ class WavelengthCorrections(BasePrimitive):
             # molar mass of water vapor [kg/mol]
             M_w = 0.018015
             # molar mass of dry air with x_c ppm of CO2 [kg/mol]
-            M_a = 10e-3 * (28.9635 + 12.011 * 10e-6 * (x_c - 400))
+            M_a = 10**-3 * (28.9635 + 12.011 * 10**-6 * (x_c - 400))
             # gas constant [J/(mol*K)]
             R = 8.314510
 
