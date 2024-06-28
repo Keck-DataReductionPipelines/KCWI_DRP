@@ -104,6 +104,8 @@ class WavelengthCorrections(BasePrimitive):
 
         cube = np.nan_to_num(obj.data, nan=0, posinf=0, neginf=0)
 
+        print(cube.shape)
+
         if obj.header['CTYPE3'] == 'WAVE':
             self.logger.warn("FITS already in vacuum wavelength.")
             return
@@ -113,7 +115,7 @@ class WavelengthCorrections(BasePrimitive):
         cwave_air = wave_air[int(wave_air.shape[0] / 2)]
         cwave_vac = wave_vac[int(wave_vac.shape[0] / 2)]
         self.logger.info("Air to Vacuum for (%.3f) gives %.3f" %
-                         (cwave_air.value, cwave_vac.value))
+                         (cwave_air.value, cwave_vac.value)) 
 
         # resample to uniform grid
         cube_new = np.zeros_like(cube)
@@ -121,6 +123,9 @@ class WavelengthCorrections(BasePrimitive):
             for j in range(cube.shape[1]):
 
                 spec0 = cube[:, j, i]
+
+                print(spec0.shape)
+
                 if not mask:
                     f_cubic = interp1d(
                         wave_vac,
@@ -150,6 +155,7 @@ class WavelengthCorrections(BasePrimitive):
 
                     spec_new = np.zeros_like(spec0)
                     for k in range(spec0.shape[0]):
+                        print(f'spec_pre and spec_nex: {spec_pre[k]}, {spec_nex[k]}')
                         spec_new[k] = max(spec_pre[k], spec_nex[k])
 
                 cube_new[:, j, i] = spec_new
@@ -184,7 +190,7 @@ class WavelengthCorrections(BasePrimitive):
         h = self.action.args.dome_hum / 100
         # convert from [C] to [K]
         T = self.action.args.dome_temp + 273.15
-        # convert from mmHg to Pa
+        # convert from mbar to Pa
         p = self.action.args.pres * 100
         # ppm of CO2
         x_c = 450
@@ -390,8 +396,8 @@ class WavelengthCorrections(BasePrimitive):
         print("Old wavelength: ", old_wavelength[int(wavelength.shape[0] / 2)])
         print("New wavelength: ", new_wavelength[int(wavelength.shape[0] / 2)])
 
-        v = ((new_wavelength - wavelength)/ wavelength) * 3.0 * 10e8
-        print("v: ", v[int(wavelength.shape[0] / 2)])
+        # v = ((new_wavelength - wavelength)/ wavelength) * 3.0 * 10e8
+        # print("v: ", v[int(wavelength.shape[0] / 2)])
 
         # Units
         new_wave = new_wavelength*u.AA
