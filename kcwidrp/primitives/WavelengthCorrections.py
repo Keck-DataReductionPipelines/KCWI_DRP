@@ -1,7 +1,9 @@
 import os
 
+import copy
 import numpy as np
 from scipy.interpolate import interp1d
+from scipy.interpolate import PchipInterpolator
 from astropy import units as u
 from astropy.coordinates import SkyCoord, EarthLocation
 
@@ -44,6 +46,10 @@ class WavelengthCorrections(BasePrimitive):
 
     def _perform(self):
 
+        # helio and a2v bools
+        helio_bool = False
+        a2v_bool = False
+
         # Determine which radial velocity correction to make
         correction_mode = self.config.instrument.radial_velocity_correction
         options = ["none", "barycentric", "heliocentric"]
@@ -57,18 +63,45 @@ class WavelengthCorrections(BasePrimitive):
         suffix = 'icube'  # Can be ammended to handle ocube files
         obj = self.locate_object_file(suffix)
 
+        obj_copy = copy.deepcopy(obj)
+
         if "none" in correction_mode:
             self.logger.info("Skipping radial velocity correction")
             obj.header['VCORR'] = (0.0, 'km/s')
             obj.header['VCORRTYP'] = (correction_mode, 'Vcorr type')
 
         else:
-            self.logger.info(f"Performing {correction_mode} correction")
-            obj = self.heliocentric(obj, correction_mode)
+            self.logger.info(f"Performing Old {correction_mode} correction")
+            obj_copy = self.old_heliocentric(obj_copy, correction_mode)
+            helio_bool = True
 
         if self.config.instrument.air_to_vacuum:
-            self.logger.info("Performing Air to Vacuum Conversion")
-            obj = self.air2vac(obj)
+            self.logger.info("Performing Old Air to Vacuum Conversion")
+            obj_copy = self.air2vac(obj_copy)
+            a2v_bool = True
+
+        # call function with 2 bools that does conversions and then resample all in one
+        obj = self.helio_a2v_conversion(obj, helio_bool, a2v_bool, correction_mode)
+
+        '''
+        diff = 0
+        greatest = 0
+        greatestarr = []
+        index = []
+        for i in range(obj.data.shape[2]):
+            for j in range(obj.data.shape[1]):
+                for k in range(obj.data.shape[0]):
+                    diff = np.abs(obj.data[k, j, i] - obj_copy.data[k, j, i])
+                    if diff > greatest:
+                        greatest = diff
+                        greatestarr.append(diff)
+                        index.append([k, j, i])
+        print(len(greatestarr))
+        print('greatest: ', greatestarr[-10:-1])
+        print('index: ', index[-10:-1])
+
+        diff = diff / (obj.data.shape[2] * obj.data.shape[1] * obj.data.shape[0])
+        '''
 
         log_string = WavelengthCorrections.__module__
         obj.header['HISTORY'] = log_string
@@ -88,6 +121,120 @@ class WavelengthCorrections(BasePrimitive):
 
         return self.action.args
 
+    def helio_a2v_conversion(self, obj, helio_bool, a2v_bool, correction_mode, mask=False, vcorr=None, resample=True):
+        """
+        Apply heliocentric and/or air to vacuum conversion to wavelengths in a cube.
+
+        Adapted from https://github.com/dbosul/cwitools.git
+
+        Args:
+            obj (astropy HDU / HDUList): Input HDU/HDUList with 3D data.
+            helio_bool (bool): Set to apply heliocentric conversion.
+            a2v_bool (bool): Set to apply air to vac conversion.
+            correction_mode (str): "none", "barycentric", or "heliocentric"
+            vcorr (float): Use a different correction velocity.
+            mask (bool): Set if the cube is a mask cube.
+
+        Returns:
+            HDU / HDUList: Trimmed FITS object with updated header.
+            vcorr (float): (if vcorr is True) Correction velocity in km/s.
+            Return type matches type of fits_in argument.
+        """
+
+        cube = np.nan_to_num(obj.data, nan=0, posinf=0, neginf=0)
+
+        wav_old = self.get_wav_axis(obj.header)
+
+        # np.savetxt("wav_old.txt",wav_old, fmt='%.1f', newline=',')
+
+        wav_air = wav_old * u.AA
+
+        if helio_bool:
+
+            self.logger.info(f"Performing {correction_mode} correction")
+
+            v_old = 0.
+            if 'VCORR' in obj.header:
+                v_old = obj.header['VCORR']
+                self.logger.info("Rolling back the existing correction with:")
+                self.logger.info("Vcorr = %.2f km/s." % v_old)
+
+            vcorr = self.heliocentric(obj, correction_mode, vcorr)
+            v_tot = vcorr - v_old
+            if not resample:
+                obj.header['CRVAL3'] = str(obj.header['CRVAL3'] * (1 + v_tot / 2.99792458e5))
+                obj.header['CD3_3'] = str(obj.header['CD3_3'] * (1 + v_tot / 2.99792458e5))
+
+            obj.header['VCORR'] = (vcorr, 'km/s')
+            obj.header['VCORRTYP'] = (correction_mode, 'Vcorr type')
+
+            wav_new = wav_old * (1 + v_tot / 2.99792458e5)
+            cwave_hel = self.action.args.cwave * (1 + v_tot / 2.99792458e5)
+            self.logger.info("Vcorr for CWAVE (%.3f) gives %.3f" % 
+                             (self.action.args.cwave, cwave_hel))
+            
+            # np.savetxt("wav_hel.txt", wav_new, fmt='%.18f', newline=',')
+
+            if a2v_bool:
+                wav_air = wav_new * u.AA
+
+        if a2v_bool:
+
+            self.logger.info("Performing Air to Vacuum Conversion")
+            wav_new = self.a2v_conversion(wav_air)
+            cwave_air = wav_air[int(wav_air.shape[0] / 2)]
+            cwave_vac = wav_new[int(wav_new.shape[0] / 2)]
+            self.logger.info("New Air to Vacuum for (%.3f) gives %.3f" % (cwave_air.value, cwave_vac.value))
+            obj.header['CTYPE3'] = ('WAVE', 'Vacuum Wavelengths')
+
+            # np.savetxt("wav_air.txt", wav_new.value, fmt='%.18f', newline=',')
+
+        # resample to uniform grid
+        if resample:
+            self.logger.info("Resampling to uniform grid")
+            cube_new = np.zeros_like(cube)
+            spec0_sum = []
+            spec_new_inter_sum = []
+            spec_new_pchip_sum = []
+            for i in range(cube.shape[2]):
+                for j in range(cube.shape[1]):
+
+                    spec0 = cube[:, j, i]
+                    if i == 0 and j == 22:
+                        np.savetxt("spec0_0_22.txt", spec0, fmt='%.18f', newline=',')
+                    spec0_sum.append(np.sum(spec0))
+
+                    if not mask:
+
+                        f_cubic = interp1d(wav_new, spec0, kind='cubic',
+                                         fill_value='extrapolate')
+
+                        spec_new = f_cubic(wav_old)
+                        spec_new_inter_sum.append(np.sum(spec_new))
+
+                        f_cubic = PchipInterpolator(wav_new, spec0)
+                        spec_new = f_cubic(wav_old)
+                        spec_new_pchip_sum.append(np.sum(spec_new))
+
+                    else:
+                        f_pre = interp1d(wav_new, spec0, kind='previous',
+                                            bounds_error=False, fill_value=128)
+                        spec_pre = f_pre(wav_old)
+                        f_nex = interp1d(wav_new, spec0, kind='next',
+                                            bounds_error=False, fill_value=128)
+                        spec_nex = f_nex(wav_old)
+                        spec_new = np.zeros_like(spec0)
+                        for k in range(spec0.shape[0]):
+                            spec_new[k] = max(spec_pre[k], spec_nex[k])
+                    cube_new[:, j, i] = spec_new
+
+            print(f'spec0 sum: {sum(spec0_sum) / len(spec0_sum)}')
+            print(f'spec_interp_new sum: {sum(spec_new_inter_sum) / len(spec_new_inter_sum)}')
+            print(f'spec_pchip_new sum: {sum(spec_new_pchip_sum) / len(spec_new_pchip_sum)}')
+
+            obj.data = cube_new
+        return obj
+
     def air2vac(self, obj, mask=False):
         """
         Convert wavelengths in a cube from standard air to vacuum.
@@ -104,8 +251,6 @@ class WavelengthCorrections(BasePrimitive):
 
         cube = np.nan_to_num(obj.data, nan=0, posinf=0, neginf=0)
 
-        print(cube.shape)
-
         if obj.header['CTYPE3'] == 'WAVE':
             self.logger.warn("FITS already in vacuum wavelength.")
             return
@@ -114,7 +259,7 @@ class WavelengthCorrections(BasePrimitive):
         wave_vac = self.a2v_conversion(wave_air)
         cwave_air = wave_air[int(wave_air.shape[0] / 2)]
         cwave_vac = wave_vac[int(wave_vac.shape[0] / 2)]
-        self.logger.info("Air to Vacuum for (%.3f) gives %.3f" %
+        self.logger.info("Old Air to Vacuum for (%.3f) gives %.3f" %
                          (cwave_air.value, cwave_vac.value)) 
 
         # resample to uniform grid
@@ -123,8 +268,6 @@ class WavelengthCorrections(BasePrimitive):
             for j in range(cube.shape[1]):
 
                 spec0 = cube[:, j, i]
-
-                print(spec0.shape)
 
                 if not mask:
                     f_cubic = interp1d(
@@ -155,7 +298,6 @@ class WavelengthCorrections(BasePrimitive):
 
                     spec_new = np.zeros_like(spec0)
                     for k in range(spec0.shape[0]):
-                        print(f'spec_pre and spec_nex: {spec_pre[k]}, {spec_nex[k]}')
                         spec_new[k] = max(spec_pre[k], spec_nex[k])
 
                 cube_new[:, j, i] = spec_new
@@ -169,7 +311,7 @@ class WavelengthCorrections(BasePrimitive):
         Convert air-based wavelengths to vacuum
 
         Adapted from wave.py in: https://github.com/pypeit/PypeIt/
-        Formula from https://ui.adsabs.harvard.edu/abs/1996ApOpt..35.1566C/
+        Formulas from https://ui.adsabs.harvard.edu/abs/1996ApOpt..35.1566C/
 
         Args:
             wave (ndarray): Wavelengths
@@ -182,34 +324,20 @@ class WavelengthCorrections(BasePrimitive):
         wave = wave.to(u.AA)
         wavelength = wave.value
 
+        # wave number (inverse wavelength in micrometers)
         sigma = (1.e4/wavelength)
         sigma_sq = sigma**2
 
-        # Variables from args
-        # convert from % to decimal
+        # humidity: convert from % to decimal
         h = self.action.args.dome_hum / 100
-        # convert from [C] to [K]
+        # temperature: convert from [C] to [K]
         T = self.action.args.dome_temp + 273.15
-        # convert from mbar to Pa
+        # pressure: convert from mbar to Pa
         p = self.action.args.pres * 100
         # ppm of CO2
         x_c = 450
 
         def x_w_func(T, p, h):
-            """
-
-            Returns the molar fraction of water vapor in moist air. From Section 3
-            below Equation (4)
-
-            Args:
-                T (float): temperature in Kelvin [K]
-                p (float): pressure in Pascals [Pa]
-                h (float): fractional humidity 
-
-            Returns:
-                Molar fraction of water vapor in moist air
-
-            """
 
             # temperature [C]
             t = T - 273.15
@@ -235,8 +363,6 @@ class WavelengthCorrections(BasePrimitive):
             x_w = f * h * (svp/p)
 
             return x_w 
-        
-        x_w = x_w_func(T, p, h)
 
         # Constants for equation (1) from Appendix A
         k0 = 238.0185
@@ -244,21 +370,11 @@ class WavelengthCorrections(BasePrimitive):
         k2 = 57.362
         k3 = 167917
 
-        # The equation used for index of refraction for standard air is:
-        # 10^8(factor - 1) = k1/(k0 - sigma_sq)  + k3/(k2 - sigma_sq)
-
         # Index of refraction for standard air. From equation (1)
         n_as = ((k1 / (k0 - sigma_sq) + k3 / (k2 - sigma_sq)) / 10**8) + 1
 
         # Index of refraction for standard air with x_c ppm CO2. From equation (2)
         n_axs = ((n_as - 1) * (1 + 0.534 * 10**-6 * (x_c - 450))) + 1
-
-
-        # Standard conversion format
-        # Leaving this here to test 
-        factor = 1 + (5.792105**-2 / (238.0185-sigma_sq)) + \
-            (1.67918**-3 / (57.362-sigma_sq))
-
 
         # Constants for equation (3) from Appendix A
         cf = 1.022 # correction factor
@@ -267,27 +383,10 @@ class WavelengthCorrections(BasePrimitive):
         w2 = -0.032380
         w3 = 0.004028
 
-        # The equation used for the index of refraction for standard water vapor is:
-        # 10^8(n_ws - 1) = cf(w0 + w1(sigma^2) + w2(sigma^4) + w3(sigma^6))
-        # From equation (3)
-
-        # Index of refraction for standard water vapor.
+        # Index of refraction for standard water vapor. From equation (3)
         n_ws = ((cf * (w0 + (w1 * sigma**2) + (w2 * sigma**4) + (w3 * sigma**6))) / 10e8) + 1
         
         def Z_func(T, p, x_w):
-            """
-
-            Returns the compressability of moist air. Adapted from equation (12) in Appendix A.
-
-            Args:
-                T (float): temperature in Kelvin [K]
-                p (float): pressure in Pascals [Pa]
-                x_w (float): molar fraction of water vapor in moist air
-
-            Returns:
-                Compresability of the moist air
-
-            """
 
             # t = temperature [C]
             t = T - 273.15
@@ -303,26 +402,11 @@ class WavelengthCorrections(BasePrimitive):
             d = 1.83 * 10**-11
             e = -0.765 * 10**-8
 
-            # Compresibility of moist air
-            # From equation (12) in Appendix A
+            # Compresibility of moist air. From equation (12) in Appendix A
             Z = 1 - (p/T) * (a0 + a1*t + a2 * t**2 + (b0 + b1*t) * x_w + (c0 + c1*t) * x_w**2) + (p/T)**2 * (d + e * x_w**2)
             return Z
-        
+
         def density_func(T, p, h, x_c, x_w=None):
-            """
-            Return the density of moist air given. Adapted from equation (4)
-
-            Args:
-                T (float): temperature in Kelvin [K]
-                p (float): pressure in Pascals [Pa]
-                h (float): fractional humidity 
-                x_c (int): ppm of CO2
-                x_w (int): optional parameter for molar fraction of water vapor in moist air
-
-            Returns:
-                Density of the moist air
-
-            """
 
             # molar mass of water vapor [kg/mol]
             M_w = 0.018015
@@ -338,12 +422,11 @@ class WavelengthCorrections(BasePrimitive):
             # compresibility of moist air
             Z = Z_func(T, p, x_w)
 
-            # density of moist air
-            # From equation (4)
+            # density of moist air. From equation (4)
             rho = (p * M_a / Z * R * T) * (1 - x_w * (1 - M_w / M_a))
-            
+
             return rho
-        
+
         def n_prop_func(T, p, h, x_c):
 
             # molar mass of water vapor [kg/mol]
@@ -362,42 +445,28 @@ class WavelengthCorrections(BasePrimitive):
             # compressability of moist air
             Z = Z_func(T, p, x_w)
 
-            # density of dry air component of moist air with actual conditions
-            # From step 8. in Appendix B
+            # density of dry air component of moist air with actual conditions. From step 8 in Appendix B
             rho_a = p * M_a * (1 - x_w) / Z * R * T 
-            # density of water vapor component of moist air with actual conditons 
-            # From step 9. in Appendix B
+            # density of water vapor component of moist air with actual conditons. From step 9. in Appendix B
             rho_w = p * M_w * x_w / Z * R * T
 
-            # refractive index of moist air
-            # From Equation (5)
+            # refractive index of moist air. From Equation (5)
             n_prop = 1 + ((rho_a/rho_axs) * (n_axs - 1) + (rho_w/rho_ws) * (n_ws - 1))
 
             return n_prop
-        
+
         # refractive index
         n_prop = n_prop_func(T, p, h, x_c)
 
-        old_rind = factor[int(factor.shape[0] / 2)]
-        rwav = wavelength[int(wavelength.shape[0] / 2)]
-        self.logger.info("Old Refractive index = %.10f at %.3f Ang" % (old_rind, rwav))
-
         new_rind = n_prop[int(n_prop.shape[0] / 2)]
-        self.logger.info("New Refractive index = %.10f at %.3f Ang" % (new_rind, rwav))
+        rwav = wavelength[int(wavelength.shape[0] / 2)]
+        self.logger.info("Refractive index = %.10f at %.3f Ang" % (new_rind, rwav))
         
         # only modify above 2000A
-        factor = factor*(wavelength >= 2000.) + 1.*(wavelength < 2000.)
         n_prop = n_prop*(wavelength >= 2000.) + 1.*(wavelength < 2000.)
 
         # Convert
-        old_wavelength = wavelength*factor
         new_wavelength = wavelength*n_prop
-
-        print("Old wavelength: ", old_wavelength[int(wavelength.shape[0] / 2)])
-        print("New wavelength: ", new_wavelength[int(wavelength.shape[0] / 2)])
-
-        # v = ((new_wavelength - wavelength)/ wavelength) * 3.0 * 10e8
-        # print("v: ", v[int(wavelength.shape[0] / 2)])
 
         # Units
         new_wave = new_wavelength*u.AA
@@ -405,7 +474,63 @@ class WavelengthCorrections(BasePrimitive):
 
         return new_wave
 
-    def heliocentric(self, obj, correction_mode, mask=False, resample=True,
+    def heliocentric(self, obj, correction_mode, vcorr=None):
+        """
+        Apply heliocentric correction to old wavelengths
+
+        Adapted from https://github.com/dbosul/cwitools.git
+
+        Args:
+            obj (astropy HDU / HDUList): Input HDU/HDUList with 3D data.
+            correction_mode (str): "none", "barycentric", or "heliocentric"
+            vcorr (float): Use a different correction velocity.
+
+        Returns:
+            HDU / HDUList: Trimmed FITS object with updated header.
+            vcorr (float): (if vcorr is True) Correction velocity in km/s.
+            Return type matches type of fits_in argument.
+            
+        Examples: 
+            
+            To apply heliocentric correction,
+            
+            >>> hdu_new = heliocentric(hdu_old)
+            
+            However, this resamples the wavelengths back to the original grid.
+            To use the new grid without resampling the data,
+            
+            >>> hdu_new = heliocentric(hdu_old, resample=False)
+        """
+
+        barycentric = ("barycentric" in correction_mode)
+
+        if vcorr is None:
+            targ = SkyCoord(
+                obj.header['TARGRA'],
+                obj.header['TARGDEC'],
+                unit='deg',
+                obstime=obj.header['DATE-BEG']
+            )
+
+            lat = self.config.instrument.latitude
+            lon = self.config.instrument.longitude
+            alt = self.config.instrument.altitude
+
+            keck = EarthLocation.from_geodetic(lat=lat, lon=lon, height=alt)
+            if barycentric:
+                vcorr = targ.radial_velocity_correction(
+                    kind='barycentric', location=keck)
+            else:
+                vcorr = targ.radial_velocity_correction(
+                    kind='heliocentric', location=keck)
+            vcorr = vcorr.to('km/s').value
+
+        self.logger.info("Helio/Barycentric correction:")
+        self.logger.info("Vcorr = %.2f km/s." % vcorr)
+
+        return vcorr
+    
+    def old_heliocentric(self, obj, correction_mode, mask=False, resample=True,
                      vcorr=None):
         """
         Apply heliocentric correction to the cubes.
@@ -486,9 +611,9 @@ class WavelengthCorrections(BasePrimitive):
 
         wav_old = self.get_wav_axis(obj.header)
         wav_hel = wav_old * (1 + v_tot / 2.99792458e5)
-        cwave_hel = self.action.args.cwave * (1 + v_tot / 2.99792458e5)
-        self.logger.info("Vcorr for CWAVE (%.3f) gives %.3f" %
-                         (self.action.args.cwave, cwave_hel))
+        cwave_hel = wav_old[int(wav_old.shape[0] / 2)]* (1 + v_tot / 2.99792458e5)
+        self.logger.info("Old method for Vcorr for CWAVE (%.3f) gives %.3f" %
+                         (wav_old[int(wav_old.shape[0] / 2)], cwave_hel))
 
         # resample to uniform grid
         self.logger.info("Resampling to uniform grid")
@@ -496,21 +621,22 @@ class WavelengthCorrections(BasePrimitive):
         for i in range(cube.shape[2]):
             for j in range(cube.shape[1]):
 
-                spc0 = cube[:, j, i]
+                spec0 = cube[:, j, i]
+
                 if not mask:
-                    f_cubic = interp1d(wav_hel, spc0, kind='cubic',
+                    f_cubic = interp1d(wav_hel, spec0, kind='cubic',
                                        fill_value='extrapolate')
                     spec_new = f_cubic(wav_old)
 
                 else:
-                    f_pre = interp1d(wav_hel, spc0, kind='previous',
+                    f_pre = interp1d(wav_hel, spec0, kind='previous',
                                      bounds_error=False, fill_value=128)
                     spec_pre = f_pre(wav_old)
-                    f_nex = interp1d(wav_hel, spc0, kind='next',
+                    f_nex = interp1d(wav_hel, spec0, kind='next',
                                      bounds_error=False, fill_value=128)
                     spec_nex = f_nex(wav_old)
-                    spec_new = np.zeros_like(spc0)
-                    for k in range(spc0.shape[0]):
+                    spec_new = np.zeros_like(spec0)
+                    for k in range(spec0.shape[0]):
                         spec_new[k] = max(spec_pre[k], spec_nex[k])
                 cube_new[:, j, i] = spec_new
 

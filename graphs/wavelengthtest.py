@@ -257,6 +257,14 @@ n_prop = n_prop*(wavelength >= 2000.) + 1.*(wavelength < 2000.)
 # assign variables for the different methods
 corrected_wavelengths = wavelength*n_prop
 
+print(f'Refractive index for pressure at a very small number (can not be 0 because p is the divisor in the x_w equation): {n_prop_func(275.25, 0.00000001, .159, 429)}')
+
+print(f'Refractive index for ppm of CO2 at 1 million (0 deg C, 1 atm, 0% humidity): {n_prop_func(273.15, 101325, 0, 1000000)}')
+# at these same numbers, the index of refraction is 1.00044856, kinda seems like a meaningful difference
+
+# h = molar fraction of water in air = xw = nw / (na + nw)
+# na = mols of air
+# nw = mols of water
 
 '''
 # test prints
