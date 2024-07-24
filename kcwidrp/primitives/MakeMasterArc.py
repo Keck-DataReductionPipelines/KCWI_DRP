@@ -1,6 +1,6 @@
 from keckdrpframework.primitives.base_img import BaseImg
 from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_reader, \
-    kcwi_fits_writer, strip_fname  # , get_master_name
+    kcwi_fits_writer, strip_fname , get_unique_STATEID_master_name
 
 import os
 import ccdproc
@@ -58,14 +58,15 @@ class MakeMasterArc(BaseImg):
 
         combine_list = list(self.combine_list['filename'])
         # get master arc output name
-        maname = strip_fname(combine_list[0]) + '_' + suffix + '.fits'
+        # maname = strip_fname(combine_list[0]) + '_' + suffix + '.fits'
         if self.action.args.min_files > 1:
             stack = []
             stackf = []
             for arc in combine_list:
                 # get arc intensity (int) image file name in redux directory
-                stackf.append(arc.split('.fits')[0] + '_int.fits')
-                arcfn = os.path.join(args.in_directory, stackf[-1])
+                stackf.append(strip_fname(arc) + '_int.fits')
+                arcfn = os.path.join(self.config.instrument.cwd,
+                self.config.instrument.output_directory, stackf[-1])
                 # using [0] gets just the image data
                 stack.append(kcwi_fits_reader(arcfn)[0])
 
@@ -86,15 +87,18 @@ class MakeMasterArc(BaseImg):
                                                          "stack input file")
             stacked.header['HISTORY'] = log_string
             self.action.args.ccddata = stacked
+            # maname = get_unique_STATEID_master_name(stacked, suffix)
+            maname = strip_fname(combine_list[0]) + '_' + suffix + '.fits'
 
             kcwi_fits_writer(stacked, output_file=maname,
                              output_dir=self.config.instrument.output_directory)
             self.context.proctab.update_proctab(frame=stacked, suffix=suffix,
                                                 newtype=args.new_type,
-                                                filename=stacked.header[
-                                                    'OFNAME'])
-            self.action.args.name = stacked.header['OFNAME']
+                                                filename=self.action.args.name) ### HERE
+            # self.action.args.name = maname
+            # self.action.args.name = stacked.header['OFNAME']
         else:
+            maname = strip_fname(combine_list[0]) + '_' + suffix + '.fits'
             self.action.args.ccddata.header['IMTYPE'] = args.new_type
             self.action.args.ccddata.header['HISTORY'] = log_string
             kcwi_fits_writer(self.action.args.ccddata, output_file=maname,

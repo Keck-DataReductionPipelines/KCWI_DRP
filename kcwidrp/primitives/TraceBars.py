@@ -159,14 +159,14 @@ class TraceBars(BasePrimitive):
             # in this line we pass the trace information to an argument
             # instead of writing it to a table
             self.context.trace = trace
-            ofname = strip_fname(self.action.args.contbar_image) + \
+            name = strip_fname(self.action.args.contbar_image) + \
                 "_trace.fits"
             write_table(table=[src, dst, barid, slid],
                         names=('src', 'dst', 'barid', 'slid'),
                         output_dir=os.path.join(
                             self.config.instrument.cwd,
                             self.config.instrument.output_directory),
-                        output_name=ofname,
+                        output_name=name,
                         clobber=self.config.instrument.clobber,
                         comment=['Source and destination fiducial points',
                                  'Derived from KCWI continuum bars images',

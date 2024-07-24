@@ -204,10 +204,11 @@ class SolveGeom(BasePrimitive):
             dichroic_fraction = 1.
 
         # Package geometry data
-        ofname = self.action.args.ccddata.header['OFNAME']
+        # name = self.action.args.ccddata.header['OFNAME']
+        name = self.action.args.name
         self.action.args.geometry_file = os.path.join(
             self.config.instrument.output_directory,
-            strip_fname(ofname) + '_geom.pkl')
+            strip_fname(name) + '_geom.pkl')
         if os.path.exists(self.action.args.geometry_file):
             self.logger.error("Geometry file already exists: %s" %
                               self.action.args.geometry_file)

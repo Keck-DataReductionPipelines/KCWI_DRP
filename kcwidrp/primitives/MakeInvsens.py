@@ -333,7 +333,7 @@ class MakeInvsens(BasePrimitive):
         wlm0 = wgoo0
         wlm1 = wgoo1
         # interactively set wavelength limits
-        if self.config.instrument.plot_level >= 1:
+        if self.config.instrument.plot_level > 1:
             print("CHECKING WAVELENGTH LIMITS")
             print("Current WL limits: %.1f - %.1f Angstroms "
                   "(blue vertical lines)" % (wlm0, wlm1))
@@ -387,7 +387,8 @@ class MakeInvsens(BasePrimitive):
         local_lmfile = os.path.basename(stdfile).split('.fits')[0] + '.lmsk'
         if not os.path.exists(local_lmfile):
             # then in stds directory
-            lmfile = stdfile.split('.fits')[0] + '.lmsk'
+            # lmfile = stdfile.split('.fits')[0] + '.lmsk'
+            lmfile = strip_fname(stdfile) + '.lmsk'
             if not os.path.exists(lmfile):
                 lmfile = None
         else:
@@ -428,7 +429,7 @@ class MakeInvsens(BasePrimitive):
                 else:
                     print("bad line: %s" % lmws)
         # Now interactively identify lines if requested
-        if self.config.instrument.plot_level >= 1:
+        if self.config.instrument.plot_level >= 2:
             yran = [np.min(obsspec[wl_good]), np.max(obsspec[wl_good])]
             # source = ColumnDataSource(data=dict(x=w, y=obsspec))
             print("MASKING SHARP FEATURES: ABSORPTION LINES/COSMIC RAYS")
@@ -580,7 +581,7 @@ class MakeInvsens(BasePrimitive):
                           line_color='black', line_dash='dashdot')
                 set_plot_lims(peff, xlim=[wall0, wall1], ylim=yran)
                 bokeh_plot(peff, self.context.bokeh_session)
-                if self.config.instrument.plot_level >= 1:
+                if self.config.instrument.plot_level >= 2:
                     input("Next? <cr>: ")
                 else:
                     time.sleep(2. * self.config.instrument.plot_pause)
@@ -601,7 +602,7 @@ class MakeInvsens(BasePrimitive):
                 pivs.line([wlm1, wlm1], yran, line_color='green')
                 set_plot_lims(pivs, xlim=[wall0, wall1], ylim=yran)
                 bokeh_plot(pivs, self.context.bokeh_session)
-                if self.config.instrument.plot_level >= 1:
+                if self.config.instrument.plot_level >= 2:
                     input("Next? <cr>: ")
                 else:
                     time.sleep(2. * self.config.instrument.plot_pause)
@@ -620,7 +621,7 @@ class MakeInvsens(BasePrimitive):
                 pcal.line([wlm1, wlm1], yran, line_color='green')
                 set_plot_lims(pcal, xlim=[wall0, wall1], ylim=yran)
                 bokeh_plot(pcal, self.context.bokeh_session)
-                if self.config.instrument.plot_level >= 1:
+                if self.config.instrument.plot_level >= 2:
                     input("Next? <cr>: ")
                 else:
                     time.sleep(2. * self.config.instrument.plot_pause)
@@ -650,7 +651,7 @@ class MakeInvsens(BasePrimitive):
                           line_color='black', line_dash='dashed')
                 set_plot_lims(prsd, xlim=[wall0, wall1], ylim=yran)
                 bokeh_plot(prsd, self.context.bokeh_session)
-                if self.config.instrument.plot_level >= 1:
+                if self.config.instrument.plot_level >= 2:
                     qstr = input("Current fit order = %d, "
                                  "New fit order? <int>, <cr> - done: " % ford)
                     if len(qstr) <= 0:
