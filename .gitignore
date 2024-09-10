@@ -6,3 +6,4 @@
 /build
 *.egg
 /dist
+*.DS_STORE
