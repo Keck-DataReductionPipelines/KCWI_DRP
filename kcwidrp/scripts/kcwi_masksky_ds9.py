@@ -1,5 +1,5 @@
 from astropy.io import fits as pf
-import pyregion
+from regions import Regions
 
 import numpy as np
 import sys
@@ -12,7 +12,7 @@ def main():
     To use this routine, process your data with default sky subtraction. Then
     display the target \*_intf.fits file in ds9. Use region shapes to indicate
     non-sky pixels in image (box, circle, etc.). Write out ds9 region file
-    (\*.reg). Then run this routine:
+    (\*.reg). Ensure the region file is in physical coordinates Then run this routine:
 
         * ``python ~/kderp/devel/kcwi_masksky_ds9.py kb180101_00111_intf.fits ds9.reg``
 
@@ -67,12 +67,28 @@ def main():
     hdu_list = pf.open(imfname)
     header = hdu_list[0].header
 
-    # load in the region file
-    r = pyregion.open(regfname).as_imagecoord(header)
-    m = pyregion.get_mask(r, hdu_list[0])
+    # load the region file
+    with open(regfname, 'r') as f:
+        # Read it out as a string
+        regstr = f.read()
+        
+        # Check if the region file is in physical coordinates
+        if 'physical' not in regstr:
+            print("Region file must be in physical coordinates")
+            exit()
+        
+        # 
+        regstr.replace('physical', '')
+        r = Regions.parse(regstr, format='ds9')
+        mask = None
+        for region in r.regions:
+            if mask is None:
+                mask = region.to_mask()
+            else:
+                mask = mask | region.to_mask()
 
     # write out the mask
-    hdu = pf.PrimaryHDU(np.uint8(m))
+    hdu = pf.PrimaryHDU(np.uint8(mask))
     hdu.writeto(outfile, overwrite=True)
 
     print("Done.")
