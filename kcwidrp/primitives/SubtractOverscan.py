@@ -65,7 +65,7 @@ class SubtractOverscan(BasePrimitive):
                 osvec = np.nanmedian(
                     self.action.args.ccddata.data[y0:y1, x0:x1], axis=1)
                 nsam = x1 - x0
-                xx = np.arange(len(osvec), dtype=np.float)
+                xx = np.arange(len(osvec), dtype=np.float32)
                 # fit it, avoiding first 50 px
                 if direc[iac][0]:
                     # forward read skips first 50 px
