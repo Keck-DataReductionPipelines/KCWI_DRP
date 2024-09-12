@@ -113,12 +113,10 @@ class CorrectDefects(BasePrimitive):
         return self.action.args
 
     def _post_condition(self):
-        self.action.args.stop_pipeline = True
-        return True
 
-        if self.action.stops_requested is not None and len(self.action.stops_requested) > 0:
-            # If there are stops requested, check to see if action.name is in the list
-            if self.action.name in self.action.stops_requested:
-                self.action.args.stop_pipeline = True
+        if self.context.stop_point is not None and self.context.stop_point == self.action.name:
+            self.action.args.stop_pipeline = True
+            self.logger.info(f"User requested pipeline stop, stopping processing of {self.action.args.name}")
+            print("\nSTOPPING, HOPEFULLY!\n")
         return True
     # END: class CorrectDefects()

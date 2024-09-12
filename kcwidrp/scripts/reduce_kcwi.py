@@ -70,9 +70,9 @@ def _parse_arguments(in_args: list) -> argparse.Namespace:
     
     # Arguments for starting/stopping the pipeline at designated points
     parser.add_argument("--start_at_stage", dest="start_point", type=str,
-                        help="Start processing at a designated. Options are: [test]")
+                        help="Start processing at a designated.")
     parser.add_argument("--stop_at_stage", dest="stop_point", type=str,
-                        help="Stop processing at a designated. Options are: [before_cosmic_rays, before_make_cube, before_wavelength_correction]")
+                        help="Stop processing at a designated.")
 
     # in this case, we are loading an entire directory,
     # and ingesting all the files in that directory
@@ -313,6 +313,12 @@ def main():
                 "Using line list %s instead of generated list" %
                 args.atlas_line_list)
             framework.config.instrument.LINELIST = args.atlas_line_list
+
+    # check for start and stop points
+    if args.start_point:
+        framework.context.start_point = args.start_point
+    if args.stop_point:
+        framework.context.stop_point = args.stop_point
 
     # update proc table argument
     if args.proctab:
