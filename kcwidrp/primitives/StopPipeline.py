@@ -17,8 +17,6 @@ class StopPipeline(BasePrimitive):
     def _perform(self):
 
         self.logger.info("Checking for pipeline stop request")
-        import pdb 
-        pdb.set_trace()
         self.logger.info(f"Stop pipeline: {self.action.args.stop_pipeline}")
 
 
