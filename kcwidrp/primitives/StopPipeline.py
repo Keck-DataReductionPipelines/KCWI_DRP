@@ -18,6 +18,9 @@ class StopPipeline(BasePrimitive):
         self.logger.info("Checking for pipeline stop request")
         self.logger.info(f"Stop pipeline: {self.action.args.stop_pipeline}")
 
+        import pdb 
+        pdb.set_trace()
+
         if self.action.args.stop_pipeline:
             self.logger.info("User requested pipeline stop")    
             # This overrides the event table, so the pipeline will stop processing
