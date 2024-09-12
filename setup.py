@@ -69,9 +69,9 @@ setup(name=NAME,
                         'pandas~=1.3.5',
                         'matplotlib~=3.9.2',
                         'ref_index~=1.0',
-                        'pyregion~=2.0',
                         'cython',
                         'selenium',
+                        'pyerfa',
                         'phantomjs'],
       python_requires="~=3.12"
       )
