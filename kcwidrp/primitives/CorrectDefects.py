@@ -116,7 +116,8 @@ class CorrectDefects(BasePrimitive):
 
         if self.context.stop_point is not None and self.context.stop_point == self.action.name:
             self.action.args.stop_pipeline = True
-            self.logger.info(f"User requested pipeline stop, stopping processing of {self.action.args.name}")
+            self.logger.info(f"User requested pipeline stop, stopping processing of {self.action.args.name} after this step")
+            self.logger.info(f"action.args.stop_pipeline = {self.action.args.stop_pipeline}")
             print("\nSTOPPING, HOPEFULLY!\n")
         return True
     # END: class CorrectDefects()
