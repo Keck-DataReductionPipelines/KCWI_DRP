@@ -17,6 +17,7 @@ class StopPipeline(BasePrimitive):
 
         if self.action.args.stop_pipeline:
             self.logger.info("User requested pipeline stop")    
-            exit()
-        
+            # This overrides the event table, so the pipeline will stop processing
+            # this file, but still continue with the next file
+            self.action.new_event = None        
         return self.action.args
