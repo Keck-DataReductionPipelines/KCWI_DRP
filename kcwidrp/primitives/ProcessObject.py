@@ -11,4 +11,8 @@ class ProcessObject(BasePrimitive):
         self.logger = context.pipeline_logger
 
     def _perform(self):
+        import pdb
+        print("ProcessObject new_event:")
+        print(self.action.new_event)
+        pdb.set_trace()
         return self.action.args
