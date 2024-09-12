@@ -102,6 +102,7 @@ class CorrectDefects(BasePrimitive):
         # self.action.args.ccddata.mask = flags
         self.action.args.ccddata.flags = flags
 
+# Make this the default? Might be nice
         if self.config.instrument.saveintims:
             kcwi_fits_writer(self.action.args.ccddata,
                              table=self.action.args.table,
@@ -110,4 +111,14 @@ class CorrectDefects(BasePrimitive):
                              suffix="def")
 
         return self.action.args
+
+    def _post_condition(self):
+        self.action.args.stop_pipeline = True
+        return True
+
+        if self.action.stops_requested is not None and len(self.action.stops_requested) > 0:
+            # If there are stops requested, check to see if action.name is in the list
+            if self.action.name in self.action.stops_requested:
+                self.action.args.stop_pipeline = True
+        return True
     # END: class CorrectDefects()
