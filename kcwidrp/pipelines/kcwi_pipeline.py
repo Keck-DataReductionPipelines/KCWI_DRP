@@ -42,10 +42,10 @@ class Kcwi_pipeline(BasePipeline):
                                       "subtract_overscan_started",
                                       "bias_trim_overscan"),
         "bias_trim_overscan":        ("TrimOverscan",
-                                      "trim_overscan_started",      # intb
+                                      "trim_overscan_started",            # intb
                                       "bias_make_master"),
         "bias_make_master":          ("MakeMasterBias",
-                                      "master_bias_started",        # mbias
+                                      "master_bias_started",             # mbias
                                       None),
         # DARK PROCESSING
         "process_dark":              ("ProcessDark",
@@ -73,10 +73,10 @@ class Kcwi_pipeline(BasePipeline):
                                       "create_unc_started",
                                       "dark_rectify_image"),
         "dark_rectify_image":        ("RectifyImage",
-                                      "rectification_started",      # int
+                                      "rectification_started",             # int
                                       "dark_make_master"),
         "dark_make_master":          ("MakeMasterDark",
-                                      "master_dark_started",        # mdark
+                                      "master_dark_started",             # mdark
                                       None),
         # CONTBARS PROCESSING
         "process_contbars":          ("ProcessContbars",
@@ -92,16 +92,16 @@ class Kcwi_pipeline(BasePipeline):
                                       "gain_correction_started",
                                       "contbar_rectify_image"),
         "contbar_rectify_image":     ("RectifyImage",
-                                      "rectification_started",      # int
+                                      "rectification_started",             # int
                                       "contbar_make_master"),
         "contbar_make_master":       ("MakeMasterContbars",
-                                      "master_contbar_started",     # mcont
+                                      "master_contbar_started",          # mcont
                                       "contbar_find_bars"),
         "contbar_find_bars":         ("FindBars",
                                       "find_bars_started",
                                       "contbar_trace_bars"),
         "contbar_trace_bars":        ("TraceBars",
-                                      "trace_bars_started",         # trace
+                                      "trace_bars_started",              # trace
                                       None),
         # ARCS PROCESSING
         "process_arc":               ("ProcessArc",
@@ -123,10 +123,10 @@ class Kcwi_pipeline(BasePipeline):
                                       "create_unc_started",
                                       "arcs_rectify_image"),
         "arcs_rectify_image":        ("RectifyImage",
-                                      "rectification_started",      # int
+                                      "rectification_started",             # int
                                       "arcs_make_master"),
         "arcs_make_master":          ("MakeMasterArc",
-                                      "master_arcs_started",        # marc
+                                      "master_arcs_started",              # marc
                                       "arcs_extract_arcs"),
         "arcs_extract_arcs":         ("ExtractArcs",
                                       "extract_arcs_started",
@@ -150,16 +150,16 @@ class Kcwi_pipeline(BasePipeline):
                                       "solving_arcs_started",
                                       "arcs_solve_geom"),
         "arcs_solve_geom":           ("SolveGeom",
-                                      "solving_geom_started",       # geom
+                                      "solving_geom_started",             # geom
                                       "arcs_generate_maps"),
         "arcs_generate_maps":        ("GenerateMaps",
-                                      "generating_maps_started",    # maps
+                                      "generating_maps_started",          # maps
                                       "arc_make_cube"),
         "arc_make_cube":             ("MakeCube",
-                                      "making_cube_started",        # icube
+                                      "making_cube_started",             # icube
                                       "arc_make_cubeimage"),
         "arc_make_cubeimage":        ("CubeImage",
-                                      "making_cubeimage_started",   # icube_2d
+                                      "making_cubeimage_started",     # icube_2d
                                       None),
         # FLAT PROCESSING
         "process_flat":              ("ProcessFlat",
@@ -187,25 +187,25 @@ class Kcwi_pipeline(BasePipeline):
                                       "create_unc_started",
                                       "flat_rectify_image"),
         "flat_rectify_image":        ("RectifyImage",
-                                      "rectification_started",      # int
+                                      "rectification_started",             # int
                                       "flat_subtract_dark"),
         "flat_subtract_dark":        ("SubtractDark",
                                       "subtract_dark_started",
                                       "flat_subtract_scat"),
         "flat_subtract_scat":        ("SubtractScatteredLight",
-                                      "scat_subtract_started",      # intd
+                                      "scat_subtract_started",            # intd
                                       "flat_make_stack"),
         "flat_make_stack":           ("StackFlats",
-                                      "stack_flats_started",        # sflat
+                                      "stack_flats_started",             # sflat
                                       "flat_make_master"),
         "flat_make_master":          ("MakeMasterFlat",
-                                      "master_flat_started",        # mflat
+                                      "master_flat_started",             # mflat
                                       "flat_correct_illumination"),
         "flat_correct_illumination": ("CorrectIllumination",
                                       "illumination_correction_started",  # intf
                                       "flat_make_cube"),
         "flat_make_cube":            ("MakeCube",
-                                      "making_flat_cube_started",   # icube
+                                      "making_flat_cube_started",        # icube
                                       None),
         # OBJECT PROCESSING
         "process_object":            ("ProcessObject",
@@ -228,6 +228,9 @@ class Kcwi_pipeline(BasePipeline):
                                       "object_correct_defects"),
         "object_correct_defects":    ("CorrectDefects",
                                       "defect_correction_started",
+                                      "pause_before_cr"),
+        "pause_before_cr":           ("StopPipeline",       # Pause if requested
+                                      "pausing_before_crs",
                                       "object_remove_crs"),
         "object_remove_crs":         ("RemoveCosmicRays",
                                       "remove_crs_started",
@@ -236,40 +239,46 @@ class Kcwi_pipeline(BasePipeline):
                                       "create_unc_started",
                                       "object_rectify_image"),
         "object_rectify_image":      ("RectifyImage",
-                                      "rectification_started",      # int
+                                      "rectification_started",             # int
                                       "object_subtract_dark"),
         "object_subtract_dark":      ("SubtractDark",
                                       "subtract_dark started",
                                       "object_subtract_scat"),
         "object_subtract_scat":      ("SubtractScatteredLight",
-                                      "scat_subtract_started",      # intd
+                                      "scat_subtract_started",            # intd
                                       "object_correct_illum"),
         "object_correct_illum":      ("CorrectIllumination",
                                       "illumination_correction_started",  # intf
                                       "object_make_master"),
         "object_make_master":        ("MakeMasterObject",
-                                      "master_object_started",      # mobj
+                                      "master_object_started",            # mobj
                                       "object_make_sky"),
         "object_make_sky":           ("MakeMasterSky",
                                       "making_master_sky_started",
                                       "object_subtract_sky"),
         "object_subtract_sky":       ("SubtractSky",
-                                      "subtracting_sky_started",    # intk
+                                      "subtracting_sky_started",          # intk
+                                      "pause_before_make_cube"),
+        "pause_before_make_cube":    ("StopPipeline",       # Pause if requested
+                                      "pausing_before_make_cube",
                                       "object_make_cube"),
         "object_make_cube":          ("MakeCube",
-                                      "making_cube_started",        # icube
+                                      "making_cube_started",             # icube
+                                      "pause_before_wavelength"),
+        "pause_before_wavelength":   ("StopPipeline",       # Pause if requested
+                                      "pausing_before_wave_corr",
                                       "object_wavelengthcorr"),
         "object_wavelengthcorr":     ("WavelengthCorrections",
                                       "wavelength_correction_started",  # icubew
                                       "object_correct_dar"),
         "object_correct_dar":        ("CorrectDar",
-                                      "correcting_dar_started",     # icubed
+                                      "correcting_dar_started",         # icubed
                                       "object_make_invsens"),
         "object_make_invsens":       ("MakeInvsens",
                                       "make_invsens_started",
                                       "object_flux_calibrate"),
         "object_flux_calibrate":     ("FluxCalibrate",
-                                      "flux_calibration_started",   # icubes
+                                      "flux_calibration_started",       # icubes
                                       None),
         # NOD AND SHUFFLE OBJECT PROCESSING
         "process_nandshuff":         ("ProcessObject",
@@ -297,27 +306,30 @@ class Kcwi_pipeline(BasePipeline):
                                       "create_unc_started",
                                       "nandshuff_rectify_image"),
         "nandshuff_rectify_image":   ("RectifyImage",
-                                      "rectification_started",      # int
+                                      "rectification_started",             # int
                                       "nandshuff_subtract_sky"),
         "nandshuff_subtract_sky":    ("NandshuffSubtractSky",
-                                      "nandshuff_skysub_started",   # intk
+                                      "nandshuff_skysub_started",         # intk
                                       "nandshuff_correct_illum"),
         "nandshuff_correct_illum":   ("CorrectIllumination",
                                       "illumination_correction_started",  # intf
                                       "nandshuff_make_cube"),
         "nandshuff_make_cube":       ("MakeCube",
-                                      "making_cube_started",        # icube
+                                      "making_cube_started",             # icube
                                       "nandshuff_wavelengthcorr"),
         "nandshuff_wavelengthcorr":  ("WavelengthCorrections",
                                       "wavelength_correction_started",  # icubew
                                       "nandshuff_correct_dar"),
         "nandshuff_correct_dar":     ("CorrectDar",
-                                      "correcting_dar_started",     # icubed
+                                      "correcting_dar_started",         # icubed
                                       "nandshuff_flux_calibrate"),
         "nandshuff_flux_calibrate":  ("FluxCalibrate",
-                                      "flux_calibration_started",   # icubes
+                                      "flux_calibration_started",       # icubes
                                       None),
-        "next_file_stop":            ("ingest_file", "file_ingested", None)
+        "next_file_stop":            ("ingest_file", "file_ingested", None),
+        "process_object_stop":       ("ProcessObject",
+                                      "object_processing_started",
+                                      None)
     }
 
     # event_table = kcwi_event_table
@@ -364,6 +376,10 @@ class Kcwi_pipeline(BasePipeline):
         if action.args.in_proctab and not context.config.instrument.clobber:
             self.context.pipeline_logger.warn("Pushing noop to queue")
             context.push_event("noop", action.args)
+        elif "RESTARTING BY USER REQUEST SOMEHOW": # STARTING IN THE NEW SPECIAL WAY
+            self.context.pipeline_logger.info(f"Starting the pipeline at {1}")
+            context.push_event("process_object_stop", action.args)
+            context.push_event("PRIMITIVE TO START AT", action.args)
         elif "BIAS" in action.args.imtype:
             if action.args.ttime > 0:
                 self.context.pipeline_logger.warn(
