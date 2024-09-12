@@ -378,10 +378,13 @@ class Kcwi_pipeline(BasePipeline):
         if action.args.in_proctab and not context.config.instrument.clobber:
             self.context.pipeline_logger.warn("Pushing noop to queue")
             context.push_event("noop", action.args)
-        elif False and "RESTARTING BY USER REQUEST SOMEHOW": # STARTING IN THE NEW SPECIAL WAY
-            self.context.pipeline_logger.info(f"Starting the pipeline at {1}")
+        elif self.context.start_point: # STARTING IN THE NEW SPECIAL WAY
+            self.context.pipeline_logger.info(f"Starting the pipeline at {self.contest.start_point}!")
+            action.new_event = self.context.start_point
             context.push_event("process_object_stop", action.args)
-            context.push_event("PRIMITIVE TO START AT", action.args)
+            # context.push_event("PRIMITIVE TO START AT", action.args)
+            import pdb
+            pdb.set_trace()
         elif "BIAS" in action.args.imtype:
             if action.args.ttime > 0:
                 self.context.pipeline_logger.warn(
