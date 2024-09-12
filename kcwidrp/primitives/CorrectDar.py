@@ -9,6 +9,7 @@ from astropy.nddata import CCDData
 import math
 import ref_index
 import os
+import erfa
 
 
 def atm_disper(w0, w1, airmass, temperature=10.0, pressure_pa=61100.0,
@@ -49,8 +50,20 @@ def atm_disper_slalib(w0, w1, airmass, temperature=10.0, pressure_pa=61100.0,
     PHI = math.radians(19.82833333333333)   #Keck latitude
     TLR = 0.0065
     EPS = 1.0e-8
-    R0 = 206265.*refro(z, HM, TDK, PMB, RH, w0*1e4, PHI, TLR, EPS)
-    R1 = 206265.*refro(z, HM, TDK, PMB, RH, w1*1e4, PHI, TLR, EPS)
+    R0 = 206265.*refro(z, HM, TDK, PMB, RH, w0/1e4, PHI, TLR, EPS)
+    R1 = 206265.*refro(z, HM, TDK, PMB, RH, w1/1e4, PHI, TLR, EPS)
+    return R0-R1
+
+
+def atm_disper_ERFA(w0, w1, airmass, temperature=10.0, pressure_pa=61100.0,
+                    humidity=50.0, co2=400.0):
+    z = math.acos(1.0/airmass)
+    pmb = pressure_pa/100.
+    rh = humidity/100.
+    refA0, refB0 = erfa.refco(pmb, temperature, rh, w0/1e4)
+    R0 = 206265*(refA0*np.tan(z) + refB0*np.tan(z)**3)
+    refA1, refB1 = erfa.refco(pmb, temperature, rh, w1/1e4)
+    R1 = 206265*(refA1*np.tan(z) + refB1*np.tan(z)**3)
     return R0-R1
 
 
@@ -99,7 +112,7 @@ class CorrectDar(BasePrimitive):
 
         # Determine which DAR correction model to mauseke
         DAR_correction_model = self.config.instrument.dar_correction_model
-        options = ["Filippenko1982", "slalib"]
+        options = ["Filippenko1982", "slalib", "ERFA"]
 
         # If the config file has an invalid option, return
         if not bool([el for el in options if el in DAR_correction_model]):
@@ -164,6 +177,8 @@ class CorrectDar(BasePrimitive):
             dispersion_max_as = atm_disper(wgoo1, wgoo0, airmass)
         elif DAR_correction_model == "slalib":
             dispersion_max_as = atm_disper_slalib(wgoo1, wgoo0, airmass)
+        elif DAR_correction_model == "ERFA":
+            dispersion_max_as = atm_disper_ERFA(wgoo1, wgoo0, airmass)
 
         # projected onto IFU
         xdmax_as = dispersion_max_as * math.sin(projection_angle)

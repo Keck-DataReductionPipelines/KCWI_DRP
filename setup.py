@@ -71,6 +71,7 @@ setup(name=NAME,
                         'ref_index~=1.0',
                         'cython',
                         'selenium',
+                        'pyerfa',
                         'phantomjs'],
       python_requires="~=3.12"
       )
