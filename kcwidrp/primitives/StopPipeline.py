@@ -8,6 +8,7 @@ class StopPipeline(BasePrimitive):
     """
 
     def __init__(self, action, context):
+        BasePrimitive.__init__(self, action, context)
         self.logger = context.pipeline_logger
 
     def _pre_condition(self):
@@ -16,10 +17,10 @@ class StopPipeline(BasePrimitive):
     def _perform(self):
 
         self.logger.info("Checking for pipeline stop request")
-        self.logger.info(f"Stop pipeline: {self.action.args.stop_pipeline}")
-
         import pdb 
         pdb.set_trace()
+        self.logger.info(f"Stop pipeline: {self.action.args.stop_pipeline}")
+
 
         if self.action.args.stop_pipeline:
             self.logger.info("User requested pipeline stop")    
