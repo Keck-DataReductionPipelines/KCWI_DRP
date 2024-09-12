@@ -114,7 +114,8 @@ class CorrectDefects(BasePrimitive):
 
     def _post_condition(self):
 
-        if self.context.stop_point is not None and self.context.stop_point == self.action.name:
+        # Only stop if the image type is allowed
+        if self.actions.args.allow_stops and self.context.stop_point == self.action.name:
             self.action.args.stop_pipeline = True
             self.logger.info(f"User requested pipeline stop, stopping processing of {self.action.args.name} after this step")
             self.logger.info(f"action.args.stop_pipeline = {self.action.args.stop_pipeline}")

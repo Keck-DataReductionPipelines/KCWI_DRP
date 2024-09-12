@@ -356,6 +356,8 @@ class Kcwi_pipeline(BasePipeline):
                 "No processing is possible.")
             return False
 
+        action.args.allow_stops = False
+
         groupid = action.args.groupid
         camera = action.args.ccddata.header['CAMERA'].upper()
         self.context.pipeline_logger.info("******* GROUPID is %s " %
@@ -452,6 +454,7 @@ class Kcwi_pipeline(BasePipeline):
             arc_args.in_directory = "redux"
             context.push_event("process_arc", arc_args)
         elif "OBJECT" in action.args.imtype:
+            self.action.args.allow_stops = True
             if action.args.nasmask and action.args.numopen > 1:
                 context.push_event("process_nandshuff", action.args)
             else:
