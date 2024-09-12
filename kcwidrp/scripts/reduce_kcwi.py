@@ -30,7 +30,6 @@ import logging.config
 def _parse_arguments(in_args: list) -> argparse.Namespace:
     description = "KCWI pipeline CLI"
 
-    # this is a simple case where we provide a frame and a configuration file
     parser = argparse.ArgumentParser(prog=f"{in_args[0]}",
                                      description=description)
     parser.add_argument('-c', '--config', dest="kcwi_config_file", type=str,
@@ -68,6 +67,12 @@ def _parse_arguments(in_args: list) -> argparse.Namespace:
                         type=float, default=None,
                         help="Fraction of line max for fitting window "
                              "(default: 0.5)")
+    
+    # Arguments for starting/stopping the pipeline at designated points
+    parser.add_argument("--start_at_stage", dest="start_point", type=str,
+                        help="Start processing at a designated. Options are: [test]")
+    parser.add_argument("--stop_at_stage", dest="stop_point", type=str,
+                        help="Stop processing at a designated. Options are: [before_cosmic_rays, before_make_cube, before_wavelength_correction]")
 
     # in this case, we are loading an entire directory,
     # and ingesting all the files in that directory
