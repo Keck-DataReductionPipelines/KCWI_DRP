@@ -77,16 +77,14 @@ class TrimOverscan(BasePrimitive):
             self.action.args.ccddata.header[
                 'ATSEC%d' % ia] = (sec, "Amp section in trimmed image")
             # remove obsolete sections
-            
-            # DONT LOSE THIS!
-            ## self.action.args.ccddata.header.pop('ASEC%d' % ia)
-            ## self.action.args.ccddata.header.pop('BSEC%d' % ia)
-            ## self.action.args.ccddata.header.pop('DSEC%d' % ia)
-            ## self.action.args.ccddata.header.pop('CSEC%d' % ia)
-            ## # only in RED images
-            ## t_key = 'TSEC%d' % ia
-            ## if t_key in self.action.args.ccddata.header:
-            ##     self.action.args.ccddata.header.pop(t_key)
+            self.action.args.ccddata.header.pop('ASEC%d' % ia)
+            self.action.args.ccddata.header.pop('BSEC%d' % ia)
+            self.action.args.ccddata.header.pop('DSEC%d' % ia)
+            self.action.args.ccddata.header.pop('CSEC%d' % ia)
+            # only in RED images
+            t_key = 'TSEC%d' % ia
+            if t_key in self.action.args.ccddata.header:
+                self.action.args.ccddata.header.pop(t_key)
         
         # update with new image
         self.action.args.ccddata.data = new
