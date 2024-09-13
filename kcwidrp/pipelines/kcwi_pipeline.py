@@ -380,11 +380,11 @@ class Kcwi_pipeline(BasePipeline):
             context.push_event("noop", action.args)
         elif self.context.start_point: # STARTING IN THE NEW SPECIAL WAY
             self.context.pipeline_logger.info(f"Starting the pipeline at {self.context.start_point}!")
+            import pdb
+            pdb.set_trace()
             action.new_event = self.context.start_point
             context.push_event("process_object_stop", action.args)
             # context.push_event("PRIMITIVE TO START AT", action.args)
-            import pdb
-            pdb.set_trace()
         elif "BIAS" in action.args.imtype:
             if action.args.ttime > 0:
                 self.context.pipeline_logger.warn(
