@@ -819,7 +819,6 @@ class ingest_file(BasePrimitive):
 
         ccddata, table = kcwi_fits_reader(self.name)
 
-
         # Are we already in proctab?
         out_args.in_proctab = self.context.proctab.in_proctab(frame=ccddata)
         if out_args.in_proctab:
@@ -837,6 +836,7 @@ class ingest_file(BasePrimitive):
                 else:
                     self.logger.info("Processing completed in %s" % last_file)
         else:
+            self.logger.info(f"{self.name} not in proctab.")
             out_args.last_suffix = ""
 
         # save the ccd data into an object
