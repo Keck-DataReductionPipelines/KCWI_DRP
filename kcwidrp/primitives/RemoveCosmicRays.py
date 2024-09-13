@@ -1,5 +1,6 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
-from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer
+from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer, strip_fname, kcwi_fits_reader
+import os
 
 import numpy as np
 from astroscrappy import detect_cosmics
@@ -31,6 +32,12 @@ class RemoveCosmicRays(BasePrimitive):
         self.logger = context.pipeline_logger
 
     def _perform(self):
+
+        if not self.action.args.ccddata and self.action.args.name:
+            self.logger.info("No CCDData object found, loading from file instead")
+            self.actions.args.ccddata = self.locate_object_file('obj')
+    
+
         # TODO: implement parameter options from kcwi_stage1.pro
         self.logger.info("Cleaning and flagging cosmic rays")
 
@@ -140,4 +147,16 @@ class RemoveCosmicRays(BasePrimitive):
                              suffix="crr")
 
         return self.action.args
+    
+    def locate_object_file(self, suffix):
+        ofn = self.action.args.name
+        objfn = strip_fname(ofn) + f'_{suffix}.fits'
+        full_path = os.path.join(
+            self.config.instrument.cwd,
+            self.config.instrument.output_directory, objfn)
+        if os.path.exists(full_path):
+            return kcwi_fits_reader(full_path)[0]
+        else:
+            self.logger.error(f'Unable to read file {objfn}')
+            return None
     # END: class RemoveCosmicRays()
