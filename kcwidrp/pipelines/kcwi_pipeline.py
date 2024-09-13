@@ -326,10 +326,18 @@ class Kcwi_pipeline(BasePipeline):
         "nandshuff_flux_calibrate":  ("FluxCalibrate",
                                       "flux_calibration_started",       # icubes
                                       None),
-        "next_file_stop":            ("ingest_file", "file_ingested", None),
-        "process_object_stop":       ("ProcessObject",
+        "next_file_stop":            ("ingest_file",
+                                      "file_ingested",
+                                      None),
+        "process_object_cosmic_ray": ("ProcessObject",
                                       "object_processing_started",
-                                      None)
+                                      "object_remove_crs"),
+        "process_object_make_cube":  ("ProcessObject",
+                                      "object_processing_started",
+                                      "object_make_cube"),
+        "process_object_wavelength": ("ProcessObject",
+                                      "object_processing_started",
+                                      "object_wavelengthcorr")
     }
 
     # event_table = kcwi_event_table
@@ -379,16 +387,16 @@ class Kcwi_pipeline(BasePipeline):
             self.context.pipeline_logger.warn("Pushing noop to queue")
             context.push_event("noop", action.args)
         elif self.context.start_point: # STARTING IN THE NEW SPECIAL WAY
-            # object_args.new_type = "SKY"
+            if "OBJECT" not in action.args.imtype:
+                self.context.pipeline_logger.warn(
+                    "First image is not an object image. Discarding.")
+                return False
             action.args.new_type = "MOBJ"
             action.args.min_files = \
                 context.config.instrument.object_min_nframes
             action.args.in_directory = "redux"
             self.context.pipeline_logger.info(f"Starting the pipeline at {self.context.start_point}!")
-            import pdb
-            pdb.set_trace()
-            action.new_event = self.context.start_point
-            context.push_event("process_object_stop", action.args)
+            context.push_event(self.context.start_point, action.args)
             # context.push_event("PRIMITIVE TO START AT", action.args)?
         elif "BIAS" in action.args.imtype:
             if action.args.ttime > 0:
