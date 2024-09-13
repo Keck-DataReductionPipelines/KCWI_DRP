@@ -1,5 +1,5 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
-from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer
+from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer, strip_fname, kcwi_fits_reader
 
 import numpy as np
 import pkg_resources
@@ -32,6 +32,10 @@ class CorrectDefects(BasePrimitive):
 
     def _perform(self):
         self.logger.info("Correcting detector defects")
+
+        if not self.action.args.ccddata and self.action.args.name:
+            self.logger.info("No CCDData object found, loading from file instead")
+            self.actions.args.ccddata = self.locate_object_file('obj')
 
         # Header keyword to update
         key = 'BPCLEAN'
@@ -121,4 +125,16 @@ class CorrectDefects(BasePrimitive):
             self.logger.info(f"action.args.stop_pipeline = {self.action.args.stop_pipeline}")
             print("\nSTOPPING, HOPEFULLY!\n")
         return True
+    
+    def locate_object_file(self, suffix):
+        ofn = self.action.args.name
+        objfn = strip_fname(ofn) + f'_{suffix}.fits'
+        full_path = os.path.join(
+            self.config.instrument.cwd,
+            self.config.instrument.output_directory, objfn)
+        if os.path.exists(full_path):
+            return kcwi_fits_reader(full_path)[0]
+        else:
+            self.logger.error(f'Unable to read file {objfn}')
+            return None
     # END: class CorrectDefects()
