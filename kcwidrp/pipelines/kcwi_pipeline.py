@@ -379,12 +379,17 @@ class Kcwi_pipeline(BasePipeline):
             self.context.pipeline_logger.warn("Pushing noop to queue")
             context.push_event("noop", action.args)
         elif self.context.start_point: # STARTING IN THE NEW SPECIAL WAY
+            # object_args.new_type = "SKY"
+            action.args.new_type = "MOBJ"
+            action.args.min_files = \
+                context.config.instrument.object_min_nframes
+            action.args.in_directory = "redux"
             self.context.pipeline_logger.info(f"Starting the pipeline at {self.context.start_point}!")
             import pdb
             pdb.set_trace()
             action.new_event = self.context.start_point
             context.push_event("process_object_stop", action.args)
-            # context.push_event("PRIMITIVE TO START AT", action.args)
+            # context.push_event("PRIMITIVE TO START AT", action.args)?
         elif "BIAS" in action.args.imtype:
             if action.args.ttime > 0:
                 self.context.pipeline_logger.warn(
