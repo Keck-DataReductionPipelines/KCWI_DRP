@@ -819,6 +819,7 @@ class ingest_file(BasePrimitive):
 
         ccddata, table = kcwi_fits_reader(self.name)
 
+
         # Are we already in proctab?
         out_args.in_proctab = self.context.proctab.in_proctab(frame=ccddata)
         if out_args.in_proctab:
@@ -1290,7 +1291,7 @@ def get_master_name(tab, target_type, loc=0):
     return res
 
 
-def master_bias_name(ccddata, target_type='MBIAS'):
+def get_unique_CCD_master_name(ccddata, target_type='MBIAS'):
     # Currently NOT USED (DN, 7-Sep-2023)
     # Delivers a mbias filename that is unique for each CCD configuration
     # Any KCWI frame with a shared CCD configuration can use the same bias
@@ -1298,7 +1299,7 @@ def master_bias_name(ccddata, target_type='MBIAS'):
     return name
 
 
-def master_flat_name(ccddata, target_type):
+def get_unique_STATEID_master_name(ccddata, target_type):
     # Currently NOT USED (DN, 7-Sep-2023)
     # Delivers a name that is unique across an observing block
     name = target_type.lower() + '_' + ccddata.header['STATEID'] + '.fits'

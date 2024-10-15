@@ -10,6 +10,7 @@ def kcwi_get_std(targname, logger=None):
     stdfile = None
     stdname = None
     obname = targname.lower()
+    obname = "".join(obname.split()) # remove all whitespace
     path = 'data/stds/%s.fits' % obname
     package = __name__.split('.')[0]
     full_path = pkg_resources.resource_filename(package, path)
