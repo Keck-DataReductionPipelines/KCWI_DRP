@@ -71,7 +71,7 @@ class SubtractScatteredLight(BasePrimitive):
                 yvals[0] = np.nanmedian(yvals[1:10])
                 yvals[-1] = np.nanmedian(yvals[-11:-2])
             # X data values
-            xvals = np.arange(len(yvals), dtype=np.float)
+            xvals = np.arange(len(yvals), dtype=np.float32)
             # filter window
             fwin = 151
             scat = savgol_filter(yvals, fwin, 3)

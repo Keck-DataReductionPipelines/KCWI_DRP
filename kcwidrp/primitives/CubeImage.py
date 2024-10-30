@@ -59,7 +59,7 @@ class CubeImage(BasePrimitive):
         # create output image
         cub_x = self.action.args.cube_size[1]
         out_x = int(24 * cub_x)
-        out_img = np.zeros((out_y, out_x), dtype=np.float)
+        out_img = np.zeros((out_y, out_x), dtype=np.float32)
         # set spatial scale
         s0 = 0.
         ds = 24.0 / out_x

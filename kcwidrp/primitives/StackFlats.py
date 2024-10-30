@@ -1,6 +1,6 @@
 from keckdrpframework.primitives.base_img import BaseImg
 from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_reader, \
-    kcwi_fits_writer, strip_fname
+    kcwi_fits_writer, strip_fname, get_unique_STATEID_master_name
 
 import os
 import ccdproc
@@ -81,8 +81,9 @@ class StackFlats(BaseImg):
         self.logger.info("Stacking flats using method %s" % method)
 
         combine_list = list(self.combine_list['filename'])
-        # get flat stack output name
+        # get flat stack output name        
         stname = strip_fname(combine_list[0]) + '_' + suffix + '.fits'
+        # stname = get_unique_STATEID_master_name(self.action.args.ccddata, suffix)
         stack = []
         stackf = []
         fmeds = []
@@ -91,7 +92,8 @@ class StackFlats(BaseImg):
             stackf.append(strip_fname(flat) + '_intd.fits')
             flatfn = os.path.join(self.config.instrument.cwd,
                                   self.config.instrument.output_directory,
-                                  stackf[-1])
+                                  stackf[0])
+                                  # stackf[-1])
             # using [0] gets just the image data
             f = kcwi_fits_reader(flatfn)[0]
             # Set mask to None to prevent ccdproc.combine from masking
@@ -139,7 +141,7 @@ class StackFlats(BaseImg):
 
         self.context.proctab.update_proctab(frame=stacked, suffix=suffix,
                                             newtype=self.action.args.stack_type,
-                                            filename=stacked.header['OFNAME'])
+                                            filename=combine_list[0]) ### HERE
         self.context.proctab.write_proctab(tfil=self.config.instrument.procfile)
 
         self.logger.info(log_string)
