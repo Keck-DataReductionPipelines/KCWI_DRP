@@ -40,7 +40,7 @@ and activate it.
 
     .. code-block:: bash
 
-        conda create --name kcwidrp python=3.7
+        conda create --name kcwidrp python=3.12
         conda activate kcwidrp
 
 

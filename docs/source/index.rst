@@ -5,10 +5,10 @@ KCWI_DRP is a the official data reduction pipeline (DRP) for the Keck Cosmic Web
 This DRP has been developed by the KCWI team at Caltech in
 collaboration with the W. M. Keck Observatory Scientific Software Group.
 
-Release 1.1
+Release 1.2
 ===========
 
-We are excited to announce the release version of 1.1.0 of the KCWI DRP, now with support for
+We are excited to announce the release version of 1.2.0 of the KCWI DRP, now with support for
 both the red and blue sides of the instrument. Just like version 1.0, this
 pipeline is based off of the original KCWIdrp IDL pipeline developed by the KCWI
 team at Caltech, and this pipeline continues to be the only pipeline supported
@@ -24,6 +24,7 @@ Features
 * Full traceability of DRP versions and execution steps in HISTORY headers
 * Versatile sky subtraction modes including using external sky frames, ability to manually mask regions, or skipping it entirely
 * Formal support system via GitHub issues
+* Added support for Mac intel M2 and M3 chips in Python 3.12
 
 For older versions, see :doc:`versions`.
 
