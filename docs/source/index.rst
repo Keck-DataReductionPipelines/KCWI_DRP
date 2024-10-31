@@ -52,11 +52,33 @@ Follow the documentation in this section to reduce KCWI data.
 More information
 ================
 
+For more information on the internals of the pipeline, see the following sections:
 .. toctree::
    :maxdepth: 1
 
    pipeline_concepts
    api
+
+Helpful Packages
+================
+
+The following packages might be helpful to users working with reduced KCWI data.
+Please note that these packages are not maintained or developed by W. M. Keck Observatory
+or the KCWI team at Caltech. Rather, these are community-developed packages that
+are listed only for convenience. If you utilize any of these packages, please
+ensure that you properly cite their developers in addition to the KCWI DRP's.
+
+KCWIKit
+-------
+`KCWIKit<https://github.com/yuguangchen1/KcwiKit>`_. is a community developed
+package to extend the official KCWI DRP with a
+variety of stacking tools and DRP improvements. The software offers masking and
+median filtering scripts to be used while running the KCWI DRP, and a step-by-step
+KCWI_DRP implementation for finer control over the reduction process. Once the DRP
+has finished, KCWIKit can be used to stack the output cubes via the Montage package.
+Various functions cross-correlate and mosaic the constituent cubes and the final
+stacked cubes are WCS corrected. Helper functions can then be used to deproject
+the stacked cube into lower-dimensional representations should the user desire.
 
 Developers
 ==========
