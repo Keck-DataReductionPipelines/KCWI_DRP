@@ -59,8 +59,8 @@ For more information on the internals of the pipeline, see the following section
    pipeline_concepts
    api
 
-Helpful Packages
-================
+Other Helpful Packages
+======================
 
 The following packages might be helpful to users working with reduced KCWI data.
 Please note that these packages are not maintained or developed by W. M. Keck Observatory
@@ -70,7 +70,7 @@ ensure that you properly cite their developers in addition to the KCWI DRP's.
 
 KCWIKit
 -------
-`KCWIKit<https://github.com/yuguangchen1/KcwiKit>`_. is a community developed
+`KCWIKit <https://github.com/yuguangchen1/KcwiKit>`_. is a community developed
 package to extend the official KCWI DRP with a
 variety of stacking tools and DRP improvements. The software offers masking and
 median filtering scripts to be used while running the KCWI DRP, and a step-by-step
@@ -83,7 +83,7 @@ the stacked cube into lower-dimensional representations should the user desire.
 Developers
 ==========
 
-The DRP was developed in collaboration between:
+The KCWI DRP was developed in collaboration between:
 
 * Don Neill, Matt Matuszewki, Nik Prusinski, Chris Martin and the KCWI Team at Caltech
 * Max Brodheim, Luca Rizzi, and Rosalie McGurk at W. M. Keck Observatory
