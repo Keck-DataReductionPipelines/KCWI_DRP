@@ -74,6 +74,12 @@ all the requirements needed for the pipeline.
         pip install kcwidrp
 
 
+    .. warning ::
+        Installing the pipeline by directly invoking `setup.py` is not recommended.
+        This method does not install the required dependencies in the recommended way,
+        and may lead to conflicts with other packages on your system.
+
+
 Installing From Source
 ----------------------
 
