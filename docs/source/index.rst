@@ -65,12 +65,12 @@ Other Helpful Packages
 The following packages might be helpful to users working with reduced KCWI data.
 Please note that these packages are not maintained or developed by W. M. Keck Observatory
 or the KCWI team at Caltech. Rather, these are community-developed packages that
-are listed only for convenience. If you utilize any of these packages, please
-ensure that you properly cite their developers in addition to the KCWI DRP's.
+are listed only for convenience. **If you utilize any of these packages, please
+ensure that you properly cite their developers in addition to the KCWI DRP's.**
 
 KCWIKit
 -------
-`KCWIKit <https://github.com/yuguangchen1/KcwiKit>`_. is a community developed
+`KCWIKit <https://github.com/yuguangchen1/KcwiKit>`_ is a community developed
 package to extend the official KCWI DRP with a
 variety of stacking tools and DRP improvements. The software offers masking and
 median filtering scripts to be used while running the KCWI DRP, and a step-by-step
