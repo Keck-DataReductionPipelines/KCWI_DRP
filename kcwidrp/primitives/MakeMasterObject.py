@@ -101,7 +101,7 @@ class MakeMasterObject(BaseImg):
                                                          "stack input file")
             stacked.header['HISTORY'] = log_string
             self.action.args.ccddata = stacked
-            mobj_name = get_master_name(combine_list, "mobj")
+            mobj_name = strip_fname(combine_list[0]) + '_' + suffix + '.fits'
             kcwi_fits_writer(stacked, output_file=mobj_name,
                              output_dir=self.config.instrument.output_directory)
             self.context.proctab.update_proctab(frame=stacked, suffix=suffix,
@@ -110,7 +110,7 @@ class MakeMasterObject(BaseImg):
             # self.action.args.name = mobj_name
             # self.action.args.name = stacked.header['OFNAME']
         else:
-            mobj_name = get_master_name(combine_list, "mobj")
+            mobj_name = strip_fname(combine_list[0]) + '_' + suffix + '.fits'
             self.action.args.ccddata.header['IMTYPE'] = args.new_type
             self.action.args.ccddata.header['HISTORY'] = log_string
             kcwi_fits_writer(self.action.args.ccddata, output_file=mobj_name,
