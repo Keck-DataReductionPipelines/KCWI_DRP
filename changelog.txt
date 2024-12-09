@@ -15,3 +15,13 @@
 	-Enabled -i CLI option
 	-Fixed bug where bad pixels would cause entire slices to be masked, instead of single pixels
 	-Added changelog
+1.1.0:
+	-Adds support for the red arm of KCWI
+1.2.0:
+	-Now uses python 3.12, allowing reductions on Apple Silicon CPUs, in addition to Intel and AMD
+	-Added check_cals.py, which allows users to check whether they have the calibration files needed
+	 before starting a full reduction
+	-Allows for using input files with arbitrary names (no longer need to use only files as they
+	 were named when they were first written to disk)
+	-Fixes a bug that prevented two concurrent instances of the pipeline from running at the same time
+	-Adds additional standard star spectra for use in fluxing
