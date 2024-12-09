@@ -62,7 +62,7 @@ class MakeMasterContbars(BaseImg):
             stack = []
             stackf = []
             for cbs in combine_list:
-                # get arc intensity (int) image file name in redux directory
+                # get cbars intensity (int) image file name in redux directory
                 stackf.append(strip_fname(cbs) + '_int.fits')
                 cbsfn = os.path.join(self.config.instrument.cwd, self.config.instrument.output_directory, stackf[-1])
                 # using [0] gets just the image data
@@ -86,7 +86,7 @@ class MakeMasterContbars(BaseImg):
             stacked.header['HISTORY'] = log_string
             self.action.args.ccddata = stacked
 
-            # get master arc output name
+            # get master cbars output name
             mcbars_name = strip_fname(combine_list[0]) + '_' + suffix + '.fits'
 
             kcwi_fits_writer(stacked, output_file=mcbars_name,
