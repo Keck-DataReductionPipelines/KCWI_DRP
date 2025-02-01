@@ -40,7 +40,7 @@ and activate it.
 
     .. code-block:: bash
 
-        conda create --name kcwidrp python=3.7
+        conda create --name kcwidrp python=3.12
         conda activate kcwidrp
 
 
@@ -72,6 +72,11 @@ all the requirements needed for the pipeline.
     .. code-block:: bash
 
         pip install kcwidrp
+
+
+Installing the pipeline by directly invoking `setup.py` is not recommended.
+This method does not install the required dependencies in the recommended way,
+and may lead to conflicts with other packages on your system.
 
 
 Installing From Source
