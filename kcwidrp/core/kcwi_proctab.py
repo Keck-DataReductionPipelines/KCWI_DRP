@@ -158,10 +158,6 @@ class Proctab:
                 self.log.info('Looking for frames with CCDCFG = %s' %
                               frame.header['CCDCFG'])
                 tab = tab[(tab['DID'] == int(frame.header['CCDCFG']))]
-                if target_group is not None:
-                    self.log.info('Looking for frames with GRPID = %s' %
-                                  target_group)
-                    tab = tab[(tab['GRPID'] == target_group)]
             # raw DARKS must have the same CCDCFG and TTIME
             elif target_type == 'DARK':
                 self.log.info('Looking for frames with CCDCFG = %s and '
