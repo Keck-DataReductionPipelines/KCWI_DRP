@@ -3,8 +3,7 @@ from kcwidrp.core.bokeh_plotting import bokeh_plot
 from kcwidrp.core.kcwi_correct_extin import kcwi_correct_extin
 from kcwidrp.core.kcwi_get_std import kcwi_get_std
 from kcwidrp.core.kcwi_plotting import set_plot_lims, save_plot
-from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer, \
-    kcwi_fits_reader, strip_fname
+from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer, kcwi_fits_reader, strip_fname
 
 from bokeh.plotting import figure, ColumnDataSource
 from scipy.signal import find_peaks

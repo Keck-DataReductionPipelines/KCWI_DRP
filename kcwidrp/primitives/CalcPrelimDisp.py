@@ -42,8 +42,7 @@ class CalcPrelimDisp(BasePrimitive):
         y_binning = self.action.args.ybinsize
         # 0 - compute alpha
         if 'BLUE' in self.action.args.ccddata.header['CAMERA'].upper():
-            preliminary_alpha = self.action.args.grangle - 13.0 - \
-                self.action.args.adjang
+            preliminary_alpha = self.action.args.grangle - 13.0 - self.action.args.adjang
         else:
             # red_grat_norm_angle = 156.1748047  # Caltech AIT value
             red_grat_norm_angle = 155.892
@@ -51,9 +50,8 @@ class CalcPrelimDisp(BasePrimitive):
         # 1 - compute preliminary angle of diffraction
         preliminary_beta = self.action.args.camangle - preliminary_alpha
         # 2 - compute preliminary dispersion
-        preliminary_dispersion = math.cos(preliminary_beta/math.degrees(1.)) / \
-            self.action.args.rho / self.config.instrument.FCAM * \
-            (self.config.instrument.PIX*y_binning) * 1.e4
+        preliminary_dispersion = (math.cos(preliminary_beta/math.degrees(1.)) / self.action.args.rho / 
+                                  self.config.instrument.FCAM * (self.config.instrument.PIX*y_binning) * 1.e4)
         preliminary_dispersion *= math.cos(
             self.config.instrument.GAMMA/math.degrees(1.))
         self.logger.info("Initial alpha, beta (deg): %.3f, %.3f" %

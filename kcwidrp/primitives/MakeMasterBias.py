@@ -1,7 +1,6 @@
 from keckdrpframework.models.arguments import Arguments
 from keckdrpframework.primitives.base_img import BaseImg
-from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_reader, \
-    kcwi_fits_writer, parse_imsec, strip_fname, get_unique_CCD_master_name
+from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_reader, kcwi_fits_writer, parse_imsec, strip_fname, get_unique_CCD_master_name
 from kcwidrp.core.bokeh_plotting import bokeh_plot
 from kcwidrp.core.kcwi_plotting import save_plot
 
@@ -98,8 +97,7 @@ class MakeMasterBias(BaseImg):
                                                      "stack input file")
 
         # for readnoise stats use 2nd and 3rd bias
-        diff = stack[1].data.astype(np.float32) - \
-            stack[2].data.astype(np.float32)
+        diff = stack[1].data.astype(np.float32) - stack[2].data.astype(np.float32)
         namps = stack[1].header['NVIDINP']
         if len(amps) != namps:
             self.logger.warning("Amp count disagreement!")
@@ -109,20 +107,18 @@ class MakeMasterBias(BaseImg):
             # get amp section
             sec, rfor = parse_imsec(stacked.header['ATSEC%d' % ia])
             noise = diff[sec[0]:(sec[1]+1), sec[2]:(sec[3]+1)]
-            noise = np.reshape(noise, noise.shape[0]*noise.shape[1]) * \
-                gain / 1.414
+            noise = np.reshape(noise, noise.shape[0]*noise.shape[1]) * gain / 1.414
             # get stats on noise
             c, low, upp = sigmaclip(noise, low=3.5, high=3.5)
             bias_rn = c.std()
             self.logger.info("Amp%d read noise from bias in e-: %.3f" %
                              (ia, bias_rn))
-            stacked.header['BIASRN%d' % ia] = \
-                (float("%.3f" % bias_rn), "RN in e- from bias")
+            stacked.header['BIASRN%d' % ia] = (float("%.3f" % bias_rn),
+                                               "RN in e- from bias")
             if self.config.instrument.plot_level >= 1:
                 # output filename stub
-                biasfnam = "bias_%05d_%s_amp%d_rdnoise" % \
-                          (stacked.header['FRAMENO'],
-                           stacked.header['AMPMODE'], ia)
+                biasfnam = "bias_%05d_%s_amp%d_rdnoise" % (stacked.header['FRAMENO'],
+                                                           stacked.header['AMPMODE'], ia)
                 plabel = '[ Img # %d' % stacked.header['FRAMENO']
                 plabel += ' (Bias)'
                 plabel += ' %s' % self.action.args.ccddata.header['BINNING']

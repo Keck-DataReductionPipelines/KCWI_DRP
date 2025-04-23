@@ -52,8 +52,7 @@ class CreateUncertaintyImage(BasePrimitive):
                 parsed_section, read_forward = parse_imsec(section)
                 self.action.args.ccddata.uncertainty.array[
                     parsed_section[0]:(parsed_section[1]+1),
-                    parsed_section[2]:(parsed_section[3]+1)] = \
-                    np.sqrt(
+                    parsed_section[2]:(parsed_section[3]+1)] = np.sqrt(
                     self.action.args.ccddata.uncertainty.array[
                         parsed_section[0]:(parsed_section[1] + 1),
                         parsed_section[2]:(parsed_section[3] + 1)] ** 2 +

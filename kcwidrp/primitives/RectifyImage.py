@@ -100,8 +100,7 @@ class RectifyImage(BasePrimitive):
                 self.logger.info("Red images are already rectified")
                 did_rectify = True
             elif 'BLUE' in camera:
-                if 'TBO' in ampmode or 'ALL' in ampmode or \
-                        '__C' in ampmode or '__E' in ampmode:
+                if 'TBO' in ampmode or 'ALL' in ampmode or '__C' in ampmode or '__E' in ampmode:
                     self.logger.info("Blue ampmode %s images are already "
                                      "rectified", ampmode)
                     did_rectify = True

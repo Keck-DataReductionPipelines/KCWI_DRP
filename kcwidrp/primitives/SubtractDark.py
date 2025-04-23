@@ -1,6 +1,6 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
-from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_reader, \
-        get_master_name
+from kcwidrp.primitives.kcwi_file_primitives import (kcwi_fits_reader,
+        get_master_name)
 import os
 
 
@@ -38,10 +38,9 @@ class SubtractDark(BasePrimitive):
                              mdname))[0]
             # scale by exposure time
             fac = 1.0
-            if 'TTIME' in mdark.header and \
-               'TTIME' in self.action.args.ccddata.header:
-                fac = float(self.action.args.ccddata.header['TTIME']) / \
-                      float(mdark.header['TTIME'])
+            if ('TTIME' in mdark.header and
+               'TTIME' in self.action.args.ccddata.header):
+                fac = float(self.action.args.ccddata.header['TTIME']) / float(mdark.header['TTIME'])
                 self.logger.info("dark scaled by %.3f" % fac)
             else:
                 self.logger.warn("unable to scale dark by exposure time")

@@ -40,8 +40,7 @@ class GenerateMaps(BasePrimitive):
 
         log_string = GenerateMaps.__module__
 
-        if self.action.args.geometry_file is not None and \
-                os.path.exists(self.action.args.geometry_file):
+        if self.action.args.geometry_file is not None and os.path.exists(self.action.args.geometry_file):
             with open(self.action.args.geometry_file, 'rb') as ifile:
                 geom = pickle.load(ifile)
             # get geom params

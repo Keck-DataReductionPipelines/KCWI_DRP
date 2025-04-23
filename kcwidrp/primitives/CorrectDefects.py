@@ -90,8 +90,7 @@ class CorrectDefects(BasePrimitive):
             self.action.args.ccddata.header[key] = (False, keycom)
 
         self.logger.info("Cleaned %d bad pixels" % number_of_bad_pixels)
-        self.action.args.ccddata.header['NBPCLEAN'] = \
-            (number_of_bad_pixels, 'number of bad pixels cleaned')
+        self.action.args.ccddata.header['NBPCLEAN'] = (number_of_bad_pixels, 'number of bad pixels cleaned')
 
         log_string = CorrectDefects.__module__
         self.action.args.ccddata.header['HISTORY'] = log_string

@@ -1,6 +1,6 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
-from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer, \
-    strip_fname
+from kcwidrp.primitives.kcwi_file_primitives import (kcwi_fits_writer,
+    strip_fname)
 
 import numpy as np
 

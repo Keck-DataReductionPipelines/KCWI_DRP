@@ -47,8 +47,8 @@ class FlagSaturation(BasePrimitive):
         self.action.args.ccddata.header[key] = (True, keycom)
 
         self.logger.info("Flagged %d saturated pixels" % number_of_sat_pixels)
-        self.action.args.ccddata.header['NSATFLAG'] = \
-            (number_of_sat_pixels, 'number of saturated pixels flagged')
+        self.action.args.ccddata.header['NSATFLAG'] = (number_of_sat_pixels,
+                                                       'number of saturated pixels flagged')
 
         log_string = FlagSaturation.__module__
         self.action.args.ccddata.header['HISTORY'] = log_string

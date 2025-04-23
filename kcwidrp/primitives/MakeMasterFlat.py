@@ -1,6 +1,6 @@
 from keckdrpframework.primitives.base_img import BaseImg
-from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_reader, \
-    kcwi_fits_writer, strip_fname, plotlabel
+from kcwidrp.primitives.kcwi_file_primitives import (kcwi_fits_reader,
+    kcwi_fits_writer, strip_fname, plotlabel)
 from kcwidrp.core.kcwi_plotting import get_plot_lims
 from kcwidrp.core.bokeh_plotting import bokeh_plot
 from kcwidrp.core.kcwi_plotting import save_plot
@@ -298,8 +298,7 @@ class MakeMasterFlat(BaseImg):
             # fit vignetted slope
             resfit = np.polyfit(xfit, yfit, 1)
             # corrected data
-            ycdata = stacked.data.flat[qq] / \
-                np.polyval(wavelinfit, wavemap.data.flat[qq]-ww0)
+            ycdata = stacked.data.flat[qq] / np.polyval(wavelinfit, wavemap.data.flat[qq]-ww0)
             ycmin = 0.5     # np.min(ycdata)
             ycmax = 1.25    # np.max(ycdata)
             # compute the intersection
@@ -342,9 +341,9 @@ class MakeMasterFlat(BaseImg):
             # apply the correction!
             self.logger.info("Applying vignetting correction...")
             for i in qcor:
-                newflat.flat[i] = (resflat[1]+resflat[0]*posmap.data.flat[i]) \
-                                / (resfit[1]+resfit[0]*posmap.data.flat[i]) * \
-                                stacked.data.flat[i]
+                newflat.flat[i] = ((resflat[1]+resflat[0]*posmap.data.flat[i]) /
+                                  (resfit[1]+resfit[0]*posmap.data.flat[i]) *
+                                stacked.data.flat[i])
             # now deal with the intermediate (buffer) region
             self.logger.info("Done, now handling buffer region")
             # get buffer points to fit in reference region
@@ -380,9 +379,8 @@ class MakeMasterFlat(BaseImg):
                     if (xinter-buffer) <= v <= (xinter+buffer)]
             # apply buffer correction to all buffer points in newflat
             for i in qbuf:
-                newflat.flat[i] = \
-                    (resflat[1] + resflat[0] * posmap.data.flat[i]) / \
-                    np.polyval(buffit, posmap.data.flat[i]) * newflat.flat[i]
+                newflat.flat[i] = ((resflat[1] + resflat[0] * posmap.data.flat[i]) / 
+                     np.polyval(buffit, posmap.data.flat[i]) * newflat.flat[i])
             self.logger.info("Vignetting correction complete.")
 
         self.logger.info("Fitting master illumination")
@@ -506,8 +504,7 @@ class MakeMasterFlat(BaseImg):
                 xlf = np.asarray([fpoints[i] for i in qhi])
                 ylf = np.asarray([ylfit[i] for i in qhi])
                 hifit = np.polyfit(xlf, ylf, 1)
-                ratio = (hifit[1] + hifit[0] * apk) / \
-                        (lowfit[1] + lowfit[0] * apk)
+                ratio = (hifit[1] + hifit[0] * apk) / (lowfit[1] + lowfit[0] * apk)
                 self.logger.info("BM ledge ratio: %.3f" % ratio)
                 # correct flat data
                 qcorr = [i for i, v in enumerate(xfr) if v >= apk]
@@ -562,8 +559,7 @@ class MakeMasterFlat(BaseImg):
         self.logger.info("Using %d knots for bspline fit" % knots)
 
         # generate a fit from ref slice points
-        bkpt = np.min(xfr) + np.arange(knots+1) * \
-            (np.max(xfr) - np.min(xfr)) / knots
+        bkpt = np.min(xfr) + np.arange(knots+1) * (np.max(xfr) - np.min(xfr)) / knots
         sftr, _ = Bspline.iterfit(xfr[nrefx:-nrefx], yfr[nrefx:-nrefx],
                                   fullbkpt=bkpt)
         yfitr, _ = sftr.value(xfr)
@@ -582,8 +578,7 @@ class MakeMasterFlat(BaseImg):
         s = np.argsort(xfb)
         xfb = xfb[s]
         yfb = yfb[s]
-        bkpt = np.min(xfb) + np.arange(knots+1) * \
-            (np.max(xfb) - np.min(xfb)) / knots
+        bkpt = np.min(xfb) + np.arange(knots+1) * (np.max(xfb) - np.min(xfb)) / knots
         sftb, _ = Bspline.iterfit(xfb[nrefx:-nrefx], yfb[nrefx:-nrefx],
                                   fullbkpt=bkpt)
         yfitb, _ = sftb.value(xfb)
@@ -602,8 +597,7 @@ class MakeMasterFlat(BaseImg):
         s = np.argsort(xfd)
         xfd = xfd[s]
         yfd = yfd[s]
-        bkpt = np.min(xfd) + np.arange(knots + 1) * \
-            (np.max(xfd) - np.min(xfd)) / knots
+        bkpt = np.min(xfd) + np.arange(knots + 1) * (np.max(xfd) - np.min(xfd)) / knots
         sftd, _ = Bspline.iterfit(xfd[nrefx:-nrefx], yfd[nrefx:-nrefx],
                                   fullbkpt=bkpt)
         yfitd, _ = sftd.value(xfd)
@@ -619,8 +613,7 @@ class MakeMasterFlat(BaseImg):
         waves = minwave + (maxwave - minwave) * np.arange(nwaves+1) / nwaves
         if self.config.instrument.plot_level >= 1:
             # output filename stub
-            rbfnam = "redblue_%05d_%s_%s_%s" % \
-                      (stacked.header['FRAMENO'],
+            rbfnam = "redblue_%05d_%s_%s_%s" % (stacked.header['FRAMENO'],
                        self.action.args.illum, self.action.args.grating,
                        self.action.args.ifuname)
             if xbin == 1:
@@ -804,9 +797,7 @@ class MakeMasterFlat(BaseImg):
                 bluefluxes = [yfb[i] - blue_offset for i in qselblue]
                 self.logger.info("Blue zero crossing, only applying offset")
             else:
-                blue_offset = yfb[qselblue[-1]] * \
-                              (bluelinfit[1]+bluelinfit[0]*xfb[qselblue[-1]]) \
-                              - blue_all_tie
+                blue_offset = yfb[qselblue[-1]] * (bluelinfit[1]+bluelinfit[0]*xfb[qselblue[-1]]) - blue_all_tie
                 bluefluxes = [yfb[i] * (bluelinfit[1]+bluelinfit[0]*xfb[i])
                               - blue_offset for i in qselblue]
                 self.logger.info("Blue linear ratio fit scaling applied")
@@ -820,9 +811,7 @@ class MakeMasterFlat(BaseImg):
                 redfluxes = [yfd[i] - red_offset for i in qselred]
                 self.logger.info("Red zero crossing, only applying offset")
             else:
-                red_offset = yfd[qselred[0]] * \
-                             (redlinfit[1]+redlinfit[0]*xfd[qselred[0]]) \
-                             - red_all_tie
+                red_offset = yfd[qselred[0]] * (redlinfit[1]+redlinfit[0]*xfd[qselred[0]]) - red_all_tie
                 redfluxes = [yfd[i] * (redlinfit[1]+redlinfit[0]*xfd[i])
                              - red_offset for i in qselred]
                 self.logger.info("Red linear ratio fit scaling applied")
@@ -848,15 +837,13 @@ class MakeMasterFlat(BaseImg):
         allfx = allfx[s]
         ally = ally[s]
 
-        bkpt = np.min(allx) + np.arange(knots+1) * \
-            (np.max(allx) - np.min(allx)) / knots
+        bkpt = np.min(allx) + np.arange(knots+1) * (np.max(allx) - np.min(allx)) / knots
         sftall, _ = Bspline.iterfit(allfx, ally, fullbkpt=bkpt)
         yfitall, _ = sftall.value(allx)
 
         if self.config.instrument.plot_level >= 1:
             # output filename stub
-            fltfnam = "flat_%05d_%s_%s_%s" % \
-                      (stacked.header['FRAMENO'],
+            fltfnam = "flat_%05d_%s_%s_%s" % (stacked.header['FRAMENO'],
                        self.action.args.illum, self.action.args.grating,
                        self.action.args.ifuname)
             if xbin == 1:

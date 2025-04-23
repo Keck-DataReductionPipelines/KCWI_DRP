@@ -85,8 +85,9 @@ class ReadAtlas(BasePrimitive):
             # Get central third
             mf = 1./3.
             # Unless we are low disp., then get central 3 5ths
-            if 'BL' in self.action.args.grating or \
-                    'RL' in self.action.args.grating:
+            if ('BL' in self.action.args.grating or
+                'RL' in self.action.args.grating):
+                
                 mf = 3./5.
             # Unless we are red high disp., then get central 8 10ths
             if 'RH' in self.action.args.grating:

@@ -84,11 +84,9 @@ class SolveAIT(BasePrimitive):
         dwout = self.action.args.dwout
         self.logger.info("Output Delta WAVE: %.3f", dwout)
         ndels = int((trimw0 - self.config.instrument.WAVEFID) / dwout)
-        self.action.args.wave0out = \
-            self.config.instrument.WAVEFID + float(ndels) * dwout
+        self.action.args.wave0out = self.config.instrument.WAVEFID + float(ndels) * dwout
         ndels = int((trimw1 - self.config.instrument.WAVEFID) / dwout)
-        self.action.args.wave1out = \
-            self.config.instrument.WAVEFID + float(ndels) * dwout
+        self.action.args.wave1out = self.config.instrument.WAVEFID + float(ndels) * dwout
         self.logger.info("WAVE RANGE: %.2f - %.2f" %
                          (self.action.args.wave0out, self.action.args.wave1out))
         # Calculate wavelength limits

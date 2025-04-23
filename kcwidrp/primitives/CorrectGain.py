@@ -1,6 +1,5 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
-from kcwidrp.primitives.kcwi_file_primitives import parse_imsec, \
-    kcwi_fits_writer
+from kcwidrp.primitives.kcwi_file_primitives import parse_imsec, kcwi_fits_writer
 
 
 class CorrectGain(BasePrimitive):

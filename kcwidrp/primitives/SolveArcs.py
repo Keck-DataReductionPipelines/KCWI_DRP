@@ -1,7 +1,7 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from kcwidrp.core.bokeh_plotting import bokeh_plot
-from kcwidrp.core.kcwi_plotting import get_plot_lims, oplot_slices, \
-    set_plot_lims, save_plot
+from kcwidrp.core.kcwi_plotting import (get_plot_lims, oplot_slices,
+    set_plot_lims, save_plot)
 from kcwidrp.primitives.GetAtlasLines import get_line_window, gaus
 from kcwidrp.primitives.kcwi_file_primitives import plotlabel
 
@@ -214,9 +214,8 @@ class SolveArcs(BasePrimitive):
                     at_flux_dat.append(self.action.args.at_flux[iw])
                     # plot, if requested
                     if do_inter and ib == next_bar_to_plot:
-                        ptitle = " Bar# %d - line %3d/%3d: xc = %.1f, " \
-                                 "Wave = %9.2f" % \
-                                 (ib, (iw + 1), len(self.action.args.at_wave),
+                        ptitle = " Bar# %d - line %3d/%3d: xc = %.1f, Wave = %9.2f" % (
+                                 ib, (iw + 1), len(self.action.args.at_wave),
                                   peak, aw)
                         atx0 = [i for i, v in enumerate(atwave)
                                 if v >= min(wvec)][0]
@@ -384,8 +383,8 @@ class SolveArcs(BasePrimitive):
             # do plotting?
             if master_inter and ib == next_bar_to_plot:
                 # plot bar fit residuals
-                ptitle = " for Bar %03d, Slice %02d, RMS = %.3f, N = %d" % \
-                         (ib, int(ib / 5), wsig, len(arc_pix_dat))
+                ptitle = " for Bar %03d, Slice %02d, RMS = %.3f, N = %d" % (
+                         ib, int(ib / 5), wsig, len(arc_pix_dat))
                 p = figure(title=plab + "RESIDUALS" + ptitle,
                            x_axis_label="Wavelength (A)",
                            y_axis_label="Fit - Inp (A)",
@@ -471,11 +470,9 @@ class SolveArcs(BasePrimitive):
                 cf_st = float(np.nanstd(coef))
                 cn = poly_order - ic
                 if cn > 0:
-                    ptitle = plab + "COEF %d VALUES <C%d> = " \
-                                    "%.3g +- %.3g" % (cn, cn, cf_av, cf_st)
+                    ptitle = plab + "COEF %d VALUES <C%d> = %.3g +- %.3g" % (cn, cn, cf_av, cf_st)
                 else:
-                    ptitle = plab + "COEF %d VALUES <C%d> = " \
-                                    "%.2f +- %.2f" % (cn, cn, cf_av, cf_st)
+                    ptitle = plab + "COEF %d VALUES <C%d> = %.2f +- %.2f" % (cn, cn, cf_av, cf_st)
                 self.logger.info(ptitle)
                 p = figure(title=ptitle, x_axis_label="Bar #",
                            y_axis_label="Coef %d (%s)" % (cn, ylabs[ic]),
@@ -499,8 +496,7 @@ class SolveArcs(BasePrimitive):
         # Plot number of lines fit
         self.action.args.av_bar_nls = float(np.nanmean(bar_nls))
         self.action.args.st_bar_nls = float(np.nanstd(bar_nls))
-        ptitle = plab + \
-            "FIT STATS <Nlns> = %.1f +- %.1f" % (self.action.args.av_bar_nls,
+        ptitle = plab + "FIT STATS <Nlns> = %.1f +- %.1f" % (self.action.args.av_bar_nls,
                                                  self.action.args.st_bar_nls)
         p = figure(title=ptitle, x_axis_label="Bar #",
                    y_axis_label="N Lines",
@@ -543,8 +539,7 @@ class SolveArcs(BasePrimitive):
                          (self.action.args.av_bar_sig,
                           self.action.args.st_bar_sig))
 
-        ptitle = plab + \
-            "FIT STATS <RMS> = %.3f +- %.3f" % (self.action.args.av_bar_sig,
+        ptitle = plab + "FIT STATS <RMS> = %.3f +- %.3f" % (self.action.args.av_bar_sig,
                                                 self.action.args.st_bar_sig)
         p = figure(title=ptitle, x_axis_label="Bar #", y_axis_label="RMS (A)",
                    plot_width=self.config.instrument.plot_width,

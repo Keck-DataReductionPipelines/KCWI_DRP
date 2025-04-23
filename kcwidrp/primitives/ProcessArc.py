@@ -14,8 +14,7 @@ class ProcessArc(BasePrimitive):
         self.logger = context.pipeline_logger
 
     def _pre_condition(self):
-        if self.action.args.calibration_lamp == \
-                self.config.instrument.default_arc_lamp:
+        if self.action.args.calibration_lamp == self.config.instrument.default_arc_lamp:
             self.logger.info("Using default arc lamp: %s" %
                              self.config.instrument.default_arc_lamp)
             return True

@@ -3,9 +3,9 @@ import requests
 import time
 
 from keckdrpframework.primitives.base_primitive import BasePrimitive
-from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer, \
-                                                    kcwi_fits_reader, \
-                                                    strip_fname
+from kcwidrp.primitives.kcwi_file_primitives import (kcwi_fits_writer,
+                                                    kcwi_fits_reader,
+                                                    strip_fname)
 
 
 class SendHTTP(BasePrimitive):

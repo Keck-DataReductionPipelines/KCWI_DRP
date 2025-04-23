@@ -1,6 +1,6 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
-from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_reader, \
-    get_master_name, get_unique_CCD_master_name
+from kcwidrp.primitives.kcwi_file_primitives import (kcwi_fits_reader,
+    get_master_name, get_unique_CCD_master_name)
 
 import os
 
@@ -51,8 +51,7 @@ class SubtractBias(BasePrimitive):
             if len(amps) != namps:
                 self.logger.warning("Amp count disagreement!")
             for ia in amps:
-                self.action.args.ccddata.header['BIASRN%d' % ia] = \
-                    mbias.header['BIASRN%d' % ia]
+                self.action.args.ccddata.header['BIASRN%d' % ia] = mbias.header['BIASRN%d' % ia]
 
             self.action.args.ccddata.header[key] = (True, keycom)
             self.action.args.ccddata.header['MBFILE'] = (mbname,

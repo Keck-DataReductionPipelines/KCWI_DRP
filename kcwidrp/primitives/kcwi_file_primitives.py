@@ -595,11 +595,9 @@ class ingest_file(BasePrimitive):
         """
         # ARCS
         if self.get_keyword('IMTYPE') == 'ARCLAMP':
-            if self.get_keyword('LMP0STAT') == 1 and \
-                    self.get_keyword('LMP0SHST') == 1:
+            if self.get_keyword('LMP0STAT') == 1 and self.get_keyword('LMP0SHST') == 1:
                 illum = self.get_keyword('LMP0NAM')
-            elif self.get_keyword('LMP1STAT') == 1 and \
-                    self.get_keyword('LMP1SHST') == 1:
+            elif self.get_keyword('LMP1STAT') == 1 and self.get_keyword('LMP1SHST') == 1:
                 illum = self.get_keyword('LMP1NAM')
             else:
                 illum = 'Test'
@@ -611,8 +609,7 @@ class ingest_file(BasePrimitive):
                 illum = 'Test'
         # DOMES
         elif self.get_keyword('IMTYPE') == 'DOMEFLAT':
-            if self.get_keyword('FLIMAGIN') == 'on' or \
-                    self.get_keyword('FLSPECTR') == 'on':
+            if self.get_keyword('FLIMAGIN') == 'on' or self.get_keyword('FLSPECTR') == 'on':
                 illum = 'Dome'
             else:
                 illum = 'Test'
@@ -861,8 +858,7 @@ class ingest_file(BasePrimitive):
 
         if self.check_if_file_can_be_processed(imtype) is False:
 
-            if self.config.instrument.continuous or \
-                    self.config.instrument.wait_for_event:
+            if self.config.instrument.continuous or self.config.instrument.wait_for_event:
                 self.logger.warn("Input frame cannot be reduced. Rescheduling")
                 self.action.new_event = None
                 return None
@@ -912,8 +908,7 @@ class ingest_file(BasePrimitive):
         # AMPMODE
         out_args.ampmode = self.ampmode()
         # BINNING
-        out_args.xbinsize, out_args.ybinsize = \
-            map(int, self.get_keyword('BINNING').split(','))
+        out_args.xbinsize, out_args.ybinsize = map(int, self.get_keyword('BINNING').split(','))
         # IFUNUM
         out_args.ifunum = int(self.get_keyword('IFUNUM'))
         # IFUNAM

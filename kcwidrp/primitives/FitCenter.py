@@ -1,7 +1,6 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from kcwidrp.core.bokeh_plotting import bokeh_plot
-from kcwidrp.core.kcwi_plotting import get_plot_lims, oplot_slices, \
-    set_plot_lims, save_plot
+from kcwidrp.core.kcwi_plotting import get_plot_lims, oplot_slices, set_plot_lims, save_plot
 from kcwidrp.primitives.kcwi_file_primitives import plotlabel
 
 from bokeh.plotting import figure
@@ -55,23 +54,23 @@ def pascal_shift(coefficients=None, x0=None):
     x05 = x0 ** 5
     x06 = x0 ** 6
     # use Pascal's Triangle to shift coefficients
-    fincoeff[0] = usecoeff[0] - usecoeff[1] * x01 + usecoeff[2] * x02 \
-        - usecoeff[3] * x03 + usecoeff[4] * x04 - usecoeff[5] * x05 \
-        + usecoeff[6] * x06
+    fincoeff[0] = (usecoeff[0] - usecoeff[1] * x01 + usecoeff[2] * x02
+        - usecoeff[3] * x03 + usecoeff[4] * x04 - usecoeff[5] * x05
+        + usecoeff[6] * x06)
 
-    fincoeff[1] = usecoeff[1] - 2.0 * usecoeff[2] * x01 \
-        + 3.0 * usecoeff[3] * x02 - 4.0 * usecoeff[4] * x03 \
-        + 5.0 * usecoeff[5] * x04 - 6.0 * usecoeff[6] * x05
+    fincoeff[1] = (usecoeff[1] - 2.0 * usecoeff[2] * x01
+        + 3.0 * usecoeff[3] * x02 - 4.0 * usecoeff[4] * x03
+        + 5.0 * usecoeff[5] * x04 - 6.0 * usecoeff[6] * x05)
 
-    fincoeff[2] = usecoeff[2] - 3.0 * usecoeff[3] * x01 \
-        + 6.0 * usecoeff[4] * x02 - 10.0 * usecoeff[5] * x03 \
-        + 15.0 * usecoeff[6] * x04
+    fincoeff[2] = (usecoeff[2] - 3.0 * usecoeff[3] * x01
+        + 6.0 * usecoeff[4] * x02 - 10.0 * usecoeff[5] * x03
+        + 15.0 * usecoeff[6] * x04)
 
-    fincoeff[3] = usecoeff[3] - 4.0 * usecoeff[4] * x01 \
-        + 10.0 * usecoeff[5] * x02 - 20.0 * usecoeff[6] * x03
+    fincoeff[3] = (usecoeff[3] - 4.0 * usecoeff[4] * x01
+        + 10.0 * usecoeff[5] * x02 - 20.0 * usecoeff[6] * x03)
 
-    fincoeff[4] = usecoeff[4] - 5.0 * usecoeff[5] * x01 \
-        + 15.0 * usecoeff[6] * x02
+    fincoeff[4] = (usecoeff[4] - 5.0 * usecoeff[5] * x01
+        + 15.0 * usecoeff[6] * x02)
 
     fincoeff[5] = usecoeff[5] - 6.0 * usecoeff[6] * x01
 
@@ -100,20 +99,20 @@ def bar_fit_helper(argument):
         # populate the coefficients
         coefficients[4] = argument['p0'][b]
         coefficients[3] = dispersion
-        cosbeta = dispersion / (argument['PIX'] * argument['ybin']) * \
-            argument['rho'] * argument['FCAM'] * 1.e-4
+        cosbeta = (dispersion / (argument['PIX'] * argument['ybin']) *
+            argument['rho'] * argument['FCAM'] * 1.e-4)
         if cosbeta > 1.:
             cosbeta = 1.
         beta = math.acos(cosbeta)
-        coefficients[2] = -(argument['PIX'] * argument['ybin'] /
-                            argument['FCAM']) ** 2 * math.sin(beta) / 2. / \
-            argument['rho'] * 1.e4
-        coefficients[1] = -(argument['PIX'] * argument['ybin'] /
-                            argument['FCAM']) ** 3 * math.cos(beta) / 6. / \
-            argument['rho'] * 1.e4
-        coefficients[0] = (argument['PIX'] * argument['ybin'] /
-                           argument['FCAM']) ** 4 * math.sin(beta) / 24. / \
-            argument['rho'] * 1.e4
+        coefficients[2] = (-(argument['PIX'] * argument['ybin'] /
+                            argument['FCAM']) ** 2 * math.sin(beta) / 2. /
+            argument['rho'] * 1.e4)
+        coefficients[1] = (-(argument['PIX'] * argument['ybin'] /
+                            argument['FCAM']) ** 3 * math.cos(beta) / 6. /
+            argument['rho'] * 1.e4)
+        coefficients[0] = ((argument['PIX'] * argument['ybin'] /
+                           argument['FCAM']) ** 4 * math.sin(beta) / 24. /
+            argument['rho'] * 1.e4)
         # what are the min and max wavelengths to consider?
         wl0 = np.polyval(coefficients, argument['xvals'][argument['minrow']])
         wl1 = np.polyval(coefficients, argument['xvals'][argument['maxrow']])
@@ -177,26 +176,25 @@ def bar_fit_helper(argument):
     # update coeffs
     coefficients[4] = argument['p0'][b] - barshift
     coefficients[3] = bardisp
-    cosbeta = coefficients[3] / (argument['PIX'] * argument['ybin']) * \
-        argument['rho'] * argument['FCAM'] * 1.e-4
+    cosbeta = (coefficients[3] / (argument['PIX'] * argument['ybin']) *
+        argument['rho'] * argument['FCAM'] * 1.e-4)
     if cosbeta > 1.:
         cosbeta = 1.
     beta = math.acos(cosbeta)
-    coefficients[2] = -(argument['PIX'] * argument['ybin'] /
-                        argument['FCAM']) ** 2 * \
-        math.sin(beta) / 2. / argument['rho'] * 1.e4
-    coefficients[1] = -(argument['PIX'] * argument['ybin'] /
-                        argument['FCAM']) ** 3 * \
-        math.cos(beta) / 6. / argument['rho'] * 1.e4
-    coefficients[0] = (argument['PIX'] * argument['ybin'] /
-                       argument['FCAM']) ** 4 * \
-        math.sin(beta) / 24. / argument['rho'] * 1.e4
+    coefficients[2] = (-(argument['PIX'] * argument['ybin'] /
+                        argument['FCAM']) ** 2 *
+        math.sin(beta) / 2. / argument['rho'] * 1.e4)
+    coefficients[1] = (-(argument['PIX'] * argument['ybin'] /
+                        argument['FCAM']) ** 3 *
+        math.cos(beta) / 6. / argument['rho'] * 1.e4)
+    coefficients[0] = ((argument['PIX'] * argument['ybin'] /
+                       argument['FCAM']) ** 4 *
+        math.sin(beta) / 24. / argument['rho'] * 1.e4)
     shifted_coefficients = pascal_shift(coefficients, argument['x0'])
     print("Bar#: %3d, Cdisp: %.4f" % (b, bardisp))
 
     # Return results
-    return b, shifted_coefficients, coefficients[4], coefficients[3], \
-           maxima, bardisp
+    return b, shifted_coefficients, coefficients[4], coefficients[3], maxima, bardisp
     # END: def bar_fit_helper()
 
 
@@ -235,8 +233,8 @@ class FitCenter(BasePrimitive):
         # y binning
         y_binning = self.action.args.ybinsize
         # let's populate the 0 points vector
-        p0 = self.action.args.cwave + np.array(self.context.bar_offsets) * \
-            self.context.prelim_disp - self.action.args.offset_wave
+        p0 = (self.action.args.cwave + np.array(self.context.bar_offsets) *
+            self.context.prelim_disp - self.action.args.offset_wave)
         # next we are going to brute-force scan around the preliminary
         # dispersion for a better solution. We will wander 5% away from it.
         maximum_dispersion_deviation = 0.05  # fraction

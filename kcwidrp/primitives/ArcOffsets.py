@@ -1,7 +1,7 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from kcwidrp.core.bokeh_plotting import bokeh_plot
-from kcwidrp.core.kcwi_plotting import get_plot_lims, oplot_slices, \
-    set_plot_lims, save_plot
+from kcwidrp.core.kcwi_plotting import (get_plot_lims, oplot_slices,
+                                        set_plot_lims, save_plot)
 from kcwidrp.primitives.kcwi_file_primitives import plotlabel
 
 import time

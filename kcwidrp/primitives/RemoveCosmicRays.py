@@ -87,19 +87,15 @@ class RemoveCosmicRays(BasePrimitive):
 
             self.logger.info("Astroscrappy: cleaned cosmic rays")
             header['history'] = "Astroscrappy: cleaned cosmic rays"
-            header['history'] = \
-                "Astroscrappy params: sigclip=%5.2f sigfrac=%5.2f " \
-                "objlim=%5.2f" % (
+            header['history'] = "Astroscrappy params: sigclip=%5.2f sigfrac=%5.2f objlim=%5.2f" % (
                 self.config.instrument.CRR_SIGCLIP,
                 self.config.instrument.CRR_SIGFRAC,
                 self.config.instrument.CRR_OBJLIM)
-            header['history'] = \
-                "Astroscrappy params: fsmode=%s psfmodel=%s psffwhm=%5.2f" % (
+            header['history'] = "Astroscrappy params: fsmode=%s psfmodel=%s psffwhm=%5.2f" % (
                 self.config.instrument.CRR_FSMODE,
                 self.config.instrument.CRR_PSFMODEL,
                 self.config.instrument.CRR_PSFFWHM)
-            header['history'] = "Astroscrappy params: sepmed=%s " \
-                                "minexptime=%f" % (
+            header['history'] = "Astroscrappy params: sepmed=%s minexptime=%f" % (
                 self.config.instrument.CRR_SEPMED,
                 self.config.instrument.CRR_MINEXPTIME)
             # header['history'] = "LA CosmicX run on %s" % time.strftime("%c")
@@ -122,9 +118,7 @@ class RemoveCosmicRays(BasePrimitive):
         else:
             self.logger.info("Astroscrappy: exptime < minexptime=%.1f" %
                              self.config.instrument.CRR_MINEXPTIME)
-            header['history'] = \
-                "Astroscrappy: exptime < minexptime=%.1f" % \
-                self.config.instrument.CRR_MINEXPTIME
+            header['history'] = "Astroscrappy: exptime < minexptime=%.1f" % self.config.instrument.CRR_MINEXPTIME
             header[key] = (False, keycom)
             header['NCRCLEAN'] = (0, "number of cosmic ray pixels")
 

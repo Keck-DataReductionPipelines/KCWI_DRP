@@ -86,11 +86,9 @@ class SolveGeom(BasePrimitive):
         # Calculate output wavelengths
         dwout = self.action.args.dwout
         ndels = int((trimw0 - self.config.instrument.WAVEFID) / dwout)
-        self.action.args.wave0out = \
-            self.config.instrument.WAVEFID + float(ndels) * dwout
+        self.action.args.wave0out = self.config.instrument.WAVEFID + float(ndels) * dwout
         ndels = int((trimw1 - self.config.instrument.WAVEFID) / dwout)
-        self.action.args.wave1out = \
-            self.config.instrument.WAVEFID + float(ndels) * dwout
+        self.action.args.wave1out = self.config.instrument.WAVEFID + float(ndels) * dwout
         self.logger.info("WAVE RANGE: %.2f - %.2f" %
                          (self.action.args.wave0out, self.action.args.wave1out))
         # Calculate wavelength limits
@@ -117,10 +115,8 @@ class SolveGeom(BasePrimitive):
                          (self.action.args.waveall0, self.action.args.waveall1))
         self.logger.info("WAVE   MID: %.2f" % self.action.args.wavemid)
         # Start setting up slice transforms
-        self.action.args.x0out = \
-            int(self.action.args.reference_bar_separation / 2.) + 1
-        self.refoutx = np.arange(0, 5) * \
-            self.action.args.reference_bar_separation + self.action.args.x0out
+        self.action.args.x0out = int(self.action.args.reference_bar_separation / 2.) + 1
+        self.refoutx = np.arange(0, 5) * self.action.args.reference_bar_separation + self.action.args.x0out
         # Variables for output control points
         srcw = []
         # Loop over source control points

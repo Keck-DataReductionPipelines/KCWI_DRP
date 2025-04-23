@@ -68,8 +68,7 @@ class FindBars(BasePrimitive):
             # set threshold for peak finding
             average_value_middle_vector = np.average(middle_vector)
             stdev_value_middle_vector = np.nanstd(middle_vector)
-            bar_thresh = average_value_middle_vector + \
-                0.5 * stdev_value_middle_vector
+            bar_thresh = average_value_middle_vector + 0.5 * stdev_value_middle_vector
             self.logger.info("peak threshold = %f" % bar_thresh)
             # find peaks above threshold
             peaks_in_middle_vector, _ = find_peaks(
@@ -180,16 +179,13 @@ class FindBars(BasePrimitive):
         # calculate reference delta x based on refbar
         self.action.args.reference_delta_x = 0.
         try:
-            if (reference_bar-1) > 0 and \
-                    (reference_bar+3) < self.config.instrument.NBARS:
+            if (reference_bar-1) > 0 and (reference_bar+3) < self.config.instrument.NBARS:
                 for ib in range(reference_bar-1, reference_bar+3):
-                    self.action.args.reference_delta_x += \
-                        (middle_centers[ib] - middle_centers[ib-1])
+                    self.action.args.reference_delta_x += (middle_centers[ib] - middle_centers[ib-1])
                 ndiv = 4.
             else:
                 for ib in range(reference_bar, reference_bar+1):
-                    self.action.args.reference_delta_x += \
-                        (middle_centers[ib] - middle_centers[ib-1])
+                    self.action.args.reference_delta_x += (middle_centers[ib] - middle_centers[ib-1])
                 ndiv = 2.
         except IndexError:
             self.logger.warning(
@@ -198,10 +194,8 @@ class FindBars(BasePrimitive):
             ndiv = 1.
         self.action.args.reference_delta_x /= ndiv
         # store image info
-        self.action.args.contbar_image_number = \
-            self.action.args.ccddata.header['FRAMENO']
-        self.action.args.contbar_image = \
-            self.action.args.name
+        self.action.args.contbar_image_number = self.action.args.ccddata.header['FRAMENO']
+        self.action.args.contbar_image = self.action.args.name
             # self.action.args.ccddata.header['OFNAME']
 
         log_string = FindBars.__module__

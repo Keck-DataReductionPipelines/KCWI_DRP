@@ -1,6 +1,7 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
-from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer, \
-    kcwi_fits_reader, strip_fname
+from kcwidrp.primitives.kcwi_file_primitives import (kcwi_fits_writer,
+                                                     kcwi_fits_reader,
+                                                     strip_fname)
 
 import time
 import os
@@ -101,8 +102,7 @@ def make_cube_helper(argument):
     else:
         darped = None
 
-    return argument['slice_number'], warped, uarped, marped, farped, karped, \
-        oarped, sarped, darped
+    return argument['slice_number'], warped, uarped, marped, farped, karped, oarped, sarped, darped
 
 
 class MakeCube(BasePrimitive):
@@ -264,8 +264,7 @@ class MakeCube(BasePrimitive):
             if self.config.instrument.plot_level >= 3:
                 for isl in range(0, 24):
                     warped = out_cube[:, :, isl]
-                    ptitle = self.action.args.plotlabel + \
-                        "WARPED Slice %d" % isl
+                    ptitle = self.action.args.plotlabel + "WARPED Slice %d" % isl
                     p = figure(tooltips=[("x", "$x"), ("y", "$y"),
                                          ("value", "@image")],
                                title=ptitle,

@@ -329,10 +329,10 @@ class GetAtlasLines(BasePrimitive):
         self.action.args.atmaxwave = maxwav
         self.action.args.dichroic_fraction = dichroic_fraction
         # output filename stub
-        atfnam = "arc_%05d_%s_%s_%s_atlines" % \
+        atfnam = ("arc_%05d_%s_%s_%s_atlines" %
                  (self.action.args.ccddata.header['FRAMENO'],
                   self.action.args.illum, self.action.args.grating,
-                  self.action.args.ifuname)
+                  self.action.args.ifuname))
         # check if line list was given on command line
         if self.config.instrument.LINELIST:
             with open(self.config.instrument.LINELIST) as llfn:
@@ -385,8 +385,7 @@ class GetAtlasLines(BasePrimitive):
                              " <FWHM> = %.3f (A)" % (len(arc_cent), avwsg,
                                                      avwfwhm))
             # fitting window based on grating type
-            if 'H' in self.action.args.grating or \
-                    'M' in self.action.args.grating:
+            if 'H' in self.action.args.grating or 'M' in self.action.args.grating:
                 fwid = avwfwhm
             else:
                 fwid = avwsg

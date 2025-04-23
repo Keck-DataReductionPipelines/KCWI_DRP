@@ -1,6 +1,8 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
-from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer, \
-    kcwi_fits_reader, get_master_name, strip_fname
+from kcwidrp.primitives.kcwi_file_primitives import (kcwi_fits_writer,
+                                                     kcwi_fits_reader,
+                                                     get_master_name,
+                                                     strip_fname)
 from kcwidrp.core.kcwi_correct_extin import kcwi_correct_extin
 
 import os
@@ -91,8 +93,7 @@ class FluxCalibrate(BasePrimitive):
                                         "using 1s")
                     expt = 1.0
             # resample onto object waves, if needed
-            if w0 != mcw0 or dw != mcdw or wav[-1] != mcwav[-1] or \
-                    sz[0] != mcsz[0]:
+            if w0 != mcw0 or dw != mcdw or wav[-1] != mcwav[-1] or sz[0] != mcsz[0]:
                 self.logger.warning("wavelength scales not identical, "
                                     "resampling standard")
                 self.logger.info(w0, mcw0, dw, mcdw, wav[-1], mcwav[-1], sz[0], mcsz[0])
@@ -111,8 +112,7 @@ class FluxCalibrate(BasePrimitive):
                     self.action.args.ccddata.data[:, ix, isl] *= mscal
                     if self.action.args.ccddata.noskysub is not None:
                         self.action.args.ccddata.noskysub[:, ix, isl] *= mscal
-                    self.action.args.ccddata.uncertainty.array[:, ix, isl] *= \
-                        mscal
+                    self.action.args.ccddata.uncertainty.array[:, ix, isl] *= mscal
 
             # check for obj, sky cubes
             if self.action.args.nasmask and self.action.args.numopen > 1:

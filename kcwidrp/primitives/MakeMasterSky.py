@@ -1,6 +1,6 @@
 from keckdrpframework.primitives.base_img import BaseImg
-from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_reader, \
-    kcwi_fits_writer, strip_fname
+from kcwidrp.primitives.kcwi_file_primitives import (kcwi_fits_reader,
+    kcwi_fits_writer, strip_fname)
 from kcwidrp.primitives.GetAtlasLines import gaus
 from kcwidrp.core.kcwi_get_std import kcwi_get_std
 from kcwidrp.core.bokeh_plotting import bokeh_plot
@@ -400,10 +400,8 @@ class MakeMasterSky(BaseImg):
                 auto_cont_width = 7. * res[2]
 
                 # Next define lower and upper windows
-                con_pos_mask_lo_0 = con_pos_mask_0 - \
-                    14 / self.action.args.xbinsize
-                con_pos_mask_up_1 = con_pos_mask_1 + \
-                    14 / self.action.args.xbinsize
+                con_pos_mask_lo_0 = con_pos_mask_0 - 14 / self.action.args.xbinsize
+                con_pos_mask_up_1 = con_pos_mask_1 + 14 / self.action.args.xbinsize
 
                 # plot, if requested
                 if self.config.instrument.plot_level >= 1:
@@ -450,10 +448,8 @@ class MakeMasterSky(BaseImg):
                 con_pos_mask_1 = auto_cont_pos + auto_cont_width
 
                 # Next define lower and upper windows
-                con_pos_mask_lo_0 = con_pos_mask_0 - \
-                    14 / self.action.args.xbinsize
-                con_pos_mask_up_1 = con_pos_mask_1 + \
-                    14 / self.action.args.xbinsize
+                con_pos_mask_lo_0 = con_pos_mask_0 - 14 / self.action.args.xbinsize
+                con_pos_mask_up_1 = con_pos_mask_1 + 14 / self.action.args.xbinsize
 
             self.logger.info("Masking all but sky region between "
                              "%.2f and %.2f and between %.2f and %.2f" %
@@ -462,9 +458,9 @@ class MakeMasterSky(BaseImg):
 
             # Mask all but local sky from sky calculation
             for i, v in enumerate(binary_mask.flat):
-                if (0 < posmap.data.flat[i] < con_pos_mask_lo_0) or \
-                   (con_pos_mask_0 < posmap.data.flat[i] < con_pos_mask_1) or \
-                   (con_pos_mask_up_1 < posmap.data.flat[i] < posmax):
+                if ((0 < posmap.data.flat[i] < con_pos_mask_lo_0) or
+                   (con_pos_mask_0 < posmap.data.flat[i] < con_pos_mask_1) or
+                   (con_pos_mask_up_1 < posmap.data.flat[i] < posmax)):
                     binary_mask.flat[i] = True
 
         # count masked pixels
@@ -533,8 +529,7 @@ class MakeMasterSky(BaseImg):
         n = int(sm_sz[0] * knotspp)
 
         # calculate break points for b splines
-        bkpt = np.min(waves) + np.arange(n+1) * \
-            (np.max(waves) - np.min(waves)) / n
+        bkpt = np.min(waves) + np.arange(n+1) * (np.max(waves) - np.min(waves)) / n
 
         # log
         self.logger.info("Nknots = %d, min = %.2f, max = %.2f (A)" %
@@ -556,8 +551,7 @@ class MakeMasterSky(BaseImg):
                 if n == 8000:
                     n = 5000
                 # calculate breakpoints
-                bkpt = np.min(waves) + np.arange(n + 1) * \
-                    (np.max(waves) - np.min(waves)) / n
+                bkpt = np.min(waves) + np.arange(n + 1) * (np.max(waves) - np.min(waves)) / n
                 # log
                 self.logger.info("Nknots = %d, min = %.2f, max = %.2f (A)" %
                                  (n, np.min(bkpt), np.max(bkpt)))
@@ -585,8 +579,7 @@ class MakeMasterSky(BaseImg):
         # plot, if requested
         if self.config.instrument.plot_level >= 1:
             # output filename stub
-            skyfnam = "sky_%05d_%s_%s_%s" % \
-                     (self.action.args.ccddata.header['FRAMENO'],
+            skyfnam = "sky_%05d_%s_%s_%s" % (self.action.args.ccddata.header['FRAMENO'],
                       self.action.args.illum, self.action.args.grating,
                       self.action.args.ifuname)
             p = figure(
@@ -627,8 +620,7 @@ class MakeMasterSky(BaseImg):
         self.action.args.ccddata.header['IMTYPE'] = 'SKY'
         self.action.args.ccddata.header['HISTORY'] = log_string
         self.action.args.ccddata.header['SKYMODEL'] = (True, 'sky model image?')
-        self.action.args.ccddata.header['SKYIMAGE'] = \
-            (ofn, 'image used for sky model')
+        self.action.args.ccddata.header['SKYIMAGE'] = (ofn, 'image used for sky model')
         if tmsk > 0:
             self.action.args.ccddata.header['SKYMSK'] = (True,
                                                          'was sky masked?')

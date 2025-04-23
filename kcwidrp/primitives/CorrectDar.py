@@ -1,7 +1,8 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from kcwidrp.core.kcwi_get_std import kcwi_get_std
-from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer, \
-    kcwi_fits_reader, strip_fname
+from kcwidrp.primitives.kcwi_file_primitives import (kcwi_fits_writer,
+                                                     kcwi_fits_reader,
+                                                     strip_fname)
 
 import numpy as np
 from scipy.ndimage import shift
@@ -169,25 +170,20 @@ class CorrectDar(BasePrimitive):
         output_flags += 128
 
         output_image[:, padding_y:(padding_y+image_size[1]),
-                     padding_x:(padding_x+image_size[2])] = \
-            self.action.args.ccddata.data
+                     padding_x:(padding_x+image_size[2])] = self.action.args.ccddata.data
 
         output_stddev[:, padding_y:(padding_y+image_size[1]),
-                      padding_x:(padding_x+image_size[2])] = \
-            self.action.args.ccddata.uncertainty.array
+                      padding_x:(padding_x+image_size[2])] = self.action.args.ccddata.uncertainty.array
 
         output_mask[:, padding_y:(padding_y+image_size[1]),
-                    padding_x:(padding_x+image_size[2])] = \
-            self.action.args.ccddata.mask
+                    padding_x:(padding_x+image_size[2])] = self.action.args.ccddata.mask
 
         output_flags[:, padding_y:(padding_y+image_size[1]),
-                     padding_x:(padding_x+image_size[2])] = \
-            self.action.args.ccddata.flags
+                     padding_x:(padding_x+image_size[2])] = self.action.args.ccddata.flags
 
         if output_noskysub is not None:
             output_noskysub[:, padding_y:(padding_y + image_size[1]),
-                            padding_x:(padding_x + image_size[2])] = \
-                self.action.args.ccddata.noskysub
+                            padding_x:(padding_x + image_size[2])] = self.action.args.ccddata.noskysub
 
         # check for obj, sky cubes
         output_obj = None
@@ -241,10 +237,8 @@ class CorrectDar(BasePrimitive):
         # Perform correction
         for j, wl in enumerate(waves):
             dispersion_correction = atm_disper(wref, wl, airmass)
-            x_shift = dispersion_correction * \
-                math.sin(projection_angle) / x_scale
-            y_shift = dispersion_correction * \
-                math.cos(projection_angle) / y_scale
+            x_shift = dispersion_correction * math.sin(projection_angle) / x_scale
+            y_shift = dispersion_correction * math.cos(projection_angle) / y_scale
             output_image[j, :, :] = shift(output_image[j, :, :],
                                           (y_shift, x_shift))
             output_stddev[j, :, :] = shift(output_stddev[j, :, :],
@@ -260,20 +254,16 @@ class CorrectDar(BasePrimitive):
         if output_obj is not None:
             for j, wl in enumerate(waves):
                 dispersion_correction = atm_disper(wref, wl, airmass)
-                x_shift = dispersion_correction * \
-                    math.sin(projection_angle) / x_scale
-                y_shift = dispersion_correction * \
-                    math.cos(projection_angle) / y_scale
+                x_shift = dispersion_correction * math.sin(projection_angle) / x_scale
+                y_shift = dispersion_correction * math.cos(projection_angle) / y_scale
                 output_obj[j, :, :] = shift(output_obj[j, :, :],
                                             (y_shift, x_shift))
 
         if output_sky is not None:
             for j, wl in enumerate(waves):
                 dispersion_correction = atm_disper(wref, wl, airmass)
-                x_shift = dispersion_correction * \
-                    math.sin(projection_angle) / x_scale
-                y_shift = dispersion_correction * \
-                    math.cos(projection_angle) / y_scale
+                x_shift = dispersion_correction * math.sin(projection_angle) / x_scale
+                y_shift = dispersion_correction * math.cos(projection_angle) / y_scale
                 output_sky[j, :, :] = shift(output_sky[j, :, :],
                                             (y_shift, x_shift))
 
@@ -281,10 +271,8 @@ class CorrectDar(BasePrimitive):
         if output_del is not None:
             for j, wl in enumerate(waves):
                 dispersion_correction = atm_disper(wref, wl, airmass)
-                x_shift = dispersion_correction * \
-                    math.sin(projection_angle) / x_scale
-                y_shift = dispersion_correction * \
-                    math.cos(projection_angle) / y_scale
+                x_shift = dispersion_correction * math.sin(projection_angle) / x_scale
+                y_shift = dispersion_correction * math.cos(projection_angle) / y_scale
                 output_del[j, :, :] = shift(output_del[j, :, :],
                                             (y_shift, x_shift))
 
