@@ -73,8 +73,7 @@ class TraceBars(BasePrimitive):
                 # trace up
                 samy = self.action.args.middle_row + samp
                 done = False
-                while samy < (self.action.args.ccddata.data.shape[0] - win) \
-                        and not done:
+                while samy < (self.action.args.ccddata.data.shape[0] - win) and not done:
                     ys = np.median(
                         self.action.args.ccddata.data[(samy - win):
                                                       (samy + win + 1),
@@ -127,8 +126,7 @@ class TraceBars(BasePrimitive):
             if do_plot:
                 # output filename stub
                 nbars = self.config.instrument.NBARS
-                trcfnam = "bars_%05d_%s_%s_%s" % \
-                          (self.action.args.ccddata.header['FRAMENO'],
+                trcfnam = "bars_%05d_%s_%s_%s" % (self.action.args.ccddata.header['FRAMENO'],
                            self.action.args.illum, self.action.args.grating,
                            self.action.args.ifuname)
                 # plot them
@@ -159,8 +157,7 @@ class TraceBars(BasePrimitive):
             # in this line we pass the trace information to an argument
             # instead of writing it to a table
             self.context.trace = trace
-            name = strip_fname(self.action.args.contbar_image) + \
-                "_trace.fits"
+            name = strip_fname(self.action.args.contbar_image) + "_trace.fits"
             write_table(table=[src, dst, barid, slid],
                         names=('src', 'dst', 'barid', 'slid'),
                         output_dir=os.path.join(
@@ -185,8 +182,7 @@ class TraceBars(BasePrimitive):
                                               "Cont. bars image")})
 
             if self.config.instrument.saveintims:
-                from kcwidrp.primitives.kcwi_file_primitives import \
-                    kcwi_fits_writer
+                from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer
                 from skimage import transform as tf
                 # fit transform
                 # NOTE: we do not need an asymmetric polynomial for this

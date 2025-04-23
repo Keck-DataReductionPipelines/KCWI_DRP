@@ -6,9 +6,9 @@ from astropy import units as u
 from astropy.coordinates import SkyCoord, EarthLocation
 
 from keckdrpframework.primitives.base_primitive import BasePrimitive
-from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer, \
-                                                    kcwi_fits_reader, \
-                                                    strip_fname
+from kcwidrp.primitives.kcwi_file_primitives import (kcwi_fits_writer,
+                                                    kcwi_fits_reader,
+                                                    strip_fname)
 
 
 class WavelengthCorrections(BasePrimitive):
@@ -179,8 +179,7 @@ class WavelengthCorrections(BasePrimitive):
 
         # Standard conversion format
         sigma_sq = (1.e4/wavelength)**2.  # wavenumber squared
-        factor = 1 + (5.792105e-2/(238.0185-sigma_sq)) + \
-            (1.67918e-3/(57.362-sigma_sq))
+        factor = 1 + (5.792105e-2/(238.0185-sigma_sq)) + (1.67918e-3/(57.362-sigma_sq))
         rind = factor[int(factor.shape[0] / 2)]
         rwav = wavelength[int(wavelength.shape[0] / 2)]
         self.logger.info("Refractive index = %.10f at %.3f Ang" % (rind, rwav))

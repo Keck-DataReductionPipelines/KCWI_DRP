@@ -73,16 +73,14 @@ class SubtractOverscan(BasePrimitive):
                     # generate fitted overscan vector for full range
                     osfit = np.polyval(oscoef, xx)
                     # calculate residuals
-                    resid = (osvec[50:] - osfit[50:]) * math.sqrt(nsam) * \
-                        gain / 1.414
+                    resid = (osvec[50:] - osfit[50:]) * math.sqrt(nsam) * gain / 1.414
                 else:
                     # reverse read skips last 50 px
                     oscoef = np.polyfit(xx[:-50], osvec[:-50], porder)
                     # generate fitted overscan vector for full range
                     osfit = np.polyval(oscoef, xx)
                     # calculate residuals
-                    resid = (osvec[:-50] - osfit[:-50]) * math.sqrt(nsam) * \
-                        gain / 1.414
+                    resid = (osvec[:-50] - osfit[:-50]) * math.sqrt(nsam) * gain / 1.414
 
                 sdrs = float("%.3f" % np.std(resid))
                 self.logger.info("Img # %05d, Amp %d [%d:%d, %d:%d]" % (frameno,
@@ -93,10 +91,8 @@ class SubtractOverscan(BasePrimitive):
                                  (ia, osval))
                 self.logger.info("Amp%d Read noise from oscan in e-: %.3f" %
                                  (ia, sdrs))
-                self.action.args.ccddata.header['OSCNRN%d' % ia] = \
-                    (sdrs, "amp%d RN in e- from oscan" % ia)
-                self.action.args.ccddata.header['OSCNVAL%d' % ia] = \
-                    (osval, "amp%d oscan counts (DN)" % ia)
+                self.action.args.ccddata.header['OSCNRN%d' % ia] = (sdrs, "amp%d RN in e- from oscan" % ia)
+                self.action.args.ccddata.header['OSCNVAL%d' % ia] = (osval, "amp%d oscan counts (DN)" % ia)
 
                 if self.config.instrument.plot_level >= 2:
                     x = np.arange(len(osvec))
@@ -121,8 +117,7 @@ class SubtractOverscan(BasePrimitive):
                 xx1 = dsec[iac][3] + 1
                 self.action.args.ccddata.data[y0:y1, xx0:xx1] -= osval
                 # for ix in range(dsec[iac][2], dsec[iac][3] + 1):
-                #     self.action.args.ccddata.data[y0:y1, ix] = \
-                #         self.action.args.ccddata.data[y0:y1, ix] - osfit
+                #     self.action.args.ccddata.data[y0:y1, ix] = self.action.args.ccddata.data[y0:y1, ix] - osfit
                 performed = True
             else:
                 self.logger.info("not enough overscan px to fit amp %d" % ia)

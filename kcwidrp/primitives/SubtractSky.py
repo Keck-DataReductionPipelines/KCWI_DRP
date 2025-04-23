@@ -1,6 +1,6 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
-from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_reader, \
-    kcwi_fits_writer, strip_fname  # , get_master_name
+from kcwidrp.primitives.kcwi_file_primitives import (kcwi_fits_reader,
+    kcwi_fits_writer, strip_fname)
 import os
 
 
@@ -146,8 +146,7 @@ class SubtractSky(BasePrimitive):
             self.logger.info("Sky scale factor = %.3f" % skscl)
 
             # store un-sky-subtracted image
-            self.action.args.ccddata.noskysub = \
-                self.action.args.ccddata.data.copy()
+            self.action.args.ccddata.noskysub = self.action.args.ccddata.data.copy()
 
             # do the subtraction
             self.action.args.ccddata.data -= msky.data * skscl

@@ -16,8 +16,7 @@ def test_parse_kcwi_config():
 def test_parse_log_config():
 
     framework_logcfg_file = 'configs/logger.cfg'
-    framework_logcfg_fullpath = \
-        pkg_resources.resource_filename(pkg, framework_logcfg_file)
+    framework_logcfg_fullpath = pkg_resources.resource_filename(pkg, framework_logcfg_file)
     # we are only checking that the config file can be parsed,
     # not that the log file can be created
     try:

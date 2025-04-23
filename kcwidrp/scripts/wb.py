@@ -263,25 +263,22 @@ def get_log_string(ifile, batch=False):
             except KeyError:
                 pass
             try:
-                lstring = "%(OFNAME)19s %(CONFIGID)4s (%(AMPMODE)3s/%(BINNING)3s/%(CCDMODE)1d/" \
-                          "%(GAINMUL)2d/%(NUMOPEN)2d/%(EXPTIME)6.1f s), (%(IFUNAM)3s/" \
-                          "%(BFILTNAM)5s/%(BGRATNAM)4s/%(BGROTNAM)9s dg/" \
-                          "%(BCWAVE)6.1f/%(CALMNAM)s/%(CALPNAM)5s/%(CALLANG)5.1f dg), " \
-                          "(%(BARTANG)5.1f/%(BNASNAM)4s/%(BFOCMM)6.3f) %(AIRMASS)5.3f: %(IMTYPE)7s/" \
-                          "%(ILLUME)6s/%(TARGNAME)s:%(OBJECT)s" % header
+                lstring = ("%(OFNAME)19s %(CONFIGID)4s (%(AMPMODE)3s/%(BINNING)3s/%(CCDMODE)1d/"
+                          "%(GAINMUL)2d/%(NUMOPEN)2d/%(EXPTIME)6.1f s), (%(IFUNAM)3s/"
+                          "%(BFILTNAM)5s/%(BGRATNAM)4s/%(BGROTNAM)9s dg/"
+                          "%(BCWAVE)6.1f/%(CALMNAM)s/%(CALPNAM)5s/%(CALLANG)5.1f dg), "
+                          "(%(BARTANG)5.1f/%(BNASNAM)4s/%(BFOCMM)6.3f) %(AIRMASS)5.3f: %(IMTYPE)7s/"
+                          "%(ILLUME)6s/%(TARGNAME)s:%(OBJECT)s") % header
             except:
                 lstring = "%19s : ?" % ifile
 
             if header['EXPTIME'] <= 0.0:
-                cstr = "%(BINNING)3s:%(AMPMODE)3s:%(CCDMODE)1d:%(GAINMUL)2d:BIAS" % \
-                       header
+                cstr = "%(BINNING)3s:%(AMPMODE)3s:%(CCDMODE)1d:%(GAINMUL)2d:BIAS" % header
             else:
                 if batch:
-                    cstr = "%(BINNING)3s:%(BFILTNAM)s:%(BGRATNAM)s:%(IFUNAM)s:%(BCWAVE).1f" \
-                           % header
+                    cstr = "%(BINNING)3s:%(BFILTNAM)s:%(BGRATNAM)s:%(IFUNAM)s:%(BCWAVE).1f" % header
                 else:
-                    cstr = "%(BINNING)3s:%(BFILTNAM)s:%(BGRATNAM)s:%(IFUNAM)s:%(BCWAVE).1f:" \
-                           "%(EXPTIME)6.1f:%(OBJECT)s" % header
+                    cstr = "%(BINNING)3s:%(BFILTNAM)s:%(BGRATNAM)s:%(IFUNAM)s:%(BCWAVE).1f:%(EXPTIME)6.1f:%(OBJECT)s" % header
             lfn = get_cal_list_file(header)
         else:
             lstring = "%19s : NOT a BLUE image!" % ifile

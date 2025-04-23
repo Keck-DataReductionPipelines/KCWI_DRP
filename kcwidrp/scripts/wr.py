@@ -266,25 +266,22 @@ def get_log_string(ifile, batch=False):
             except KeyError:
                 pass
             try:
-                lstring = "%(OFNAME)19s %(CONFIGID)4s (%(AMPMODE)8s/%(BINNING)3s/%(CDSSPEED)1d/" \
-                          "%(ADCGAINS)1d/%(NUMOPEN)2d/%(EXPTIME)6.1f s), (%(IFUNAM)3s/" \
-                          "%(RFILTNAM)5s/%(RGRATNAM)4s/%(RGROTNAM)9s dg/" \
-                          "%(RCWAVE)6.1f/%(CALMNAM)5s/%(CALPNAM)5s/%(CALLANG)5.1f dg), " \
-                          "(%(RARTANG)5.1f/%(RNASNAM)4s/%(RFOCMM)6.3f) %(AIRMASS)5.3f: %(IMTYPE)7s/" \
-                          "%(ILLUME)6s/%(TARGNAME)s:%(OBJECT)s" % header
+                lstring = ("%(OFNAME)19s %(CONFIGID)4s (%(AMPMODE)8s/%(BINNING)3s/%(CDSSPEED)1d/"
+                          "%(ADCGAINS)1d/%(NUMOPEN)2d/%(EXPTIME)6.1f s), (%(IFUNAM)3s/"
+                          "%(RFILTNAM)5s/%(RGRATNAM)4s/%(RGROTNAM)9s dg/"
+                          "%(RCWAVE)6.1f/%(CALMNAM)5s/%(CALPNAM)5s/%(CALLANG)5.1f dg), "
+                          "(%(RARTANG)5.1f/%(RNASNAM)4s/%(RFOCMM)6.3f) %(AIRMASS)5.3f: %(IMTYPE)7s/"
+                          "%(ILLUME)6s/%(TARGNAME)s:%(OBJECT)s") % header
             except:
                 lstring = "%19s : ?" % ifile
 
             if header['EXPTIME'] <= 0.0:
-                cstr = "%(BINNING)3s:%(AMPMODE)8s:%(CDSSPEED)1d:%(ADCGAINS)1d:BIAS" % \
-                       header
+                cstr = "%(BINNING)3s:%(AMPMODE)8s:%(CDSSPEED)1d:%(ADCGAINS)1d:BIAS" % header
             else:
                 if batch:
-                    cstr = "%(BINNING)3s:%(RGRATNAM)s:%(IFUNAM)s:%(RCWAVE).1f" \
-                           % header
+                    cstr = "%(BINNING)3s:%(RGRATNAM)s:%(IFUNAM)s:%(RCWAVE).1f" % header
                 else:
-                    cstr = "%(BINNING)3s:%(RGRATNAM)s:%(IFUNAM)s:%(RCWAVE).1f:" \
-                           "%(EXPTIME)6.1f:%(OBJECT)s" % header
+                    cstr = "%(BINNING)3s:%(RGRATNAM)s:%(IFUNAM)s:%(RCWAVE).1f:%(EXPTIME)6.1f:%(OBJECT)s" % header
             lfn = get_cal_list_file(header)
         else:
             lstring = "%19s : NOT a RED image!" % ifile

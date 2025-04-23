@@ -172,12 +172,10 @@ def main():
     check_directory("plots")
 
     framework_config_file = "configs/framework.cfg"
-    framework_config_fullpath = \
-        pkg_resources.resource_filename(pkg, framework_config_file)
+    framework_config_fullpath = pkg_resources.resource_filename(pkg, framework_config_file)
 
     framework_logcfg_file = 'configs/logger.cfg'
-    framework_logcfg_fullpath = \
-        pkg_resources.resource_filename(pkg, framework_logcfg_file)
+    framework_logcfg_fullpath = pkg_resources.resource_filename(pkg, framework_logcfg_file)
 
     # add kcwi specific config files # make changes here to allow this file
     # to be loaded from the command line
@@ -350,12 +348,9 @@ def main():
         framework.config.instrument.oscanbuf = int(
             kcwi_config.RED['oscanbuf'])
     else:
-        framework.config.instrument.arc_min_nframes = \
-            kcwi_config.arc_min_nframes
-        framework.config.instrument.contbars_min_nframes = \
-            kcwi_config.contbars_min_nframes
-        framework.config.instrument.object_min_nframes = \
-            kcwi_config.object_min_nframes
+        framework.config.instrument.arc_min_nframes = kcwi_config.arc_min_nframes
+        framework.config.instrument.contbars_min_nframes = kcwi_config.contbars_min_nframes
+        framework.config.instrument.object_min_nframes = kcwi_config.object_min_nframes
         framework.config.instrument.minoscanpix = kcwi_config.minoscanpix
         framework.config.instrument.oscanbuf = kcwi_config.oscanbuf
 

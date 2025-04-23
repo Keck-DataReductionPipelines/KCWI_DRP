@@ -88,8 +88,7 @@ class SubtractScatteredLight(BasePrimitive):
             self.logger.info("Mean signal to noise = %.2f" % signal_to_noise)
             if self.config.instrument.plot_level >= 1:
                 # output filename stub
-                scfnam = "scat_%05d_%s_%s_%s" % \
-                         (self.action.args.ccddata.header['FRAMENO'],
+                scfnam = "scat_%05d_%s_%s_%s" % (self.action.args.ccddata.header['FRAMENO'],
                           self.action.args.illum, self.action.args.grating,
                           self.action.args.ifuname)
                 # plot
@@ -111,8 +110,7 @@ class SubtractScatteredLight(BasePrimitive):
             # Subtract scattered light
             self.logger.info("Starting scattered light subtraction")
             for ix in range(0, siz[1]):
-                self.action.args.ccddata.data[y0:y3, ix] = \
-                    self.action.args.ccddata.data[y0:y3, ix] - scat
+                self.action.args.ccddata.data[y0:y3, ix] = self.action.args.ccddata.data[y0:y3, ix] - scat
             self.action.args.ccddata.header[key] = (True, keycom)
 
         log_string = SubtractScatteredLight.__module__
