@@ -124,8 +124,8 @@ def bar_fit_helper(argument):
                  if v >= minimum_wavelength][0]
         maxrw = [i for i, v in enumerate(argument['refwave'])
                  if v <= maximum_wavelength][-1]
-        ref_wave_of_sub_spectrum = argument['refwave'][minrw:maxrw]
-        ref_flux_of_sub_spectrum = argument['reflux'][minrw:maxrw]
+        ref_wave_of_sub_spectrum = argument['refwave'][minrw:maxrw].copy()
+        ref_flux_of_sub_spectrum = argument['reflux'][minrw:maxrw].copy()
         # get bell cosine taper to avoid nasty edge effects
         tkwgt = signal.windows.tukey(len(ref_flux_of_sub_spectrum),
                                      alpha=argument['taperfrac'])
