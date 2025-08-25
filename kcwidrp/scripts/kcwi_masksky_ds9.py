@@ -78,7 +78,9 @@ def main():
             exit()
         
         # 
-        regstr.replace('physical', '')
+        #regstr.replace('physical', '')
+        regstr = regstr.replace('physical', 'image') # Two things: it looks like regstr.replace doesn't overwrite the string "in place", and regions doesnt like it if you dont specify a coordinate system
+        #print(regstr)
         r = Regions.parse(regstr, format='ds9')
         mask = None
         for region in r.regions:
