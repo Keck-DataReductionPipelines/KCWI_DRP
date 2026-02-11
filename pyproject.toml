@@ -1,0 +1,56 @@
+[tool.poetry]
+name = "kcwidrp"
+version = "1.2.1"
+description = "KCWI Data Reduction Pipeline"
+readme = "README.rst"
+license = "BSD-3-Clause"
+authors = [
+    "J. Neill <neill@srl.caltech.edu>",
+    "L. Rizzi",
+    "M. Brodheim"
+]
+homepage = "https://github.com/Keck-DataReductionPipelines/KCWI_DRP.git"
+packages = [{ include = "kcwidrp" }]
+include = [
+    "kcwidrp/configs/*.cfg",
+    "kcwidrp/data/*",
+    "kcwidrp/data/extin/*",
+    "kcwidrp/data/stds/*"
+]
+
+[tool.poetry.dependencies]
+python = ">=3.12"
+scikit-image = ">=0.24,<1.0"
+astropy = ">=6.1.3,<6.2.0"
+astroscrappy = ">=1.1.0,<1.2.0"
+ccdproc = ">=2.4.2,<2.5.0"
+numpy = "==1.26.4"
+scipy = ">=1.14.1,<1.15.0"
+pyerfa = ">=2.0.1.5,<3.0.0.0"
+bokeh = ">=2.4.3,<2.5.0"
+jinja2 = ">=3.0.3,<3.1.0"
+psutil = ">=5.7.0,<5.8.0"
+pytest = ">=5.4.1,<5.5.0"
+keckdrpframework = "0.1.*"
+requests = ">=2.32.5,<3.0.0"
+pandas = ">=1.3.5"
+matplotlib = ">=3.9.2,<3.10.0"
+ref_index = ">=1.0,<2.0"
+pyregion = ">=2.0,<3.0"
+cython = ">=3.2.4,<4.0.0"
+selenium = ">=4.40.0,<5.0.0"
+phantomjs = ">=1.4.1,<2.0.0"
+
+[tool.poetry.scripts]
+reduce_kcwi = "kcwidrp.scripts.reduce_kcwi:main"
+kcwi_masksky_ds9 = "kcwidrp.scripts.kcwi_masksky_ds9:main"
+smart_reduce_kcwi = "kcwidrp.scripts.smart_reduce_kcwi:main"
+modhead = "kcwidrp.scripts.modhead:main"
+start_kcwi_rti = "kcwidrp.scripts.kcwi_rti:main"
+wb = "kcwidrp.scripts.wb:wb_main"
+wr = "kcwidrp.scripts.wr:wr_main"
+check_cals = "kcwidrp.scripts.check_cals:main"
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
