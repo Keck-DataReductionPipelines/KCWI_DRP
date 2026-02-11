@@ -1,10 +1,11 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
+from kcwidrp.core.kcwi_pkg_resources import get_resource_path
 from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer
 
 import numpy as np
-import pkg_resources
 import os
 import pandas as pd
+
 
 
 class CorrectDefects(BasePrimitive):
@@ -55,7 +56,7 @@ class CorrectDefects(BasePrimitive):
                                                self.action.args.xbinsize,
                                                self.action.args.ybinsize, nastr)
         package = __name__.split('.')[0]
-        full_path = pkg_resources.resource_filename(package, path)
+        full_path = get_resource_path(package, path)
         number_of_bad_pixels = 0   # count of defective pixels cleaned
         if os.path.exists(full_path):
             self.logger.info("Reading defect list in: %s" % full_path)

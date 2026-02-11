@@ -10,6 +10,7 @@ from keckdrpframework.models.arguments import Arguments
 from keckdrpframework.utils.drpf_logger import getLogger
 from kcwidrp.core.bokeh_plotting import check_running_process
 from kcwidrp.core.kcwi_get_std import is_file_kcwi_std
+from kcwidrp.core.kcwi_pkg_resources import get_resource_path
 
 import subprocess
 import time
@@ -18,7 +19,6 @@ import argparse
 import sys
 import traceback
 import os
-import pkg_resources
 import psutil
 import shutil
 
@@ -129,7 +129,7 @@ def main():
             print("Config file kcwi.cfg already exists in current dir")
         else:
             kcwi_config_file = 'configs/kcwi.cfg'
-            kcwi_config_fullpath = pkg_resources.resource_filename(
+            kcwi_config_fullpath = get_resource_path(
                 pkg, kcwi_config_file)
             shutil.copy(kcwi_config_fullpath, os.getcwd())
             print("Copied kcwi.cfg into current dir.  Edit and use with -c")
@@ -181,18 +181,15 @@ def main():
     check_directory("plots")
 
     framework_config_file = "configs/framework.cfg"
-    framework_config_fullpath = \
-        pkg_resources.resource_filename(pkg, framework_config_file)
+    framework_config_fullpath = get_resource_path(pkg, framework_config_file)
 
     framework_logcfg_file = 'configs/logger.cfg'
-    framework_logcfg_fullpath = \
-        pkg_resources.resource_filename(pkg, framework_logcfg_file)
-
+    framework_logcfg_fullpath = get_resource_path(pkg, framework_logcfg_file)
     # add kcwi specific config files # make changes here to allow this file
     # to be loaded from the command line
     if args.kcwi_config_file is None:
         kcwi_config_file = 'configs/kcwi.cfg'
-        kcwi_config_fullpath = pkg_resources.resource_filename(
+        kcwi_config_fullpath = get_resource_path(
             pkg, kcwi_config_file)
         kcwi_config = ConfigClass(kcwi_config_fullpath, default_section='KCWI')
     else:

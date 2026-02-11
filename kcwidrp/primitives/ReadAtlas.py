@@ -1,11 +1,12 @@
 from keckdrpframework.primitives.base_primitive import BasePrimitive
 from kcwidrp.core.bokeh_plotting import bokeh_plot
 from kcwidrp.core.kcwi_plotting import save_plot
+from kcwidrp.core.kcwi_pkg_resources import get_resource_path
 from kcwidrp.primitives.kcwi_file_primitives import plotlabel
+
 
 from bokeh.plotting import figure
 from bokeh.models import Range1d
-import pkg_resources
 import os
 from astropy.io import fits as pf
 import numpy as np
@@ -54,7 +55,7 @@ class ReadAtlas(BasePrimitive):
         # Does the atlas file exist?
         path = "data/%s.fits" % lamp.lower()  # always use slash
         pkg = __name__.split('.')[0]
-        atpath = pkg_resources.resource_filename(pkg, path)
+        atpath = get_resource_path(pkg, path)
         if os.path.exists(atpath):
             self.logger.info("Reading atlas spectrum in: %s" % atpath)
         else:

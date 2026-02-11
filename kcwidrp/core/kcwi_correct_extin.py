@@ -1,9 +1,10 @@
 from astropy.io import fits as pf
-import pkg_resources
 import os
 
 import numpy as np
 from scipy.interpolate import interp1d
+
+from kcwidrp.core.kcwi_pkg_resources import get_resource_path
 
 
 def kcwi_correct_extin(img, hdr, logger=None):
@@ -13,7 +14,7 @@ def kcwi_correct_extin(img, hdr, logger=None):
     # read extinction data
     path = 'data/extin/snfext.fits'
     package = __name__.split('.')[0]
-    full_path = pkg_resources.resource_filename(package, path)
+    full_path = get_resource_path(package, path)
     if os.path.exists(full_path):
         hdul = pf.open(full_path)
         exwl = hdul[1].data['LAMBDA']
