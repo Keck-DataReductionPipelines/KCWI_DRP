@@ -223,6 +223,10 @@ def main():
     if args.verbose:
         framework.logger.setLevel(logging.DEBUG)
         framework.context.pipeline_logger.setLevel(logging.DEBUG)
+        for handler in framework.logger.handlers:
+            handler.setLevel(logging.DEBUG)
+        for handler in framework.context.pipeline_logger.handlers:
+            handler.setLevel(logging.DEBUG)
 
     if args.infiles is not None:
         framework.config.file_type = args.infiles
@@ -423,7 +427,7 @@ def main():
 
     # single frame processing
     elif args.frames:
-        framework.context.pipeline_logger.debug("Processing individual frames")
+        framework.context.pipeline_logger.debug("Processing individual frames (-f or --frames), checking for channel consistency ...")
         frames = []
         for frame in args.frames:
             framework.context.pipeline_logger.debug(f"Processing frame: {frame}")
@@ -446,7 +450,7 @@ def main():
 
     # processing of a list of files contained in a file
     elif args.file_list:
-        framework.context.pipeline_logger.debug(f"Processing frames from file list: {args.file_list}")
+        framework.context.pipeline_logger.debug(f"Processing frames from file list: {args.file_list} (-l or --list), checking for channel consistency ...")
         frames = []
         with open(args.file_list) as file_list:
             for frame in file_list:
@@ -477,7 +481,7 @@ def main():
     # specified in the config file) on each file,
     # optionally continue to monitor if -m is specified
     elif args.dirname is not None:
-        framework.context.pipeline_logger.debug(f"Processing frames from directory: {args.dirname}, monitor={args.monitor}")
+        framework.context.pipeline_logger.debug(f"Processing frames from directory: {args.dirname}, monitor={args.monitor} (-d or --directory), checking for channel consistency ...")
 
         framework.ingest_data(args.dirname, None, args.monitor)
 
