@@ -7,9 +7,11 @@ import numpy as np
 from datetime import datetime
 
 from keckdrpframework.primitives.base_primitive import BasePrimitive
+from kcwidrp.core.kcwi_pkg_resources import get_resource_path
 import os
 import logging
-import pkg_resources
+import importlib
+
 import subprocess
 from pathlib import Path
 
@@ -1199,7 +1201,7 @@ def kcwi_fits_writer(ccddata, table=None, output_file=None, output_dir=None,
 
     if not contains_version:
         # Add setup.py version number to header
-        version = pkg_resources.get_distribution('kcwidrp').version
+        version = importlib.metadata.version('kcwidrp')
         ccddata.header.add_history(f"kcwidrp version={version}")
 
         # Get string filepath to .git dir, relative to this primitive

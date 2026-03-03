@@ -1,8 +1,8 @@
 import os
 from astropy.io.fits import file
-import pkg_resources
 from astropy.io import fits
 
+from kcwidrp.core.kcwi_pkg_resources import get_resource_path
 
 def kcwi_get_std(targname, logger=None):
     """Checks if object is a standard star, returns std file path and name"""
@@ -13,7 +13,7 @@ def kcwi_get_std(targname, logger=None):
     obname = "".join(obname.split()) # remove all whitespace
     path = 'data/stds/%s.fits' % obname
     package = __name__.split('.')[0]
-    full_path = pkg_resources.resource_filename(package, path)
+    full_path = get_resource_path(package, path)
     if os.path.exists(full_path):
         logger.info("Found std file: %s" % full_path)
         stdfile = full_path

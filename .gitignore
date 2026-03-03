@@ -7,3 +7,4 @@
 *.egg
 /dist
 *.DS_STORE
+settings.json

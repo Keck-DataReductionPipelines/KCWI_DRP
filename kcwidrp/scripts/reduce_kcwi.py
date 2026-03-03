@@ -10,6 +10,7 @@ from keckdrpframework.models.arguments import Arguments
 from keckdrpframework.utils.drpf_logger import getLogger
 from kcwidrp.core.bokeh_plotting import check_running_process
 from kcwidrp.core.kcwi_get_std import is_file_kcwi_std
+from kcwidrp.core.kcwi_pkg_resources import get_resource_path
 
 import subprocess
 import time
@@ -18,7 +19,6 @@ import argparse
 import sys
 import traceback
 import os
-import pkg_resources
 import psutil
 import shutil
 
@@ -105,6 +105,9 @@ def _parse_arguments(in_args: list) -> argparse.Namespace:
     parser.add_argument("-k", "--skipsky", dest='skipsky', action="store_true",
                         default=False, help="Skip sky subtraction")
 
+    parser.add_argument("-v", "--verbose", dest='verbose', action="store_true",
+                        default=False, help="Verbose logging")
+
     out_args = parser.parse_args(in_args[1:])
     return out_args
 
@@ -129,7 +132,7 @@ def main():
             print("Config file kcwi.cfg already exists in current dir")
         else:
             kcwi_config_file = 'configs/kcwi.cfg'
-            kcwi_config_fullpath = pkg_resources.resource_filename(
+            kcwi_config_fullpath = get_resource_path(
                 pkg, kcwi_config_file)
             shutil.copy(kcwi_config_fullpath, os.getcwd())
             print("Copied kcwi.cfg into current dir.  Edit and use with -c")
@@ -181,18 +184,15 @@ def main():
     check_directory("plots")
 
     framework_config_file = "configs/framework.cfg"
-    framework_config_fullpath = \
-        pkg_resources.resource_filename(pkg, framework_config_file)
+    framework_config_fullpath = get_resource_path(pkg, framework_config_file)
 
     framework_logcfg_file = 'configs/logger.cfg'
-    framework_logcfg_fullpath = \
-        pkg_resources.resource_filename(pkg, framework_logcfg_file)
-
+    framework_logcfg_fullpath = get_resource_path(pkg, framework_logcfg_file)
     # add kcwi specific config files # make changes here to allow this file
     # to be loaded from the command line
     if args.kcwi_config_file is None:
         kcwi_config_file = 'configs/kcwi.cfg'
-        kcwi_config_fullpath = pkg_resources.resource_filename(
+        kcwi_config_fullpath = get_resource_path(
             pkg, kcwi_config_file)
         kcwi_config = ConfigClass(kcwi_config_fullpath, default_section='KCWI')
     else:
@@ -219,6 +219,14 @@ def main():
     framework.context.pipeline_logger = getLogger(framework_logcfg_fullpath,
                                                   name="KCWI")
     framework.logger = getLogger(framework_logcfg_fullpath, name="DRPF")
+
+    if args.verbose:
+        framework.logger.setLevel(logging.DEBUG)
+        framework.context.pipeline_logger.setLevel(logging.DEBUG)
+        for handler in framework.logger.handlers:
+            handler.setLevel(logging.DEBUG)
+        for handler in framework.context.pipeline_logger.handlers:
+            handler.setLevel(logging.DEBUG)
 
     if args.infiles is not None:
         framework.config.file_type = args.infiles
@@ -358,16 +366,31 @@ def main():
             kcwi_config.object_min_nframes
         framework.config.instrument.minoscanpix = kcwi_config.minoscanpix
         framework.config.instrument.oscanbuf = kcwi_config.oscanbuf
+    framework.context.pipeline_logger.debug("Set channel specific parameters from config file:")
+    framework.context.pipeline_logger.debug(
+        f"arc_min_nframes={framework.config.instrument.arc_min_nframes}")
+    framework.context.pipeline_logger.debug(
+        f"contbars_min_nframes={framework.config.instrument.contbars_min_nframes}")
+    framework.context.pipeline_logger.debug(
+        f"object_min_nframes={framework.config.instrument.object_min_nframes}")
+    framework.context.pipeline_logger.debug(
+        f"minoscanpix={framework.config.instrument.minoscanpix}")
+    framework.context.pipeline_logger.debug(
+        f"oscanbuf={framework.config.instrument.oscanbuf}")
 
     # start the bokeh server is requested by the configuration parameters
     if framework.config.instrument.enable_bokeh is True:
+        framework.context.pipeline_logger.debug("Config requests bokeh server, checking if already running ...")
         if check_running_process(process='bokeh') is False:
             with open("bokeh_output.txt", "wb") as out:
+                framework.context.pipeline_logger.debug("Starting bokeh server ...")
                 subprocess.Popen('bokeh serve', shell=True, stderr=out,
                                  stdout=out)
             # --session-ids=unsigned --session-token-expiration=86400',
             # shell=True)
             time.sleep(5)
+        else:
+            framework.context.pipeline_logger.debug("Bokeh server already running")
         # subprocess.Popen('open http://localhost:5006?bokeh-session-id=kcwi',
         # shell=True)
 
@@ -404,38 +427,43 @@ def main():
 
     # single frame processing
     elif args.frames:
+        framework.context.pipeline_logger.debug("Processing individual frames (-f or --frames), checking for channel consistency ...")
         frames = []
         for frame in args.frames:
+            framework.context.pipeline_logger.debug(f"Processing frame: {frame}")
             # Verify we have the correct channel selected
-            if args.blue and 'kr' in frame:
+            if args.blue and 'kr' in frame.lower():
                 print('Blue channel requested, but red files in list')
                 qstr = input('Proceed? <cr>=yes or Q=quit: ')
                 if 'Q' in qstr.upper():
                     frames = []
                     break
-            if args.red and 'kb' in frame:
+            if args.red and 'kb' in frame.lower():
                 print('Red channel requested, but blue files in list')
                 qstr = input('Proceed? <cr>=yes or Q=quit: ')
                 if 'Q' in qstr.upper():
                     frames = []
                     break
             frames.append(frame)
+        framework.context.pipeline_logger.debug(f"Frames to process: {frames}")
         framework.ingest_data(None, frames, False)
 
     # processing of a list of files contained in a file
     elif args.file_list:
+        framework.context.pipeline_logger.debug(f"Processing frames from file list: {args.file_list} (-l or --list), checking for channel consistency ...")
         frames = []
         with open(args.file_list) as file_list:
             for frame in file_list:
+                framework.context.pipeline_logger.debug(f"Reading frame from file list: {frame.strip()}")
                 if "#" not in frame:
                     # Verify we have the correct channel selected
-                    if args.blue and 'kr' in frame:
+                    if args.blue and 'kr' in frame.lower():
                         print('Blue channel requested, but red files in list')
                         qstr = input('Proceed? <cr>=yes or Q=quit: ')
                         if 'Q' in qstr.upper():
                             frames = []
                             break
-                    if args.red and 'kb' in frame:
+                    if args.red and 'kb' in frame.lower():
                         print('Red channel requested, but blue files in list')
                         qstr = input('Proceed? <cr>=yes or Q=quit: ')
                         if 'Q' in qstr.upper():
@@ -453,11 +481,16 @@ def main():
     # specified in the config file) on each file,
     # optionally continue to monitor if -m is specified
     elif args.dirname is not None:
+        framework.context.pipeline_logger.debug(f"Processing frames from directory: {args.dirname}, monitor={args.monitor} (-d or --directory), checking for channel consistency ...")
 
         framework.ingest_data(args.dirname, None, args.monitor)
 
     # implement the group mode
     if args.group_mode is True:
+        framework.context.pipeline_logger.debug("Group mode enabled")
+        if framework.context.data_set is None:
+            framework.context.pipeline_logger.error("No data ingested, cannot run in group mode")
+            sys.exit(1)
         data_set = framework.context.data_set
 
         # remove focus images and ccd clearing images from the dataset
