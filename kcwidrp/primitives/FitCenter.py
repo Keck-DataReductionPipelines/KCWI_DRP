@@ -128,7 +128,7 @@ def bar_fit_helper(argument):
         ref_flux_of_sub_spectrum = argument['reflux'][minrw:maxrw].copy()
         # get bell cosine taper to avoid nasty edge effects
         tkwgt = signal.windows.tukey(len(ref_flux_of_sub_spectrum),
-                                     alpha=argument['tuckeyalpha'])
+                                     alpha=argument['tukeyalpha'])
         # apply taper to atlas spectrum
         ref_flux_of_sub_spectrum *= tkwgt
         # adjust wavelengths
@@ -209,7 +209,7 @@ class FitCenter(BasePrimitive):
     and rough offset between reference bar and atlas spectrum, and the
     calculated dispersion.
 
-    Uses config parameter TUCKEYALPHA to control cross-correlation roll-off.
+    Uses config parameter TUKEYALPHA to control cross-correlation roll-off.
 
     """
 
@@ -266,11 +266,11 @@ class FitCenter(BasePrimitive):
         subxvals = self.action.args.xvals[
                    self.action.args.minrow:self.action.args.maxrow]
 
-        # log tuckeyalpha: important!
-        self.logger.info("Using TUCKEYALPHA = %.3f" %
-                         self.config.instrument.TUCKEYALPHA)
+        # log tukeyalpha: important!
+        self.logger.info("Using TUKEYALPHA = %.3f" %
+                         self.config.instrument.TUKEYALPHA)
         self.action.args.ccddata.header['TUCKALPH'] = (
-            self.config.instrument.TUCKEYALPHA, "taper fraction for central fit")
+            self.config.instrument.TUKEYALPHA, "taper fraction for central fit")
         # loop over bars and assemble input arguments
         my_arguments = []
         for b, bs in enumerate(self.context.arcs):
@@ -288,7 +288,7 @@ class FitCenter(BasePrimitive):
                 'xvals': self.action.args.xvals,
                 'refwave': self.action.args.refwave,
                 'reflux': self.action.args.reflux,
-                'tuckeyalpha': self.config.instrument.TUCKEYALPHA,
+                'tukeyalpha': self.config.instrument.TUKEYALPHA,
                 'refdisp': self.action.args.refdisp,
                 'subxvals': subxvals,
                 'nn': number_of_values_to_try, 'x0': self.action.args.x0
