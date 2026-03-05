@@ -1247,9 +1247,9 @@ def kcwi_fits_writer(ccddata, table=None, output_file=None, output_dir=None,
     # check for noskysub
     nskysb = getattr(ccddata, "noskysub", None)
     if nskysb is not None:
-        if ccddata.noskysub.dtype == np.float64:
+        if nskysb.dtype == np.float64:
             print("Converting noskysub data to 32 bits")
-            ccddata.noskysub = ccddata.noskysub.astype(np.float32)
+            nskysb = nskysb.astype(np.float32)
         fits_noskysub = fits.ImageHDU(nskysb, name='NOSKYSUB')
         # Copy over WCS. Could copy over the entire header if desired
         keys = ['CTYPE1', 'CTYPE2', 'CTYPE3',
