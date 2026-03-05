@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "kcwidrp"
-version = "1.2.1"
+version = "1.3.0"
 description = "KCWI Data Reduction Pipeline"
 readme = "README.rst"
 license = "BSD-3-Clause"
