@@ -1226,10 +1226,12 @@ def kcwi_fits_writer(ccddata, table=None, output_file=None, output_dir=None,
     # If there is a data array, and the type of that array is a 64-bit float,
     # force it to 32 bits.
     if ccddata.data is not None and ccddata.data.dtype == np.float64:
+        print("Converting primary data to 32 bits")
         ccddata.data = ccddata.data.astype(np.float32)
     # If there is an uncertainty array, and the values within
     # (the .array property), make it 32 bits.
     if ccddata.uncertainty is not None and ccddata.uncertainty.array.dtype == np.float64:
+        print("Converting uncertainty data to 32 bits")
         ccddata.uncertainty.array = ccddata.uncertainty.array.astype(np.float32)
     
     out_file = os.path.join(output_dir, os.path.basename(output_file))
@@ -1246,13 +1248,21 @@ def kcwi_fits_writer(ccddata, table=None, output_file=None, output_dir=None,
     nskysb = getattr(ccddata, "noskysub", None)
     if nskysb is not None:
         if ccddata.noskysub.dtype == np.float64:
+            print("Converting noskysub data to 32 bits")
             ccddata.noskysub = ccddata.noskysub.astype(np.float32)
-        hdus_to_save.append(fits.ImageHDU(nskysb, name='NOSKYSUB'))
-    # something about the way the original table is written out is wrong
-    # and causes problems.  Leaving it off for now.
-    # if table is not None:
-    #    hdus_to_save.append(table)
-    # log
+        fits_noskysub = fits.ImageHDU(nskysb, name='NOSKYSUB')
+        # Copy over WCS. Could copy over the entire header if desired
+        keys = ['CTYPE1', 'CTYPE2', 'CTYPE3',
+                'CUNIT1', 'CUNIT2', 'CUNIT3',
+                'CNAME1', 'CNAME2', 'CNAME3',                                 
+                'CRVAL1', 'CRVAL2', 'CRVAL3',                            
+                'CRPIX1', 'CRPIX2', 'CRPIX3',                       
+                'CD1_1', 'CD2_1', 'CD1_2',
+                'CD2_2', 'CD3_3']
+        for k in keys:
+            if k in ccddata.header:
+                fits_noskysub.header[k] = ccddata.header[k]
+        hdus_to_save.append(fits_noskysub)
     logger.info(">>> Saving %d hdus to %s" % (len(hdus_to_save), out_file))
     hdus_to_save.writeto(out_file, overwrite=True)
 
