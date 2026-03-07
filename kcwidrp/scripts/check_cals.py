@@ -19,7 +19,6 @@ from pathlib import Path
 import argparse
 import logging
 import warnings
-import pkg_resources
 
 from astropy.nddata import CCDData
 from astropy.utils.exceptions import AstropyWarning
@@ -27,6 +26,7 @@ from astropy.utils.exceptions import AstropyWarning
 from kcwidrp.core.kcwi_proctab import Proctab
 from keckdrpframework.config.framework_config import ConfigClass
 from kcwidrp.core.kcwi_get_std import kcwi_get_std
+from kcwidrp.core.kcwi_pkg_resources import get_resource_path
 from kcwidrp.primitives.kcwi_file_primitives import fix_header
 
 
@@ -115,7 +115,7 @@ def main():
     pkg = 'kcwidrp'
     if args.config is None:
         kcwi_config_file = 'configs/kcwi.cfg'
-        kcwi_config_fullpath = pkg_resources.resource_filename(pkg, kcwi_config_file)
+        kcwi_config_fullpath = get_resource_path(pkg, kcwi_config_file)
         config = ConfigClass(kcwi_config_fullpath, default_section='KCWI')
     else:
         config = ConfigClass(args.config, default_section='KCWI')

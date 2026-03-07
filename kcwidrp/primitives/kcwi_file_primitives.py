@@ -7,9 +7,11 @@ import numpy as np
 from datetime import datetime
 
 from keckdrpframework.primitives.base_primitive import BasePrimitive
+from kcwidrp.core.kcwi_pkg_resources import get_resource_path
 import os
 import logging
-import pkg_resources
+import importlib
+
 import subprocess
 from pathlib import Path
 
@@ -1199,7 +1201,7 @@ def kcwi_fits_writer(ccddata, table=None, output_file=None, output_dir=None,
 
     if not contains_version:
         # Add setup.py version number to header
-        version = pkg_resources.get_distribution('kcwidrp').version
+        version = importlib.metadata.version('kcwidrp')
         ccddata.header.add_history(f"kcwidrp version={version}")
 
         # Get string filepath to .git dir, relative to this primitive
@@ -1224,10 +1226,12 @@ def kcwi_fits_writer(ccddata, table=None, output_file=None, output_dir=None,
     # If there is a data array, and the type of that array is a 64-bit float,
     # force it to 32 bits.
     if ccddata.data is not None and ccddata.data.dtype == np.float64:
+        logger.debug("Converting PRIMARY from 64 bits to 32")
         ccddata.data = ccddata.data.astype(np.float32)
     # If there is an uncertainty array, and the values within
     # (the .array property), make it 32 bits.
     if ccddata.uncertainty is not None and ccddata.uncertainty.array.dtype == np.float64:
+        logger.debug("Converting UNCERTAINTY from 64 bits to 32")
         ccddata.uncertainty.array = ccddata.uncertainty.array.astype(np.float32)
     
     out_file = os.path.join(output_dir, os.path.basename(output_file))
@@ -1243,14 +1247,22 @@ def kcwi_fits_writer(ccddata, table=None, output_file=None, output_dir=None,
     # check for noskysub
     nskysb = getattr(ccddata, "noskysub", None)
     if nskysb is not None:
-        if ccddata.noskysub.dtype == np.float64:
-            ccddata.noskysub = ccddata.noskysub.astype(np.float32)
-        hdus_to_save.append(fits.ImageHDU(nskysb, name='NOSKYSUB'))
-    # something about the way the original table is written out is wrong
-    # and causes problems.  Leaving it off for now.
-    # if table is not None:
-    #    hdus_to_save.append(table)
-    # log
+        if nskysb.dtype == np.float64:
+            logger.debug("Converting NOSKYSUB from 64 bits to 32")
+            nskysb = nskysb.astype(np.float32)
+        fits_noskysub = fits.ImageHDU(nskysb, name='NOSKYSUB')
+        # Copy over WCS. Could copy over the entire header if desired
+        keys = ['CTYPE1', 'CTYPE2', 'CTYPE3',
+                'CUNIT1', 'CUNIT2', 'CUNIT3',
+                'CNAME1', 'CNAME2', 'CNAME3',                                 
+                'CRVAL1', 'CRVAL2', 'CRVAL3',                            
+                'CRPIX1', 'CRPIX2', 'CRPIX3',                       
+                'CD1_1', 'CD2_1', 'CD1_2',
+                'CD2_2', 'CD3_3']
+        for k in keys:
+            if k in ccddata.header:
+                fits_noskysub.header[k] = ccddata.header[k]
+        hdus_to_save.append(fits_noskysub)
     logger.info(">>> Saving %d hdus to %s" % (len(hdus_to_save), out_file))
     hdus_to_save.writeto(out_file, overwrite=True)
 
