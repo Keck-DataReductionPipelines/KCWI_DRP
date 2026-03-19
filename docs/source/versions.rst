@@ -4,6 +4,16 @@
 Previous versions
 =================
 
+Version 1.2.0 (2025)
+--------------------
+
+* Simplified installation via pip and conda environment
+* Vacuum to air and heliocentric or barycentric correction
+* Ability of using KOA file names or original file names
+* Full traceability of DRP versions and execution steps in HISTORY headers
+* Versatile sky subtraction modes including using external sky frames, ability to manually mask regions, or skipping it entirely
+* Formal support system via GitHub issues
+* Added support for Mac intel M2 and M3 chips in Python 3.12
 
 
 Version 1.1.0 (2023)
