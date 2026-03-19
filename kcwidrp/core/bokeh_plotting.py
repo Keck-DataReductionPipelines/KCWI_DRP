@@ -20,6 +20,9 @@ def bokeh_plot(plot, session):
 
     # NOT TESTED YET
 
+    if session is None:
+        return
+
     new_figure = session.document.select_one(selector=dict(type=Figure))
     layout = session.document.select_one(selector=dict(type=Column))
 
