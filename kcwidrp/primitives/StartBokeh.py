@@ -4,6 +4,8 @@ from bokeh.client import pull_session
 from bokeh.plotting.figure import figure
 from bokeh.layouts import column
 
+from kcwidrp.core.kcwi_plotting import configure_plot_driver
+
 
 class StartBokeh(BasePrimitive):
     """
@@ -32,5 +34,10 @@ class StartBokeh(BasePrimitive):
         session.document.add_root(c)
         self.context.bokeh_session = session
         session.show(c)
+
+        firefox_compat = getattr(self.config.instrument, 'plot_firefox_compat', False)
+        prewarm = getattr(self.config.instrument, 'plot_prewarm_firefox', False)
+        if firefox_compat and prewarm:
+            configure_plot_driver(firefox_compat=firefox_compat, prewarm=prewarm)
 
         return True
