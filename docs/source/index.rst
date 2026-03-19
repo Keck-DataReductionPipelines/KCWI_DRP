@@ -20,6 +20,7 @@ New Features
 ------------
 
 * Further refined support of Python 3.12 through updated dependencies
+* Replaced ``setup.py`` based builds with Poetry and ``pyproject.toml``
 * Fixed a bug where weighting mask was repeatedly applied during dispersion calculation
 * Added more spectral standards for red-side reductions
 * Properly propogates WCS to NOSKYSUB extensions
