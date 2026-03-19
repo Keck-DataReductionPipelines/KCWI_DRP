@@ -37,17 +37,38 @@ missing, it tells you which, and how many are needed. More details can be found
 Known Issues
 ============
 
-Pipeline Ingests Blue Files as Red, and Vice Versa
---------------------------------------------------
+Bokeh Issues
+------------
 
-There is a known bug in the Keck DRP framework that prevents two instances of
-the DRP from running at the same time. This can be inconvenient, as this means
-you cannot reduce red and blue side data at the same time on the same machine.
-Until this bug gets fixed, the only solution is to run through your data first
-for one set of blue/red data, then the other.
+The DRP relies on a package called ``Bokeh`` to render plots. This package has a
+large number of dependencies (both Python and system) that can cause issues. If
+you are having issues plotting, read on.
+
+Firstly, add/update the following parameter to you ``kcwi.cfg`` config file:
+
+.. code-block:: bash
+
+    terminate_on_failed_bokeh_start = True
+
+This tells the pipeline to immediately exit if Bokeh fails to initialize. When
+you run the pipeline again, if it makes it immediately fails at ``StartBokeh``,
+that confirms that Bokeh is the problem.
+
+Next, try adding/updating the following to your config:
+
+.. code-block:: bash
+
+    plot_firefox_compat = True
+
+
+This will try to automatically find a firefox installation and use it - this is
+especially an issue if your machine is running firefox installed via snap on
+Ubuntu, although it may well manifest on other machines. You may need to follow
+steps 1 through 3 in the next section, as well.
+
 
 Firefox/geckodriver cannot be found
------------------------------------
++++++++++++++++++++++++++++++++++++
 
 Error message:
 
@@ -70,41 +91,12 @@ These instructions assume you are using :code:`conda` to manage your environment
 
     pip install selenium
     pip install geckodriver
-    
-#. Open :code:`KCWI_DRP/kcwidrp/core/kcwi_plotting.py` in a text editor
 
-#. Add the following import at the top of the file: ::
+Add or update the following in your config file:
 
-    from selenium import webdriver
+.. code-block:: bash
 
-#. Find your firefox installation by executing :code:`which firefox` from the
-   command line. Make note of the output. It should look something like
-   :code:`/PATH/TO/CONDA/envs/kcwidrp/bin/firefox`
-#. Replace the function :code:`save_plot` with the following: ::
-
-    def save_plot(fig, filename=None):
-        if filename is None:
-            fnam = os.path.join('plots', 'kcwi_drp_plot.png')
-        else:
-            fnam = os.path.join('plots', filename)
-
-        options = webdriver.FirefoxOptions()
-
-        options.add_argument("--headless")
-        options.add_argument("--hide-scrollbars")
-        options.add_argument("--force-device-scale-factor=1")
-        options.add_argument("--force-color-profile=srgb")
-        driver = webdriver.Firefox(firefox_binary="[YOUR/PATH/HERE]",
-                                    firefox_options=options)
-        export_png(fig, filename=fnam, webdriver=driver)
-        driver.close()
-        logger.info(">>> Saving to %s" % fnam)
-
-   where :code:`[YOUR/PATH/HERE]` is replaced by the path found in the
-   previous step
-#. Navigate to the :code:`KCWI_DRP` directory, and run::
-
-        python setup.py install
+    plot_firefox_compat = True
 
 Massive Slowdown When Calculating Central Dispersion
 ----------------------------------------------------
