@@ -25,8 +25,18 @@ class StartBokeh(BasePrimitive):
 
     def _perform(self):
 
-        # session = pull_session(session_id='kcwi', url='http://localhost:5006')
-        session = pull_session()
+        self.context.bokeh_session = None
+        try:
+            # session = pull_session(session_id='kcwi', url='http://localhost:5006')
+            session = pull_session()
+        except Exception as e:
+            if getattr(self.config.instrument, 'terminate_on_failed_bokeh_start', False):
+                self.logger.error("Could not connect to Bokeh server: %s", e)
+                raise RuntimeError("Bokeh server failed to start and "
+                                   "terminate_on_failed_bokeh_start is True") from e
+            self.logger.warning("Could not connect to Bokeh server, "
+                                "interactive plots disabled: %s", e)
+            return self.action.args
         self.logger.info("Enabling BOKEH plots")
         p = figure()
         c = column(children=[p])
