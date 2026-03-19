@@ -16,8 +16,8 @@
 # ref_index~=1.0
 # pyregion
 # cython
-# sphinx-automodapi
-# sphinx_rtd_theme
+sphinx-automodapi
+sphinx_rtd_theme
 # keckdrpframework==1.0.0
 astropy==6.1.7
     # via
