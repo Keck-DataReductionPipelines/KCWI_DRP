@@ -52,6 +52,7 @@ More information
 ================
 
 For more information on the internals of the pipeline, see the following sections:
+
 .. toctree::
    :maxdepth: 1
 
