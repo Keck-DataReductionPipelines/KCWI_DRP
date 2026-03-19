@@ -44,7 +44,15 @@ The DRP relies on a package called ``Bokeh`` to render plots. This package has a
 large number of dependencies (both Python and system) that can cause issues. If
 you are having issues plotting, read on.
 
-Firstly, add/update the following parameter to you ``kcwi.cfg`` config file:
+As a first check, try to kill any hanging ``bokeh`` processes:
+
+.. code-block:: bash
+
+    pkill bokeh
+
+Try running the pipeline again, sometimes this is enough to clear any issues.
+
+Failing that, add/update the following parameter to you ``kcwi.cfg`` config file:
 
 .. code-block:: bash
 
@@ -60,12 +68,23 @@ Next, try adding/updating the following to your config:
 
     plot_firefox_compat = True
 
-
 This will try to automatically find a firefox installation and use it - this is
 especially an issue if your machine is running firefox installed via snap on
 Ubuntu, although it may well manifest on other machines. You may need to follow
 steps 1 through 3 in the next section, as well.
 
+The next time you run the pipeline, it may appear to hang at the first plotting
+call - wait to see if it proceeds. It may take up to a minute or two
+for firefox to sort itself out (there's a timeout somewhere that must be waited
+out).
+
+You may see a scary looking warning like
+
+.. code-block:: bash
+
+    [Parent 808986, Main Thread] WARNING: Failed to mkdir /home/kcwidrp/snap/firefox/7967/.config/ibus/bus: Not a directory: 'glib warning', file /build/firefox/parts/firefox/build/toolkit/xre/nsSigHandlers.cpp:201
+
+This is not something to worry about.
 
 Firefox/geckodriver cannot be found
 +++++++++++++++++++++++++++++++++++
