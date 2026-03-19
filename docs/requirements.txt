@@ -19,5 +19,5 @@ pyregion
 cython
 sphinx-automodapi
 sphinx_rtd_theme
-keckdrpframework @ git+https://github.com/Keck-DataReductionPipelines/KeckDRPFramework.git
-kcwidrp @ git+https://github.com/Keck-DataReductionPipelines/KCWI_DRP.git@kcrm_merge
+keckdrpframework==1.0.0
+kcwidrp @ git+https://github.com/Keck-DataReductionPipelines/KCWI_DRP.git@ubuntu_2404_bokeh_compatibility

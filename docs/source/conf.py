@@ -24,7 +24,7 @@ author = 'Don Neill, KCWI Team, Luca Rizzi, Max Brodheim'
 # sys.path.append(os.path.abspath('./docs/'))
 
 # The full version, including alpha/beta/rc tags
-release = '1.0'
+release = '1.3.1'
 
 
 # -- General configuration ---------------------------------------------------
