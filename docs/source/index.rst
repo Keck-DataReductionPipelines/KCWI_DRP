@@ -48,16 +48,6 @@ Follow the documentation in this section to reduce KCWI data.
    versions
 
 
-More information
-================
-
-For more information on the internals of the pipeline, see the following sections:
-
-.. toctree::
-   :maxdepth: 1
-
-   pipeline_concepts
-   api
 
 Other Helpful Packages
 ======================
