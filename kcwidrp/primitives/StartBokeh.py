@@ -4,6 +4,8 @@ from bokeh.client import pull_session
 from bokeh.plotting.figure import figure
 from bokeh.layouts import column
 
+from kcwidrp.core.kcwi_plotting import configure_plot_driver
+
 
 class StartBokeh(BasePrimitive):
     """
@@ -23,8 +25,18 @@ class StartBokeh(BasePrimitive):
 
     def _perform(self):
 
-        # session = pull_session(session_id='kcwi', url='http://localhost:5006')
-        session = pull_session()
+        self.context.bokeh_session = None
+        try:
+            # session = pull_session(session_id='kcwi', url='http://localhost:5006')
+            session = pull_session()
+        except Exception as e:
+            if getattr(self.config.instrument, 'terminate_on_failed_bokeh_start', False):
+                self.logger.error("Could not connect to Bokeh server: %s", e)
+                raise RuntimeError("Bokeh server failed to start and "
+                                   "terminate_on_failed_bokeh_start is True") from e
+            self.logger.warning("Could not connect to Bokeh server, "
+                                "interactive plots disabled: %s", e)
+            return self.action.args
         self.logger.info("Enabling BOKEH plots")
         p = figure()
         c = column(children=[p])
@@ -32,5 +44,10 @@ class StartBokeh(BasePrimitive):
         session.document.add_root(c)
         self.context.bokeh_session = session
         session.show(c)
+
+        firefox_compat = getattr(self.config.instrument, 'plot_firefox_compat', False)
+        prewarm = getattr(self.config.instrument, 'plot_prewarm_firefox', False)
+        if firefox_compat and prewarm:
+            configure_plot_driver(firefox_compat=firefox_compat, prewarm=prewarm)
 
         return True
