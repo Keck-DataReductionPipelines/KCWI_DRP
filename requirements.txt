@@ -197,7 +197,7 @@ ref-index==1.0
     # via kcwidrp (pyproject.toml)
 reproject==0.19.0
     # via ccdproc
-requests==2.32.5
+requests==2.33.0
     # via kcwidrp (pyproject.toml)
 scikit-image==0.26.0
     # via
