@@ -148,7 +148,7 @@ partd==1.4.2
     # via dask
 phantomjs==1.4.1
     # via kcwidrp (pyproject.toml)
-pillow==12.1.1
+pillow==12.2.0
     # via
     #   bokeh
     #   imageio
