@@ -245,7 +245,7 @@ typing-extensions==4.15.0
     #   zarr
 tzdata==2025.3
     # via pandas
-urllib3[socks]==2.6.3
+urllib3[socks]==2.7.0
     # via
     #   requests
     #   selenium
