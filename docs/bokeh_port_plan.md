@@ -8,8 +8,8 @@ Date: 2026-10-08. Decision taken: Matplotlib behind a Bokeh-shaped wrapper; call
 
 | Model | ID | Used here for |
 |---|---|---|
-| Fable 5.1 | `claude-fable-5-1` | The one concurrency-sensitive component, and the final independent review |
-| Opus 5.5 | `claude-opus-5-5` | Design work and anything where a wrong choice propagates to all 48 plots |
+| Fable 5.1 | `claude-fable-5-1` | The final independent review only. Optional: Opus 5.5 in a fresh session is an acceptable substitute |
+| Opus 5.5 | `claude-opus-5-5` | Design work, the live viewer, and anything where a wrong choice propagates to all 48 plots |
 | Sonnet 5.5 | `claude-sonnet-5-5` | Well-specified implementation: mechanical edits, tests, scripts, clean-up |
 | Haiku 5.5 | `claude-haiku-5-5` | Inventory and sweep checks with a known right answer |
 
@@ -48,14 +48,14 @@ Four rules for the wrapper:
 |---|---|---|---|
 | 0.1 | Capture reference plots from the current pipeline | Human | – |
 | 0.2 | Build the plot inventory | Haiku 5.5 | – |
-| 0.3 | Prototype the live viewer | Fable 5.1 (high) | – |
+| 0.3 | Prototype the live viewer | Opus 5.5 (high) | – |
 | 0.4 | Confirm downstream, remote-viewing and viewer-port assumptions | Human | – |
 | 0.5 | Clean the working tree so diffs are readable | Human | – |
 | 1.1 | Write the wrapper and PNG path | Opus 5.5 (high) | 0.2, 0.5 |
 | 1.2 | Write the wrapper tests | Sonnet 5.5 (medium) | 1.1 |
 | 2.1 | Convert the 11 straightforward primitives | Sonnet 5.5 (medium) | 1.1, 1.2 |
 | 2.2 | Convert the 5 primitives with special features | Opus 5.5 (medium) | 1.1, 1.2 |
-| 3.1 | Implement the live viewer and `StartPlotViewer` | Fable 5.1 (high) | 0.3, 1.1 |
+| 3.1 | Implement the live viewer and `StartPlotViewer` | Opus 5.5 (high) | 0.3, 1.1 |
 | 3.2 | Update the three launch scripts | Sonnet 5.5 (medium) | 3.1 |
 | 4.1 | Write the side-by-side comparison script | Sonnet 5.5 (low) | 0.1 |
 | 4.2 | First-pass comparison of old and new plots | Opus 5.5 (high) | 0.1, 2.1, 2.2, 4.1 |
@@ -63,7 +63,7 @@ Four rules for the wrapper:
 | 5.1 | Remove Bokeh, Selenium, and Firefox-only config | Sonnet 5.5 (medium) | 4.3 |
 | 5.1b | Update the ReadTheDocs sources on the `documentation` branch | Sonnet 5.5 (medium) | 5.1 |
 | 5.2 | Sweep for leftovers | Haiku 5.5 | 5.1, 5.1b |
-| 5.3 | Independent review of the whole branch | Fable 5.1 (high) | 5.2 |
+| 5.3 | Independent review of the whole branch | Fable 5.1 (high), or Opus 5.5 | 5.2 |
 | 5.4 | Clean-machine install and reduction | Human | 5.3 |
 
 Tasks 0.1–0.5 are independent and can run in parallel. So can 2.1 and 2.2, and 3.x alongside 2.x.
@@ -119,7 +119,7 @@ Verification:
 - The summary does **not** list `map` or `close` as figure methods. In `MakeCube` and `FitCenter` the name `p` is also bound to a multiprocessing pool.
 - Spot-check five rows by hand against the source.
 
-### 0.3 Live viewer prototype — Fable 5.1 (high)
+### 0.3 Live viewer prototype — Opus 5.5 (high)
 
 A throwaway script outside the package that reproduces the framework's threading: the main thread idle, a daemon worker thread that builds plots and blocks in `input()` or `time.sleep()`, and a WebAgg server on a third thread showing whatever the worker last submitted.
 
@@ -140,7 +140,7 @@ It must also settle the viewer topology. Today every pipeline process pushes int
 
 If 0.4 shows observers rely on a single fixed port for several processes, the alternative to prototype is: only the first process to bind the port runs a viewer and the others run with none.
 
-Why Fable: this is the only part of the port with real concurrency, an event loop on a non-main thread, and behaviour that differs between macOS and Linux. A wrong conclusion here would misdirect phase 3.
+Why Opus at high effort: this is the only part of the port with real concurrency, an event loop on a non-main thread, and behaviour that differs between macOS and Linux, and a wrong conclusion here would misdirect phase 3. The concurrency is modest, though: one Tornado loop on a daemon thread with a single thread-safe hand-off, a pattern Matplotlib documents in its WebAgg embedding example, and the hard parts are spelled out above. The protection against a wrong design is the pass or fail criteria below, run on both operating systems, not the model tier. An earlier draft assigned this to Fable 5.1; that was reviewed and judged unnecessary.
 
 Verification (all must hold for WebAgg to be chosen):
 - A plot submitted from the worker appears in the browser while the worker is blocked in `input()`.
@@ -304,7 +304,7 @@ Verification:
 
 ## Phase 3: live view
 
-### 3.1 Viewer and `StartPlotViewer` — Fable 5.1 (high)
+### 3.1 Viewer and `StartPlotViewer` — Opus 5.5 (high)
 
 Implement the viewer chosen in 0.3 behind a small interface: `start()`, `show(recorded_figure)`, `clear()`, `stop()`. `bokeh_plot(p, viewer)` and `bokeh_clear(viewer)` delegate to it and do nothing when the viewer is `None`. Rename the `StartBokeh` primitive to `StartPlotViewer`, keeping `start_bokeh` as an alias event name in both pipeline tables, and keeping `context.bokeh_session` as the attribute name so primitives are untouched.
 
@@ -319,7 +319,7 @@ Details the implementation must follow:
 - **Ctrl-C while blocked in `input()`.** The framework's handler only sets `keep_going`; the action thread stays in `input()` until return is pressed. This is today's behaviour and is not changed, but the viewer must keep serving during that wait and must not swallow or re-install the SIGINT handler. Tornado must be started without its own signal handling.
 - **Launch scripts.** `enable_bokeh` is read in the three scripts to decide whether to queue the `start_bokeh` event; see 5.1 for the renamed key. The 5-second `time.sleep` that waits for `bokeh serve` goes away with the subprocess in 3.2.
 
-Why Fable: same reasoning as 0.3, now in production form, including shutdown behaviour and the multi-process case.
+Why Opus at high effort: same reasoning as 0.3, now in production form, including shutdown behaviour and the multi-process case. The implementation details above and the verification list below carry the risk.
 
 Verification:
 - The 0.3 criteria, re-run against the real implementation inside `reduce_kcwi`.
@@ -435,11 +435,11 @@ Expected intentional hits, and nothing else: the public function names `bokeh_pl
 
 Verification: the list of intentional hits is short, explicit, and matches what phases 3 and 5.1 said they would keep. Anything else is fixed.
 
-### 5.3 Independent review — Fable 5.1 (high)
+### 5.3 Independent review — Fable 5.1 (high), or Opus 5.5 (high) in a fresh session
 
 A review of the full branch diff in a fresh session with no access to the implementation conversations, focused on: thread and process safety of the viewer, including the fork in `MakeCube` and reliance on any exit-time clean-up that `os._exit` would skip; any path where a plotting failure could stop a reduction, including every place the wrapper can raise when `STRICT` is false; recorded data that is not copied; behaviour changes in primitives beyond imports, including any change to the number or order of prompts; any way the viewer switch could affect PNG saving; wrapper mappings that are plausible but wrong (units, defaults, axis orientation, the items in the 1.1 trap list); and stray file-mode changes in the diff (0.5).
 
-Why Fable in a fresh context: the reviewer should not share the implementers' assumptions, and this is the last automated check before release.
+Why a fresh context: the reviewer should not share the implementers' assumptions, and this is the last automated check before release. Most of that independence comes from the fresh session with no access to the implementation conversations. Using Fable adds a little more, because Opus wrote both the wrapper and the viewer, and it is a single pass. It is a nicety, not a requirement: if Fable is not available, run this with Opus 5.5 in a fresh session and accept slightly less independence from the author.
 
 Verification: every finding is either fixed with a test or closed with a written reason.
 
