@@ -51,11 +51,31 @@ def _get_driver():
     firefox_bin = _find_firefox_binary()
     if firefox_bin:
         options.binary_location = firefox_bin
-    geckodriver = _find_geckodriver()
-    serv = FirefoxService(executable_path=geckodriver) if geckodriver else FirefoxService()
-    _firefox_driver = webdriver.Firefox(options=options, service=serv)
-    atexit.register(_close_driver)
-    return _firefox_driver
+    # Try each geckodriver in turn: the snap wrapper (/snap/bin/geckodriver)
+    # exits immediately on some systems (e.g. home directory outside /home, or
+    # no login session, as under cron), so non-snap installs are tried first.
+    # None means let Selenium locate/download a driver itself.
+    geckodrivers = _find_geckodrivers()
+    logger.info("Geckodriver candidates: %s"
+                % (', '.join(geckodrivers) or 'none found'))
+    last_exc = None
+    for geckodriver in geckodrivers + [None]:
+        name = geckodriver or '(selenium default)'
+        serv = FirefoxService(executable_path=geckodriver) if geckodriver \
+            else FirefoxService()
+        logger.info("Trying to start Firefox WebDriver with geckodriver %s"
+                    % name)
+        try:
+            _firefox_driver = webdriver.Firefox(options=options, service=serv)
+        except Exception as e:
+            logger.warning("Could not start Firefox WebDriver with "
+                           "geckodriver %s: %s" % (name, e))
+            last_exc = e
+            continue
+        logger.info("Started Firefox WebDriver with geckodriver %s" % name)
+        atexit.register(_close_driver)
+        return _firefox_driver
+    raise last_exc
 
 
 def _close_driver():
@@ -99,8 +119,8 @@ def _find_firefox_binary():
     # On Ubuntu 24.04, /usr/bin/firefox is a shell script wrapper for the snap.
     # Selenium requires the actual ELF binary, not a wrapper script.
     candidates = [
-        '/snap/firefox/current/usr/lib/firefox/firefox',
         '/usr/lib/firefox/firefox',
+        '/snap/firefox/current/usr/lib/firefox/firefox',
     ]
     for path in candidates:
         if os.path.isfile(path) and os.access(path, os.X_OK):
@@ -109,17 +129,22 @@ def _find_firefox_binary():
     return shutil.which('firefox')
 
 
-def _find_geckodriver():
-    """Return path to geckodriver, searching common locations."""
+def _find_geckodrivers():
+    """Return paths to all geckodrivers found, in order of preference."""
+    # Snap copies go last: they only run inside a user login session.
     candidates = [
-        '/snap/bin/geckodriver',
         '/usr/bin/geckodriver',
         '/usr/local/bin/geckodriver',
+        shutil.which('geckodriver'),
+        '/snap/bin/geckodriver',
+        '/snap/firefox/current/usr/lib/firefox/geckodriver',
     ]
+    found = []
     for path in candidates:
-        if os.path.isfile(path) and os.access(path, os.X_OK):
-            return path
-    return shutil.which('geckodriver')
+        if path and path not in found and os.path.isfile(path) \
+                and os.access(path, os.X_OK):
+            found.append(path)
+    return found
 
 
 def save_plot(fig, filename=None):
