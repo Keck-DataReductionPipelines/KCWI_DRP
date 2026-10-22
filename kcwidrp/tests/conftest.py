@@ -237,185 +237,196 @@ def scanned_keywords():
     return {line.split()[0] for line in HEADER_KEYWORD_SCAN.strip().splitlines()}
 
 
-# Plausible values for a KCWI BLUE, 2x2 binned, four-amplifier OBJECT frame.
-# Values marked "?" in the trailing comment are guesses (not read from real
-# data); see _UNSURE below.  None of them is a calibrated number: they exist so
-# that header reads do not raise KeyError.
+# Header values for a KCWI BLUE, 2x2 binned, four-amplifier OBJECT frame.
+# Trailing comments say where each value comes from:
+#   "# kb260115_00011": copied from a real blue arc (2026-01-15, BL/RM1,
+#       Small slicer), after kcwi_fits_reader()/fix_header() where ingest
+#       changes the value.  The frame is 1x1 binned; binning-dependent values
+#       are computed in synthetic_ccddata() instead.
+#   "# object value: synthetic": object-frame keywords (pointing, target,
+#       timing); 2026jan15 has no object frame, so these are placeholders.
+#   "# DRP-written": keywords that primitives write; they never appear in
+#       raw headers, and the value only has to be of the right type.
+#   "# ?": still an unverified guess.
 _DEFAULTS = {
-    "AIRMASS": 1.1,
+    "AIRMASS": 1.1,                          # object value: synthetic (no object frame yet)
     "AMPMNUM": 0,              # fix_header(): AMPMODE not in its table -> 0
-    "ARCFL": "kb260101_00010.fits",          # ?
-    "ARCNO": 10,                             # ?
-    "AUTMSKTY": "none",                      # ?
-    "AUTOMASK": False,                       # ?
-    "AVEXCOR": 1.0,                          # ?
-    "AVWVSIG": 0.5,                          # ? Angstrom
-    "BAR0": 0,                               # ?
-    "BARSEP": 16.0,                          # ? pixels
-    "BCWAVE": 4500.0,
-    "BFILTNAM": "KBlue",
-    "BGRANGLE": 61.0,                        # ? degrees
-    "BGRATNAM": "BM",
-    "BNASNAM": "Object",                     # 'Mask' in value -> nasmask()
-    "BPFILE": "",                            # ?
+    "ARCFL": "kb260101_00010.fits",          # DRP-written: not in raw headers
+    "ARCNO": 10,                             # DRP-written: not in raw headers
+    "AUTMSKTY": "none",                      # DRP-written: not in raw headers
+    "AUTOMASK": False,                       # DRP-written: not in raw headers
+    "AVEXCOR": 1.0,                          # DRP-written: not in raw headers
+    "AVWVSIG": 0.5,                          # DRP-written: not in raw headers (Angstrom)
+    "BAR0": 0,                               # DRP-written: not in raw headers
+    "BARSEP": 16.0,                          # DRP-written: not in raw headers (pixels)
+    "BCWAVE": 4599.8271484,                  # kb260115_00011
+    "BFILTNAM": 'None',                      # kb260115_00011
+    "BGRANGLE": 28.7556705,                  # kb260115_00011
+    "BGRATNAM": 'BL',                        # kb260115_00011
+    "BNASNAM": 'Open',                       # kb260115_00011
+    "BPFILE": "",                            # DRP-written: not in raw headers
     "BUNIT": "adu",
-    "CBARSFL": "kb260101_00011.fits",        # ?
-    "CBARSNO": 11,                           # ?
-    "CCDMODE": 0,
+    "CBARSFL": "kb260101_00011.fits",        # DRP-written: not in raw headers
+    "CBARSNO": 11,                           # DRP-written: not in raw headers
+    "CCDMODE": 1,                            # kb260115_00011
     "CCDSUM": "2 2",
-    "CD1_1": -0.0003,                        # ? deg (slicer scale ~0.37 arcsec)
+    "CD1_1": -0.0003,                        # DRP-written: not in raw headers (deg (slicer scale ~0.37 arcsec))
     "CD1_2": 0.0,
     "CD2_1": 0.0,
     "CD2_2": 4.048e-05 * 2,                  # PIXSCALE * ybin (kcwi.cfg)
-    "CD3_3": 1.0,                            # ? Angstrom/px, BM at 2x binning
+    "CD3_3": 1.0,                            # DRP-written: not in raw headers (Angstrom/px, BM at 2x binning)
     "CDELT1": 4.048e-05 * 2,
     "CDELT2": 3.7718e-04,                    # SLICESCALE (kcwi.cfg)
-    "CDSSPEED": 0,                           # ?
-    "CNAME1": "KCWI y",                      # ?
-    "CNAME2": "KCWI x",                      # ?
-    "CNAME3": "KCWI wave",                   # ?
-    "CONTPOS": 0.0,                          # ?
-    "CONTWID": 0.0,                          # ?
+    "CDSSPEED": 0,                           # raw RED only (kr260115_00013: 1)
+    "CNAME1": "KCWI y",                      # DRP-written: not in raw headers
+    "CNAME2": "KCWI x",                      # DRP-written: not in raw headers
+    "CNAME3": "KCWI wave",                   # DRP-written: not in raw headers
+    "CONTPOS": 0.0,                          # DRP-written: not in raw headers
+    "CONTWID": 0.0,                          # DRP-written: not in raw headers
     "CRPIX1": 1.0,
     "CRPIX2": 1.0,
     "CRPIX3": 1.0,
     "CRVAL1": 0.0,
     "CRVAL2": 0.0,
-    "CRVAL3": 3500.0,                        # ?
+    "CRVAL3": 3500.0,                        # DRP-written: not in raw headers
     "CTYPE1": "RA---TAN",
     "CTYPE2": "DEC--TAN",
     "CTYPE3": "AWAV",
     "CUNIT1": "deg",
     "CUNIT2": "deg",
     "CUNIT3": "Angstrom",
-    "DARANG": 0.0,                           # ?
+    "DARANG": 0.0,                           # DRP-written: not in raw headers
     "DARCOR": False,
-    "DAREFWL": 4500.0,                       # ?
-    "DARKSCL": 1.0,                          # ?
-    "DARPADX": 0,                            # ?
-    "DARPADY": 0,                            # ?
-    "DATE-BEG": "2026-01-01T05:00:00.000",
-    "DATE-END": "2026-01-01T05:00:01.000",
-    "DEC": 2.0,
-    "DECBASE": 2.0,                          # ?
-    "DICHFRAC": 0.0,                         # ?
-    "EQUINOX": 2000.0,
-    "EXPTIME": 1.0,
+    "DAREFWL": 4500.0,                       # DRP-written: not in raw headers
+    "DARKSCL": 1.0,                          # DRP-written: not in raw headers
+    "DARPADX": 0,                            # DRP-written: not in raw headers
+    "DARPADY": 0,                            # DRP-written: not in raw headers
+    "DATE-BEG": "2026-01-01T05:00:00.000",   # object value: synthetic (no object frame yet)
+    "DATE-END": "2026-01-01T05:00:01.000",   # object value: synthetic (no object frame yet)
+    "DEC": 2.0,                              # object value: synthetic (no object frame yet)
+    "DECBASE": 2.0,                          # object value: synthetic (no object frame yet)
+    "DICHFRAC": 0.0,                         # DRP-written: not in raw headers
+    "EQUINOX": 2000.0,                       # kb260115_00011
+    "EXPTIME": 1.0,                          # object value: synthetic (no object frame yet)
     "EXTCOR": False,
     "FLIMAGIN": "off",
     "FLSPECTR": "off",
-    "FRAMENO": 1,
-    "GAINMUL": 1,                            # fix_header() sets 1
+    "FRAMENO": 1,                            # object value: synthetic (no object frame yet)
+    "GAINMUL": 10,                           # kb260115_00011 (post-ingest)
     "GEOMCOR": False,
-    "GEOMFL": "",                            # ?
-    "GROUPID": "kb260101_00001",             # ?
-    "IFUNAM": "Large",
-    "IFUNUM": 1,
-    "IFUPA": 0.0,
-    "IFUROFF": 0.0,                          # ?
-    "IMTYPE": "OBJECT",
-    "INVFORD": 3,                            # ?
-    "INVFW0": 0.0,                           # ?
-    "INVFW1": 0.0,                           # ?
-    "INVSENS": 1.0,                          # ?
-    "INVSL0": 0.0,                           # ?
-    "INVSL1": 0.0,                           # ?
-    "INVSLMX": 0.0,                          # ?
-    "INVSLY": 0.0,                           # ?
-    "INVSW0": 0.0,                           # ?
-    "INVSW1": 0.0,                           # ?
-    "INVSY0": 0,                             # ?
-    "INVSY1": 0,                             # ?
-    "INVSZ0": 0,                             # ?
-    "INVSZ1": 0,                             # ?
-    "KOAID": "KB.20260101.00001.00",         # ?
-    "LATPOLE": 90.0,                         # ?
-    "LMP0NAM": "FEAR",
+    "GEOMFL": "",                            # DRP-written: not in raw headers
+    "GROUPID": "kb260101_00001",             # object value: synthetic (no object frame yet)
+    "IFUNAM": 'Small',                       # kb260115_00011
+    "IFUNUM": 3,                             # kb260115_00011
+    "IFUPA": 0.0,                            # object value: synthetic (no object frame yet)
+    "IFUROFF": 0.0,                          # DRP-written: not in raw headers
+    "IMTYPE": "OBJECT",                      # object value: synthetic (no object frame yet)
+    "INVFORD": 3,                            # DRP-written: not in raw headers
+    "INVFW0": 0.0,                           # DRP-written: not in raw headers
+    "INVFW1": 0.0,                           # DRP-written: not in raw headers
+    "INVSENS": 1.0,                          # DRP-written: not in raw headers
+    "INVSL0": 0.0,                           # DRP-written: not in raw headers
+    "INVSL1": 0.0,                           # DRP-written: not in raw headers
+    "INVSLMX": 0.0,                          # DRP-written: not in raw headers
+    "INVSLY": 0.0,                           # DRP-written: not in raw headers
+    "INVSW0": 0.0,                           # DRP-written: not in raw headers
+    "INVSW1": 0.0,                           # DRP-written: not in raw headers
+    "INVSY0": 0,                             # DRP-written: not in raw headers
+    "INVSY1": 0,                             # DRP-written: not in raw headers
+    "INVSZ0": 0,                             # DRP-written: not in raw headers
+    "INVSZ1": 0,                             # DRP-written: not in raw headers
+    "KOAID": "KB.20260101.00001.00",         # object value: synthetic (no object frame yet)
+    "LATPOLE": 90.0,                         # DRP-written: not in raw headers
+    "LMP0NAM": 'FeAr',                       # kb260115_00011
     "LMP0SHST": 0,
     "LMP0STAT": 0,
-    "LMP1NAM": "THAR",
+    "LMP1NAM": 'ThAr',                       # kb260115_00011
     "LMP1SHST": 0,
     "LMP1STAT": 0,
     "LMP3STAT": 0,
-    "LONPOLE": 180.0,                        # ?
-    "MASTFLAT": "",                          # ?
-    "MBFILE": "",                            # ?
-    "MDFILE": "",                            # ?
-    "MFFILE": "",                            # ?
-    "MJD": 61041.2083,                       # = 2026-01-01T05:00 UT
-    "MSFILE": "",                            # ?
-    "MSIMNO": 0,                             # ?
-    "NASSCL": False,                         # ?
+    "LONPOLE": 180.0,                        # DRP-written: not in raw headers
+    "MASTFLAT": "",                          # DRP-written: not in raw headers
+    "MBFILE": "",                            # DRP-written: not in raw headers
+    "MDFILE": "",                            # DRP-written: not in raw headers
+    "MFFILE": "",                            # DRP-written: not in raw headers
+    "MJD": 61041.2083,                       # object value: synthetic (no object frame yet)
+    "MSFILE": "",                            # DRP-written: not in raw headers
+    "MSIMNO": 0,                             # DRP-written: not in raw headers
+    "NASSCL": False,                         # DRP-written: not in raw headers
     "NBPCLEAN": 0,
     "NCRCLEAN": 0,
     "NSATFLAG": 0,
     "NSHFDN": 0,
     "NSHFUP": 0,
     "NSTACK": 1,
-    "NUMOPEN": 0,                            # ?
+    "NUMOPEN": 1,                            # kb260115_00011
     "NVIDINP": 4,                            # overridden from ampmode
-    "OBJECT": "Test",
-    "OBJROW0": 0,                            # ?
-    "OBJROW1": 0,                            # ?
-    "OFNAME": "kb260101_00001.fits",
-    "PARANG": 0.0,                           # ?
-    "PONAME": "IFU",                         # ?
-    "POSMAPF": "",                           # ?
-    "PXSCL": 4.048e-05 * 2,                  # ? PIXSCALE * xbin
-    "RA": 150.0,
-    "RABASE": 150.0,                         # ?
+    "OBJECT": "Test",                        # object value: synthetic (no object frame yet)
+    "OBJROW0": 0,                            # DRP-written: not in raw headers
+    "OBJROW1": 0,                            # DRP-written: not in raw headers
+    "OFNAME": "kb260101_00001.fits",         # object value: synthetic (no object frame yet)
+    "PARANG": 0.0,                           # object value: synthetic (no object frame yet)
+    "PONAME": 'REF-N',                       # kb260115_00011
+    "POSMAPF": "",                           # DRP-written: not in raw headers
+    "PXSCL": 4.048e-05 * 2,                  # DRP-written: not in raw headers (PIXSCALE * xbin)
+    "RA": 150.0,                             # object value: synthetic (no object frame yet)
+    "RABASE": 150.0,                         # object value: synthetic (no object frame yet)
     "RADESYS": "FK5",
-    "RCWAVE": 7000.0,                        # ? presence means dichroic in
-    "RGRANGLE": 0.0,                         # ?   BLUE headers (dich())
-    "RGRATNAM": "RL",                        # ?
-    "RNASNAM": "Object",
-    "ROTPOSN": 0.0,                          # ?
-    "ROTREFAN": 0.0,                         # ?
-    "SDWVSIG": 0.1,                          # ?
-    "SHUFROWS": 0,
+    "RCWAVE": 7199.9848633,                  # kb260115_00011
+    "RGRANGLE": 123.0774384,                 # kb260115_00011
+    "RGRATNAM": 'RM1',                       # kb260115_00011
+    "RNASNAM": 'Open',                       # kb260115_00011
+    "ROTPOSN": 0.0,                          # object value: synthetic (no object frame yet)
+    "ROTREFAN": 0.0,                         # object value: synthetic (no object frame yet)
+    "SDWVSIG": 0.1,                          # DRP-written: not in raw headers
+    "SHUFROWS": 1370,                        # kb260115_00011
     "SKYCOR": False,
-    "SKYIMAGE": "",                          # ?
-    "SKYMAST": "",                           # ?
-    "SKYMODEL": "",                          # ?
-    "SKYMSK": "",                            # ?
-    "SKYMSKF": "",                           # ?
-    "SKYROW0": 0,                            # ?
-    "SKYROW1": 0,                            # ?
-    "SKYSCL": 1.0,                           # ?
-    "SLIMAPF": "",                           # ?
+    "SKYIMAGE": "",                          # DRP-written: not in raw headers
+    "SKYMAST": "",                           # DRP-written: not in raw headers
+    "SKYMODEL": "",                          # DRP-written: not in raw headers
+    "SKYMSK": "",                            # DRP-written: not in raw headers
+    "SKYMSKF": "",                           # DRP-written: not in raw headers
+    "SKYROW0": 0,                            # DRP-written: not in raw headers
+    "SKYROW1": 0,                            # DRP-written: not in raw headers
+    "SKYSCL": 1.0,                           # DRP-written: not in raw headers
+    "SLIMAPF": "",                           # DRP-written: not in raw headers
     "SLSCL": 3.7718e-04,                     # SLICESCALE (kcwi.cfg)
-    "STATEID": "0123456789abcdef",           # ? hash-like string
-    "STATENAM": "synthetic",                 # ?
-    "STCKMETH": "average",                   # ?
-    "STCKSIGU": 3.0,                         # ?
-    "SUBROW0": 0,                            # ?
-    "SUBROW1": 0,                            # ?
+    "STATEID": '6968443881c6cc2a85772b8f',   # kb260115_00011
+    "STATENAM": 'Small_BL_4600_RM1_7200',    # kb260115_00011
+    "STCKMETH": "average",                   # DRP-written: not in raw headers
+    "STCKSIGU": 3.0,                         # DRP-written: not in raw headers
+    "SUBROW0": 0,                            # DRP-written: not in raw headers
+    "SUBROW1": 0,                            # DRP-written: not in raw headers
     "TAPLINES": 4,                           # overridden from ampmode
-    "TARGDEC": 2.0,
-    "TARGNAME": "Test",
-    "TARGRA": 150.0,
-    "TELAPSE": 1.0,
-    "TELESCOP": "Keck II",
-    "TTIME": 1.0,
+    "TARGDEC": 2.0,                          # object value: synthetic (no object frame yet)
+    "TARGNAME": "Test",                      # object value: synthetic (no object frame yet)
+    "TARGRA": 150.0,                         # object value: synthetic (no object frame yet)
+    "TELAPSE": 1.0,                          # object value: synthetic (no object frame yet)
+    "TELESCOP": 'Keck II',                   # kb260115_00011
+    "TTIME": 1.0,                            # object value: synthetic (no object frame yet)
     "TUCKALPH": 0.2,                         # TUKEYALPHA (kcwi.cfg)
     "VCORR": 0.0,
-    "VCORRTYP": "none",                      # ?
-    "WAVALL0": 3500.0,                       # ?
-    "WAVALL1": 5500.0,                       # ?
-    "WAVGOOD0": 3600.0,                      # ?
-    "WAVGOOD1": 5400.0,                      # ?
-    "WAVMAPF": "",                           # ?
+    "VCORRTYP": "none",                      # DRP-written: not in raw headers
+    "WAVALL0": 3500.0,                       # DRP-written: not in raw headers
+    "WAVALL1": 5500.0,                       # DRP-written: not in raw headers
+    "WAVGOOD0": 3600.0,                      # DRP-written: not in raw headers
+    "WAVGOOD1": 5400.0,                      # DRP-written: not in raw headers
+    "WAVMAPF": "",                           # DRP-written: not in raw headers
     "WAVMID": 4500.0,
     "WCSDIM": 3,
-    "WCSNAME": "KCWI",                       # ?
-    "XPOSURE": 1.0,
+    "WCSNAME": "KCWI",                       # DRP-written: not in raw headers
+    "XPOSURE": 1.0,                          # object value: synthetic (no object frame yet)
 }
 
 # Values marked "?" in the comments above are guesses.
 
-# Per-amplifier read noise and gain (e-/ADU, e-): plausible, not calibrated.
-_GAINS = (1.00, 1.02, 1.04, 1.06)           # ?
-_BIAS_RN = (3.0, 3.1, 3.2, 3.3)             # ?
+# Per-amplifier gain (e-/ADU) as kcwi_fits_reader()/fix_header() set it for
+# kb260115_00011 (BLUE, GAINMUL 10, amps 1-4).  RED frames use amps numbered
+# from 0 (GAIN0..GAIN3) with fix_header's red_amp_gain table; the fixture's RED
+# variant does not model that yet (T.4).
+_GAINS = (0.157, 0.160, 0.158, 0.158)       # kb260115_00011 (post-ingest)
+# Read noise per amplifier (e-): DRP-written (not in raw headers), plausible.
+_BIAS_RN = (3.0, 3.1, 3.2, 3.3)             # DRP-written
 
 
 def _sec(x0, x1, y0, y1):
@@ -515,20 +526,23 @@ def synthetic_ccddata():
         values["PXSCL"] = 4.048e-05 * binning[0]
         values["CD2_2"] = 4.048e-05 * binning[1]
         values["CDELT1"] = 4.048e-05 * binning[1]
-        values["BARTANG" if camera == "BLUE" else "RARTANG"] = 0.0   # ?
+        values["BARTANG" if camera == "BLUE" else "RARTANG"] = (
+            23.1307564 if camera == "BLUE" else 56.022934)  # kb/kr260115 arcs
         values.update(_amp_sections(nx, ny, n_amps, overscan,
                                       binning[0], binning[1]))
         for ia in range(1, n_amps + 1):
             values["GAIN%d" % ia] = _GAINS[ia - 1]
             values["BIASRN%d" % ia] = _BIAS_RN[ia - 1]
+        if camera == "RED":
+            # kr260115_00013 shares the instrument state of the blue arc.
+            values.update({"RCWAVE": 7199.9848633, "RGRATNAM": 'RM1',
+                           "RGRANGLE": 123.0774384, "RNASNAM": 'Open',
+                           "GAINMUL": 1, "CCDMODE": 1})
         # CCDCFG as kcwi_fits_reader builds it (CCDSUM, CCDMODE, GAINMUL,
         # AMPMNUM).
         values["CCDCFG"] = ("%s%1d%02d%02d" % (
             values["CCDSUM"].replace(" ", ""), values["CCDMODE"],
             values["GAINMUL"], values["AMPMNUM"]))
-        if camera == "RED":
-            values.update({"RCWAVE": 7000.0, "RGRATNAM": "RL",
-                           "RGRANGLE": 0.0, "RNASNAM": "Object"})
         values.update(header_overrides)
         for key, value in values.items():
             hdr[key] = value

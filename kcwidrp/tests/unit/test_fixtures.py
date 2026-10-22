@@ -53,8 +53,9 @@ def test_synthetic_ccddata_blue_defaults(synthetic_ccddata):
     assert hdr["CCDSUM"] == "2 2"
     assert hdr["NVIDINP"] == 4
     # source: analytic -- CCDCFG = CCDSUM(no blank) + CCDMODE(1) + GAINMUL(2)
-    # + AMPMNUM(2), as kcwi_fits_reader builds it.
-    assert hdr["CCDCFG"] == "2200100"
+    # + AMPMNUM(2), as kcwi_fits_reader builds it; CCDMODE 1 and GAINMUL 10
+    # as in kb260115_00011, whose CCDCFG is "1111000" at 1x1 binning.
+    assert hdr["CCDCFG"] == "2211000"
     assert hdr["NAXIS1"] == 144 and hdr["NAXIS2"] == 128
 
 
