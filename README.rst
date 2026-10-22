@@ -29,12 +29,7 @@ Documentation for this project is maintained with ReadTheDocs at the following l
 Tests
 -----
 
-Status of tests:
-`<https://travis-ci.com/github/Keck-DataReductionPipelines/KCWI_DRP>`_
-
-
-.. image:: https://travis-ci.com/Keck-DataReductionPipelines/KCWI_DRP.svg?branch=master
-   :target: https://travis-ci.com/Keck-DataReductionPipelines/KCWI_DRP
+The tests are run locally; see ``docs/testing.md`` for how to run them.
 
 
 Dependencies

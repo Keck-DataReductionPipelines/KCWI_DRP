@@ -25,3 +25,6 @@
 	 were named when they were first written to disk)
 	-Fixes a bug that prevented two concurrent instances of the pipeline from running at the same time
 	-Adds additional standard star spectra for use in fluxing
+Unreleased:
+	-Removed the Travis CI configuration (.travis.yml) and the Travis references in README.rst
+	-There is currently no CI; tests are run locally, see docs/testing.md
