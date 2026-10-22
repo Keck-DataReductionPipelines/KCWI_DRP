@@ -787,7 +787,7 @@ Validation:
 
 ### P.5 Bug fixes — Opus 5.5 (medium) for fixes, Sonnet 5.5 (medium) for the failing tests
 
-Depends on: P.4, PR3a merged. One commit per bug marked "PR3b" in §13 (B1, B1b, B3, B7, B8, B11, B12, B13, B16–B29, except those fixed earlier). For each bug, the failing test usually already exists as a strict `xfail` from T.4 or T.6. Where it does not, Sonnet first writes one from the bug description only. Opus then fixes the bug and removes the `xfail` marker in the same commit; the test passes.
+Depends on: P.4, PR3a merged. One commit per bug marked "PR3b" in §13 (B1, B1b, B3, B7, B8, B11, B12, B13, B16–B32, except those fixed earlier). For each bug, the failing test usually already exists as a strict `xfail` from T.4 or T.6. Where it does not, Sonnet first writes one from the bug description only. Opus then fixes the bug and removes the `xfail` marker in the same commit; the test passes.
 
 Validation:
 - Each commit message states the bug, the fix, and the measured effect on the S.3 reductions ("no change in outputs" or "invsens changes by X % at λ Y").
@@ -1118,7 +1118,7 @@ Rollback: each PR is independently revertable. Until M.6, the matrix code is opt
 
 ## 13. Bugs found while planning (input to T.11, P.4 and P.5)
 
-Found by reading the code at `dfbcf9d` (unchanged at `v1.3.2`); B11–B13 were found by the S.5 inventory, B14–B15 by T.1's import test, B16 by T.2's attribute scan, B17–B21 by T.3, B22–B25 by T.6 and B26–B29 by T.4, all confirmed by reading the code. PR3b is the upgrade's bug-fix PR: besides the prompt-site bugs it carries the non-prompt bugs marked PR3b (B16–B29), each in its own commit with its measured effect. Each must be confirmed by a failing test before it is fixed. Line numbers will move after Track A. "Crash" below means the primitive raises: the framework logs the exception, that frame's chain of events stops, and the rest of the reduction continues (§6.1). "Fixed in" follows D11 and D12.
+Found by reading the code at `dfbcf9d` (unchanged at `v1.3.2`); B11–B13 were found by the S.5 inventory, B14–B15 by T.1's import test, B16 by T.2's attribute scan, B17–B21 by T.3, B22–B25 by T.6 and B26–B32 by T.4, all confirmed by reading the code. PR3b is the upgrade's bug-fix PR: besides the prompt-site bugs it carries the non-prompt bugs marked PR3b (B16–B32), each in its own commit with its measured effect. Each must be confirmed by a failing test before it is fixed. Line numbers will move after Track A. "Crash" below means the primitive raises: the framework logs the exception, that frame's chain of events stops, and the rest of the reduction continues (§6.1). "Fixed in" follows D11 and D12.
 
 | ID | Where | Bug | Effect | Changes outputs? | Fixed in |
 |---|---|---|---|---|---|
@@ -1153,5 +1153,8 @@ Found by reading the code at `dfbcf9d` (unchanged at `v1.3.2`); B11–B13 were f
 | B27 | `StackFlats.py:115` | The stacked data are rescaled by `median(fmeds)` after `ccdproc.combine` with `scale=inv_median`, but the stacked uncertainty is not. | Stacked-flat uncertainty is too small by the factor `median(fmeds)` | Yes (flat uncertainty, and everything propagated from it) | With B26 |
 | B28 | `FlagSaturation.py:41-46` | `NSATFLAG` is `np.sum` of the tuple `np.where` returns, i.e. the sum of the row and column indices of the flagged pixels, not their number. | `NSATFLAG` header value is wrong; the flags themselves are right | Yes (one header value) | PR3b |
 | B29 | `SubtractOverscan.py:57-58` | The overscan window is `[x0 + oscanbuf : x1 - oscanbuf)` with `x1` inclusive, so `oscanbuf` columns are skipped at the start and `oscanbuf + 1` at the end. | With a column gradient in the overscan the subtracted level is off by up to about 1 DN | Yes (small) | PR3b, with the measured effect |
+| B30 | `CorrectDar.py:248-255` | The mask and flags planes are shifted with the same cubic-spline `scipy.ndimage.shift` as the data. | Flags in `icubed` become arbitrary byte values (e.g. 34, 94, 129), and padding pixels shifted in from outside the cube get 0 instead of 128 | Yes (`icubed` mask and flags) | PR3b (the `warp` path stays after M.6, D5): shift flags and mask with order 0 and fill the padding with 128 |
+| B31 | `FluxCalibrate.py:98` | `self.logger.info(w0, mcw0, dw, …)` passes a float as the message with seven extra arguments. | A "--- Logging error ---" traceback whenever the invsens wavelength grid differs from the cube's and INFO is logged | No | PR3b |
+| B32 | `MakeInvsens.py:388-393` (since `eaa516c`, 2024-04-16) | The fallback line-mask path is `strip_fname(stdfile) + '.lmsk'`, the bare file stem, instead of the path next to the standard's file in `data/stds/`. | The shipped `bd02d3375.lmsk` and `feige110.lmsk` are never used; invsens for those standards is fitted without their line masks | Yes (invsens for those standards) | PR3b, with the measured change in invsens |
 
 B1 is the only one known to affect unattended reductions at default settings. S.3's level-1 logs show whether it occurred on the reference data.
