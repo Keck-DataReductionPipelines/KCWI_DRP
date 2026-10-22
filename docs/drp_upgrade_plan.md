@@ -466,7 +466,7 @@ Validation:
 
 ### T.4 Primitive-level unit tests — Sonnet 5.5 (medium); Opus 5.5 (medium) for the numeric and prompt cases
 
-Depends on: T.2. Synthetic inputs with known answers, run through `run_primitive`. Two fixture gaps found in T.2 come first: `synthetic_ccddata()` defaults to 8 overscan columns, below `minoscanpix` (75 for BLUE), so overscan tests must pass a wider overscan or the default must change; and RED frames must number amplifiers 0–3 (`ASEC0`…, `GAIN0`…) as `ingest_file.map_ccd` and `fix_header` expect, which the fixture does not do yet.
+Depends on: T.2. Synthetic inputs with known answers, run through `run_primitive`. Fixture gaps found in T.2 and T.3 come first: `synthetic_ccddata()` appends `NAXIS1`/`NAXIS2` as ordinary cards at the end of the header, which fails astropy's verification in `kcwi_fits_writer`; blue frames lack `AMPID1..4`, which `fix_header`/`kcwi_fits_reader` read; `synthetic_ccddata()` defaults to 8 overscan columns, below `minoscanpix` (75 for BLUE), so overscan tests must pass a wider overscan or the default must change; and RED frames must number amplifiers 0–3 (`ASEC0`…, `GAIN0`…) as `ingest_file.map_ccd` and `fix_header` expect, which the fixture does not do yet.
 
 Detector level (Sonnet):
 - `SubtractOverscan`: constant and sloped overscan per amplifier removed; each amplifier mode in the config. Also at `plot_level = 3` with `bokeh_session = None` (B10, from T.11).
@@ -787,7 +787,7 @@ Validation:
 
 ### P.5 Bug fixes — Opus 5.5 (medium) for fixes, Sonnet 5.5 (medium) for the failing tests
 
-Depends on: P.4, PR3a merged. One commit per bug marked "PR3b" in §13 (B1, B1b, B3, B7, B8, B11, B12, B13, B16). For each bug, the failing test usually already exists as a strict `xfail` from T.4 or T.6. Where it does not, Sonnet first writes one from the bug description only. Opus then fixes the bug and removes the `xfail` marker in the same commit; the test passes.
+Depends on: P.4, PR3a merged. One commit per bug marked "PR3b" in §13 (B1, B1b, B3, B7, B8, B11, B12, B13, B16–B21). For each bug, the failing test usually already exists as a strict `xfail` from T.4 or T.6. Where it does not, Sonnet first writes one from the bug description only. Opus then fixes the bug and removes the `xfail` marker in the same commit; the test passes.
 
 Validation:
 - Each commit message states the bug, the fix, and the measured effect on the S.3 reductions ("no change in outputs" or "invsens changes by X % at λ Y").
@@ -1118,7 +1118,7 @@ Rollback: each PR is independently revertable. Until M.6, the matrix code is opt
 
 ## 13. Bugs found while planning (input to T.11, P.4 and P.5)
 
-Found by reading the code at `dfbcf9d` (unchanged at `v1.3.2`); B11–B13 were found by the S.5 inventory, B14–B15 by T.1's import test and B16 by T.2's attribute scan, all confirmed by reading the code. Each must be confirmed by a failing test before it is fixed. Line numbers will move after Track A. "Crash" below means the primitive raises: the framework logs the exception, that frame's chain of events stops, and the rest of the reduction continues (§6.1). "Fixed in" follows D11 and D12.
+Found by reading the code at `dfbcf9d` (unchanged at `v1.3.2`); B11–B13 were found by the S.5 inventory, B14–B15 by T.1's import test, B16 by T.2's attribute scan and B17–B21 by T.3, all confirmed by reading the code. PR3b is the upgrade's bug-fix PR: besides the prompt-site bugs it carries the non-prompt bugs marked PR3b (B16–B21), each in its own commit with its measured effect. Each must be confirmed by a failing test before it is fixed. Line numbers will move after Track A. "Crash" below means the primitive raises: the framework logs the exception, that frame's chain of events stops, and the rest of the reduction continues (§6.1). "Fixed in" follows D11 and D12.
 
 | ID | Where | Bug | Effect | Changes outputs? | Fixed in |
 |---|---|---|---|---|---|
@@ -1140,5 +1140,10 @@ Found by reading the code at `dfbcf9d` (unchanged at `v1.3.2`); B11–B13 were f
 | B14 | `kcwidrp/scripts/kcwi_masksky_ds9.py:2`, `pyproject.toml` | The script imports `regions` (since `2aba1ef`), but `pyproject.toml` declares `pyregion`, which nothing imports any more. | The `kcwi_masksky_ds9` entry point fails with `ModuleNotFoundError` in a clean install | No | PR1 (bokeh 5.1, which already edits the dependency list): replace `pyregion` with `regions` |
 | B15 | `kcwidrp/scripts/reduce_server.py:11` | Imports `keckdrpframework.utils.easyHTTP`, which `keckdrpframework` 1.0.0 does not ship. Not an entry point. | The module cannot be imported or run | No | R.1: the maintainer decides whether to delete the script or fix it; the T.1 import test pins it as a strict `xfail` until then |
 | B16 | `SolveAIT.py:219-224` | Reads `self.action.args.dich_frac`, but `GetAtlasLines.py:330` sets `args.dichroic_fraction` (as `SolveGeom.py:202` reads it). The `AttributeError` fallback always applies. | `DICHFRAC` in SolveAIT's output header is always 1.0; cube headers (from `geom['dich_frac']`) are unaffected | Yes (one header value) | PR3b (P.5), with the measured effect on S.3 outputs |
+| B17 | `core/kcwi_proctab.py:151-154` (`search_proctab`) | After filtering `tab` by camera, the type filter uses a mask built from the full table: `tab = tab[(self.proctab['TYPE'] == target_type)]`. | `IndexError` when one proctab holds frames of both cameras. Latent in normal use, where each channel has its own proctab | No | PR3b |
+| B18 | `core/kcwi_get_std.py:14-22, 26-35` | `kcwi_get_std` and `is_file_kcwi_std` default to `logger=None` but call `logger.info`/`logger.error` unconditionally. | `AttributeError` when called without a logger | No | PR3b |
+| B19 | `WavelengthCorrections.get_wav_axis` (`:349-355`) | Computes `CRVAL + (i - CRPIX) * CD` for 0-based `i`; FITS pixels are 1-based, so with `CRPIX3 = 1` (as `MakeCube.py:350` writes) the axis starts one pixel low (`CRVAL3 - CD3_3`). `air2vac` and `heliocentric` resample on this axis. | Air-to-vacuum and velocity resampling use a wavelength axis shifted by one pixel; the effect on `icubew` is second order (about one pixel × v/c, and the change of the air–vacuum offset across one pixel) | Yes (small) | PR3b, with the measured change in `icubew` |
+| B20 | `kcwi_file_primitives.py:1198` (`kcwi_fits_writer`) | Iterates `ccddata.header["HISTORY"]`, which raises `KeyError` when the header has no `HISTORY` card. | Writer fails on a header without HISTORY. Latent for KOA raw frames, which carry HISTORY | No | PR3b |
+| B21 | `WavelengthCorrections.get_wav_axis` (`:333-335`) | Calls `self.logger.warning.error(...)` when a `CTYPEn` card is missing. | `AttributeError` instead of the intended message | No | PR3b |
 
 B1 is the only one known to affect unattended reductions at default settings. S.3's level-1 logs show whether it occurred on the reference data.

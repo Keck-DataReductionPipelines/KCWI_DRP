@@ -100,7 +100,7 @@ A bug that exists in the code is pinned by a test that asserts the **correct** b
 1. Tests are written from the specification (the plan, the task description, docstrings, published behaviour), not from the implementation's source.
 2. Tests are written by a different model, or in a fresh session with no access to the implementation conversation, from the code they test. The pull request says who wrote what.
 3. A test that only re-executes the implementation's own formula (for example, computing the expected value with the same expression the code uses) is not a test. It is rejected in review.
-4. Each new test file is checked once by deliberately breaking the code it tests; at least one test in the file must fail. The breakage used is noted in the pull request.
+4. Each new test file is checked once by deliberately breaking the code it tests; at least one test in the file must fail. The breakage used is noted in the pull request. Run these checks with `PYTHONDONTWRITEBYTECODE=1`, and delete `__pycache__` directories after reverting: a breakage of the same length as the original (for example `tan` → `sin`), reverted within the same second, leaves a stale `.pyc` that Python still loads, so later runs test the broken code.
 
 ## 9. Property (invariant) tests
 
