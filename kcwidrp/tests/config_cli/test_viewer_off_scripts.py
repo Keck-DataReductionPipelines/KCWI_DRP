@@ -27,7 +27,8 @@ QUEUEING = ("append_event", "ingest_data")
 
 def _own_nodes(func):
     """Yield nodes in func's body, not descending into nested defs."""
-    stack = list(func.body)
+    stack = [n for n in func.body
+             if not isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))]
     while stack:
         node = stack.pop()
         yield node
