@@ -85,6 +85,7 @@ Decisions added after review (2026-10-22). Where one changes an earlier row, the
 | D17 | From M.2c, the regression manifest has explicit `*_warp` datasets pinned with `cube_method = "warp"`. They keep their references through the M.6 default flip. | Without them, blessing the default datasets at M.6 leaves the `warp` rollback path (D5) untested |
 | D18 | Tests and the regression runner set `astropy.utils.iers.conf.auto_download = False`; the IERS table versions in use are recorded in the regression provenance. | `radial_velocity_correction` may otherwise download IERS-A, which breaks the "no network" rule and can change `icubew` with no code change |
 | D19 | PR6 (covariance) gets its own gate, G5b. S.4 Q10 is split: Q10a (`CUBEMETH`, `WAVCORR`, `DARCOR`) before M.2c; Q10b (noise-curve keywords, named in M.5a) before M.5b. | PR6 adds user-facing keys, extensions and header keywords (Q7), and the M.5 names do not exist when M.2c starts |
+| D20 | (Maintainer decision, 2026-10-22.) Upstream `develop` was fast-forwarded to `master` (`9be28f5`, `v1.3.2`), so `upgrade-start` is on `develop` and PRs target `develop` (D6) with no extra commits. `stash@{0}` (an earlier draft of PR #218 plus mode flips) was dropped. S.1 is complete. | `develop` had stayed at `6058c37` while `master` received PR #207's merge and PR #218 |
 
 ---
 
