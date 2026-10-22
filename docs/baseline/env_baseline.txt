@@ -1,0 +1,103 @@
+# pip freeze of the kcwidrp conda env (baseline env, D14), 2026-10-22
+# python: Python 3.12.13; platform: Darwin arm64; kcwidrp at upgrade-start (9be28f5)
+appnope @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_appnope_1787337124/work
+astropy==6.1.7
+astropy-iers-data==0.2026.8.3.0.53.6
+astropy_healpix==1.1.3
+astroscrappy==1.1.0
+asttokens @ file:///home/conda/feedstock_root/build_artifacts/asttokens_1783975656336/work
+attrs==26.1.0
+bokeh==2.4.3
+ccdproc==2.4.3
+certifi==2026.7.22
+charset-normalizer==3.4.9
+click==8.4.2
+cloudpickle==3.1.2
+comm @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_comm_1753453984/work
+contourpy==1.3.3
+cycler==0.12.1
+Cython==3.2.9
+dask==2026.7.1
+dask-image==2026.5.0
+debugpy @ file:///Users/runner/miniforge3/conda-bld/bld/rattler-build_debugpy_1789745265/work
+donfig==0.8.1.post1
+executing @ file:///home/conda/feedstock_root/build_artifacts/executing_1756729339227/work
+fonttools==4.63.0
+fsspec==2026.7.0
+google-crc32c==1.8.0
+h11==0.16.0
+idna==3.18
+ImageIO==2.37.4
+importlib_resources==6.5.2
+ipykernel @ file:///Users/runner/miniforge3/conda-bld/bld/rattler-build_ipykernel_1790708055/work
+ipython @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_ipython_1788260388/work
+ipython_pygments_lexers @ file:///home/conda/feedstock_root/build_artifacts/ipython_pygments_lexers_1737123620466/work
+jedi @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_jedi_1782251948/work
+Jinja2==3.0.3
+jupyter_client @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_jupyter_client_1787929615/work
+jupyter_core @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_jupyter_core_1760643864/work
+keckdrpframework==1.0.0
+kiwisolver==1.5.0
+lazy-loader==0.5
+locket==1.0.0
+MarkupSafe==3.0.3
+matplotlib==3.9.4
+matplotlib-inline @ file:///home/conda/feedstock_root/build_artifacts/matplotlib-inline_1778264321245/work
+more-itertools==11.1.0
+nest-asyncio2 @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_nest-asyncio2_1790240046/work
+networkx==3.6.1
+numcodecs==0.16.5
+numpy==1.26.4
+outcome==1.3.0.post0
+packaging==26.0
+pandas==2.3.3
+parso @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_parso_1777722955/work
+partd==1.4.2
+pexpect @ file:///home/conda/feedstock_root/build_artifacts/pexpect_1733301927746/work
+phantomjs==1.4.1
+pillow==12.3.0
+PIMS==0.7
+platformdirs @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_platformdirs_1791727231/work
+pluggy==0.13.1
+prompt_toolkit @ file:///home/conda/feedstock_root/build_artifacts/prompt-toolkit_1785160527032/work
+psutil==5.7.3
+ptyprocess @ file:///home/conda/feedstock_root/build_artifacts/ptyprocess_1733302279685/work/dist/ptyprocess-0.7.0-py2.py3-none-any.whl#sha256=92c32ff62b5fd8cf325bec5ab90d7be3d2a8ca8c8a3813ff487a8d2002630d1f
+pure_eval @ file:///home/conda/feedstock_root/build_artifacts/pure_eval_1789159354067/work
+py==1.11.0
+PyAVM==0.9.9
+pyerfa==2.0.1.5
+Pygments @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_pygments_1786995678/work
+pyparsing==3.3.2
+pyregion==2.3.0
+PySocks==1.7.1
+pytest==5.4.3
+python-dateutil @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_python-dateutil_1751104122/work
+pytz==2026.3.post1
+PyYAML==6.0.3
+pyzmq @ file:///Users/runner/miniforge3/conda-bld/bld/rattler-build_pyzmq_1789730185/work
+ref_index==1.0
+reproject==0.21.0
+requests==2.34.2
+scikit-image==0.26.0
+scipy==1.14.1
+selenium==4.46.0
+setuptools==82.0.1
+six @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_six_1753199211/work
+slicerator==1.1.0
+sniffio==1.3.1
+sortedcontainers==2.4.0
+stack_data @ file:///home/conda/feedstock_root/build_artifacts/stack_data_1733569443808/work
+tifffile==2026.3.3
+toolz==1.1.0
+tornado @ file:///Users/runner/miniforge3/conda-bld/tornado_1789910997880/work
+traitlets @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_traitlets_1785761789/work
+trio==0.33.0
+trio-websocket==0.12.2
+typing_extensions @ file:///home/conda/feedstock_root/build_artifacts/bld/rattler-build_typing_extensions_1783002732/work
+tzdata==2026.3
+urllib3==2.7.0
+wcwidth @ file:///Users/runner/miniforge3/conda-bld/bld/rattler-build_wcwidth_1791194620/work
+websocket-client==1.9.0
+wheel==0.47.0
+wsproto==1.3.2
+zarr==3.1.5
