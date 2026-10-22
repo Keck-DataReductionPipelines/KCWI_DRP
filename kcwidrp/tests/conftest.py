@@ -37,6 +37,9 @@ from keckdrpframework.config.framework_config import ConfigClass
 
 from kcwidrp.core.kcwi_pkg_resources import get_resource_path
 from kcwidrp.core.kcwi_proctab import Proctab
+# Register the hypothesis profiles here too, so --hypothesis-profile=thorough
+# also works when pytest is started from the repository root (T.5).
+import kcwidrp.tests.properties._profiles  # noqa: F401,E402
 from kcwidrp.primitives.kcwi_file_primitives import KCCDData
 
 # D18: no network access for IERS tables, for every test in the session.
