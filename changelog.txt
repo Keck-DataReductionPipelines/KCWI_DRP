@@ -28,3 +28,4 @@
 Unreleased:
 	-Removed the Travis CI configuration (.travis.yml) and the Travis references in README.rst
 	-There is currently no CI; tests are run locally, see docs/testing.md
+	-pytest moved from the runtime dependencies to a "test" extra (with hypothesis and pytest-cov); install with pip install -e ".[test]"

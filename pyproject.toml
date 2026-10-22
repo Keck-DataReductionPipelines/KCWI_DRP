@@ -30,7 +30,6 @@ pyerfa = ">=2.0.1.5,<3.0.0.0"
 bokeh = ">=2.4.3,<2.5.0"
 jinja2 = ">=3.0.3,<3.1.0"
 psutil = ">=5.7.0,<5.8.0"
-pytest = ">=5.4.1,<5.5.0"
 keckdrpframework = "1.0"
 requests = ">=2.32.5,<3.0.0"
 pandas = ">=1.3.5,<3.0.0"
@@ -41,6 +40,13 @@ cython = ">=3.2.4,<4.0.0"
 selenium = ">=4.40.0,<5.0.0"
 phantomjs = ">=1.4.1,<2.0.0"
 importlib_resources = "6.5.2"
+# Test dependencies (D13): pip install -e ".[test]"
+pytest = {version = ">=8", optional = true}
+hypothesis = {version = ">=6.100", optional = true}
+pytest-cov = {version = ">=5", optional = true}
+
+[tool.poetry.extras]
+test = ["pytest", "hypothesis", "pytest-cov"]
 
 [tool.poetry.scripts]
 reduce_kcwi = "kcwidrp.scripts.reduce_kcwi:main"
@@ -51,6 +57,26 @@ start_kcwi_rti = "kcwidrp.scripts.kcwi_rti:main"
 wb = "kcwidrp.scripts.wb:wb_main"
 wr = "kcwidrp.scripts.wr:wr_main"
 check_cals = "kcwidrp.scripts.check_cals:main"
+
+[tool.pytest.ini_options]
+testpaths = ["kcwidrp/tests"]
+# importlib import mode: test files need no __init__.py and same-named files
+# in different directories (e.g. test_x.py in unit/core and unit/primitives)
+# do not clash.
+addopts = "--import-mode=importlib --strict-markers -m 'not regression'"
+markers = [
+    "regression: needs $KCWI_REGRESSION_DATA; runs a full reduction (only in kcwidrp/tests/regression/)",
+    "slow: a fast-suite test that takes more than 2 s (rare; the test says why)",
+]
+filterwarnings = [
+    # Ignore DeprecationWarning only where the warning is raised by a
+    # third-party module, so deprecations raised from kcwidrp stay visible.
+    # The list is the set actually emitted in the baseline env (T.1): bokeh
+    # 2.4.3 (np.bool8, utcfromtimestamp) and matplotlib 3.9 with pyparsing
+    # (PyparsingDeprecationWarning is a DeprecationWarning subclass).
+    "ignore::DeprecationWarning:bokeh.*",
+    "ignore::DeprecationWarning:matplotlib.*",
+]
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
