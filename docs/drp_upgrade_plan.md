@@ -1118,7 +1118,7 @@ Rollback: each PR is independently revertable. Until M.6, the matrix code is opt
 
 ## 13. Bugs found while planning (input to T.11, P.4 and P.5)
 
-Found by reading the code at `dfbcf9d` (unchanged at `v1.3.2`); B11–B13 were found by the S.5 inventory and confirmed by reading the code. Each must be confirmed by a failing test before it is fixed. Line numbers will move after Track A. "Crash" below means the primitive raises: the framework logs the exception, that frame's chain of events stops, and the rest of the reduction continues (§6.1). "Fixed in" follows D11 and D12.
+Found by reading the code at `dfbcf9d` (unchanged at `v1.3.2`); B11–B13 were found by the S.5 inventory and B14–B15 by T.1's import test, all confirmed by reading the code. Each must be confirmed by a failing test before it is fixed. Line numbers will move after Track A. "Crash" below means the primitive raises: the framework logs the exception, that frame's chain of events stops, and the rest of the reduction continues (§6.1). "Fixed in" follows D11 and D12.
 
 | ID | Where | Bug | Effect | Changes outputs? | Fixed in |
 |---|---|---|---|---|---|
@@ -1137,5 +1137,7 @@ Found by reading the code at `dfbcf9d` (unchanged at `v1.3.2`); B11–B13 were f
 | B11 | `kcwi_rti.py:405-423` (`-f` branch) | After the wrong-channel prompt, answering `Q` empties the local `frames` list, but the code then ingests `args.frames`, so the quit is ignored. (`reduce_kcwi.py` ingests `frames` correctly.) | Quit at the channel prompt does nothing in RTI | No | PR3b (P.5), because the fix changes what a valid answer does |
 | B12 | `NandshuffSubtractSky.py:303, 305` (non-standard N&S branch) | `sky[0, objrow0, :] = 0.` and `obj[0, objrow0, :] = 0.` use three indices on 2-D arrays (the intended slice is `[0:objrow0, :]`). | NandshuffSubtractSky fails after the user enters the sky scale, so non-standard N&S frames are never sky-subtracted | Yes (crash → result) | PR3b (P.5); synthetic N&S test only (Q4) |
 | B13 | `MakeInvsens.py:404-408, 488-493` | Header lines of an existing `.lmsk` file are read with `strip()` and written back with no newline, so all header lines and the first mask line are joined into one line that starts with `#`. | On the next run with that file, the first line mask is silently dropped as a comment | Yes, on re-use of an edited `.lmsk` file | PR3b (P.5) |
+| B14 | `kcwidrp/scripts/kcwi_masksky_ds9.py:2`, `pyproject.toml` | The script imports `regions` (since `2aba1ef`), but `pyproject.toml` declares `pyregion`, which nothing imports any more. | The `kcwi_masksky_ds9` entry point fails with `ModuleNotFoundError` in a clean install | No | PR1 (bokeh 5.1, which already edits the dependency list): replace `pyregion` with `regions` |
+| B15 | `kcwidrp/scripts/reduce_server.py:11` | Imports `keckdrpframework.utils.easyHTTP`, which `keckdrpframework` 1.0.0 does not ship. Not an entry point. | The module cannot be imported or run | No | R.1: the maintainer decides whether to delete the script or fix it; the T.1 import test pins it as a strict `xfail` until then |
 
 B1 is the only one known to affect unattended reductions at default settings. S.3's level-1 logs show whether it occurred on the reference data.
