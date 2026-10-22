@@ -5,7 +5,8 @@ Tasks S.2 and S.3 of [drp_upgrade_plan.md](../drp_upgrade_plan.md). Only text fi
 ## Baseline environment (S.2, 2026-10-22)
 
 - Conda env `kcwidrp`, Python 3.12.13, macOS arm64 (`Darwin arm64`).
-- `kcwidrp` installed editable (`pip install -e .`) from `upgrade-start` (`9be28f5`, `v1.3.2`).
+- `kcwidrp` installed editable (`pip install -e .`) from `upgrade-start`. That tag was first `9be28f5` (`v1.3.2`) and moved to `6270cba` (1.3.3, the StackFlats hotfix, D21) before S.3; the environment itself did not change.
+- A stale, untracked `kcwidrp.egg-info/` (version 1.2.0, from an old local build) at the repository root shadowed the installed metadata whenever Python ran from the repository root, so `importlib.metadata.version('kcwidrp')`, which `kcwi_fits_writer` writes into every output's HISTORY, reported 1.2.0 there. It was moved out of the repository on 2026-10-22. If it reappears (e.g. after a `setup.py`-style build), delete it before S.3 or any regression run.
 - Full package list: [env_baseline.txt](env_baseline.txt). Key versions: numpy 1.26.4, scipy 1.14.1, astropy 6.1.7, scikit-image 0.26.0, astroscrappy 1.1.0, bokeh 2.4.3, matplotlib 3.9.4, keckdrpframework 1.0.0, psutil 5.7.3, pytest 5.4.3.
 
 ### Repair done before recording

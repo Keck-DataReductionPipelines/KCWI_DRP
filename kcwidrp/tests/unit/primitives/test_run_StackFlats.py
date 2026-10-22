@@ -169,9 +169,6 @@ def bright_flats():
     return flats
 
 
-@pytest.mark.xfail(strict=True, reason="B26: StackFlats.py:92-95 builds "
-                   "every flat's path from stackf[0], so all N inputs are the "
-                   "first flat and the other flats are never read")
 def test_flats_of_different_brightness_are_scaled_and_averaged(
         run_primitive, synthetic_ccddata, tmp_redux):
     write_flats(synthetic_ccddata, tmp_redux, bright_flats())
@@ -191,11 +188,6 @@ def test_flats_of_different_brightness_are_scaled_and_averaged(
     np.testing.assert_allclose(data, expected, rtol=1e-6)
 
 
-@pytest.mark.xfail(strict=True, reason="B26: all N inputs are the first "
-                   "flat (StackFlats.py:92-95), so the uncertainty is 0; and "
-                   "B27: StackFlats.py:115 rescales the stacked data "
-                   "by median(fmeds) but not its uncertainty, which stays in "
-                   "unit-median units")
 def test_stack_uncertainty_is_in_the_units_of_the_stack(
         run_primitive, synthetic_ccddata, tmp_redux):
     write_flats(synthetic_ccddata, tmp_redux, bright_flats())
