@@ -77,7 +77,7 @@ Decisions added after review (2026-10-22). Where one changes an earlier row, the
 |---|---|---|
 | D10 | Work starts from upstream `v1.3.2`, not `12fd4aa`. `git fetch`, check that `develop` contains `v1.3.2`, branch from it, and tag `upgrade-start` there. The `geckodriver_prefer_non_snap` question in S.1 is closed: it was merged as PR #218. | `v1.3.2` was released 2026-10-15 and is not an ancestor of `dfbcf9d`; PRs against `develop` must not undo it |
 | D11 | Two existing crashes when the viewer is off are fixed in PR0 (T.11, bugs B9 and B10 in §13): `context.bokeh_session` is initialised to `None` by the launch scripts, and `bokeh_clear(None)` returns. Behaviour with a working Bokeh server is unchanged. | Without it, no reduction at `plot_level ≥ 1` runs with the viewer disabled, so the regression suite (T.7) cannot run unattended and headless on `upgrade-start` code |
-| D12 | Track P's "no behaviour change" rule is: **for input that is valid today, PR3a must give identical prompts, logged results and outputs; input that is invalid today (crashes, silent resets, silent early exits, accidental quits) may re-prompt instead.** Bugs whose fix only affects invalid input (B1c, B2, B4, B5, B6) are fixed by the helper in PR3a. Bugs whose fix changes outputs, or the prompts seen with valid input, (B1, B1b, B3, B7, B8) are fixed in PR3b. Supersedes the "keep the bug in P.4" wording. | §8.2's helper design already fixes B4 and B5 by construction; the earlier text put the same fixes in both PRs |
+| D12 | Track P's "no behaviour change" rule is: **for input that is valid today, PR3a must give identical prompts, logged results and outputs; input that is invalid today (crashes, silent resets, silent early exits, accidental quits) may re-prompt instead.** Bugs whose fix only affects invalid input (B1c, B2, B4, B5, B6) are fixed by the helper in PR3a. Bugs whose fix changes outputs, or the prompts seen with valid input, (B1, B1b, B3, B7, B8, and later B11–B13) are fixed in PR3b. Supersedes the "keep the bug in P.4" wording. | §8.2's helper design already fixes B4 and B5 by construction; the earlier text put the same fixes in both PRs |
 | D13 | Test dependencies are a pip-installable extra (`pip install -e ".[test]"`), declared as PEP 621 `[project.optional-dependencies]` (supported by `poetry-core>=2`) or `[tool.poetry.extras]`, not a Poetry-only dependency group. Amends D9. | Users and maintainers install with pip and conda; a Poetry group cannot be installed by pip |
 | D14 | Two environments, both Python 3.12: the **baseline env** (repaired `kcwidrp` conda env plus the test extra) runs `upgrade-start` code and all of PR0; the **development env** for PR1 onward has the same numeric pins (`numpy`, `scipy`, `astropy`, `scikit-image`, `astroscrappy`) as the baseline, minus Bokeh. The environment check in T.7 is done in the baseline env, before any code change. | `upgrade-start` cannot import without Bokeh, so it cannot be run in a post-PR1 env; `numpy==1.26.4` has no Python 3.13 wheels |
 | D15 | The regression runner does not trust the exit code or stdin position. Failures are found by scanning the log; prompts are recorded by a `sitecustomize.py` that the runner places on `PYTHONPATH` and that wraps `builtins.input` to append each prompt and answer to a sidecar file. | The framework catches primitive exceptions, carries on, and always leaves through `os._exit(0)`; Python reads a redirected stdin file in 8 KB blocks, so file position shows nothing about how many answers were used |
@@ -86,6 +86,25 @@ Decisions added after review (2026-10-22). Where one changes an earlier row, the
 | D18 | Tests and the regression runner set `astropy.utils.iers.conf.auto_download = False`; the IERS table versions in use are recorded in the regression provenance. | `radial_velocity_correction` may otherwise download IERS-A, which breaks the "no network" rule and can change `icubew` with no code change |
 | D19 | PR6 (covariance) gets its own gate, G5b. S.4 Q10 is split: Q10a (`CUBEMETH`, `WAVCORR`, `DARCOR`) before M.2c; Q10b (noise-curve keywords, named in M.5a) before M.5b. | PR6 adds user-facing keys, extensions and header keywords (Q7), and the M.5 names do not exist when M.2c starts |
 | D20 | (Maintainer decision, 2026-10-22.) Upstream `develop` was fast-forwarded to `master` (`9be28f5`, `v1.3.2`), so `upgrade-start` is on `develop` and PRs target `develop` (D6) with no extra commits. `stash@{0}` (an earlier draft of PR #218 plus mode flips) was dropped. S.1 is complete. | `develop` had stayed at `6058c37` while `master` received PR #207's merge and PR #218 |
+
+Maintainer answers to the S.4 questions (gate G0), given 2026-10-22 by the maintainer. Numbered after the S.4 list (S4-Q*n*) so they do not clash with Q1–Q16 above. S4-Q10b is still open (asked after M.5a).
+
+| # | Question (S.4) | Answer | Consequence in this plan |
+|---|---|---|---|
+| S4-Q1 | Does anything downstream read `plots/*.png`? | **Only file names and PNG format matter.** | Track A may change plot appearance; names, format and pixel size are preserved as the bokeh plan already requires |
+| S4-Q2 | How are plots viewed when the pipeline runs remotely? | **VNC / remote desktop.** The browser runs on the pipeline host. | The `localhost`-only viewer binding works as designed. R.3's remote session is done over VNC. SSH port-forwarding stays documented but is not tested |
+| S4-Q3 | Several processes watched at once; one tab per process acceptable? | **Yes, one tab per process.** | The default topology from bokeh plan 0.3 is confirmed; the shared-port alternative is dropped |
+| S4-Q4 | Auto-open the browser tab on summit and RTI hosts? | **Off everywhere.** | `plot_viewer_open_browser = False` in both `kcwi.cfg` and `kcwi_koarti.cfg` (§7 amendment 13). This changes today's behaviour (`session.show` opens a tab); the changelog says so and the printed URL is the way in |
+| S4-Q5 | Who merges the `documentation` branch; how is ReadTheDocs rebuilt? | **User documentation lives in a separate repository, [KCWI_DRP-Docs](https://github.com/Keck-DataReductionPipelines/KCWI_DRP-Docs) (`main`), maintained by the maintainer, and is updated under a separate plan.** | All `documentation`-branch and `docs/source/` work leaves this plan: T.10's second half, bokeh 5.1b and R.4 become a hand-off list for the docs plan (§10 R.4) |
+| S4-Q6 | Are prompts driven by scripts at Keck? | **No, humans only.** | Prompt wording can change freely in Track P; P.0 needs no maintainer wording approval |
+| S4-Q7 | Log user answers at INFO? | **Yes.** | As planned (Q8) |
+| S4-Q8 | Flip the default `cube_method` to `matrix` in this release? | **Yes, if every M.0 threshold passes on both channels and the M.2e, M.4 and M.5c human checks are signed off; otherwise the release ships with `matrix` opt-in.** | M.6's go/no-go is mechanical; G6 checks the evidence against this rule |
+| S4-Q9 | New extensions in `icube*` files, or separate files? | **Separate files.** | The coverage cube (M.2c) and covariance products (M.5b) go in new files next to the cube, e.g. `<frame>_icube_coverage.fits`, `<frame>_icube_corr.fits`; the HDU layout of every existing output is unchanged. Exact names are proposed in M.2c/M.5b and listed in the changelog |
+| S4-Q10a | Header keywords `CUBEMETH`, `WAVCORR`, `DARCOR`? | **Yes, as proposed.** `CUBEMETH` is written in both modes. | M.2c, M.3, M.4 as written |
+| S4-Q11 | Opt-in `W` file: acceptable, and where? | **Yes. Write a routine that saves `W` in COO form as a FITS file with a single binary-table extension, next to the cube.** | M.5b writes `<frame>_icube_W.fits` (option B) with `cube_matrix.write_matrix_fits` / `read_matrix_fits`; no `.npz` (§9 amendment 10) |
+| S4-Q12 | Are old invsens files reused across reductions? | **Rarely.** | M.2d's proposed default stands: on a method mismatch, log an ERROR naming both files and the fix, and skip flux calibration for that frame |
+| S4-Q13 | Move `pytest` into a `test` extra? | **Yes.** | T.1 as written (D13) |
+| S4-Q14 | Flip the RTI config to `matrix` too? | **Yes, same as `kcwi.cfg`.** | M.6 changes both configs, under the same S4-Q8 rule |
 
 ---
 
@@ -142,7 +161,7 @@ Track T: tests (T.0–T.6, T.10, T.11 can start at once; T.7 needs S.3 and T.11)
                            M.6 default flip + M.7 ─────► PR7 ─► (G6)
                                                            │
                          Release: R.1 sweep, R.2 review, R.3 clean machine,
-                                  R.4 docs branch, R.5 release ─► (G7)
+                                  R.4 docs hand-off, R.5 release ─► (G7)
 ```
 
 Why this order:
@@ -192,7 +211,7 @@ Gates. Each needs the named sign-off before the next step starts.
 | T.9 | Testing guide and pre-PR checklist | Sonnet (low) | T.8 | – |
 | T.10 | Remove Travis CI | Sonnet (low) | – | – |
 | T.11 | Fix viewer-off crashes B9, B10 | Sonnet (low); tests in a fresh session | T.1 | – |
-| A.* | Bokeh port tasks 0.3, 1.1–5.1b | per bokeh plan | S.3, S.5, T.1–T.3 committed (PR1 merges after PR0) | ✔ |
+| A.* | Bokeh port tasks 0.3, 1.1–5.1 (not 5.1b) | per bokeh plan | S.3, S.5, T.1–T.3 committed (PR1 merges after PR0) | ✔ |
 | M.0 | Matrix fixture, metrics thresholds and regions | Sonnet (medium) | T.7 | ✔ |
 | M.1a | Vectorize GenerateMaps | Sonnet (medium) | M.0 | – |
 | M.1b | Pixel-edge coordinate helper | Opus (medium) | M.0 | – |
@@ -220,7 +239,7 @@ Gates. Each needs the named sign-off before the next step starts.
 | R.1 | Leftover sweep (code and tests) | Sonnet (low) | all | – |
 | R.2 | Independent review | Opus (high), fresh session | R.1 | – |
 | R.3 | Clean-machine acceptance | Human | R.2 | ✔ |
-| R.4 | Documentation branch | Sonnet (medium) | R.3 | ✔ |
+| R.4 | Documentation hand-off list (docs repo is out of scope, S4-Q5) | Sonnet (medium) | R.3 | ✔ |
 | R.5 | Release | Human + Keck | R.4 | ✔ |
 
 ---
@@ -308,6 +327,8 @@ New for Track T:
 
 Added after review (Track M):
 14. Should the RTI configuration (`kcwi_koarti.cfg`) also default to `cube_method = "matrix"` at M.6, or stay on `warp` for quick-look? (Ask together with Q8.)
+
+Status: answered 2026-10-22 (§2, S4-Q1–Q14), except Q10b, which is asked after M.5a.
 
 Validation: every question has an answer row in §2 before the task that depends on it starts (question 13 before T.1; 1–5 before A.3.1; 6–7 before P.0; 8, 9, 10a, 11 and 12 before M.2c; 10b before M.5b; 14 before M.6).
 
@@ -462,7 +483,7 @@ Numeric and prompt cases (Opus):
 - `WavelengthCorrections` on a synthetic cube with a line at a known air wavelength: the line ends up at the vacuum, velocity-corrected wavelength.
 - `FluxCalibrate` with a synthetic invsens: output equals input × invsens / exposure time.
 - `CalcPrelimDisp`: the formula, for each grating.
-- **Known prompt-site bugs as strict `xfail`s** (D8), driven through `answers` or `plot_level`: B1 and B1b (`MakeMasterFlat` peak selection with several and with zero peaks at `plot_level = 1`), B1c (out-of-range peak number), B2 (one-number line mask), B3 (fit order after a failed fit), B4 (bar number lower than the current one), B5 (an answer containing `q` quits), B6 (invalid limits reset accepted limits), B7 (sky scale 0). The markers are removed by the PR that fixes each bug, as listed in §13's "Fixed in" column (D12): B1c, B2, B4, B5 and B6 in PR3a (P.4), B1, B1b, B3 and B7 in PR3b (P.5).
+- **Known prompt-site bugs as strict `xfail`s** (D8), driven through `answers` or `plot_level`: B1 and B1b (`MakeMasterFlat` peak selection with several and with zero peaks at `plot_level = 1`), B1c (out-of-range peak number), B2 (one-number line mask), B3 (fit order after a failed fit), B4 (bar number lower than the current one), B5 (an answer containing `q` quits), B6 (invalid limits reset accepted limits), B7 (sky scale 0, `nan`, `inf`), B12 (non-standard N&S branch, synthetic frame), B13 (`.lmsk` round trip). The markers are removed by the PR that fixes each bug, as listed in §13's "Fixed in" column (D12): B1c, B2, B4, B5 and B6 in PR3a (P.4), B1, B1b, B3, B7, B12 and B13 in PR3b (P.5).
 
 Validation:
 - Each test builds its inputs in memory or in `tmp_path`, and runs in under 2 s.
@@ -495,7 +516,7 @@ Depends on: T.1.
 - **Config references:** an AST scan finds every `config.instrument.<key>` used in the code (59 distinct keys at `dfbcf9d`), and every `getattr(<…>.config.instrument, '<key>', …)` / `hasattr(…)` with a string literal (used in `StartBokeh.py` and `kcwi_rti.py`). A `getattr` with a non-literal name fails the test with file and line. Each attribute-style key must exist in `kcwi.cfg`; `getattr` keys with a default may be absent but are listed. Keys read only for backward compatibility (from bokeh 5.1: `enable_bokeh`) are on a commented "deprecated" allow-list. A key in `kcwi.cfg` that no code reads fails the test, unless it is on a commented allow-list. Every key in `kcwi_koarti.cfg` exists in `kcwi.cfg`, and the value differences are listed in an allow-list.
 - **Event tables** (`kcwi_pipeline.py`, `keck_rti_pipeline.py`): every event's primitive resolves to a class with `_perform` (in `kcwidrp.primitives` or the framework); every "next event" exists in the table; there are no duplicate keys in the dict literal (checked by AST, since Python silently keeps the last one); unreachable events are reported.
 - **Entry points:** every target in `[tool.poetry.scripts]` imports, and `--help` exits 0. `smart_reduce_kcwi` currently fails to import (bokeh plan 3.2), so it is a strict `xfail` with reason "A.3.2".
-- **`reduce_kcwi` argument handling:** `-f`, `-l`, `-b`, `-r` parsed as documented; the channel check bug B8 as a strict `xfail` (removed in PR3b, D12).
+- **`reduce_kcwi` argument handling:** `-f`, `-l`, `-b`, `-r` parsed as documented; the channel check bug B8 and the ignored RTI quit B11 as strict `xfail`s (removed in PR3b, D12).
 - **Viewer off** (with T.11): the launch scripts leave `context.bokeh_session` defined (as `None`) when `enable_bokeh = False`.
 
 Validation: each of these breakages makes a test fail: a misspelled key reference (`config.instrument.plot_levl`); a duplicated event key; an event pointing to a primitive that does not exist; a "next event" that does not exist; `plot_level = "1"` (string) in a config.
@@ -596,12 +617,10 @@ Do, on the PR0 branch:
 - `README.rst`: remove the "Tests" section's Travis link and status badge (lines 30–38 at `dfbcf9d`). Replace them with one sentence pointing to `docs/testing.md` for running the tests locally. Keep the ReadTheDocs badge.
 - `environment.yml`: `.travis.yml` is its only consumer in the repo. Do not delete or change it here, but note in the PR that its fate is decided in bokeh-plan 5.1 (§7 amendment 9).
 
-Do, on the `documentation` branch (held for R.4 if PR0 merges first, or done alongside it by whoever S.4 named):
-- `README.rst`: the same change as on `master`.
-- `docs/source/development.rst`: replace pull-request requirement 2, "A pass from the automatic TravisCI tests", with the §1 rule: fast-suite and (for reduction-code changes) regression-suite summaries in the PR description, with a link to the testing guide.
+Hand-off to the documentation plan (S4-Q5; not done in this upgrade): the user documentation in `KCWI_DRP-Docs` should replace the pull-request requirement "A pass from the automatic TravisCI tests" (if it still carries it) with the §1 rule: fast-suite and (for reduction-code changes) regression-suite summaries in the PR description, with a link to the testing guide. R.4 collects this item.
 
 Validation:
-- `git grep -i travis` on the PR0 branch returns hits only in `docs/` planning documents and `changelog.txt`. The same search on the `documentation` branch returns nothing in `README.rst` or `docs/source/`.
+- `git grep -i travis` on the PR0 branch returns hits only in `docs/` planning documents and `changelog.txt`.
 - `README.rst` renders without warnings (`python -m docutils README.rst /dev/null`, or `twine check` on a built sdist).
 - The changelog entry states that Travis CI is removed, that there is currently no CI, and how to run the tests locally.
 
@@ -642,7 +661,7 @@ No workflow is added now (Q15). The suite is built so that adding one later is a
 
 ## 7. Track A: Bokeh → Matplotlib
 
-Execute [bokeh_port_plan.md](bokeh_port_plan.md) tasks 0.3, 1.1, 1.2, 2.1, 2.2, 3.1, 3.2, 4.1, 4.2, 4.3, 5.1, 5.1b as written, with these amendments.
+Execute [bokeh_port_plan.md](bokeh_port_plan.md) tasks 0.3, 1.1, 1.2, 2.1, 2.2, 3.1, 3.2, 4.1, 4.2, 4.3 and 5.1 as written, with these amendments. Task 5.1b is out of scope (amendment 13).
 
 ### Amendments
 
@@ -652,7 +671,7 @@ Execute [bokeh_port_plan.md](bokeh_port_plan.md) tasks 0.3, 1.1, 1.2, 2.1, 2.2, 
 4. **Minimal MakeCube changes.** In bokeh 2.2, change only the imports, the `image` call support and (if 0.3 says so) the `Pool` start method. Do not refactor `make_cube_helper`; M.2c rewrites that code.
 5. **The coverage scan (bokeh 1.2) becomes a permanent gate.** It stays in the test suite and runs on PR3, PR4–PR7. Any new plot added by Tracks P or M must use only wrapper-supported features or extend the wrapper with a test in the same PR.
 6. **Matplotlib is the only plotting library in new code.** Validation scripts in Track M may use `matplotlib.pyplot` because they are not part of the package; package code follows wrapper rule 4 (no `pyplot`).
-7. **PR1** is opened against `develop` after bokeh 4.3 sign-off; 5.1 and 5.1b may land in PR1 or as a follow-up, at the maintainers' preference (G1).
+7. **PR1** is opened against `develop` after bokeh 4.3 sign-off; 5.1 may land in PR1 or as a follow-up, at the maintainers' preference (G1).
 8. **Tests go into the Track T layout** (§6.4). Bokeh 1.2's `test_kcwi_plotting.py` lives in `kcwidrp/tests/unit/plotting/`. Bokeh 4.2's re-runs are regression-suite runs (full profile): tiers 1–5 must pass unchanged (cubes and the `.proc` table must not change in Track A), and tier 6 produces the plot comparison. Once 4.3 is signed off, the plots are blessed with reason "bokeh port 4.3". Bokeh 4.1's comparison page is generated from tier 6 rather than written separately. The bokeh plan's replay check ("ends with `EOFError`, or has unread lines left") is done with the T.7 prompt record, since an `EOFError` does not end the process and stdin position cannot be read (§6.1, D15).
 9. **Travis is already gone when 5.1 runs.** T.10 deletes `.travis.yml` in PR0, so the bokeh-plan 5.1 bullet about it does not apply. Removing Travis also removes the only in-repo consumer of `environment.yml`; take that into account when 5.1 decides whether to fix or delete it.
 10. **Test files named in the bokeh plan have moved** (T.1, T.6). Read them as:
@@ -665,6 +684,7 @@ Execute [bokeh_port_plan.md](bokeh_port_plan.md) tasks 0.3, 1.1, 1.2, 2.1, 2.2, 
 
 11. **The viewer-off fix from PR0 must survive.** T.11 makes the launch scripts set `context.bokeh_session = None`. Bokeh 3.1 keeps that attribute name; with `enable_plot_viewer` false no `StartPlotViewer` event runs, so the default from T.11 is what primitives see. Bokeh 3.1's "With `enable_bokeh = False` … all PNGs still written" check covers it.
 12. **The starting point includes PR #218.** `v1.3.2` changed `kcwi_plotting.py` (non-snap Firefox/geckodriver preference). Bokeh 1.1 rewrites that file and 5.1 removes Firefox support, so the change is dropped deliberately; say so in the PR1 description and changelog.
+13. **Maintainer answers (S4-Q1–Q5).** PNG consumers depend only on file names and format, so plot appearance may change (Q1). Remote viewing is over VNC with the browser on the pipeline host, so the `localhost` binding is right and R.3 tests over VNC (Q2). One tab per process is accepted and the shared-port alternative is dropped (Q3). `plot_viewer_open_browser` defaults to `False` in both `kcwi.cfg` and `kcwi_koarti.cfg`, which changes today's behaviour: users open the printed URL. Bokeh 3.1's start-up message must make the URL easy to find, and the changelog must say the tab no longer opens by itself (Q4). Bokeh 5.1b is out of scope: the user documentation is in the separate `KCWI_DRP-Docs` repository and is updated under its own plan, fed by R.4's hand-off list (Q5).
 
 ### Human checks in Track A (from the bokeh plan, collected here)
 
@@ -672,7 +692,6 @@ Execute [bokeh_port_plan.md](bokeh_port_plan.md) tasks 0.3, 1.1, 1.2, 2.1, 2.2, 
 - **0.3 prototype:** the prototype's pass/fail list must be run on both macOS and Ubuntu 24.04. The browser-facing criteria (zoom, pan, cursor readout, tab close/reopen, two instances on two ports) need you at a browser.
 - **3.1:** the interactive MakeInvsens session (cursor readout precise enough to type wavelength limits).
 - **4.3:** review the side-by-side comparison page and the 4.2 table, step through one interactive `plot_level = 3` reduction, write the sign-off with accepted differences.
-- **5.1b:** whoever S.4 identified merges the documentation branch.
 
 ---
 
@@ -688,7 +707,7 @@ Goals (Q2, Q8):
 
 Constraints:
 - **D3:** for valid answers, the number and order of prompts is unchanged, so `answers_<channel>_3.txt` from S.3 replays on every commit of PR3a and produces identical outputs.
-- **D12: no change for input that is valid today in PR3a.** Prompts, logged results and outputs for input accepted today are unchanged. Input that is invalid today (it crashes, silently resets, silently ends a review or quits by accident) may re-prompt instead; this fixes B1c, B2, B4, B5 and B6 in PR3a. Everything that changes a reduction result for valid input or for an unattended run, or removes a prompt that valid runs see, is in PR3b (B1, B1b, B3, B7, B8).
+- **D12: no change for input that is valid today in PR3a.** Prompts, logged results and outputs for input accepted today are unchanged. Input that is invalid today (it crashes, silently resets, silently ends a review or quits by accident) may re-prompt instead; this fixes B1c, B2, B4, B5 and B6 in PR3a. Everything that changes a reduction result for valid input or for an unattended run, or removes a prompt that valid runs see, is in PR3b (B1, B1b, B3, B7, B8, B11, B12, B13).
 - **EOF is a deliberate behaviour change in PR3a** (D4): today an `EOFError` fails the primitive and the reduction carries on without its output; after PR3a the default is used. It is listed in the changelog and covered by G3.
 - **No plotting changes.** On-plot guidance was not selected (Q2). The helper must not import the plotting modules.
 
@@ -757,7 +776,7 @@ Validation:
 
 Depends on: P.3. Sites: `ReadAtlas` offset; `MakeInvsens` limits, line mask, fit order and slice loop; `MakeMasterFlat` peak; `NandshuffSubtractSky` scale (×2); the bar-jump prompts in `ArcOffsets`, `SolveArcs`, `FitCenter`; the `Proceed?` prompts in `reduce_kcwi.py` and `kcwi_rti.py`. Opus because each site is interleaved with reduction logic, and a validator that is stricter than today changes which answers are accepted.
 
-Rules (D12): **identical results for every input that is valid today.** Input that is invalid today may re-prompt (B1c out-of-range peak, B2 one-number line mask, B4 bar number out of range, B5 accidental quit, B6 reset of accepted limits). Bugs that affect valid input or unattended runs (B1, B1b, B3, B7, B8) keep today's behaviour in P.4 and are fixed in P.5.
+Rules (D12): **identical results for every input that is valid today.** Input that is invalid today may re-prompt (B1c out-of-range peak, B2 one-number line mask, B4 bar number out of range, B5 accidental quit, B6 reset of accepted limits). Bugs that affect valid input or unattended runs (B1, B1b, B3, B7, B8, B11, B12, B13) keep today's behaviour in P.4 and are fixed in P.5.
 
 Validation:
 - As P.3, and the AST allow-list is now empty. The B1c, B2, B4, B5 and B6 `xfail` markers are removed (all their sites are converted by now).
@@ -766,7 +785,7 @@ Validation:
 
 ### P.5 Bug fixes — Opus 5.5 (medium) for fixes, Sonnet 5.5 (medium) for the failing tests
 
-Depends on: P.4, PR3a merged. One commit per bug marked "PR3b" in §13 (B1, B1b, B3, B7, B8). For each bug, the failing test usually already exists as a strict `xfail` from T.4 or T.6. Where it does not, Sonnet first writes one from the bug description only. Opus then fixes the bug and removes the `xfail` marker in the same commit; the test passes.
+Depends on: P.4, PR3a merged. One commit per bug marked "PR3b" in §13 (B1, B1b, B3, B7, B8, B11, B12, B13). For each bug, the failing test usually already exists as a strict `xfail` from T.4 or T.6. Where it does not, Sonnet first writes one from the bug description only. Opus then fixes the bug and removes the `xfail` marker in the same commit; the test passes.
 
 Validation:
 - Each commit message states the bug, the fix, and the measured effect on the S.3 reductions ("no change in outputs" or "invsens changes by X % at λ Y").
@@ -809,6 +828,7 @@ Executes [matrix_cube_plan.md](matrix_cube_plan.md) Stages 0–5.
 7. **Line references** in the matrix plan were taken at `d0b4d7b`; the primitives are identical at `dfbcf9d` and `v1.3.2` (only `kcwi_plotting.py` differs), so they remain valid until Track A merges. By M.2 they will have moved: task prompts and reviews refer to code by function and symbol name, not line number.
 8. **Wavelength and DAR folding apply to object frames only.** `WavelengthCorrections` and `CorrectDar` run only after `object_make_cube` and `nandshuff_make_cube`. In matrix mode, `arc_make_cube` and `flat_make_cube` build `W` from geometry alone (M.2), with no `WAVCORR` or `DARCOR`. "All four MakeCube events use the same method" (M.2c) means the same `cube_method`, not the same corrections.
 9. **DAR breaks the per-slice block structure.** Once M.4 adds cross-slice weights, a pixel in slice *k* contributes to voxels in slices *k*−1, *k* and *k*+1, so `W` is no longer block-diagonal by slice. The matrix plan's "per slice, then `sp.vstack`/`sp.block_diag`" (§4) would only hold for M.2–M.3. So M.2a builds `W` from the start from per-*source*-slice blocks of global (row, column) indices that are summed, and the covariance in M.5 is computed per output slice with its neighbouring slices as a halo.
+10. **Output files (S4-Q9, S4-Q11).** New products never add HDUs to existing outputs; each goes in its own file next to the cube: the coverage cube (M.2c), the option A correlation planes (M.5b) and the option B matrix (M.5b). The matrix file holds `W` in COO form as a FITS file with a single binary-table extension, replacing the matrix plan's `.npz`.
 
 ### M.0 Matrix fixture, metric thresholds and regions — Sonnet 5.5 (medium)
 
@@ -887,20 +907,20 @@ Independent tests of the M.2a validation list, plus: `ncand` large enough for th
 
 ### M.2c `cube_method` in MakeCube — Opus 5.5 (medium)
 
-Depends on: M.2a, M.2b, S.4 answers 8, 9 and 10a. Matrix plan Stage 2: config key `cube_method = "warp" | "matrix"` (default `warp` in this PR); in matrix mode, every MakeCube output (data, uncertainty, mask, flags, noskysub, obj, sky, delta-wave) via `W`; all four MakeCube events (`arc_make_cube`, `flat_make_cube`, `object_make_cube`, `nandshuff_make_cube`) use the same method (geometry only for arcs and flats, §9 amendment 8); red 180° rotation preserved; WCS/header code unchanged; new header keyword `CUBEMETH`, written in both modes. Coverage cube written as agreed in S.4 Q9, in matrix mode only.
+Depends on: M.2a, M.2b, S.4 answers 8, 9 and 10a. Matrix plan Stage 2: config key `cube_method = "warp" | "matrix"` (default `warp` in this PR); in matrix mode, every MakeCube output (data, uncertainty, mask, flags, noskysub, obj, sky, delta-wave) via `W`; all four MakeCube events (`arc_make_cube`, `flat_make_cube`, `object_make_cube`, `nandshuff_make_cube`) use the same method (geometry only for arcs and flats, §9 amendment 8); red 180° rotation preserved; WCS/header code unchanged; new header keyword `CUBEMETH`, written in both modes. Coverage cube written as a separate file next to the cube (S4-Q9), e.g. `<frame>_icube_coverage.fits`, in matrix mode only.
 
 Also add the `blue_warp` and `red_warp` regression datasets (D17): copies of the default datasets with `cube_method = "warp"` in their config overrides, referenced to the same outputs.
 
 Validation:
 - `cube_method = "warp"`: every output's pixel data, mask and flags are `array_equal` to PR3a's on S.3 data, and headers differ only by `CUBEMETH = 'warp'` (the switch alone changes nothing else). Tier 2 fails on the new keyword as expected; it is blessed as `M.2c header` after G5.
-- `cube_method = "matrix"`: full reduction of both channels completes; every output file exists with the same HDU names, shapes and dtypes as the warp output (plus the agreed new extension).
+- `cube_method = "matrix"`: full reduction of both channels completes; every output file exists with the same HDU names, shapes and dtypes as the warp output, plus the separate coverage file; no existing file gains an HDU.
 - Synthetic N&S frame runs through `nandshuff_make_cube` in matrix mode.
 - `CUBEMETH` is present in every cube and propagates to `icubew`, `icubed`, `icubes`, `invsens`.
 - `pytest kcwidrp/tests` passes, coverage scan included.
 
 ### M.2d Cube-method guard — Sonnet 5.5 (medium)
 
-Matrix plan §6: invsens and science cubes must use the same method. In `FluxCalibrate`, compare `CUBEMETH` of the invsens and the cube. A missing keyword means `warp` (files from older versions). On mismatch: behaviour as decided in S.4 Q12; the proposed default is to log an ERROR naming both files and the fix ("re-derive invsens with cube_method = …") and skip flux calibration for that frame, rather than calibrate wrongly.
+Matrix plan §6: invsens and science cubes must use the same method. In `FluxCalibrate`, compare `CUBEMETH` of the invsens and the cube. A missing keyword means `warp` (files from older versions). On mismatch (as confirmed by S4-Q12): log an ERROR naming both files and the fix ("re-derive invsens with cube_method = …") and skip flux calibration for that frame, rather than calibrate wrongly.
 
 Validation: tests for matching, mismatching and missing-keyword cases; a real S.3 run with a warp invsens and a matrix cube triggers the guard.
 
@@ -952,7 +972,7 @@ PR5 = M.3 + M.4 (may be split if review prefers).
 
 ### M.5a Covariance mathematics — Opus 5.5 (high)
 
-Matrix plan Stage 5, options A, B, C (Q6). `W diag(var) Wᵀ` per output slice, with the neighbouring slices as a halo so cross-slice covariance from DAR is included (§9 amendment 9); option A extracts correlation coefficients with the +1 neighbour along each axis (3 planes; the −1 neighbour of a voxel is the +1 neighbour of the voxel before it, so 6 planes would repeat information); option B serializes `W` (and the per-pixel variance needed to use it) as `.npz`; option C fits a binned-aperture noise-scaling curve and proposes header keyword names (for S.4 Q10). Includes a documented formula for users of option B: `var(aᵀcube) = (Wᵀa)ᵀ diag(var) (Wᵀa)`.
+Matrix plan Stage 5, options A, B, C (Q6). `W diag(var) Wᵀ` per output slice, with the neighbouring slices as a halo so cross-slice covariance from DAR is included (§9 amendment 9); option A extracts correlation coefficients with the +1 neighbour along each axis (3 planes; the −1 neighbour of a voxel is the +1 neighbour of the voxel before it, so 6 planes would repeat information); option B serializes `W` as a FITS file (§9 amendment 10; the per-pixel variance needed to use it is the uncertainty of the 2-D frame named in the file's header, not a copy); option C fits a binned-aperture noise-scaling curve and proposes header keyword names (for S.4 Q10b). Includes a documented formula for users of option B: `var(aᵀcube) = (Wᵀa)ᵀ diag(var) (Wᵀa)`.
 
 Validation:
 - Monte Carlo on the synthetic fixture: for apertures of 1, 2×2, 3×3, 5×5 spaxels, predicted variance from B equals empirical to within MC error (≤ 3 % at 1000 realizations); from A's neighbour approximation, within 10 %; C's curve within 10 % of empirical at each aperture size.
@@ -960,10 +980,10 @@ Validation:
 
 ### M.5b Covariance I/O, config and tests — Sonnet 5.5 (medium)
 
-Depends on: M.5a, S.4 Q10b. Config keys (names proposed, 👤 confirmed at G5b): `cube_covariance = True` (A and C), `cube_save_matrix = False` (B). Write A as agreed in S.4 Q9; C as header keywords with the names agreed in Q10b; B as `.npz` next to the cube. Tests are written in a separate fresh session, independent of M.5a's and M.5b's source (§3 rule 1).
+Depends on: M.5a, S.4 Q10b. Config keys (names proposed, 👤 confirmed at G5b): `cube_covariance = True` (A and C), `cube_save_matrix = False` (B). Write A as a separate file next to the cube (S4-Q9), e.g. `<frame>_icube_corr.fits`; C as header keywords with the names agreed in Q10b; B as `<frame>_icube_W.fits` (S4-Q11): a routine `cube_matrix.write_matrix_fits(W, path, header)` writes `W` in COO form as a FITS file whose single binary-table extension has columns `ROW` (int32, voxel index), `COL` (int32, detector pixel index) and `VAL` (float32), with header keywords giving the matrix shape, the cube's voxel ordering and pixel ordering, the input 2-D file whose uncertainty holds the per-pixel σ, and `CUBEMETH`; `cube_matrix.read_matrix_fits(path)` returns a `scipy.sparse.coo_matrix`. Tests are written in a separate fresh session, independent of M.5a's and M.5b's source (§3 rule 1).
 
 Validation:
-- Files open with `astropy.io.fits` and `scipy.sparse.load_npz`; a round-trip test reconstructs B's matrix exactly.
+- Files open with `astropy.io.fits`; `write_matrix_fits` → `read_matrix_fits` reconstructs B's matrix exactly (same shape, indices and float32 values); the matrix file has exactly one extension, a binary table.
 - With both keys off, outputs are identical to M.4's.
 - File-size increase per cube recorded for A and B.
 
@@ -1022,16 +1042,16 @@ Bokeh-plan 5.4 in full (Ubuntu 24.04, no browser installed), plus, in the same s
 
 👤 Human check:
 - Default-config reductions of both S.3 channels produce matrix cubes and pass the M.0 thresholds against S.3.
-- One `plot_level = 3` interactive session over the remote-viewing route from S.4, replaying `answers_<channel>_3_v2.txt` with `KCWI_STRICT_INPUT=1`, then one live session answering by hand.
+- One `plot_level = 3` interactive session over VNC (S4-Q2), opening the printed viewer URL by hand (S4-Q4), replaying `answers_<channel>_3_v2.txt` with `KCWI_STRICT_INPUT=1`, then one live session answering by hand.
 - `cube_method = "warp"` still runs end to end.
 
-### R.4 Documentation branch — Sonnet 5.5 (medium)
+### R.4 Documentation hand-off list — Sonnet 5.5 (medium)
 
-Bokeh-plan 5.1b, plus: interactive-mode page (P.7), `cube_method` and covariance keys in `configuration.rst`, a short "cube construction" explanation and the invsens re-derivation note, `api.rst` entries for `cube_matrix` and `kcwi_interactive`; the T.10 changes to `README.rst` and `development.rst` if they were not already made.
+The user documentation lives in the separate `KCWI_DRP-Docs` repository and is updated under its own plan (S4-Q5). This task writes `docs/docs_handoff.md` in this repository: a checklist of every user-visible change that the docs plan must cover, each with the PR that introduced it and the source of truth (config comment, changelog entry, docstring). At least: bokeh-plan 5.1b's table (installation without Firefox/geckodriver/selenium/phantomjs; `enable_plot_viewer`, `plot_viewer_port`, `plot_viewer_open_browser = False`, `enable_bokeh` deprecation; the viewer URL and VNC viewing; viewer-port troubleshooting; `StartBokeh` → `StartPlotViewer`); the interactive-mode page (P.7: `?` help, quitting, EOF behaviour, `KCWI_STRICT_INPUT`, answers in the log); `cube_method`, `cube_covariance`, `cube_save_matrix` and the new output files (coverage, correlation, `W`); a short "cube construction" explanation and the invsens re-derivation note; API entries for `cube_matrix` and `kcwi_interactive`; the testing rule from T.10.
 
-Validation: bokeh-plan 5.1b checks; new pages build without warnings.
+Validation: every changelog entry from PR0–PR7 that changes user-visible behaviour, a config key or an output file appears in the list.
 
-👤 Human check: the person identified in S.4 merges it; check the published pages.
+👤 Human check: read the list and hand it to the documentation plan.
 
 ### R.5 Release — Human, with Keck maintainers
 
@@ -1046,7 +1066,7 @@ Run the full regression profile on the release candidate first. Version bump: `p
 | Start | S.1 | Drop `stash@{0}`; fetch; confirm `develop` has `v1.3.2`; tag `upgrade-start` | Tag exists on a commit containing `v1.3.2`, tree clean |
 | Start | S.2 | Repair the psutil install in the baseline env; confirm it runs Bokeh and opens the browser; create the Python 3.12 dev env later with matching numeric pins | Versions and test baseline recorded |
 | Start | S.3 | Run blue and red reference reductions at levels 0, 1, 3; capture answers; archive outputs and screenshots; check replay and logs | `docs/baseline/README.md` written, replay identical, no failed primitives in logs |
-| Start | S.4 | Ask maintainers questions 1–14 (10b after M.5a) | Answers in §2 |
+| Start | S.4 | Ask maintainers questions 1–14 (10b after M.5a) | Answers in §2 (done 2026-10-22 except 10b) |
 | After S.5 | S.5 | Spot-check 5 figure rows and 5 prompt rows | Noted in inventory |
 | Track T | T.0 | Approve `docs/testing.md`, especially tolerance and bless policies | Approved in PR0 |
 | Track T | T.7 | Assemble `$KCWI_REGRESSION_DATA` from S.3; check the drafted manifest; first run on unmodified code; "environment" bless if needed; keep a second copy of the data | Suite passes on `upgrade-start` |
@@ -1066,7 +1086,7 @@ Run the full regression profile on the release candidate first. Version bump: `p
 | Track M | PR6 | Ask S.4 Q10b; present covariance keys and products for G5b | Decision in §2 |
 | Track M | M.6 | Present evidence to Keck for G6 | Decision in §2 |
 | Release | R.3 | Clean-machine run, remote interactive session, warp fallback | Checklist complete |
-| Release | R.4–R.5 | Docs merge, release notes, version | Released |
+| Release | R.4–R.5 | Hand the docs list to the docs plan; release notes, version | Released |
 
 ---
 
@@ -1096,21 +1116,24 @@ Rollback: each PR is independently revertable. Until M.6, the matrix code is opt
 
 ## 13. Bugs found while planning (input to T.11, P.4 and P.5)
 
-Found by reading the code at `dfbcf9d` (unchanged at `v1.3.2`). Each must be confirmed by a failing test before it is fixed. Line numbers will move after Track A. "Crash" below means the primitive raises: the framework logs the exception, that frame's chain of events stops, and the rest of the reduction continues (§6.1). "Fixed in" follows D11 and D12.
+Found by reading the code at `dfbcf9d` (unchanged at `v1.3.2`); B11–B13 were found by the S.5 inventory and confirmed by reading the code. Each must be confirmed by a failing test before it is fixed. Line numbers will move after Track A. "Crash" below means the primitive raises: the framework logs the exception, that frame's chain of events stops, and the rest of the reduction continues (§6.1). "Fixed in" follows D11 and D12.
 
 | ID | Where | Bug | Effect | Changes outputs? | Fixed in |
 |---|---|---|---|---|---|
 | B1 | `MakeMasterFlat.py:475-481` | When more than one peak is found and `plot_level < 2`, `ipk = properties['peak_heights'].argmax()` is an index into `peaks`, but is then used as a pixel index (`apk = xvals[ipk]`). It should be `peaks[argmax]`. | The flat ledge position is taken near the start of the trimmed range instead of at the highest peak. **This runs at the default `plot_level = 1`** | Yes, when multiple peaks occur | PR3b (P.5) |
 | B1b | Same block | When **no** peak is found and `plot_level < 2`, `argmax()` of an empty array raises `ValueError`. | MakeMasterFlat fails; no master flat is written for that group, and later frames are reduced without it or fail to find it | Yes (crash → result) | PR3b (P.5) |
-| B1c | `MakeMasterFlat.py:469-474` | Interactive peak: `isnumeric()` loop accepts any non-negative integer with no bounds check; out of range raises `IndexError`. No way to accept the automatic choice. | Crash on typo | No for valid input | PR3a (P.4) |
+| B1c | `MakeMasterFlat.py:469-474` | Interactive peak: `isnumeric()` loop accepts any non-negative integer with no bounds check; out of range raises `IndexError`. `isnumeric()` is also true for characters such as `²`, which `int()` then rejects with `ValueError`. No way to accept the automatic choice. | Crash on typo | No for valid input | PR3a (P.4) |
 | B2 | `MakeInvsens.py:469-480` | Line-mask entry with only one number: `qstr.split()[1]` raises `IndexError`, but only `ValueError` is caught. | MakeInvsens fails; no invsens for that standard | No for valid input | PR3a (P.4) |
 | B3 | `MakeInvsens.py:655-680` | Fit order: `ford = int(qstr)` is assigned before the fit; if `np.polyfit` then fails (e.g. negative order), the error is caught but `ford` keeps the bad value while the fit is the old one. Very large orders are not rejected. | Logged/recorded fit order may not match the fit used | Possibly (logged value) | PR3b (P.5) |
 | B4 | `ArcOffsets.py:92-99`, `SolveArcs.py:438-445`, `FitCenter.py:339-346` | "Next? <int>": a number ≤ the current bar, negative, or ≥ NBARS never matches the loop index, so the interactive review silently ends. | Confusing; user thinks they will see bar *n* | No | PR3a (P.4) |
 | B5 | All `'Q' in q.upper()` sites | Any input containing `q` quits. | Accidental quit | No | PR3a (P.4) |
 | B6 | `MakeInvsens.py:365-380` | An invalid limits entry resets *both* limits to WAVGOOD, discarding limits the user accepted earlier in the loop, without saying so. | Surprising reset | Only after invalid input | PR3a (P.4) |
-| B7 | `NandshuffSubtractSky.py:185-195, 269-` | Sky scale 0 is accepted (only negatives re-prompt), giving no sky subtraction with no warning. | Silent no-op sky subtraction | Yes, if 0 entered | PR3b (P.5) |
+| B7 | `NandshuffSubtractSky.py:185-195, 269-` | Sky scale 0 is accepted (only negatives re-prompt), giving no sky subtraction with no warning. `nan` and `inf` are accepted too. | Silent no-op sky subtraction | Yes, if 0 entered | PR3b (P.5) |
 | B8 | `reduce_kcwi.py:436-469`, `kcwi_rti.py:412-440` | The channel check uses `'kr' in frame.lower()` on the full path, so a directory name containing `kr` or `kb` triggers a false "wrong channel" prompt; the prompt repeats for every file. | Spurious prompts, which also consume lines of a piped answers file | No | PR3b (P.5), because the fix removes prompts that valid runs see |
-| B9 | `reduce_kcwi.py:405`, `kcwi_rti.py`, `smart_reduce_kcwi.py`; every `bokeh_plot(p, self.context.bokeh_session)` | With `enable_bokeh = False`, `StartBokeh` never runs, so `context.bokeh_session` is never set and every `bokeh_plot` call reached at `plot_level ≥ 1` raises `AttributeError` (e.g. `SolveArcs.py:531`). | Most plotting primitives fail; the reduction is unusable with the viewer off | Yes (crash → result) | PR0 (T.11) |
+| B9 | `reduce_kcwi.py:405`, `kcwi_rti.py`, `smart_reduce_kcwi.py`; every `bokeh_plot(p, self.context.bokeh_session)` | With `enable_bokeh = False`, `StartBokeh` never runs, so `context.bokeh_session` is never set and every `bokeh_plot` call reached at `plot_level ≥ 1` raises `AttributeError` (e.g. `SolveArcs.py:531`). The MakeMasterFlat ledge figures (`MakeMasterFlat.py:441-454`) have no `plot_level` guard, so there it fails even at `plot_level = 0`. | Most plotting primitives fail; the reduction is unusable with the viewer off | Yes (crash → result) | PR0 (T.11) |
 | B10 | `core/bokeh_plotting.py` `bokeh_clear`; called at `SubtractOverscan.py:143` | `bokeh_clear(None)` dereferences `session.document`. `StartBokeh` sets the session to `None` when the server is unreachable. | SubtractOverscan fails for every frame at `plot_level ≥ 3` without a server | Yes (crash → result) | PR0 (T.11) |
+| B11 | `kcwi_rti.py:405-423` (`-f` branch) | After the wrong-channel prompt, answering `Q` empties the local `frames` list, but the code then ingests `args.frames`, so the quit is ignored. (`reduce_kcwi.py` ingests `frames` correctly.) | Quit at the channel prompt does nothing in RTI | No | PR3b (P.5), because the fix changes what a valid answer does |
+| B12 | `NandshuffSubtractSky.py:303, 305` (non-standard N&S branch) | `sky[0, objrow0, :] = 0.` and `obj[0, objrow0, :] = 0.` use three indices on 2-D arrays (the intended slice is `[0:objrow0, :]`). | NandshuffSubtractSky fails after the user enters the sky scale, so non-standard N&S frames are never sky-subtracted | Yes (crash → result) | PR3b (P.5); synthetic N&S test only (Q4) |
+| B13 | `MakeInvsens.py:404-408, 488-493` | Header lines of an existing `.lmsk` file are read with `strip()` and written back with no newline, so all header lines and the first mask line are joined into one line that starts with `#`. | On the next run with that file, the first line mask is silently dropped as a comment | Yes, on re-use of an edited `.lmsk` file | PR3b (P.5) |
 
 B1 is the only one known to affect unattended reductions at default settings. S.3's level-1 logs show whether it occurred on the reference data.
