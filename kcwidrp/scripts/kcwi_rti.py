@@ -9,6 +9,7 @@ from keckdrpframework.config.framework_config import ConfigClass
 from keckdrpframework.models.arguments import Arguments
 from keckdrpframework.utils.drpf_logger import getLogger
 from kcwidrp.core.bokeh_plotting import check_running_process
+from kcwidrp.core.bokeh_plotting import init_plot_session
 from kcwidrp.core.kcwi_get_std import is_file_kcwi_std
 from kcwidrp.core.kcwi_pkg_resources import get_resource_path
 
@@ -214,6 +215,7 @@ def main():
         print("Failed to initialize framework, exiting ...", e)
         traceback.print_exc()
         sys.exit(1)
+    init_plot_session(framework.context)
     framework.context.pipeline_logger = getLogger(framework_logcfg_fullpath,
                                                   name="KCWI")
     framework.logger = getLogger(framework_logcfg_fullpath,

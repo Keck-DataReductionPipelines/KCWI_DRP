@@ -31,7 +31,20 @@ def bokeh_plot(plot, session):
     session.push()
 
 
+def init_plot_session(context):
+    """Ensure context.bokeh_session exists (None if Bokeh is not running).
+
+    Primitives read context.bokeh_session unconditionally, but StartBokeh
+    only sets it when enable_bokeh is true (B9).
+    """
+    if not hasattr(context, 'bokeh_session'):
+        context.bokeh_session = None
+
+
 def bokeh_clear(session):
+
+    if session is None:
+        return
 
     session.document.clear()
     p = figure()
