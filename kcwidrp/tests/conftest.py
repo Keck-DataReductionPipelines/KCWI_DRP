@@ -13,6 +13,13 @@ synthetic_ccddata(camera="BLUE", binning=(2, 2), ampmode=None, shape=None,
 tmp_redux
     A temporary output directory with a ``redux/`` subdirectory and an empty
     Proctab.
+run_primitive(PrimitiveClass, ccddata, config_overrides=None,
+              context_extra=None, answers=None, action_extra=None)
+    Runs one primitive with harness.run_primitive (T.2), using kcwi_config()
+    and tmp_redux, with the current directory set to the tmp_redux root.
+    ``ccddata`` may be a previous run's output (Arguments) to chain runs.
+    The fixture object's ``last`` attribute is the RunRecord of the latest
+    run (action, context, input prompts, time.sleep calls).
 
 Session-wide: astropy IERS auto-download is switched off (D18).
 """
@@ -570,6 +577,33 @@ def tmp_redux(tmp_path):
     proctab.new_proctab()
     return SimpleNamespace(root=tmp_path, redux=redux, proctab=proctab,
                            proctab_file=redux / "kcwi.proc")
+
+
+class _PrimitiveRunner:
+    """Callable behind the run_primitive fixture (see harness.py)."""
+
+    def __init__(self, make_config, redux):
+        self._make_config = make_config
+        self._redux = redux
+        self.last = None
+
+    def __call__(self, PrimitiveClass, ccddata, config_overrides=None,
+                 context_extra=None, answers=None, action_extra=None):
+        from kcwidrp.tests import harness
+        self.last = harness.RunRecord()
+        return harness.run_primitive(
+            PrimitiveClass, ccddata, config_overrides=config_overrides,
+            context_extra=context_extra, answers=answers,
+            action_extra=action_extra, instrument_config=self._make_config(),
+            proctab=self._redux.proctab,
+            procfile=str(self._redux.proctab_file), record=self.last)
+
+
+@pytest.fixture
+def run_primitive(kcwi_config, tmp_redux, monkeypatch):
+    """harness.run_primitive bound to kcwi_config() and tmp_redux (T.2)."""
+    monkeypatch.chdir(tmp_redux.root)
+    return _PrimitiveRunner(kcwi_config, tmp_redux)
 
 
 @pytest.fixture
