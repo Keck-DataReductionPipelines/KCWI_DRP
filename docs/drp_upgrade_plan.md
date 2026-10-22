@@ -469,7 +469,7 @@ Validation:
 Depends on: T.2. Synthetic inputs with known answers, run through `run_primitive`.
 
 Detector level (Sonnet):
-- `SubtractOverscan`: constant and sloped overscan per amplifier removed; each amplifier mode in the config.
+- `SubtractOverscan`: constant and sloped overscan per amplifier removed; each amplifier mode in the config. Also at `plot_level = 3` with `bokeh_session = None` (B10, from T.11).
 - `TrimOverscan`: output shape and position from `DATASEC`, for 1×1 and 2×2 binning.
 - `CorrectGain`: per-amplifier gains from the header applied.
 - `FlagSaturation`, `CorrectDefects`: flags set exactly at the expected pixels; defect file chosen by binning and amp mode.
@@ -629,13 +629,15 @@ Validation:
 Depends on: T.1. D11. The only reduction-code change in PR0, and it changes nothing when a Bokeh server is running.
 
 Do:
-- In `reduce_kcwi.py`, `kcwi_rti.py` and `smart_reduce_kcwi.py`, set `framework.context.bokeh_session = None` before any event is queued, so primitives can always read the attribute (B9).
+- Add `init_plot_session(context)` to `kcwidrp/core/bokeh_plotting.py`: it sets `context.bokeh_session = None` unless the attribute already exists. Call it from `reduce_kcwi.py`, `kcwi_rti.py` and `smart_reduce_kcwi.py` right after the framework is created and before any event is queued, so primitives can always read the attribute (B9). One helper rather than three assignments, so the scripts cannot drift apart (as bokeh plan 3.2 does for the viewer switch) and so B9 can be unit-tested; `main()` in the scripts cannot be run in pieces.
 - `bokeh_clear(session)` in `kcwidrp/core/bokeh_plotting.py` returns at once when `session is None`, as `bokeh_plot` already does (B10).
 - Changelog entry: `enable_bokeh = False` now works at every `plot_level`.
 
 Validation:
-- Tests written first, from §13 B9/B10 only, in a fresh session: `SubtractOverscan` under `run_primitive` at `plot_level = 3` with `bokeh_session = None` (B10); and the T.6 viewer-off test, which builds the framework context the way `reduce_kcwi` does with `enable_bokeh = False` and checks that `context.bokeh_session` exists and is `None` (B9). Both fail on `upgrade-start` and pass after the fix.
-- A full reduction of one S.3 channel at `plot_level = 1` with `enable_bokeh = False` has no `Failed executing primitive` lines and gives outputs identical to S.3's (`array_equal` on every extension).
+- Tests written first, from §13 B9/B10 and this section only, in a fresh session, and seen to fail before the fix:
+  - B10: `bokeh_clear(None)` returns without raising. (The fuller test, `SubtractOverscan` under `run_primitive` at `plot_level = 3` with `bokeh_session = None`, is added in T.4 once the T.2 harness exists.)
+  - B9: `init_plot_session` on an object without the attribute sets it to `None`, and on an object that has one leaves it unchanged; and a `config_cli/` AST test checks that each of the three scripts calls `init_plot_session(framework.context)` before its first `append_event`/`ingest_data` call.
+- 👤 After S.3 (needs data): a full reduction of one S.3 channel at `plot_level = 1` with `enable_bokeh = False` has no `Failed executing primitive` lines and gives outputs identical to S.3's (`array_equal` on every extension). This check runs as part of T.7's first run, which uses the viewer off.
 - `git diff` touches only the lines above, the tests and the changelog.
 
 PR0 = T.0–T.11 plus the planning documents (S.1), gate G0T.
