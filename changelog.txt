@@ -25,5 +25,5 @@
 	 were named when they were first written to disk)
 	-Fixes a bug that prevented two concurrent instances of the pipeline from running at the same time
 	-Adds additional standard star spectra for use in fluxing
-Unreleased:
+1.3.3:
 	-Fixed StackFlats reading only the first flat N times (since 1.2.0): stacked flats now combine every input flat, and the stacked uncertainty is rescaled with the data
