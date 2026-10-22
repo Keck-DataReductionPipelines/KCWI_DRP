@@ -262,11 +262,7 @@ def pipeline(request):
 
 @pytest.mark.parametrize("key", [
     pytest.param("kcwi_pipeline", id="kcwi_pipeline"),
-    pytest.param("keck_rti_pipeline", id="keck_rti_pipeline", marks=pytest.mark.xfail(
-        strict=True,
-        reason="B23: keck_rti_pipeline.py defines 'alert_rti' twice "
-               "(lines 269 and 318, identical values); harmless today, "
-               "but Python drops the first silently")),
+    pytest.param("keck_rti_pipeline", id="keck_rti_pipeline"),
 ])
 def test_no_duplicate_event_keys(key):
     module_name, class_name = PIPELINES[key]
@@ -383,6 +379,7 @@ def test_tables_differ_only_by_the_rti_alert():
 def test_event_counts():
     # source: characterization @ upgrade-start (guards the AST parser itself:
     # a parser that silently found nothing would pass every other test).
-    # Entries counted in the dict literal, duplicates included.
+    # Entries counted in the dict literal, duplicates included; the RTI
+    # table had 99 before its duplicate `alert_rti` was removed (B23).
     counts = {key: len(_entries(*PIPELINES[key])) for key in PIPELINES}
-    assert counts == {"kcwi_pipeline": 97, "keck_rti_pipeline": 99}, counts
+    assert counts == {"kcwi_pipeline": 97, "keck_rti_pipeline": 98}, counts

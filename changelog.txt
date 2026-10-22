@@ -30,3 +30,4 @@ Unreleased:
 	-There is currently no CI; tests are run locally, see docs/testing.md
 	-pytest moved from the runtime dependencies to a "test" extra (with hypothesis and pytest-cov); install with pip install -e ".[test]"
 	-enable_bokeh = False now works at every plot_level (previously plotting primitives failed with AttributeError, and SubtractOverscan failed at plot_level 3 when no Bokeh session was available)
+	-Removed a duplicate alert_rti event definition from the RTI pipeline (no behaviour change)
