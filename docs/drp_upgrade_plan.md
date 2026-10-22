@@ -466,7 +466,7 @@ Validation:
 
 ### T.4 Primitive-level unit tests — Sonnet 5.5 (medium); Opus 5.5 (medium) for the numeric and prompt cases
 
-Depends on: T.2. Synthetic inputs with known answers, run through `run_primitive`.
+Depends on: T.2. Synthetic inputs with known answers, run through `run_primitive`. Two fixture gaps found in T.2 come first: `synthetic_ccddata()` defaults to 8 overscan columns, below `minoscanpix` (75 for BLUE), so overscan tests must pass a wider overscan or the default must change; and RED frames must number amplifiers 0–3 (`ASEC0`…, `GAIN0`…) as `ingest_file.map_ccd` and `fix_header` expect, which the fixture does not do yet.
 
 Detector level (Sonnet):
 - `SubtractOverscan`: constant and sloped overscan per amplifier removed; each amplifier mode in the config. Also at `plot_level = 3` with `bokeh_session = None` (B10, from T.11).
@@ -787,7 +787,7 @@ Validation:
 
 ### P.5 Bug fixes — Opus 5.5 (medium) for fixes, Sonnet 5.5 (medium) for the failing tests
 
-Depends on: P.4, PR3a merged. One commit per bug marked "PR3b" in §13 (B1, B1b, B3, B7, B8, B11, B12, B13). For each bug, the failing test usually already exists as a strict `xfail` from T.4 or T.6. Where it does not, Sonnet first writes one from the bug description only. Opus then fixes the bug and removes the `xfail` marker in the same commit; the test passes.
+Depends on: P.4, PR3a merged. One commit per bug marked "PR3b" in §13 (B1, B1b, B3, B7, B8, B11, B12, B13, B16). For each bug, the failing test usually already exists as a strict `xfail` from T.4 or T.6. Where it does not, Sonnet first writes one from the bug description only. Opus then fixes the bug and removes the `xfail` marker in the same commit; the test passes.
 
 Validation:
 - Each commit message states the bug, the fix, and the measured effect on the S.3 reductions ("no change in outputs" or "invsens changes by X % at λ Y").
@@ -1118,7 +1118,7 @@ Rollback: each PR is independently revertable. Until M.6, the matrix code is opt
 
 ## 13. Bugs found while planning (input to T.11, P.4 and P.5)
 
-Found by reading the code at `dfbcf9d` (unchanged at `v1.3.2`); B11–B13 were found by the S.5 inventory and B14–B15 by T.1's import test, all confirmed by reading the code. Each must be confirmed by a failing test before it is fixed. Line numbers will move after Track A. "Crash" below means the primitive raises: the framework logs the exception, that frame's chain of events stops, and the rest of the reduction continues (§6.1). "Fixed in" follows D11 and D12.
+Found by reading the code at `dfbcf9d` (unchanged at `v1.3.2`); B11–B13 were found by the S.5 inventory, B14–B15 by T.1's import test and B16 by T.2's attribute scan, all confirmed by reading the code. Each must be confirmed by a failing test before it is fixed. Line numbers will move after Track A. "Crash" below means the primitive raises: the framework logs the exception, that frame's chain of events stops, and the rest of the reduction continues (§6.1). "Fixed in" follows D11 and D12.
 
 | ID | Where | Bug | Effect | Changes outputs? | Fixed in |
 |---|---|---|---|---|---|
@@ -1139,5 +1139,6 @@ Found by reading the code at `dfbcf9d` (unchanged at `v1.3.2`); B11–B13 were f
 | B13 | `MakeInvsens.py:404-408, 488-493` | Header lines of an existing `.lmsk` file are read with `strip()` and written back with no newline, so all header lines and the first mask line are joined into one line that starts with `#`. | On the next run with that file, the first line mask is silently dropped as a comment | Yes, on re-use of an edited `.lmsk` file | PR3b (P.5) |
 | B14 | `kcwidrp/scripts/kcwi_masksky_ds9.py:2`, `pyproject.toml` | The script imports `regions` (since `2aba1ef`), but `pyproject.toml` declares `pyregion`, which nothing imports any more. | The `kcwi_masksky_ds9` entry point fails with `ModuleNotFoundError` in a clean install | No | PR1 (bokeh 5.1, which already edits the dependency list): replace `pyregion` with `regions` |
 | B15 | `kcwidrp/scripts/reduce_server.py:11` | Imports `keckdrpframework.utils.easyHTTP`, which `keckdrpframework` 1.0.0 does not ship. Not an entry point. | The module cannot be imported or run | No | R.1: the maintainer decides whether to delete the script or fix it; the T.1 import test pins it as a strict `xfail` until then |
+| B16 | `SolveAIT.py:219-224` | Reads `self.action.args.dich_frac`, but `GetAtlasLines.py:330` sets `args.dichroic_fraction` (as `SolveGeom.py:202` reads it). The `AttributeError` fallback always applies. | `DICHFRAC` in SolveAIT's output header is always 1.0; cube headers (from `geom['dich_frac']`) are unaffected | Yes (one header value) | PR3b (P.5), with the measured effect on S.3 outputs |
 
 B1 is the only one known to affect unattended reductions at default settings. S.3's level-1 logs show whether it occurred on the reference data.
