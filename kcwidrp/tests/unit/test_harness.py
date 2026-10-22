@@ -86,9 +86,9 @@ def test_subtract_overscan_runs(run_primitive, synthetic_ccddata):
 
 def test_trim_overscan_runs(run_primitive, synthetic_ccddata):
     out = run_primitive(TrimOverscan, synthetic_ccddata())
-    # source: analytic - default fixture frame 128 x 144, 4 amps with 8 px
-    # overscan each: trimmed width 2 * (144 / 2 - 8) = 128, height 128.
-    assert out.ccddata.shape == (128, 128)
+    # source: analytic - default fixture frame 136 x 316, 4 amps of 32 data
+    # columns x 64 data rows: trimmed width 2 * 32 = 64, height 2 * 64 = 128.
+    assert out.ccddata.shape == (128, 64)
     assert out.ccddata.header["OSCANTRM"] is True     # source: analytic
     assert "BSEC1" not in out.ccddata.header          # source: analytic
 
@@ -98,7 +98,7 @@ def test_correct_gain_runs_on_trimmed_output(run_primitive,
     trimmed = run_primitive(TrimOverscan, synthetic_ccddata())
     # Chained: the TrimOverscan output is the CorrectGain action's args.
     out = run_primitive(CorrectGain, trimmed)
-    assert out.ccddata.shape == (128, 128)            # source: analytic
+    assert out.ccddata.shape == (128, 64)             # source: analytic
     assert out.ccddata.header["GAINCOR"] is True      # source: analytic
     assert out.ccddata.header["BUNIT"] == "electron"  # source: analytic
 

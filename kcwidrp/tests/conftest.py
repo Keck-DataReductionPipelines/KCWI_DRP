@@ -7,9 +7,11 @@ kcwi_config(**overrides)
     ``scripts/reduce_kcwi.py`` loads it, with plot_level = 0 and
     plot_pause = 0 by default.
 synthetic_ccddata(camera="BLUE", binning=(2, 2), ampmode=None, shape=None,
+                  overscan=None, prescan=None, ygap=None, seed=0,
                   **header_overrides)
     Factory: a KCCDData with data, uncertainty, mask, flags and a header that
-    carries the keywords primitives read.
+    carries the keywords primitives read, laid out like a post-ingest real
+    frame (BLUE ALL/TUP, RED L2U2L1U1/L2U2; see _AMP_MODES).
 tmp_redux
     A temporary output directory with a ``redux/`` subdirectory and an empty
     Proctab.
@@ -257,7 +259,7 @@ def scanned_keywords():
 #   "# ?": still an unverified guess.
 _DEFAULTS = {
     "AIRMASS": 1.1,                          # object value: synthetic (no object frame yet)
-    "AMPMNUM": 0,              # fix_header(): AMPMODE not in its table -> 0
+    "AMPMNUM": 0,                            # kb260115_00011 (ALL); per-mode in synthetic_ccddata
     "ARCFL": "kb260101_00010.fits",          # DRP-written: not in raw headers
     "ARCNO": 10,                             # DRP-written: not in raw headers
     "AUTMSKTY": "none",                      # DRP-written: not in raw headers
@@ -275,7 +277,7 @@ _DEFAULTS = {
     "BUNIT": "adu",
     "CBARSFL": "kb260101_00011.fits",        # DRP-written: not in raw headers
     "CBARSNO": 11,                           # DRP-written: not in raw headers
-    "CCDMODE": 1,                            # kb260115_00011
+    "CCDMODE": 1,                            # kb260115_00011 (ALL; per-mode in synthetic_ccddata)
     "CCDSUM": "2 2",
     "CD1_1": -0.0003,                        # DRP-written: not in raw headers (deg (slicer scale ~0.37 arcsec))
     "CD1_2": 0.0,
@@ -427,57 +429,170 @@ _DEFAULTS = {
 
 # Values marked "?" in the comments above are guesses.
 
-# Per-amplifier gain (e-/ADU) as kcwi_fits_reader()/fix_header() set it for
-# kb260115_00011 (BLUE, GAINMUL 10, amps 1-4).  RED frames use amps numbered
-# from 0 (GAIN0..GAIN3) with fix_header's red_amp_gain table; the fixture's RED
-# variant does not model that yet (T.4).
-_GAINS = (0.157, 0.160, 0.158, 0.158)       # kb260115_00011 (post-ingest)
+# ---------------------------------------------------------------------------
+# Amplifier modes and detector geometry (T.4 fixture repair).
+#
+# The fixture builds frames that look like *post-ingest* real frames
+# (kcwi_fits_reader()/fix_header() already applied), shrunk to a few tens of
+# data columns.  The conventions below are those of the real night 2026-01-15:
+#
+#   BLUE  amps numbered 1-based (ASEC1.., GAIN1.., AMPID1..).
+#         ALL (4 amps): 1 lower-left, 2 lower-right, 3 upper-left,
+#           4 upper-right, AMPID 0-3          # kb260115_00010 / kb260115_00011
+#         TUP (2 amps): 1 left, 2 right, both full height, AMPID 2 and 3,
+#           read from the top down            # kb260115_00003 (1x1),
+#                                             # kb260115_00001 (2x2)
+#   RED   amps numbered 0-based through kcwi_file_primitives.red_amp_dict
+#         (L1 0, L2 1, U1 2, U2 3), ASEC0.., GAIN0.., plus TSECn.
+#         L2U2L1U1 (4 amps): 0 upper-left, 1 lower-left, 2 upper-right,
+#           3 lower-right                     # kr260115_00010 / _00013
+#         L2U2 (2 amps): 1 left, 3 right, both full height
+#                                             # kr260115_00003 (1x1),
+#                                             # kr260115_00001 (2x2)
+#
+# Each amplifier of a real frame is a row of  prescan | data | overscan  (left
+# amps) or  overscan | data | prescan  (right amps); the frame is two amps
+# wide.  Rows: ``nyd`` data rows per amp, and ``ygap`` unread rows between the
+# lower and upper amps (4 amps) or above the amps (2 amps): 288 (blue 1x1) /
+# 120 (red 1x1) in the real 4-amp frames, 144 / 60 in the 2-amp 2x2 frames.
+# ---------------------------------------------------------------------------
+# camera -> ampmode -> layout {amp number: (column side, row band)}, AMPID by
+# amp (BLUE), AMPMNUM, CCDMODE, GAINMODE (RED)
+_AMP_MODES = {
+    "BLUE": {
+        # AMPMNUM/CCDMODE: post-ingest kb260115_00011 (ALL), kb260115_00003 (TUP)
+        "ALL": dict(layout={1: ("left", "lower"), 2: ("right", "lower"),
+                            3: ("left", "upper"), 4: ("right", "upper")},
+                    ampid={1: 0, 2: 1, 3: 2, 4: 3},  # kb260115_00011
+                    ampmnum=0, ccdmode=1),
+        "TUP": dict(layout={1: ("left", "full"), 2: ("right", "full")},
+                    ampid={1: 2, 2: 3},               # kb260115_00003
+                    ampmnum=9, ccdmode=0),
+    },
+    "RED": {
+        # AMPMNUM: fix_header() (L2U2L1U1 -> 0, L2U2 -> 1).  CCDMODE =
+        # CDSSPEED and GAINMODE: kr260115_00013 (L2U2L1U1: 1, 0),
+        # kr260115_00003 (L2U2: 0, 1).
+        "L2U2L1U1": dict(layout={0: ("left", "upper"), 1: ("left", "lower"),
+                                 2: ("right", "upper"),
+                                 3: ("right", "lower")},
+                         ampmnum=0, ccdmode=1, gainmode=0),
+        "L2U2": dict(layout={1: ("left", "full"), 3: ("right", "full")},
+                     ampmnum=1, ccdmode=0, gainmode=1),
+    },
+}
+
+# Pre-scan and overscan widths (binned pixels), keyed by (camera, xbin).
+# Real values read from the section keywords of:
+#   BLUE 1x1: kb260115_00011 (DSEC1 starts at 55, BSEC1 [2103:2300])
+#   BLUE 2x2: kb260115_00001 (DSEC1 starts at 30, BSEC1 [1054:1150])
+#   RED  1x1: kr260115_00013 (DSEC1 starts at 8,  BSEC1 [2065:2117])
+#   RED  2x2: kr260115_00001 (DSEC1 starts at 5,  BSEC1 [1033:1104])
+# All four overscans exceed minoscanpix (75 BLUE, 20 RED in configs/kcwi.cfg),
+# so SubtractOverscan fits them (a different binning falls back to the 2x2
+# widths, which satisfy the same limits).
+_PRESCAN = {("BLUE", 1): 54, ("BLUE", 2): 29, ("RED", 1): 7, ("RED", 2): 4}
+_OVERSCAN = {("BLUE", 1): 198, ("BLUE", 2): 97, ("RED", 1): 53, ("RED", 2): 72}
+
+# Default size: 32 data columns per amp (real frames: 1024-2057) and 128 data
+# rows per column of amps (real: 4112-4128), plus an 8-row gap.  Sizes are
+# chosen so that SubtractOverscan can fit an amp: the overscan fit skips 50
+# rows (needs more than 50 + polynomial order rows per amp: 64 rows with four
+# amps and order 2, 128 with two amps and order 7).  The default frame is
+# 136 x 316 (BLUE 2x2 ALL) -- about 43k pixels.
+_DATA_COLS = 32
+_DATA_ROWS = 128
+_YGAP = 8
+
+# Per-amplifier gain (e-/ADU) as kcwi_fits_reader()/fix_header() set it.
+# BLUE: indexed by AMPID (GAINMUL 10); post-ingest kb260115_00011, and
+# kb260115_00003 for AMPID 2, 3 (TUP).
+_BLUE_GAINS = (0.157, 0.160, 0.158, 0.158)   # kb260115_00011 (post-ingest)
+# RED: indexed by amplifier number 0-3 (L1, L2, U1, U2); post-ingest
+# kr260115_00013 (fix_header() overwrites the raw GAINn from red_amp_gain).
+_RED_GAINS = (1.54, 1.551, 1.61, 1.526)     # kr260115_00013 (post-ingest)
 # Read noise per amplifier (e-): DRP-written (not in raw headers), plausible.
 _BIAS_RN = (3.0, 3.1, 3.2, 3.3)             # DRP-written
 
 
-def _sec(x0, x1, y0, y1):
-    return "[%d:%d,%d:%d]" % (x0, x1, y0, y1)
+def _rng(a, b, stride=1):
+    """'a:b' with ':stride' appended unless it is 1 (RED section style)."""
+    return "%d:%d" % (a, b) + (":%d" % stride if stride != 1 else "")
 
 
-def _amp_sections(nx, ny, n_amps, overscan, xbin=1, ybin=1):
-    """Return dict of ASECn/BSECn/CSECn/DSECn (1-biased, IRAF style).
+def _sec(xs, ys):
+    return "[%s,%s]" % (xs, ys)
 
-    Four amps: amps 1,2 lower left/right, 3,4 upper left/right (docstring of
-    ingest_file.map_ccd).  Left amps read data then overscan; right amps read
-    overscan then data (mirror image).  CSECn is in unbinned CCD pixels
-    (map_ccd divides its span by the binning).  One amp: the whole frame, overscan on
-    the right.  The exact on-chip layout of real frames is not reproduced.
+
+def _amp_sections(camera, ampmode, binning, nd, nyd, prescan, overscan,
+                  ygap):
+    """Return (ny, nx, {keyword: section}) for the amplifier mode.
+
+    ASECn, BSECn, CSECn, DSECn (and TSECn for RED) follow the real headers
+    named in the block comment above; all sections are 1-biased, IRAF style,
+    with descending ranges for amplifiers read backwards.  BSEC/DSEC/TSEC are
+    in binned pixels of the raw frame; ASEC/CSEC are in unbinned CCD pixels.
     """
+    xb, yb = binning
+    amps = _AMP_MODES[camera][ampmode]["layout"]
+    four = len(amps) == 4
+    width = prescan + nd + overscan            # one amp, raw columns
+    nx = 2 * width
+    ny = (2 * nyd if four else nyd) + ygap
     out = {}
-    if n_amps == 1:
-        nd = nx - overscan
-        out["ASEC1"] = _sec(1, nx, 1, ny)
-        out["DSEC1"] = _sec(1, nd, 1, ny)
-        out["BSEC1"] = _sec(nd + 1, nx, 1, ny)
-        out["CSEC1"] = _sec(1, nd * xbin, 1, ny * ybin)
-        return out
-    bw, bh = nx // 2, ny // 2
-    nd = bw - overscan
-    for ia in range(1, 5):
-        right = ia in (2, 4)
-        upper = ia in (3, 4)
-        y0, y1 = (bh + 1, ny) if upper else (1, bh)
-        if right:
-            bsec = _sec(bw + 1, bw + overscan, y0, y1)
-            dsec = _sec(bw + overscan + 1, nx, y0, y1)
-            cx = (2 * nd * xbin, nd * xbin + 1)   # descending: read backwards
+    for ia, (side, band) in amps.items():
+        left = side == "left"
+        if camera == "BLUE":
+            if left:
+                dx, bx = (prescan + 1, prescan + nd), (prescan + nd + 1, width)
+                cx = (1, nd * xb)
+            else:
+                dx = (2 * width - prescan, width + overscan + 1)
+                bx = (width + overscan, width + 1)
+                cx = (2 * nd * xb, nd * xb + 1)
+            if band == "upper":
+                ry = (ny, ny - nyd + 1)
+                cy = (2 * nyd * yb, nyd * yb + 1)
+            else:
+                ry = (1, nyd)
+                cy = (nyd * yb, 1) if band == "full" else (1, nyd * yb)
+            out["ASEC%d" % ia] = _sec(_rng(1, nd * xb), _rng(1, nyd * yb))
+            out["BSEC%d" % ia] = _sec(_rng(*bx), _rng(*ry))
+            out["CSEC%d" % ia] = _sec(_rng(*cx), _rng(*cy))
+            out["DSEC%d" % ia] = _sec(_rng(*dx), _rng(*ry))
         else:
-            dsec = _sec(1, nd, y0, y1)
-            bsec = _sec(nd + 1, bw, y0, y1)
-            cx = (1, nd * xbin)
-        cy = ((2 * bh * ybin, bh * ybin + 1) if upper else (1, bh * ybin))
-        out["ASEC%d" % ia] = _sec(bw + 1 if right else 1, nx if right else bw,
-                                  y0, y1)
-        out["BSEC%d" % ia] = bsec
-        out["DSEC%d" % ia] = dsec
-        out["CSEC%d" % ia] = _sec(cx[0], cx[1], cy[0], cy[1])
-    return out
+            # RED: strides appear in the keywords (see kr260115_00001/_00013)
+            ux = nd * xb + (xb - 1)            # last unbinned column
+            if left:
+                dx, bx = (prescan + 1, prescan + nd), (prescan + nd + 1, width)
+                bxs = 1
+                ax = _rng(xb, ux, xb)
+                cx = ax
+                tx = _rng(1, width)
+            else:
+                dx = (width + overscan + 1, 2 * width - prescan)
+                bx, bxs = (width + overscan, width + 1), -1
+                ax = _rng(ux, xb, -xb)
+                cx = _rng(nd * xb + xb, 2 * nd * xb + (xb - 1), -xb)
+                tx = _rng(nx, width + 1, -1)
+            if band == "upper":
+                dy = (ny - nyd + 1, ny)
+                by, bys = (ny, ny - nyd + 1), -1
+                ay = _rng(nyd * yb, 1, -yb)
+                cy = _rng(nyd * yb + 1, 2 * nyd * yb, -yb)
+                ty = _rng(ny, ny // 2 + 1, -1)
+            else:
+                dy = by = (1, nyd)
+                bys = 1
+                ay = cy = _rng(1, nyd * yb, yb)
+                ty = _rng(1, ny // 2) if four else _rng(1, ny)
+            out["ASEC%d" % ia] = _sec(ax, ay)
+            out["BSEC%d" % ia] = _sec(_rng(*bx, stride=bxs),
+                                      _rng(*by, stride=bys))
+            out["CSEC%d" % ia] = _sec(cx, cy)
+            out["DSEC%d" % ia] = _sec(_rng(*dx), _rng(*dy))
+            out["TSEC%d" % ia] = _sec(tx, ty)
+    return ny, nx, out
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -512,22 +627,66 @@ def kcwi_config():
 
 @pytest.fixture
 def synthetic_ccddata():
-    """Factory for a KCCDData frame with the header keywords primitives read."""
+    """Factory for a KCCDData frame with the header keywords primitives read.
+
+    The frame looks like a post-ingest real frame (see the block comment on
+    _AMP_MODES): real section-keyword layout, AMPIDn (BLUE), amplifier
+    numbering (BLUE 1-based, RED 0-based) and GAINn as fix_header() sets
+    them, valid NAXIS cards.  Supported ampmodes: BLUE "ALL" (default) and
+    "TUP"; RED "L2U2L1U1" (default) and "L2U2".
+
+    ``shape=(ny, nx)`` fixes the raw frame size (then ``ygap`` defaults to 0
+    and the data columns are what remains after pre-scan and ``overscan``);
+    without it the frame is built from the small defaults documented at
+    _DATA_COLS.  ``overscan`` and ``prescan`` default to the real widths for
+    the camera and x binning (_OVERSCAN, _PRESCAN).
+    """
     def make(camera="BLUE", binning=(2, 2), ampmode=None, shape=None,
-             overscan=8, seed=0, **header_overrides):
+             overscan=None, prescan=None, ygap=None, seed=0,
+             **header_overrides):
         camera = camera.upper()
         if ampmode is None:
             ampmode = "ALL" if camera == "BLUE" else "L2U2L1U1"
-        n_amps = 4 if ampmode in ("ALL", "L2U2L1U1") else 1
+        try:
+            mode = _AMP_MODES[camera][ampmode]
+        except KeyError:
+            raise ValueError("unsupported camera/ampmode: %s/%s (have %s)" % (
+                camera, ampmode, sorted(_AMP_MODES.get(camera, {}))))
+        amps = mode["layout"]
+        n_amps = len(amps)
+        xb, yb = binning
+        # 2x2 widths for binnings the real night does not have
+        key = (camera, xb if (camera, xb) in _PRESCAN else 2)
+        if prescan is None:
+            prescan = _PRESCAN[key]
+        if overscan is None:
+            overscan = _OVERSCAN[key]
         if shape is None:
-            shape = (128, 144) if n_amps == 4 else (128, 72)
-        ny, nx = shape
+            ygap = _YGAP if ygap is None else ygap
+            nd, rows = _DATA_COLS, _DATA_ROWS
+        else:
+            ygap = 0 if ygap is None else ygap
+            nd = shape[1] // 2 - prescan - overscan
+            rows = shape[0] - ygap
+            if nd < 1:
+                raise ValueError("shape %s leaves no data columns" % (shape,))
+        nyd = rows // 2 if n_amps == 4 else rows
+        ny, nx, sections = _amp_sections(camera, ampmode, binning, nd, nyd,
+                                         prescan, overscan, ygap)
+        shape = (ny, nx)
+        # NAXIS cards come first; astropy keeps them consistent with the data
+        # when the frame is written.
         hdr = fits.Header()
+        hdr["NAXIS"] = 2
+        hdr["NAXIS1"] = nx
+        hdr["NAXIS2"] = ny
         values = dict(_DEFAULTS)
         values["CAMERA"] = camera
         values["BINNING"] = "%d,%d" % tuple(binning)
         values["CCDSUM"] = "%d %d" % tuple(binning)
         values["AMPMODE"] = ampmode
+        values["AMPMNUM"] = mode["ampmnum"]
+        values["CCDMODE"] = mode["ccdmode"]
         values["NVIDINP"] = n_amps
         values["TAPLINES"] = n_amps
         values["PXSCL"] = 4.048e-05 * binning[0]
@@ -535,16 +694,21 @@ def synthetic_ccddata():
         values["CDELT1"] = 4.048e-05 * binning[1]
         values["BARTANG" if camera == "BLUE" else "RARTANG"] = (
             23.1307564 if camera == "BLUE" else 56.022934)  # kb/kr260115 arcs
-        values.update(_amp_sections(nx, ny, n_amps, overscan,
-                                      binning[0], binning[1]))
-        for ia in range(1, n_amps + 1):
-            values["GAIN%d" % ia] = _GAINS[ia - 1]
-            values["BIASRN%d" % ia] = _BIAS_RN[ia - 1]
+        values.update(sections)
+        for k, ia in enumerate(amps):
+            if camera == "BLUE":
+                ampid = mode["ampid"][ia]
+                values["AMPID%d" % ia] = ampid
+                values["GAIN%d" % ia] = _BLUE_GAINS[ampid]
+            else:
+                values["GAIN%d" % ia] = _RED_GAINS[ia]
+            values["BIASRN%d" % ia] = _BIAS_RN[k]
         if camera == "RED":
             # kr260115_00013 shares the instrument state of the blue arc.
             values.update({"RCWAVE": 7199.9848633, "RGRATNAM": 'RM1',
                            "RGRANGLE": 123.0774384, "RNASNAM": 'Open',
-                           "GAINMUL": 1, "CCDMODE": 1})
+                           "GAINMUL": 1, "CDSSPEED": mode["ccdmode"],
+                           "GAINMODE": mode["gainmode"]})
         # CCDCFG as kcwi_fits_reader builds it (CCDSUM, CCDMODE, GAINMUL,
         # AMPMNUM).
         values["CCDCFG"] = ("%s%1d%02d%02d" % (
@@ -553,8 +717,6 @@ def synthetic_ccddata():
         values.update(header_overrides)
         for key, value in values.items():
             hdr[key] = value
-        hdr["NAXIS1"] = nx
-        hdr["NAXIS2"] = ny
         rng = np.random.default_rng(seed)
         data = 1000.0 + rng.normal(0.0, 3.0, size=shape)
         ccd = KCCDData(data, meta=hdr, unit="adu",
