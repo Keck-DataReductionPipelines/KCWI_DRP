@@ -92,8 +92,7 @@ class StackFlats(BaseImg):
             stackf.append(strip_fname(flat) + '_intd.fits')
             flatfn = os.path.join(self.config.instrument.cwd,
                                   self.config.instrument.output_directory,
-                                  stackf[0])
-                                  # stackf[-1])
+                                  stackf[-1])
             # using [0] gets just the image data
             f = kcwi_fits_reader(flatfn)[0]
             # Set mask to None to prevent ccdproc.combine from masking
@@ -111,8 +110,11 @@ class StackFlats(BaseImg):
                                   sigma_clip_func=np.ma.median,
                                   sigma_clip_dev_func=mad_std)
 
-        # re-scale stacked image
+        # re-scale stacked image and its uncertainty
         stacked.data = stacked.data * np.median(fmeds)
+        if stacked.uncertainty is not None:
+            stacked.uncertainty.array = \
+                stacked.uncertainty.array * np.median(fmeds)
 
         # Get the bad pixel mask out of one of the flats (is the same for all)
         # and add it to the stacked flat as the stack's mask
