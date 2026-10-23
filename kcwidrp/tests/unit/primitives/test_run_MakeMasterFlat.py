@@ -198,11 +198,6 @@ def test_interactive_peak_reasks_non_numeric(run_primitive,
 
 
 # ----------------------------------------------------------- known bugs
-@pytest.mark.xfail(strict=True, raises=AssertionError, reason=(
-    "B1: with several peaks below plot_level 2, ipk = peak_heights.argmax() "
-    "is an index into peaks but is used as an index into xvals "
-    "(MakeMasterFlat.py:475-481), so the ledge is placed near the start of "
-    "the trimmed range instead of at the highest peak"))
 def test_several_peaks_highest_is_chosen(run_primitive, synthetic_ccddata,
                                          tmp_redux, capture):
     frame, original = setup_flat(synthetic_ccddata, tmp_redux, [SMALL, BIG])
@@ -214,18 +209,16 @@ def test_several_peaks_highest_is_chosen(run_primitive, synthetic_ccddata,
     assert ledge_left(capture, BIG[0]) == pytest.approx(1.0, rel=0.01)
 
 
-@pytest.mark.xfail(strict=True, raises=ValueError, reason=(
-    "B1b: with no peak below plot_level 2, peak_heights.argmax() of an "
-    "empty array raises ValueError (MakeMasterFlat.py:478), so no master "
-    "flat is made"))
 def test_no_peak_does_not_fail(run_primitive, synthetic_ccddata, tmp_redux,
                                capture):
     # source: analytic @ c0fed5c - plan section 13 B1b - the primitive must
-    # carry on to the master-flat fit (what it does about the ledge is for P.5
-    # to decide)
-    frame, _ = setup_flat(synthetic_ccddata, tmp_redux, [])
+    # carry on to the master-flat fit; with no ledge peak the maintainer chose
+    # (2026-10-23, 1.3.4) to skip the ledge correction, so nothing is corrected
+    frame, original = setup_flat(synthetic_ccddata, tmp_redux, [])
     run_to_master_fit(run_primitive, frame, 1)
     assert capture.x is not None
+    first, _ = correction(capture, original)
+    assert first is None
 
 
 @pytest.mark.parametrize("bad", [
