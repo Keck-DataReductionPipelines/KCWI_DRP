@@ -45,6 +45,12 @@ from kcwidrp.primitives.kcwi_file_primitives import KCCDData
 # D18: no network access for IERS tables, for every test in the session.
 iers.conf.auto_download = False
 
+
+def pytest_addoption(parser):
+    """--regression-profile and --keep-runs (T.7); options must be here."""
+    from kcwidrp.tests.regression.options import add_options
+    add_options(parser)
+
 # ---------------------------------------------------------------------------
 # Header keyword scan (T.1, 2026-10-22, commit b685577 + T.1 working tree).
 #

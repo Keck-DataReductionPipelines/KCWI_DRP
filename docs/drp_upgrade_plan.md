@@ -556,7 +556,7 @@ Each dataset entry in `manifest.json` holds: id, channel, description; raw file 
 | Tier | Check | Fails when |
 |---|---|---|
 | 1 Completion | No `Failed executing primitive` or `Exception … while invoking` lines; no other `ERROR` log lines beyond an allow-list; the prompt record has exactly as many entries as the answers file has lines, no `EOF` entry, and (until a planned prompt change is blessed) the same prompt strings as the reference record (level 3); the prompt record is empty at levels 0 and 1. The exit code is recorded but not checked: it is always 0 (§6.1) | Any of these |
-| 2 Structure | Same set of output files; same HDU names, shapes, dtypes; same header keyword set (allow-list: `DATE*`, `HISTORY`, DRP version, file paths; the `.proc` table's `filename` column is compared by base name) | Any difference |
+| 2 Structure | Same set of output files; same HDU names, shapes, dtypes; same header keyword set (ignored: `HISTORY`, `COMMENT`, checksum cards and string values that are file paths; `DATE*` cards are compared, since every one of them in DRP outputs is an observation time from the raw header; the `.proc` table's `filename` column is compared by base name) | Any difference |
 | 3 Pixels | Per product and extension: exact for integers, flags and masks; floats within the manifest tolerance (exact unless stated) | Any value outside tolerance. Report gives max abs/rel diff, fraction differing, location |
 | 4 Header values | Numeric keywords within tolerance; strings equal | Any difference |
 | 5 Science metrics | The matrix plan Stage 0 metrics (arc centroids and widths, contbar positions, standard flux, invsens ratio, σ calibration in `regions_*.json`), with the thresholds from M.0 | A threshold missed |
