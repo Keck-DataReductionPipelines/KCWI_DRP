@@ -1,6 +1,6 @@
 # Testing the KCWI DRP
 
-Status: **draft (task T.0)**, awaiting maintainer approval. Sections marked *(T.9)* are filled in when the test infrastructure exists.
+Status: **approved by the maintainer, 2026-10-22 (task T.0).** Sections marked *(T.9)* are filled in by task T.9. Changes to these rules need the same approval.
 
 This document sets the rules every test in `kcwidrp/tests/` follows. Each rule is written so that a reviewer can check it by reading a test. If a test breaks a rule, either the test is fixed or the rule is changed here first.
 

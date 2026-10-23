@@ -1,6 +1,6 @@
 # KCWI DRP upgrade: master implementation plan
 
-Date: 2026-10-22, revised the same day after review (decisions D10–D19). Status: **plan only, nothing implemented.**
+Date: 2026-10-22, revised the same day after review (decisions D10–D19). Status: **approved by the maintainer 2026-10-22 (D22); in progress.** Done so far: S.1, S.2, S.4 (except Q10b), S.5, T.0–T.6, T.10, T.11, and the 1.3.3 hotfix (D21).
 Plan documents live on branch `drp_upgrade_plan`. Code facts in this plan (counts, line numbers, bug locations) were verified at `dfbcf9d` (`master` `12fd4aa` plus planning documents only). Upstream has since released `v1.3.2` (`9be28f5`, PR #218), which differs from `12fd4aa` only in `kcwidrp/core/kcwi_plotting.py`, so primitive line numbers and counts still hold at `v1.3.2`. The work starts from `v1.3.2` (D10).
 
 This document coordinates three upgrades, and the test overhaul that protects them, into one sequence of tasks, pull requests and human checkpoints:
@@ -87,6 +87,7 @@ Decisions added after review (2026-10-22). Where one changes an earlier row, the
 | D19 | PR6 (covariance) gets its own gate, G5b. S.4 Q10 is split: Q10a (`CUBEMETH`, `WAVCORR`, `DARCOR`) before M.2c; Q10b (noise-curve keywords, named in M.5a) before M.5b. | PR6 adds user-facing keys, extensions and header keywords (Q7), and the M.5 names do not exist when M.2c starts |
 | D20 | (Maintainer decision, 2026-10-22.) Upstream `develop` was fast-forwarded to `master` (`9be28f5`, `v1.3.2`), so `upgrade-start` is on `develop` and PRs target `develop` (D6) with no extra commits. `stash@{0}` (an earlier draft of PR #218 plus mode flips) was dropped. S.1 is complete. | `develop` had stayed at `6058c37` while `master` received PR #207's merge and PR #218 |
 | D21 | (Maintainer decision, 2026-10-22.) Bug B26 (with B27) was fixed as a hotfix before S.3 rather than in PR3b: PR #219 merged into `develop` as `6270cba`, version 1.3.3; PR #220 (`develop` → `master`) opened, not merged. `upgrade-start` moves from `9be28f5` to `6270cba`, and S.3's references are made with 1.3.3. | Every stacked flat since 1.2.0 used only the first flat; references made with that bug would have had to be re-blessed in PR3b, and users get the fix without waiting for the upgrade |
+| D22 | (Maintainer decision, 2026-10-22.) The plan and the testing rules in `docs/testing.md` are approved. T.0 is done. | T.0's 👤 check |
 
 Maintainer answers to the S.4 questions (gate G0), given 2026-10-22 by the maintainer. Numbered after the S.4 list (S4-Q*n*) so they do not clash with Q1–Q16 above. S4-Q10b is still open (asked after M.5a).
 
@@ -406,6 +407,8 @@ kcwidrp/tests/
 Draft `docs/testing.md` covering: the layout above; markers (`regression`, plus `slow` for fast-suite tests over 2 s, which should be rare); what qualifies as a unit test (writes only to `tmp_path`, no network, no display, under 2 s); the xfail policy (D8); the independence rule (§3 rule 1); the tolerance policy (exact equality for integers, flags and masks; floating-point tolerances only with a written reason next to them); where an expected value comes from (an independent source such as astropy, an analytic result or a published value, or a "characterization" value captured from `upgrade-start` and labelled as such); and the bless policy (T.7). Opus because every later test follows these rules.
 
 Validation: every rule in the document is concrete enough to be checked by reading a test (no "should be reasonable").
+
+Status: **done, 2026-10-22** (approved by the maintainer, D22).
 
 👤 Human check: read and approve `docs/testing.md`. In particular, approve the tolerance policy and the rule that floating-point regression comparisons start out exact (T.7).
 
@@ -1071,7 +1074,7 @@ Run the full regression profile on the release candidate first. Version bump: `p
 | Start | S.3 | Run blue and red reference reductions at levels 0, 1, 3; capture answers; archive outputs and screenshots; check replay and logs | `docs/baseline/README.md` written, replay identical, no failed primitives in logs |
 | Start | S.4 | Ask maintainers questions 1–14 (10b after M.5a) | Answers in §2 (done 2026-10-22 except 10b) |
 | After S.5 | S.5 | Spot-check 5 figure rows and 5 prompt rows | Noted in inventory |
-| Track T | T.0 | Approve `docs/testing.md`, especially tolerance and bless policies | Approved in PR0 |
+| Track T | T.0 | Approve `docs/testing.md`, especially tolerance and bless policies | ✔ Approved 2026-10-22 (D22) |
 | Track T | T.7 | Assemble `$KCWI_REGRESSION_DATA` from S.3; check the drafted manifest; first run on unmodified code; "environment" bless if needed; keep a second copy of the data | Suite passes on `upgrade-start` |
 | Track T | T.8 | Set per-module coverage minimums; accept or reject breakages only regression catches | Written in `docs/testing.md` |
 | Every PR | §1 rule | Run fast and regression suites; paste summaries; do any bless yourself, with a reason | Summaries in the PR |
