@@ -791,7 +791,9 @@ Validation:
 
 ### P.5 Bug fixes — Opus 5.5 (medium) for fixes, Sonnet 5.5 (medium) for the failing tests
 
-Depends on: P.4, PR3a merged. One commit per bug marked "PR3b" in §13 (B1, B1b, B3, B7, B8, B11, B12, B13, B16–B32, except those fixed earlier). For each bug, the failing test usually already exists as a strict `xfail` from T.4 or T.6. Where it does not, Sonnet first writes one from the bug description only. Opus then fixes the bug and removes the `xfail` marker in the same commit; the test passes.
+Depends on: P.4, PR3a merged. One commit per bug marked "PR3b" in §13 (B1, B1b, B3, B7, B8, B11, B12, B13, B16–B33, except those fixed earlier; B30 and B33 share one commit). For each bug, the failing test usually already exists as a strict `xfail` from T.4 or T.6. Where it does not, Sonnet first writes one from the bug description only. Opus then fixes the bug and removes the `xfail` marker in the same commit; the test passes.
+
+B33 has no test yet. Its test runs a synthetic cube of constant value through `CorrectDar` with the T.2 harness, at an airmass and position angle that give a cross-slice shift of at least 0.4 px at the blue end and of the opposite sign at the red end. Outside the padding, every voxel must equal the constant to 1e-6 (the edge slice is not dimmed and nothing overshoots). Padding voxels must carry flag 128 (B30). A point source away from the edges must keep its total flux to 1e-6.
 
 Validation:
 - Each commit message states the bug, the fix, and the measured effect on the S.3 reductions ("no change in outputs" or "invsens changes by X % at λ Y").
@@ -843,8 +845,9 @@ Depends on: T.7. Matrix plan Stage 0 (tests and metrics only; data from S.3). Th
 Do:
 - `kcwidrp/tests/unit/cube_matrix/conftest.py`: a fast synthetic fixture: a small detector, two or three slices, and **affine** per-slice transforms built as `skimage` `PolynomialTransform` objects so the exact answer is known analytically. Initially it tests only the fixture itself.
 - Confirm that tier 5 computes the matrix plan Stage 0 metrics as M.2e–M.5c need them: arc-line centroid and width per slice vs `geom['avwvsig']`; contbar positions along slice; standard-star total flux and invsens ratio; σ calibration in sky regions (single spaxel and binned apertures of 1, 2×2, 3×3, 5×5 spaxels). Add any that are missing.
+- Add an **edge-slice metric** (B33, upstream issue #222). Use the NOSKYSUB extension, which is close to a uniform field, with the target excluded (the standard-star aperture, or the target mask in `regions_<channel>.json`). Take the median of each of the two outermost slices on each side, and of the two outermost spaxels at each end of the slices. Divide each by the interior median, in 100 Å bands at the blue end, at `WAVMID` and at the red end. Report these ratios in `icubed` divided by the same ratios in the warp `icube`, which has had no DAR shift. That cancels the few-percent illumination gradient already in `icube` and isolates what the DAR step does at the field edge. Compute it on every dataset, warp and matrix. Until P.5 fixes B33, the warp datasets record the metric without a threshold.
 - **Contbar cube.** The pipeline never builds a contbar cube: the contbar chain ends at `contbar_trace_bars`. Tier 5 therefore builds one itself, outside the pipeline: run `MakeCube` through the T.2 harness on the master contbars frame from the reduction's `redux/`, with that night's `*_geom.pkl`, once with each `cube_method`. Document this in the metric's docstring.
-- `regions_<channel>.json` in `$KCWI_REGRESSION_DATA`: sky-only regions and the standard-star aperture used by the σ and flux metrics.
+- `regions_<channel>.json` in `$KCWI_REGRESSION_DATA`: sky-only regions and the standard-star aperture used by the σ and flux metrics, and the target masks used by the edge-slice metric.
 - Add the thresholds below to the manifest as tier 5 thresholds for the `*_matrix` dataset variants.
 
 Proposed thresholds (👤 confirm before M.2e):
@@ -856,6 +859,7 @@ Proposed thresholds (👤 confirm before M.2e):
 | Contbar position along slice | mean |Δ| ≤ 0.05 px |
 | Standard-star total flux in aperture | within 1 % over WAVGOOD |
 | Invsens ratio (re-derived with each method) | within 2 % over WAVGOOD, no structure > 1 % on scales < 50 Å |
+| Edge-slice ratio, `icubed` ÷ warp `icube` (B33) | within 2 % of 1 for every edge slice and edge spaxel in each band. Also applies to the warp datasets from P.5 |
 | σ calibration, single spaxel | reported/empirical ratio closer to 1 than warp's |
 | σ calibration, 5×5 binned | with covariance (M.5), ratio within 10 % of 1 |
 | MakeCube wall time | ≤ warp's on the same machine |
@@ -866,7 +870,7 @@ Validation:
 - The synthetic fixture's own tests pass in under 2 s.
 
 👤 Human check:
-- **Choose the sky regions and the standard-star aperture** in the S.3 cubes (ds9 or QFitsView) and write them to `regions_<channel>.json`. Regions must be free of the target and of bright sky-line residual artefacts.
+- **Choose the sky regions and the standard-star aperture** in the S.3 cubes (ds9 or QFitsView) and write them to `regions_<channel>.json`. Regions must be free of the target and of bright sky-line residual artefacts. For the edge-slice metric, mark the target in every frame it is computed on (at least the standard), so that the outer slices and the slice ends keep enough sky spaxels.
 - **Confirm or change the thresholds** in the table and commit them before M.2e.
 
 ### M.1a Vectorize GenerateMaps — Sonnet 5.5 (medium)
@@ -918,7 +922,7 @@ Depends on: M.2a, M.2b, S.4 answers 8, 9 and 10a. Matrix plan Stage 2: config ke
 Also add the `blue_warp` and `red_warp` regression datasets (D17): copies of the default datasets with `cube_method = "warp"` in their config overrides, referenced to the same outputs.
 
 Validation:
-- `cube_method = "warp"`: every output's pixel data, mask and flags are `array_equal` to PR3a's on S.3 data, and headers differ only by `CUBEMETH = 'warp'` (the switch alone changes nothing else). Tier 2 fails on the new keyword as expected; it is blessed as `M.2c header` after G5.
+- `cube_method = "warp"`: every output's pixel data, mask and flags are `array_equal` on S.3 data to those of the `develop` commit the branch starts from (PR3a, or PR3b if it has merged, since B30 and B33 change `icubed`), and headers differ only by `CUBEMETH = 'warp'` (the switch alone changes nothing else). Tier 2 fails on the new keyword as expected; it is blessed as `M.2c header` after G5.
 - `cube_method = "matrix"`: full reduction of both channels completes; every output file exists with the same HDU names, shapes and dtypes as the warp output, plus the separate coverage file; no existing file gains an HDU.
 - Synthetic N&S frame runs through `nandshuff_make_cube` in matrix mode.
 - `CUBEMETH` is present in every cube and propagates to `icubew`, `icubed`, `icubes`, `invsens`.
@@ -970,9 +974,11 @@ Validation:
 - Standard-star flux within 1 %; invsens re-derived with matrix vs. warp within the M.0 threshold.
 - CRPIX1/2 in matrix `icubed` equal warp's.
 - With DAR folded in, the M.2a checks still hold: constant image → constant cube where coverage is full; the unnormalized column of an unmasked pixel sums to 1, now across up to three slices.
+- Constant image → constant cube also where coverage is partial but > 0, at the blue end, at `WAVMID` and at the red end: the edge slices are neither dimmed by padding nor raised by ringing (B33, issue #222).
+- Edge-slice metric (M.0) within its threshold, both channels. The coverage below which a voxel is masked (left open in the matrix plan's Stage 2) is set here, using this metric, and written into the PR.
 - The `*_matrix` datasets are re-blessed with reason `M.4` after the 👤 check below.
 
-👤 Human check: in ds9, step through wavelength planes of the matrix `icubed` standard star and confirm it does not drift. Compare the two invsens curves on one plot and accept or reject the difference.
+👤 Human check: in ds9, step through wavelength planes of the matrix `icubed` standard star and confirm it does not drift. Step through the NOSKYSUB planes of the same `icubed` from the blue end to the red end and confirm the outer slices do not brighten or fade against the interior. Compare the two invsens curves on one plot and accept or reject the difference.
 
 PR5 = M.3 + M.4 (may be split if review prefers).
 
@@ -1084,10 +1090,10 @@ Run the full regression profile on the release candidate first. Version bump: `p
 | Before P.1 | P.0 | Review every prompt explanation for scientific accuracy | Each section marked approved |
 | Track P | P.5 | Approve or reject each bug fix; inspect B1 plots | Decision per fix in PR3b |
 | Track P | P.6 | Interactive session with invalid input, `?`, Ctrl-D; read the log; record `answers_*_v2.txt`; replay it again after PR3b | Notes in PR3a; v2 file replays on PR3a and PR3b |
-| Before M.2e | M.0 | Choose sky regions and std aperture; confirm thresholds | `regions_*.json` and thresholds committed |
+| Before M.2e | M.0 | Choose sky regions, std aperture and target masks; confirm thresholds | `regions_*.json` and thresholds committed |
 | Track M | M.2e | Blink warp vs. matrix cubes; check coverage; sign off report; `M.2e initial` bless | Sign-off in PR4 |
 | Track M | M.3 | Compare one sky-line profile | Noted in PR5 |
-| Track M | M.4 | Check std star does not drift; compare invsens | Noted in PR5 |
+| Track M | M.4 | Check std star does not drift; check outer slices do not brighten or fade with λ; compare invsens | Noted in PR5 |
 | Track M | M.5c | Check noise curves; downstream tool smoke test | Noted in PR6 |
 | Track M | PR6 | Ask S.4 Q10b; present covariance keys and products for G5b | Decision in §2 |
 | Track M | M.6 | Present evidence to Keck for G6 | Decision in §2 |
@@ -1122,7 +1128,7 @@ Rollback: each PR is independently revertable. Until M.6, the matrix code is opt
 
 ## 13. Bugs found while planning (input to T.11, P.4 and P.5)
 
-Found by reading the code at `dfbcf9d` (unchanged at `v1.3.2`); B11–B13 were found by the S.5 inventory, B14–B15 by T.1's import test, B16 by T.2's attribute scan, B17–B21 by T.3, B22–B25 by T.6 and B26–B32 by T.4, all confirmed by reading the code. PR3b is the upgrade's bug-fix PR: besides the prompt-site bugs it carries the non-prompt bugs marked PR3b (B16–B32), each in its own commit with its measured effect. Each must be confirmed by a failing test before it is fixed. Line numbers will move after Track A. "Crash" below means the primitive raises: the framework logs the exception, that frame's chain of events stops, and the rest of the reduction continues (§6.1). "Fixed in" follows D11 and D12.
+Found by reading the code at `dfbcf9d` (unchanged at `v1.3.2`); B11–B13 were found by the S.5 inventory, B14–B15 by T.1's import test, B16 by T.2's attribute scan, B17–B21 by T.3, B22–B25 by T.6, B26–B32 by T.4 and B33 from upstream issue #222, all confirmed by reading the code. PR3b is the upgrade's bug-fix PR: besides the prompt-site bugs it carries the non-prompt bugs marked PR3b (B16–B33), each in its own commit with its measured effect. Each must be confirmed by a failing test before it is fixed. Line numbers will move after Track A. "Crash" below means the primitive raises: the framework logs the exception, that frame's chain of events stops, and the rest of the reduction continues (§6.1). "Fixed in" follows D11 and D12.
 
 | ID | Where | Bug | Effect | Changes outputs? | Fixed in |
 |---|---|---|---|---|---|
@@ -1160,5 +1166,6 @@ Found by reading the code at `dfbcf9d` (unchanged at `v1.3.2`); B11–B13 were f
 | B30 | `CorrectDar.py:248-255` | The mask and flags planes are shifted with the same cubic-spline `scipy.ndimage.shift` as the data. | Flags in `icubed` become arbitrary byte values (e.g. 34, 94, 129), and padding pixels shifted in from outside the cube get 0 instead of 128 | Yes (`icubed` mask and flags) | PR3b (the `warp` path stays after M.6, D5): shift flags and mask with order 0 and fill the padding with 128 |
 | B31 | `FluxCalibrate.py:98` | `self.logger.info(w0, mcw0, dw, …)` passes a float as the message with seven extra arguments. | A "--- Logging error ---" traceback whenever the invsens wavelength grid differs from the cube's and INFO is logged | No | PR3b |
 | B32 | `MakeInvsens.py:388-393` (since `eaa516c`, 2024-04-16) | The fallback line-mask path is `strip_fname(stdfile) + '.lmsk'`, the bare file stem, instead of the path next to the standard's file in `data/stds/`. | The shipped `bd02d3375.lmsk` and `feige110.lmsk` are never used; invsens for those standards is fitted without their line masks | Yes (invsens for those standards) | PR3b, with the measured change in invsens |
+| B33 | `CorrectDar.py:248-251, 257, 267, 277, 288` (reported in upstream issue #222, BL, Large slicer, v1.3.1) | The data, uncertainty, noskysub, obj, sky and delta-wave planes are shifted with `scipy.ndimage.shift` at its defaults (cubic spline, zeros outside). The cube is zero-padded before the shift, so the field edge is a step to zero inside the array. | The outermost slice (and the outermost spaxels along each slice) is partly filled with padding and comes out too faint, by about the shifted fraction: down to ~0.6 of the interior at 3750 Å in the report. Spline overshoot makes the next slice too bright, by up to ~15 %. The sign flips either side of `WAVMID`, and the size changes with airmass and parallactic angle, so mosaic seams do not match. The reporter reproduced the pipeline `icubed` exactly from `icube` on 18 blank-sky frames, so the error comes from this step alone | Yes (`icubed` data, uncertainty, noskysub, obj, sky, delta-wave; invsens, because MakeInvsens runs on the standard's `icubed`) | PR3b, in the same commit as B30 (the `warp` path stays after M.6, D5): shift with `order=1`, then divide by a cube of ones shifted the same way wherever that cube is > 0. A partly covered voxel then becomes a weighted mean of real pixels, the same rule `W` follows (M.2a). Whether partly covered voxels also get a flag is decided at G4, since a new flag bit is user-facing. The commit reports the M.0 edge-slice metric and the invsens change |
 
 B1 is the only one known to affect unattended reductions at default settings. S.3's level-1 logs show whether it occurred on the reference data.
