@@ -1,6 +1,6 @@
 # KCWI DRP upgrade: master implementation plan
 
-Date: 2026-10-22, revised the same day after review (decisions D10–D19). Status: **approved by the maintainer 2026-10-22 (D22); in progress.** Done so far: S.1, S.2, S.4 (except Q10b), S.5, T.0–T.6, T.10, T.11, and the hotfixes for B26/B27 (D21) and B1/B1b (D23). S.3 is under way on datasets ds01 and ds03.
+Date: 2026-10-22, revised the same day after review (decisions D10–D19). Status: **approved by the maintainer 2026-10-22 (D22); in progress.** Done so far: S.1, S.2, S.4 (except Q10b), S.5, T.0–T.6, T.10, T.11, and the hotfixes for B26/B27 (D21) and B1/B1b (D23). S.3 is done (ds01 and ds03).
 Plan documents live on branch `drp_upgrade_plan`. Code facts in this plan (counts, line numbers, bug locations) were verified at `dfbcf9d` (`master` `12fd4aa` plus planning documents only). Upstream has since released `v1.3.2` (`9be28f5`, PR #218), which differs from `12fd4aa` only in `kcwidrp/core/kcwi_plotting.py`, so primitive line numbers and counts still hold at `v1.3.2`. The work starts from `v1.3.2` (D10).
 
 This document coordinates three upgrades, and the test overhaul that protects them, into one sequence of tasks, pull requests and human checkpoints:
@@ -284,6 +284,8 @@ Validation:
 👤 Human check: confirm the baseline env can open the Bokeh browser tab on your Mac (needed for S.3 screenshots). If it cannot, S.3 must run on another machine; record which.
 
 ### S.3 Reference reductions — Human
+
+Status: **done, 2026-10-23.** Results, checks and timings are in `docs/baseline/README.md`: all 16 passes completed with no failed primitive; each level-3 replay is identical to its pass; levels 0 and 1 give identical cubes; `Picking the highest peak` never appears (ds03 blue found no ledge peak and skipped the correction, D23).
 
 Replaces bokeh-plan task 0.1 **and** matrix Stage 0's data capture (decision D2). Follow bokeh-plan 0.1 steps 1–4 exactly, with these additions:
 
@@ -1081,7 +1083,7 @@ Run the full regression profile on the release candidate first. Version bump: `p
 |---|---|---|---|
 | Start | S.1 | Drop `stash@{0}`; fetch; confirm `develop` has `v1.3.2`; tag `upgrade-start` | Tag exists on a commit containing `v1.3.2`, tree clean |
 | Start | S.2 | Repair the psutil install in the baseline env; confirm it runs Bokeh and opens the browser; create the Python 3.12 dev env later with matching numeric pins | Versions and test baseline recorded |
-| Start | S.3 | Run blue and red reference reductions at levels 0, 1, 3; capture answers; archive outputs and screenshots; check replay and logs | `docs/baseline/README.md` written, replay identical, no failed primitives in logs |
+| Start | S.3 | Run blue and red reference reductions at levels 0, 1, 3; capture answers; archive outputs and screenshots; check replay and logs | ✔ Done 2026-10-23: `docs/baseline/README.md` written, replays identical, no failed primitives |
 | Start | S.4 | Ask maintainers questions 1–14 (10b after M.5a) | Answers in §2 (done 2026-10-22 except 10b) |
 | After S.5 | S.5 | Spot-check 5 figure rows and 5 prompt rows | Noted in inventory |
 | Track T | T.0 | Approve `docs/testing.md`, especially tolerance and bless policies | ✔ Approved 2026-10-22 (D22) |
