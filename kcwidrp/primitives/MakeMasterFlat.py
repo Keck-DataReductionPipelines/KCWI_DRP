@@ -464,7 +464,12 @@ class MakeMasterFlat(BaseImg):
                 for pk in peaks:
                     p.line([pk, pk], ylim, color='red')
                 bokeh_plot(p, self.context.bokeh_session)
-                if len(peaks) != 1:
+                if len(peaks) == 0:
+                    # No ledge detected: nothing to correct
+                    self.logger.warning("No BM ledge peak found, "
+                                        "skipping BM ledge correction")
+                    ipk = None
+                elif len(peaks) != 1:
                     self.logger.warning("Single peak not found!")
                     if self.config.instrument.plot_level >= 2:
                         print("Please indicate the integer pixel value of the peak")
@@ -475,82 +480,83 @@ class MakeMasterFlat(BaseImg):
                     else:
                         # Pick the highest peak, using the peaks properties
                         self.logger.warning("Picking the highest peak. This may not be the correct peak!")
-                        ipk = properties['peak_heights'].argmax()
+                        ipk = peaks[properties['peak_heights'].argmax()]
                 else:
                     ipk = peaks[0]
-                apk = xvals[ipk]
-                if self.config.instrument.plot_level >= 3:
-                    p = figure(
-                        title=plab + ' Peak of ledge',
-                        x_axis_label='Wave (A)',
-                        y_axis_label='Value',
-                        plot_width=self.config.instrument.plot_width,
-                        plot_height=self.config.instrument.plot_height)
-                    p.circle(xvals, deriv, legend_label='Data')
-                    p.line([apk, apk], [-50, 200], line_color='red',
-                           legend_label='Pk')
-                    bokeh_plot(p, self.context.bokeh_session)
-                    if self.config.instrument.plot_level >= 2:
-                        input("Next? <cr>: ")
-                    else:
-                        time.sleep(self.config.instrument.plot_pause)
-                xlow = apk - 3 - 5
-                xhi = apk - 3
-                zlow = apk + 3
-                zhi = apk + 3 + 5
-                qlow = [i for i, v in enumerate(fpoints) if xlow <= v <= xhi]
-                xlf = np.asarray([fpoints[i] for i in qlow])
-                ylf = np.asarray([ylfit[i] for i in qlow])
-                lowfit = np.polyfit(xlf, ylf, 1)
-                qhi = [i for i, v in enumerate(fpoints) if zlow <= v <= zhi]
-                xlf = np.asarray([fpoints[i] for i in qhi])
-                ylf = np.asarray([ylfit[i] for i in qhi])
-                hifit = np.polyfit(xlf, ylf, 1)
-                ratio = (hifit[1] + hifit[0] * apk) / \
-                        (lowfit[1] + lowfit[0] * apk)
-                self.logger.info("BM ledge ratio: %.3f" % ratio)
-                # correct flat data
-                qcorr = [i for i, v in enumerate(xfr) if v >= apk]
-                for i in qcorr:
-                    yfr[i] /= ratio
-                # plot BM ledge
-                if self.config.instrument.plot_level >= 1:
-                    p = figure(
-                        title=plab + ' BM Ledge Region',
-                        x_axis_label='Wave (A)',
-                        y_axis_label='Value',
-                        plot_width=self.config.instrument.plot_width,
-                        plot_height=self.config.instrument.plot_height)
-                    # Input data
-                    p.circle(xledge, yledge, fill_color='blue',
-                             legend_label='Data')
-                    # correct input data
-                    qcorrect = [i for i, v in enumerate(xledge) if v >= apk]
-                    xplt = []
-                    yplt = []
-                    for i in qcorrect:
-                        xplt.append(xledge[i])
-                        yplt.append(yledge[i] / ratio)
-                    p.circle(xplt, yplt, fill_color='orange',
-                             legend_label='Corrected')
-                    p.line(fpoints, ylfit, line_color='red', legend_label='Fit')
-                    p.line([xlow, xlow], [ylmin, ylmax], line_color='blue')
-                    p.line([xhi, xhi], [ylmin, ylmax], line_color='blue')
-                    p.line([zlow, zlow], [ylmin, ylmax], line_color='black')
-                    p.line([zhi, zhi], [ylmin, ylmax], line_color='black')
-                    p.line(fpoints, lowfit[1] + lowfit[0] * fpoints,
-                           line_color='purple')
-                    p.line(fpoints, hifit[1] + hifit[0] * fpoints,
-                           line_color='green')
-                    p.line([apk, apk], [ylmin, ylmax], line_color='green',
-                           legend_label='Pk')
-                    p.y_range = Range1d(ylmin, ylmax)
-                    p.legend.location = 'top_left'
-                    bokeh_plot(p, self.context.bokeh_session)
-                    if self.config.instrument.plot_level >= 2:
-                        input("Next? <cr>: ")
-                    else:
-                        time.sleep(self.config.instrument.plot_pause)
+                if ipk is not None:
+                    apk = xvals[ipk]
+                    if self.config.instrument.plot_level >= 3:
+                        p = figure(
+                            title=plab + ' Peak of ledge',
+                            x_axis_label='Wave (A)',
+                            y_axis_label='Value',
+                            plot_width=self.config.instrument.plot_width,
+                            plot_height=self.config.instrument.plot_height)
+                        p.circle(xvals, deriv, legend_label='Data')
+                        p.line([apk, apk], [-50, 200], line_color='red',
+                               legend_label='Pk')
+                        bokeh_plot(p, self.context.bokeh_session)
+                        if self.config.instrument.plot_level >= 2:
+                            input("Next? <cr>: ")
+                        else:
+                            time.sleep(self.config.instrument.plot_pause)
+                    xlow = apk - 3 - 5
+                    xhi = apk - 3
+                    zlow = apk + 3
+                    zhi = apk + 3 + 5
+                    qlow = [i for i, v in enumerate(fpoints) if xlow <= v <= xhi]
+                    xlf = np.asarray([fpoints[i] for i in qlow])
+                    ylf = np.asarray([ylfit[i] for i in qlow])
+                    lowfit = np.polyfit(xlf, ylf, 1)
+                    qhi = [i for i, v in enumerate(fpoints) if zlow <= v <= zhi]
+                    xlf = np.asarray([fpoints[i] for i in qhi])
+                    ylf = np.asarray([ylfit[i] for i in qhi])
+                    hifit = np.polyfit(xlf, ylf, 1)
+                    ratio = (hifit[1] + hifit[0] * apk) / \
+                            (lowfit[1] + lowfit[0] * apk)
+                    self.logger.info("BM ledge ratio: %.3f" % ratio)
+                    # correct flat data
+                    qcorr = [i for i, v in enumerate(xfr) if v >= apk]
+                    for i in qcorr:
+                        yfr[i] /= ratio
+                    # plot BM ledge
+                    if self.config.instrument.plot_level >= 1:
+                        p = figure(
+                            title=plab + ' BM Ledge Region',
+                            x_axis_label='Wave (A)',
+                            y_axis_label='Value',
+                            plot_width=self.config.instrument.plot_width,
+                            plot_height=self.config.instrument.plot_height)
+                        # Input data
+                        p.circle(xledge, yledge, fill_color='blue',
+                                 legend_label='Data')
+                        # correct input data
+                        qcorrect = [i for i, v in enumerate(xledge) if v >= apk]
+                        xplt = []
+                        yplt = []
+                        for i in qcorrect:
+                            xplt.append(xledge[i])
+                            yplt.append(yledge[i] / ratio)
+                        p.circle(xplt, yplt, fill_color='orange',
+                                 legend_label='Corrected')
+                        p.line(fpoints, ylfit, line_color='red', legend_label='Fit')
+                        p.line([xlow, xlow], [ylmin, ylmax], line_color='blue')
+                        p.line([xhi, xhi], [ylmin, ylmax], line_color='blue')
+                        p.line([zlow, zlow], [ylmin, ylmax], line_color='black')
+                        p.line([zhi, zhi], [ylmin, ylmax], line_color='black')
+                        p.line(fpoints, lowfit[1] + lowfit[0] * fpoints,
+                               line_color='purple')
+                        p.line(fpoints, hifit[1] + hifit[0] * fpoints,
+                               line_color='green')
+                        p.line([apk, apk], [ylmin, ylmax], line_color='green',
+                               legend_label='Pk')
+                        p.y_range = Range1d(ylmin, ylmax)
+                        p.legend.location = 'top_left'
+                        bokeh_plot(p, self.context.bokeh_session)
+                        if self.config.instrument.plot_level >= 2:
+                            input("Next? <cr>: ")
+                        else:
+                            time.sleep(self.config.instrument.plot_pause)
         # END: handling BM grating ledge
 
         # if we are fitting a twilight flat, treat it like a sky image with a
