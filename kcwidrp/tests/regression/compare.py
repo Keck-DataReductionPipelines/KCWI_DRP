@@ -10,6 +10,9 @@ Rules (docs/testing.md sections 6 and 10):
   DATE* cards are compared: in KCWI DRP outputs they are all observation
   times copied from the raw header (DATE, DATE-OBS, DATE-BEG, DATEREND, ...);
   the DRP writes no write-time date (checked on the S.3 outputs);
+* ``*.pkl`` outputs (the geometry) are compared by content, with the same
+  path rule (a stored file path only has to agree in its file name); other
+  non-FITS files byte for byte;
 * integers, booleans and strings are compared exactly; floats exactly unless
   the manifest gives a tolerance (with a reason) for the product;
 * the ``.proc`` table is compared on every column; the ``filename`` column by
@@ -20,6 +23,7 @@ import fnmatch
 import json
 import math
 import os
+import pickle
 import re
 import struct
 from pathlib import Path
@@ -317,6 +321,89 @@ class OutputComparison:
         self.n_plots = 0
 
 
+def _is_path(value):
+    return isinstance(value, str) and ("/" in value or "\\" in value)
+
+
+def diff_objects(a, b, where="", limit=20):
+    """Differences between two unpickled DRP objects, as strings.
+
+    Dicts by key, sequences by element, arrays exactly (NaN equal to NaN),
+    other objects (e.g. skimage transforms) by their ``__dict__``, numbers and
+    other values with ``==``. A string that is a file path only has to agree
+    in its file name, the same rule as for header cards: the same input read
+    from another directory (e.g. through the regression data directory's
+    symlinks) is not a change.
+    """
+    found = []
+
+    def walk(x, y, path):
+        if len(found) >= limit:
+            return
+        if type(x) is not type(y):
+            found.append("%s: type %s, reference %s"
+                         % (path, type(x).__name__, type(y).__name__))
+        elif isinstance(x, dict):
+            for k in sorted(set(x) | set(y), key=repr):
+                if k not in x or k not in y:
+                    found.append("%s[%r]: only in the %s" % (
+                        path, k, "run" if k in x else "reference"))
+                else:
+                    walk(x[k], y[k], "%s[%r]" % (path, k))
+        elif isinstance(x, (list, tuple)):
+            if len(x) != len(y):
+                found.append("%s: length %d, reference %d"
+                             % (path, len(x), len(y)))
+            else:
+                for i, (u, v) in enumerate(zip(x, y)):
+                    walk(u, v, "%s[%d]" % (path, i))
+        elif isinstance(x, np.ndarray):
+            if x.shape != y.shape or x.dtype != y.dtype:
+                found.append("%s: shape/dtype %s %s, reference %s %s"
+                             % (path, x.shape, x.dtype, y.shape, y.dtype))
+            elif not np.array_equal(x, y, equal_nan=x.dtype.kind in "fc"):
+                found.append("%s: %d array values differ"
+                             % (path, int(np.count_nonzero(x != y))))
+        elif _is_path(x) and _is_path(y):
+            if os.path.basename(x) != os.path.basename(y):
+                found.append("%s: %r, reference %r" % (path, x, y))
+        elif hasattr(x, "__dict__") and not isinstance(x, type):
+            walk(vars(x), vars(y), path)
+        else:
+            same = x == y
+            if isinstance(same, np.ndarray):
+                same = bool(same.all())
+            if not same and not (isinstance(x, float) and math.isnan(x)
+                                 and math.isnan(y)):
+                found.append("%s: %r, reference %r" % (path, x, y))
+
+    walk(a, b, where)
+    return found
+
+
+def compare_pickle_pair(run_path, ref_path, rel, out):
+    """Tier 3 for ``*.pkl`` outputs (the geometry): compare the contents.
+
+    Only the run's own output and the maintainer's blessed reference are
+    unpickled. A file that cannot be unpickled is compared byte for byte.
+    """
+    try:
+        with open(run_path, "rb") as fa, open(ref_path, "rb") as fb:
+            a, b = pickle.load(fa), pickle.load(fb)
+    except Exception:
+        if Path(run_path).read_bytes() != Path(ref_path).read_bytes():
+            msg = "%s: bytes differ (could not be unpickled)" % rel
+            out.pixels.append({"file": rel, "ext": "-", "where": msg,
+                               "n_diff": 1})
+            out.pixel_messages.append(msg)
+        return
+    for d in diff_objects(a, b):
+        msg = "%s: %s" % (rel, d)
+        out.pixels.append({"file": rel, "ext": "-", "where": msg,
+                           "n_diff": 1})
+        out.pixel_messages.append(msg)
+
+
 def _files_under(root):
     root = Path(root)
     if not root.is_dir():
@@ -369,6 +456,8 @@ def compare_outputs(run_dir, ref_dir, procfile, tolerances=None,
             elif rel.endswith((".fits", ".fit")):
                 compare_fits_pair(a, b, rel[len("redux/"):], tolerances, out,
                                   diag_dir)
+            elif rel.endswith(".pkl"):
+                compare_pickle_pair(a, b, rel, out)
             elif a.read_bytes() != b.read_bytes():
                 msg = "%s: bytes differ (not a FITS file)" % rel
                 out.pixels.append({"file": rel, "ext": "-", "where": msg,
