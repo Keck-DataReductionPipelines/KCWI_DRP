@@ -1,6 +1,6 @@
 # KCWI DRP upgrade: master implementation plan
 
-Date: 2026-10-22, revised the same day after review (decisions D10–D19). Status: **approved by the maintainer 2026-10-22 (D22); in progress.** Done so far: S.1, S.2, S.4 (except Q10b), S.5, T.0–T.6, T.10, T.11, and the hotfixes for B26/B27 (D21) and B1/B1b (D23). S.3 is done (ds01 and ds03).
+Date: 2026-10-22, revised the same day after review (decisions D10–D19). Status: **approved by the maintainer 2026-10-22 (D22); in progress.** Done so far: S.1, S.2, S.4 (except Q10b), S.5, T.0–T.6, T.10, T.11, and the hotfixes for B26/B27 (D21) and B1/B1b (D23). S.3 is done (ds01 and ds03). T.7 is built (first real run pending); T.9 is written (regression half of its check pending).
 Plan documents live on branch `drp_upgrade_plan`. Code facts in this plan (counts, line numbers, bug locations) were verified at `dfbcf9d` (`master` `12fd4aa` plus planning documents only). Upstream has since released `v1.3.2` (`9be28f5`, PR #218), which differs from `12fd4aa` only in `kcwidrp/core/kcwi_plotting.py`, so primitive line numbers and counts still hold at `v1.3.2`. The work starts from `v1.3.2` (D10).
 
 This document coordinates three upgrades, and the test overhaul that protects them, into one sequence of tasks, pull requests and human checkpoints:
@@ -613,6 +613,8 @@ Validation: every breakage is caught by the fast suite (or by the regression sui
 👤 Human check: review the coverage table and set a minimum per module for `core/` and `kcwi_file_primitives.py` (proposed: 70 % line coverage), to be written in `docs/testing.md`. Review any breakage that only the regression suite catches and decide whether that is acceptable.
 
 ### T.9 Testing guide and pre-PR checklist — Sonnet 5.5 (low)
+
+Status (2026-10-23): guide written in `docs/testing.md` (approved rules §1–§11 unchanged) with a proposed `.github/pull_request_template.md`. Validation, first half done: a fresh Sonnet session, given only a clean clone and the guide, created a new venv, installed the test extra and got the fast suite green (710 passed, 60 xfailed; 49 s on a first run). Second half (the regression suite with a data directory) waits for T.7's first real run.
 
 Finish `docs/testing.md`: installing the test dependencies (`pip install -e ".[test]"`, Python 3.12); running the fast suite; setting up the regression data directory; running, reading and blessing regressions; writing a new test with `run_primitive` (a worked example); the pre-PR checklist that enforces the §1 rule. Propose a GitHub pull-request template with sections for the two test summaries, subject to Keck agreement.
 
