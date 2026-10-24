@@ -14,3 +14,6 @@ docs/baseline/**
 !docs/baseline/**/*.md
 !docs/baseline/**/*.txt
 !docs/baseline/**/*.json
+
+# Local virtual environment (docs/testing.md)
+.venv/

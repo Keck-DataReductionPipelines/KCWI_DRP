@@ -142,13 +142,13 @@ Editable matters. A reduction (`reduce_kcwi`) and the tests must run the code in
 python -c "import kcwidrp; print(kcwidrp.__file__)"
 ```
 
-The path must be inside your repository (`.../KCWI_DRP/kcwidrp/__init__.py`), not `site-packages`. To also see the installed version, which `kcwi_fits_writer` writes into the HISTORY of every output:
+The path must be inside your repository (`.../KCWI_DRP/kcwidrp/__init__.py`), not `site-packages`. To also see the installed version, which `kcwi_fits_writer` writes into the HISTORY of every output (it must equal `version` in `pyproject.toml`):
 
 ```
 python -c "import importlib.metadata as m; print(m.version('kcwidrp'))"
 ```
 
-A stale `kcwidrp.egg-info/` directory at the repository root (left by an old `setup.py`-style build) shadows the installed metadata whenever Python runs from the repository root, so the version above, and the version in every output's HISTORY, comes out wrong (it was 1.2.0 in the baseline environment). It is untracked. If it exists, delete it: `ls -d kcwidrp.egg-info` should say "No such file". See `docs/baseline/README.md`.
+A stale `kcwidrp.egg-info/` directory at the repository root (left by an old `setup.py`-style build) shadows the installed metadata whenever Python runs from the repository root, so the version above, and the version in every output's HISTORY, comes out wrong (an old build there reported 1.2.0 instead of the `pyproject.toml` version). It is untracked. If it exists, delete it: `ls -d kcwidrp.egg-info` should say "No such file". See `docs/baseline/README.md`.
 
 ## Running the tests
 
@@ -160,7 +160,9 @@ From the repository root:
 pytest
 ```
 
-This runs `kcwidrp/tests/` without the regression tests (`-m "not regression"` is the default in `pyproject.toml`). It needs no display, no network and no data directory. It must finish in under 60 s (section 1); on the maintainer's laptop it takes about 30 s. A suite that gets close to the limit is a problem to fix, not to live with.
+This runs `kcwidrp/tests/` without the regression tests (`-m "not regression"` is the default in `pyproject.toml`). It needs no display, no network and no data directory. It must finish in under 60 s (section 1), measured as the time pytest reports at the end of a run in an environment that has run the suite before. On the maintainer's laptop (Apple M4) that is about 32 s. The first run in a new environment takes longer (49 s reported, about a minute of wall time, in a fresh venv) because Python first compiles every module. A suite that gets close to the limit is a problem to fix, not to live with.
+
+The run prints many warnings (about 1100: polynomial-fit `RankWarning`s, deprecations in pipeline code, `SyntaxWarning: invalid escape sequence` from docstrings). They are expected and are not failures; deprecations raised from `kcwidrp` code are deliberately left visible (only third-party ones are filtered in `pyproject.toml`).
 
 Useful variations:
 
