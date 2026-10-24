@@ -1,6 +1,6 @@
 # Testing the KCWI DRP
 
-Status: **approved by the maintainer, 2026-10-22 (task T.0).** Sections marked *(T.9)* are filled in by task T.9. Changes to these rules need the same approval.
+Status: **approved by the maintainer, 2026-10-22 (task T.0).** The sections on installing, running, regression data and writing tests were filled in by task T.9. Changes to these rules need the same approval.
 
 This document sets the rules every test in `kcwidrp/tests/` follows. Each rule is written so that a reviewer can check it by reading a test. If a test breaks a rule, either the test is fixed or the rule is changed here first.
 
@@ -124,23 +124,294 @@ Defined in task T.7 of the upgrade plan. The rules that matter for reviewers:
 
 Coverage is measured (`pytest --cov=kcwidrp`) and reported in PR0 against the baseline. Minimum line coverage per module for `kcwidrp/core/` and `kcwidrp/primitives/kcwi_file_primitives.py` is set by the maintainer after T.8 (proposed: 70 %) and written here. *(T.8)*
 
-## Installing the test dependencies *(T.9)*
+## Installing the test dependencies
+
+Use Python 3.12. Python 3.13 does not work: `pyproject.toml` pins `numpy==1.26.4`, which has no 3.13 wheels. Create a conda environment or a venv, then install the package **editable** with the test extra, from the repository root:
 
 ```
+conda create -n kcwidrp python=3.12      # or: python3.12 -m venv .venv && source .venv/bin/activate
+conda activate kcwidrp
 pip install -e ".[test]"
 ```
-Python 3.12. Details completed in T.9.
 
-## Running the tests *(T.9)*
+The extra adds `pytest` (8 or newer), `hypothesis` and `pytest-cov`.
 
-## Setting up the regression data directory *(T.9)*
+Editable matters. A reduction (`reduce_kcwi`) and the tests must run the code in the working tree. A plain `pip install .` copies the package into `site-packages`, and then edits to the repository change nothing. Check which copy Python uses:
 
-## Reading a regression report and blessing *(T.9)*
+```
+python -c "import kcwidrp; print(kcwidrp.__file__)"
+```
 
-## Writing a primitive test with `run_primitive` *(T.9)*
+The path must be inside your repository (`.../KCWI_DRP/kcwidrp/__init__.py`), not `site-packages`. To also see the installed version, which `kcwi_fits_writer` writes into the HISTORY of every output:
+
+```
+python -c "import importlib.metadata as m; print(m.version('kcwidrp'))"
+```
+
+A stale `kcwidrp.egg-info/` directory at the repository root (left by an old `setup.py`-style build) shadows the installed metadata whenever Python runs from the repository root, so the version above, and the version in every output's HISTORY, comes out wrong (it was 1.2.0 in the baseline environment). It is untracked. If it exists, delete it: `ls -d kcwidrp.egg-info` should say "No such file". See `docs/baseline/README.md`.
+
+## Running the tests
+
+### The fast suite
+
+From the repository root:
+
+```
+pytest
+```
+
+This runs `kcwidrp/tests/` without the regression tests (`-m "not regression"` is the default in `pyproject.toml`). It needs no display, no network and no data directory. It must finish in under 60 s (section 1); on the maintainer's laptop it takes about 30 s. A suite that gets close to the limit is a problem to fix, not to live with.
+
+Useful variations:
+
+```
+pytest -q                                            # short output
+pytest kcwidrp/tests/unit/primitives/test_run_CorrectGain.py   # one file
+pytest kcwidrp/tests/unit/primitives -k "red"        # a directory, tests whose name matches
+pytest -rx                                           # also list every xfail with its reason
+pytest --cov=kcwidrp --cov-report=term-missing       # coverage (section 11)
+```
+
+For the check of section 8.4 (break the code on purpose, see a test fail, revert), run with the byte-code cache off and clean up afterwards:
+
+```
+PYTHONDONTWRITEBYTECODE=1 pytest kcwidrp/tests/unit/primitives/test_run_CorrectGain.py
+find kcwidrp -name __pycache__ -not -path "kcwidrp/__pycache__" -exec rm -rf {} +   # after reverting the breakage
+```
+
+(The tracked file `kcwidrp/__pycache__/__init__.cpython-36.pyc` is part of the repository, which is why the command above skips that directory. If `git status` shows it changed, `git checkout -- kcwidrp/__pycache__` restores it.)
+
+The property tests use a small, fixed set of examples by default. For a longer, random search:
+
+```
+pytest kcwidrp/tests/properties --hypothesis-profile=thorough
+```
+
+This takes minutes, not seconds; use it when you add or change an invariant (section 9). It writes nothing to `.hypothesis/`.
+
+### What the strict xfails mean
+
+The summary line of a clean run looks like `710 passed, 8 deselected, 60 xfailed`. An `xfailed` test is a known bug (section 7): the test asserts the correct behaviour, fails today, and is marked `xfail(strict=True, reason="B<n>: ...")`. `pytest -rx` lists them with the reasons. They are expected and are not failures.
+
+When one of them **passes**, pytest reports it as `FAILED ... [XPASS(strict)]`. That means the bug no longer exists in the code you are running, usually because your change fixed it. Do the following:
+
+1. Confirm the fix is real and intended (read the test: it asserts the correct behaviour).
+2. Delete the `xfail` marker in the same commit as the fix (section 7).
+3. Mark the bug as fixed in the upgrade plan's bug list, as the plan's task requires.
+
+If a bug was fixed by accident, or by a change that was not supposed to touch it, stop and find out why before removing the marker.
+
+## Setting up the regression data directory
+
+The regression suite reads everything from one directory, `$KCWI_REGRESSION_DATA`. It is assembled by hand (there is no download script) and lives outside the repository. Its layout:
+
+```
+manifest.json                datasets, SHA-256 checksums, settings, tolerances, provenance, bless history
+raw/<dataset>/               the raw KOA frames: lev0/*.fits, files_flatlamp_<channel>.txt, kcwi.sky
+reference/<entry>/           the blessed outputs of one entry: redux/, plots/, kcwib.proc or kcwir.proc
+answers/                     level-3 answer files, answers_<dataset>_<channel>_3.txt
+regions_<channel>.json       sky regions and standard-star aperture (added later, by the matrix work)
+```
+
+`<dataset>` is the S.3 dataset name (for example `ds01_F22491_pt2_60266`). `<entry>` is `<short name>_<channel>_L<plot level>` (for example `ds01_blue_L1`). `raw/<dataset>` and `reference/<entry>` may be symlinks. To save disk, use symlinks for the raw frames and APFS clones for the references (`cp -c -R`, macOS): a clone shares the data blocks with the original and costs no space until a copy is changed.
+
+Two rules for the path:
+
+- **The path to the raw frames must not contain `kr` or `kb`** (bug B8: the reduction would then ask extra questions). This applies to the real, symlink-resolved location of the frames as well as to `$KCWI_REGRESSION_DATA`.
+- Put the directory on a disk with room for one reduction's output (the runner refuses to start an entry with too little free space; see below).
+
+### Worked example
+
+Assume the S.3 run directories are in `~/drp/kcwi/s3/<dataset>/<channel>/L<level>/` (each with `redux/`, `plots/` and `kcwib.proc` or `kcwir.proc`), the raw datasets in `~/drp/kcwi/test_suite/suite/data/<dataset>/`, and the level-3 answer files in `docs/baseline/<dataset>/` of the repository. Run this from the repository root, once per dataset and channel (shown for ds01; repeat for `ds03_Compact_groupHS_60406`, and for `red` / `kcwir.proc`):
+
+```bash
+export KCWI_REGRESSION_DATA=~/drp/kcwi/regression_data
+S3=~/drp/kcwi/s3
+SUITE=~/drp/kcwi/test_suite/suite/data
+DS=ds01_F22491_pt2_60266 ; SHORT=ds01 ; CH=blue ; PROC=kcwib.proc
+
+mkdir -p $KCWI_REGRESSION_DATA/{raw,reference,answers}
+
+# raw frames: a symlink to the dataset directory
+ln -s $SUITE/$DS $KCWI_REGRESSION_DATA/raw/$DS
+
+# references: clones of the S.3 run directories (L0, L1, L3)
+for L in 0 1 3; do
+  mkdir $KCWI_REGRESSION_DATA/reference/${SHORT}_${CH}_L$L
+  cp -c -R $S3/$DS/$CH/L$L/redux $S3/$DS/$CH/L$L/plots $S3/$DS/$CH/L$L/$PROC \
+        $KCWI_REGRESSION_DATA/reference/${SHORT}_${CH}_L$L/
+done
+
+# level-3 answer files
+cp docs/baseline/$DS/answers_${DS}_${CH}_3.txt $KCWI_REGRESSION_DATA/answers/
+```
+
+(`cp -c` is the macOS APFS clone flag; on Linux use `cp -R` or `cp --reflink=auto -R`.) The `logs/` and `kcwi.cfg` of the S.3 runs are not needed in the data directory.
+
+Then draft the manifest and check the raw frames:
+
+```
+python -m kcwidrp.tests.regression draft-manifest
+python -m kcwidrp.tests.regression verify-checksums
+```
+
+`draft-manifest` reads `$KCWI_REGRESSION_DATA` (or `--data-dir`). It lists the datasets under `raw/`, computes the SHA-256 of every frame named in the `files_flatlamp_<channel>.txt` lists, makes one entry per dataset, channel and level, and reads the DRP version from the HISTORY of each reference cube. It refuses to overwrite an existing `manifest.json` without `--force`. `verify-checksums` re-reads every raw file and answer file and prints `ok` or the problems (exit status 1 if any).
+
+### What to check by hand in the drafted manifest
+
+The draft is a starting point. The maintainer reads every entry in `manifest.json`:
+
+- **Entries.** One per dataset, channel and level: `ds01_blue_L0`, `_L1`, `_L3`, and the same for red. A level for which you made no reference still gets an entry; remove it, or leave it and bless it with reason `initial` after a first run (see below).
+- **Profile and plot level.** `L1` is `quick`; `L0` and `L3` are `full` (decision D16). `plot_level` agrees with the level. A level-3 entry has an `answers` file.
+- **Config overrides.** `enable_bokeh` is off and `plot_pause` is 0, so no viewer opens during a run.
+- **Tolerances.** The drafted manifest has none: every float comparison is exact. A tolerance may be added only with a written `reason` in the entry, approved by the maintainer (section 6); the manifest loader refuses a tolerance without a reason.
+- **Provenance gaps.** The draft prints what it could not find under "Could not determine / check by hand". Typical gaps: a reference with no `git version=` in its HISTORY (the S.3 ds01 runs were a plain `pip install .`, so only the version is recorded), `iers: null` (the IERS table versions are not determined until a bless records them), and references that do not exist yet. Fill in what you know; leave `null` rather than guess.
+- **Checksums.** `verify-checksums` must say `ok` for every entry.
+
+**Keep a second copy** of the whole directory on another disk. The data cannot be re-created by script, and the checksums only detect damage, not repair it (upgrade plan, section 12). With symlinked raw frames, copy the target files as well (`cp -R -L`).
+
+## Running, reading and blessing regressions
+
+### Running
+
+Set the variable in the shell where you run pytest:
+
+```
+export KCWI_REGRESSION_DATA=~/drp/kcwi/regression_data
+pytest -m regression                          # quick profile: the L1 entries, both channels
+pytest -m regression --regression-profile=full   # also the L0 and L3 entries
+pytest -m regression -k ds01_blue_L1          # one entry
+pytest -m regression -k structure             # one tier, all entries
+pytest -m regression --keep-runs              # keep redux/ of passing runs
+```
+
+With the variable unset, every regression test is skipped with the reason `KCWI_REGRESSION_DATA not set` (`pytest -m regression -rs` shows it). The test ids are `<entry>-tier<N>_<name>`, so `-k` matches an entry name or a tier name.
+
+Each entry is reduced once, by running `reduce_kcwi` as a subprocess in a fresh directory, with the plot viewer off, IERS downloads off, and stdin taken from `/dev/null` (levels 0 and 1) or from the answers file (level 3). The runner checks the raw checksums first; a mismatch stops that entry before it runs. Entries run one at a time, and **an entry's `redux/` is deleted after all its required tiers pass**, so the disk holds roughly one reduction at a time. Before starting, the runner checks that the free space is at least 1.5 times the size of the reference `redux/` (5 GB if there is no reference yet) and stops that entry if not. Failed runs are kept. Logs, the prompt record and the per-entry report are always kept.
+
+Time: on the maintainer's Apple M4, a level-1 reduction takes about 3 to 5 minutes (193 to 288 s in S.3, `docs/baseline/README.md`), plus the comparison. The quick profile has four entries (two datasets, two channels), so expect roughly 15 to 25 minutes (an estimate: the comparison time has not been measured yet; record the real figure here after the first full run). Level-3 entries replay the interactive answers and take about the same as level 1. The runner gives up on an entry after 2 hours (`KCWI_REGRESSION_TIMEOUT`, in seconds, changes this).
+
+Where the output goes: `$KCWI_REGRESSION_OUT/<timestamp>/` (default: `kcwi_regression_out/` under the system temporary directory). The path of `report.md` is printed at the end. To run without pytest, with the same checks:
+
+```
+python -m kcwidrp.tests.regression run                      # quick profile
+python -m kcwidrp.tests.regression run --profile full --entry ds01_blue_L1 --keep-runs
+python -m kcwidrp.tests.regression report                   # rewrite report.md of the latest session from results.json
+```
+
+### Reading a report
+
+The session directory holds:
+
+- `report.md`: a summary table (one row per entry, one column per tier) ready to paste into a pull request, and below it the details per entry: run status, wall time, code version, and each tier's findings.
+- `results.json`: the same results in machine-readable form (it is what `bless` and `report` read).
+- `<entry>/`: the run itself: `reduce.out`, `kcwi.cfg`, `prompt_record.jsonl`, the logs, `entry_report.md`, and `redux/` and `plots/` if kept.
+- Difference images (run minus reference, PNG) for the extensions that differ in tier 3; the report gives each file's path.
+
+The table cells are `pass` (equal to the reference), `**FAIL**`, `info` (reported, never fails), `skip` (not applicable, for example no reference yet) and `-` (not run). The tiers, in plain words:
+
+| Tier | What it checks |
+|---|---|
+| 0 checksums | The raw frames and the answers file are the ones in the manifest |
+| 1 completion | The reduction finished: no failed primitive, no unexpected `ERROR` log line, and the prompt record matches the answers file (the number of answers used, no end-of-file; none at all at levels 0 and 1). The process exit status is shown but not checked, since it is always 0 |
+| 2 structure | The same output files, the same HDU names, shapes and dtypes, the same header keywords |
+| 3 pixels | Every pixel equal to the reference (integers, flags and masks always exactly; floats exactly unless the manifest says otherwise). The report gives the largest difference, the fraction of pixels that differ and where |
+| 4 header values | Numeric header values within tolerance, strings equal |
+| 5 metrics | Science metrics (arc line centres and widths, standard-star flux, and so on) against thresholds; none are registered yet, so it passes trivially until the matrix work (M.0) adds them |
+| 6 plots | The same PNG file names and pixel sizes |
+| 7 timings | Wall time per primitive, for information only; never fails |
+
+Start with the first failing tier: tier 1 says the reduction itself broke (read `reduce.out` and the log), tier 2 that files or headers changed, tier 3 that numbers changed (open the difference image: a smooth offset, a few bad pixels and a shifted edge look different).
+
+### Blessing
+
+A bless makes a run the new reference. Rules (section 10): it is never automatic, **only the maintainer runs it** (a model may prepare the command), and it needs a reason from this list, written as `"<reason>: <text>"`:
+
+`initial` (an entry with no reference yet), `environment`, `T.11 viewer-off`, `bokeh port 4.3`, `prompt text PR3a`, `P.5 <bug ID>` (for example `P.5 B2`), `M.2c header`, `M.2e initial`, `M.3`, `M.4`, `M.5`, `matrix default`, `release version`.
+
+The upgrade plan's T.7 bless table says when each applies and to which datasets. Anything else is refused.
+
+```
+python -m kcwidrp.tests.regression bless --entry ds01_blue_L1 \
+    --reason "environment: numpy 1.26.4 -> 2.x changes the last bit of invsens"
+```
+
+It uses the latest session under `$KCWI_REGRESSION_OUT`; `--run <session or run dir>` picks another. It prints the reason, the old and new code versions and the tier summary, then asks you to type `yes`. It refuses, changing nothing, if:
+
+- `--reason` is missing, is not on the list, or has no text after the colon;
+- the run did not complete, or tier 0 or 1 failed (a failed reduction cannot become a reference);
+- the run's `redux/` was deleted because the run passed: run again with `--keep-runs`;
+- the entry was not in that session.
+
+On success it replaces `reference/<entry>/` (redux, plots, procfile, prompt record), writes the new provenance, and appends the date, reason, old and new provenance and diff summary to the entry's `bless_history` in `manifest.json`. Quote the reason and the diff summary in the pull request.
+
+**The "environment" bless.** After the first run on unmodified code, and after any change to the libraries (numpy, scipy, astropy, the IERS tables), differences that the environment explains are blessed with reason `environment`. A difference the environment does not explain is a bug, not a bless.
+
+**Adding a new dataset entry.** Put the dataset under `raw/<dataset>/` (frames, `files_flatlamp_<channel>.txt`, `kcwi.sky`), add its answers file to `answers/` if it has a level-3 entry, run `draft-manifest --output <new file>` and copy the new entries and datasets into `manifest.json` by hand (never `--force` on a manifest that has bless history: it overwrites it), and check the new entries as above. Run the new entry (`-k <entry>`, with `--keep-runs`): with no reference its comparison tiers are skipped and tiers 0 and 1 still run. If tiers 0 and 1 pass, bless it with `--reason "initial: <what the dataset is, which code produced it>"`.
+
+## Writing a primitive test with `run_primitive`
+
+Put a new test in the directory that matches the code (section 2). A primitive `Foo` gets `kcwidrp/tests/unit/primitives/test_run_Foo.py`; a function in `kcwidrp/core/` gets a file under `unit/core/`; an invariant goes under `properties/`. Follow the rules above it: expected values with a `# source:` label (section 5), exact comparison unless a tolerance has a written reason (section 6).
+
+The `run_primitive` fixture runs one primitive without the framework: it builds the real `Action`, the context and the config, calls `Foo(action, context).apply()` in a temporary directory and returns the primitive's output (an `Arguments` object whose `.ccddata` is the frame). `synthetic_ccddata(camera=..., ampmode=..., binning=...)` builds a frame with the header keywords the primitives read. To chain primitives, pass the previous output as the next `ccddata`, as the framework does.
+
+This example runs for real. It chains `TrimOverscan` and `CorrectGain` on a synthetic frame with a known answer, and pins a known bug with a strict xfail:
+
+```python
+import numpy as np
+import pytest
+
+from kcwidrp.primitives.CorrectGain import CorrectGain
+from kcwidrp.primitives.TrimOverscan import TrimOverscan
+from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer
+
+
+def test_correct_gain_doubles_a_flat_trimmed_frame(run_primitive,
+                                                   synthetic_ccddata):
+    ccd = synthetic_ccddata(camera="BLUE", ampmode="ALL")
+    for amp in (1, 2, 3, 4):              # BLUE amplifiers are numbered 1-4
+        ccd.header["GAIN%d" % amp] = 2.0
+    trimmed = run_primitive(TrimOverscan, ccd)            # first primitive
+    trimmed.ccddata.data = np.ones(trimmed.ccddata.data.shape)
+    out = run_primitive(CorrectGain, trimmed)             # chained
+    # source: analytic - every amplifier region is multiplied by its GAINn,
+    # here 2.0 for all four, so a frame of ones becomes a frame of twos.
+    assert np.array_equal(out.ccddata.data,
+                          np.full(trimmed.ccddata.data.shape, 2.0))
+    assert out.ccddata.header["GAINCOR"] is True    # source: CorrectGain docstring
+
+
+@pytest.mark.xfail(strict=True, reason="B20: kcwi_fits_writer raises "
+                   "KeyError for a header without any HISTORY card")
+def test_writer_accepts_header_without_history(synthetic_ccddata, tmp_path):
+    ccd = synthetic_ccddata()
+    del ccd.header["HISTORY"]
+    kcwi_fits_writer(ccd, output_file="x.fits", output_dir=str(tmp_path))
+    assert (tmp_path / "x.fits").exists()      # source: analytic - it should write
+```
+
+Save it as, for example, `kcwidrp/tests/unit/primitives/test_run_CorrectGain_example.py` and run it with `pytest <that file> -rx`: one test passes and one is reported as xfailed. The xfail test asserts the **correct** behaviour; when the bug is fixed the test starts to pass, strict mode turns that into a failure, and the fix removes the marker (section 7).
+
+Notes for real tests:
+
+- **Prompts.** A primitive that calls `input()` (at `plot_level` 3, or an interactive review) needs `answers=[...]`, one string per prompt, in order: `run_primitive(Foo, ccd, config_overrides={"plot_level": 3}, answers=["", "q"])`. The harness fails the test, naming the prompt, if the primitive asks with no answers, asks more often than there are answers, or leaves answers unused. `run_primitive.last.prompts` lists the prompts asked. `config_overrides={"plot_level": 3}` changes the instrument config for that run. See `unit/primitives/test_run_ArcOffsets.py` for a full example.
+- **A missing attribute.** A primitive reads attributes that, in a real reduction, earlier primitives or the pipeline set. If the harness does not provide one, the test fails with a message like
+
+  `run_primitive: Foo read action.args.bar_avg, which the harness does not provide (in a reduction it is set by FindBars); pass it with action_extra={'bar_avg': ...}`
+
+  Pass the value yourself: `action_extra={"bar_avg": 5}` for an `action.args` attribute, `context_extra={"arcs": [...]}` for a `context` attribute. The message names the primitive that sets it in a real reduction (the lists are `ARGS_NOT_PROVIDED` and `CONTEXT_NOT_PROVIDED` in `kcwidrp/tests/harness.py`). Give the attribute a value built from the specification, not copied from a real run's output. If the message says "not in the harness's documented lists", add the attribute to the right list in `harness.py` (and the test in `unit/test_harness.py` will tell you if you forget).
+- **A frame the harness cannot ingest.** If the header lacks a keyword that the ingest helpers need, the harness raises `HarnessIngestError` naming the argument; set the keyword in the header, or pass the argument with `action_extra`.
+- Expected values are computed by hand or by an independent routine, never with the formula the primitive uses (section 8). After writing a test file, break the primitive on purpose once and confirm a test fails (section 8.4), and note the breakage in the pull request.
 
 ## Before opening a pull request
 
+Do all of the following, and put the results in the pull request description (`.github/pull_request_template.md` has a heading for each item; it is a proposal and can be dropped or changed by the maintainer).
+
 1. Run `pytest` and paste its summary line into the pull request description.
-2. If the pull request changes reduction code, run `pytest -m regression` (quick profile; full profile for pull requests that touch plotting or prompt code, and for releases) and paste the report's summary table.
-3. A regression failure is resolved by a fix, or by a bless with a reason from the allowed list (section 10).
+2. If the pull request changes reduction code, run `pytest -m regression` (quick profile; full profile for pull requests that touch plotting or prompt code, and for releases) and paste the report's summary table. If it does not touch reduction code, say "not reduction code" and why.
+3. A regression failure is resolved by a fix, or by a bless with a reason from the allowed list (section 10). Quote each bless in the description: the entry, the reason text and the diff summary. Only the maintainer runs a bless.
+4. If the pull request fixes a known bug, the `xfail` marker of its test is removed in the same commit, and the description names the bug ID. No `xfail` is added without a bug or task ID in its reason, and none is left for a bug that is fixed.
+5. No new `skip` unless a required external resource is missing, and it carries a reason (section 7).
+6. Say who wrote the tests and who wrote the code under test (section 8): a different model, or a fresh session. For each new test file, name the deliberate breakage that made a test fail.
+7. Run `pytest --cov=kcwidrp --cov-report=term-missing` and paste the lines for the modules the pull request touches. They must not fall below the minimum in section 11, once the maintainer has set it.
+8. Check `git status`: no stray files from the tests (`.hypothesis/`, `__pycache__` changes outside what is tracked, files in the repository root).
