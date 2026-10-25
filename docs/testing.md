@@ -222,6 +222,8 @@ answers/                     level-3 answer files, answers_<dataset>_<channel>_3
 regions_<channel>.json       sky regions and standard-star aperture (added later, by the matrix work)
 ```
 
+Other files and directories in the data directory (for example an archive of the S.3 screenshots and logs) are ignored by the suite.
+
 `<dataset>` is the S.3 dataset name (for example `ds01_F22491_pt2_60266`). `<entry>` is `<short name>_<channel>_L<plot level>` (for example `ds01_blue_L1`). `raw/<dataset>` and `reference/<entry>` may be symlinks. To save disk, use symlinks for the raw frames and APFS clones for the references (`cp -c -R`, macOS): a clone shares the data blocks with the original and costs no space until a copy is changed.
 
 Two rules for the path:
@@ -283,7 +285,7 @@ The draft is a starting point. The maintainer reads every entry in `manifest.jso
 
 ### Running
 
-Set the variable in the shell where you run pytest:
+Run everything below with the test environment active (`conda activate kcwidrp`, or `source .venv/bin/activate`), so that `pytest` and `python` are the environment's; `python -m pytest` works too. Set the variable in the shell where you run pytest:
 
 ```
 export KCWI_REGRESSION_DATA=~/drp/kcwi/regression_data
@@ -300,7 +302,7 @@ Each entry is reduced once, by running `reduce_kcwi` as a subprocess in a fresh 
 
 Time: on the maintainer's Apple M4, a level-1 reduction takes about 3 to 5 minutes (193 to 288 s in S.3, `docs/baseline/README.md`), plus the comparison. The quick profile has four entries (two datasets, two channels), and took 12 minutes in the first run (2026-10-24: 132 to 172 s of reduction per entry, the rest comparison). The full-profile time is to be recorded here after its first run. Level-3 entries replay the interactive answers and take about the same as level 1. The runner gives up on an entry after 2 hours (`KCWI_REGRESSION_TIMEOUT`, in seconds, changes this).
 
-Where the output goes: `$KCWI_REGRESSION_OUT/<timestamp>/` (default: `kcwi_regression_out/` under the system temporary directory). The path of `report.md` is printed at the end. To run without pytest, with the same checks:
+Where the output goes: `$KCWI_REGRESSION_OUT/<timestamp>/` (default: `kcwi_regression_out/` under the system temporary directory). The directory is created if missing, and each run adds a new timestamped session directory; nothing is removed automatically, so delete old sessions yourself. A quick-profile session in which everything passed takes about 11 MB (the reductions' `redux/` directories are deleted); a failing entry keeps its `redux/` (about 2.5–3.5 GB per entry). The path of `report.md` is printed at the end. The run prints a few `SyntaxWarning`s from pipeline docstrings; they are expected. To run without pytest, with the same checks:
 
 ```
 python -m kcwidrp.tests.regression run                      # quick profile
@@ -314,7 +316,7 @@ The session directory holds:
 
 - `report.md`: a summary table (one row per entry, one column per tier) ready to paste into a pull request, and below it the details per entry: run status, wall time, code version, and each tier's findings.
 - `results.json`: the same results in machine-readable form (it is what `bless` and `report` read).
-- `<entry>/`: the run itself: `reduce.out`, `kcwi.cfg`, `prompt_record.jsonl`, the logs, `entry_report.md`, and `redux/` and `plots/` if kept.
+- `<entry>/`: the run itself: `reduce.out`, `kcwi.cfg`, `files.txt`, the procfile, `logs/`, `plots/`, `entry_report.md`, `prompt_record.jsonl` (only when the reduction asked any prompts, i.e. level 3), and `redux/` only if it was kept (a failing entry, or `--keep-runs`). `plots/` is always kept.
 - Difference images (run minus reference, PNG) for the extensions that differ in tier 3; the report gives each file's path.
 
 The table cells are `pass` (equal to the reference), `**FAIL**`, `info` (reported, never fails), `skip` (not applicable, for example no reference yet) and `-` (not run). The tiers, in plain words:
