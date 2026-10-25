@@ -228,3 +228,33 @@ def test_wav_axis_first_pixel_is_crval_when_crpix_is_one():
     axis = WC.get_wav_axis(_stub(), _hdr5())
     np.testing.assert_allclose(axis, 4000.0 + 1.5 * np.arange(5), rtol=0,
                                atol=1e-9)
+
+
+# ------------------------------------------------------------------- T.8
+# Added by T.8 (suite quality check) in a fresh session, after a deliberate
+# change of one digit of a refractivity coefficient (57.362 -> 57.326) went
+# unnoticed: the line test above is good to 0.01 A and the property test to
+# 0.1 % of (n - 1) (about 0.0014 A), and that change moves the result by
+# 1e-4 A (6 m/s).  That is far below what matters for KCWI, but a changed
+# digit should not pass: this test pins the coefficients to the published
+# formula itself.
+def _ciddor_n_minus_1(sigma2):
+    # source: published - Ciddor (1996), Appl. Opt. 35, 1566, eq. (1), the
+    # dispersion of standard air (15 C, 101325 Pa, 450 ppm CO2), with the
+    # constants as printed there: k0 = 238.0185, k1 = 5792105, k2 = 57.362,
+    # k3 = 167917 (in units of 1e-8), sigma = 1 / wavelength in um^-1
+    return 1e-8 * (5792105.0 / (238.0185 - sigma2)
+                   + 167917.0 / (57.362 - sigma2))
+
+
+def test_conversion_matches_ciddor_formula_to_1e5_angstrom():
+    air = np.array([3200.0, 3726.032, 4000.0, 5006.843, 6562.80, 8000.0,
+                    10000.0, 11000.0])
+    got = WC.a2v_conversion(_stub(), air * u.AA).to_value(u.AA)
+    # the conversion applies n to the *air* wavelength (docstring: adapted
+    # from PypeIt, Ciddor 1996): vacuum = air * n(sigma = 1e4 / air)
+    expected = air * (1.0 + _ciddor_n_minus_1((1e4 / air) ** 2))
+    # Tolerance: 1e-5 A.  The code carries 1.67918e-3 where Ciddor prints
+    # 1.67917e-3 (1e-8 in the numerator, <= 2e-6 A at 11000 A); a changed
+    # digit of any coefficient moves the result by >= 1e-4 A.
+    np.testing.assert_allclose(got, expected, rtol=0, atol=1e-5)

@@ -254,3 +254,84 @@ def test_shipped_line_mask_file_is_used(run_primitive, synthetic_ccddata,
     run(run_primitive, synthetic_ccddata, 0, std="bd02d3375")
     assert any("Using line mask file" in r.getMessage()
                for r in caplog.records)
+
+
+# ------------------------------------------------- physical scale (T.8)
+# Added by T.8 (suite quality check) in a fresh session, after a deliberate
+# breakage of the photon-energy constant in MakeInvsens went unnoticed: the
+# prompt tests above never look at the numbers in the output files.
+#
+# Specification (class docstring, units of the output files): the standard's
+# reference spectrum F(lambda) (erg / s / cm^2 / A, data/stds) is divided by
+# the observed spectrum in e- / s (summed over the star, per bin of dw A) to
+# give the inverse sensitivity (row 0 of ``*_invsens.fits``, in erg / s /
+# cm^2 / A per e- / s per bin); the effective area (row 0 of ``*_ea.fits``,
+# cm^2 / A) is the observed rate divided by the photon rate the star delivers
+# per cm^2: F * lambda / (h c) * dw photons / s / cm^2.  The Keck telescope
+# area is 760000 cm^2, so a system of throughput eta observes
+#     counts / s = eta * 760000 * F * lambda / (h c) * dw
+# and the effective area must come out as eta * 760000.
+AREA_KECK = 760000.0                    # cm^2 (plan/primitive: Keck)
+
+
+def throughput_cube(synthetic_ccddata, eta, expt=100.0):
+    from astropy import constants as const
+    from astropy import units as u
+    from kcwidrp.core.kcwi_pkg_resources import get_resource_path
+    frame = synthetic_ccddata(
+        IMTYPE="OBJECT", OBJECT=STD, TARGNAME=STD, DARCOR=True,
+        XPOSURE=expt, CRVAL3=WALL[0], CD3_3=1.0, CRPIX3=1.0,
+        WAVGOOD0=WGOOD[0], WAVGOOD1=WGOOD[1], WAVALL0=WALL[0],
+        WAVALL1=WALL[1], DARPADY=2, SKYCOR=True, AIRMASS=0.0, DICHFRAC=1.0,
+        BGRATNAM="BL")
+    w = WALL[0] + np.arange(NW)
+    with fits.open(get_resource_path("kcwidrp", "data/stds/%s.fits" % STD)
+                   ) as hdul:
+        swl = hdul[1].data["WAVELENGTH"]
+        sflx = hdul[1].data["FLUX"]
+    flux = np.interp(w, swl, sflx)
+    # source: independent - astropy.constants (CODATA) for h c
+    hc = (const.h * const.c).to(u.erg * u.AA).value
+    rate = eta * AREA_KECK * flux * w / hc * 1.0       # dw = 1 A
+    cube = np.zeros((NW, NY, NSL))
+    cube[:, 10, 2] = rate * expt
+    return KCCDData(cube, meta=frame.header, unit="electron",
+                    uncertainty=np.sqrt(cube + 1.0)), w, flux, rate, hc
+
+
+def test_effective_area_is_throughput_times_telescope_area(
+        run_primitive, synthetic_ccddata, tmp_redux):
+    eta = 0.30
+    ccd, w, flux, rate, hc = throughput_cube(synthetic_ccddata, eta)
+    run_primitive(MakeInvsens, ccd, config_overrides={"plot_level": 0})
+    with fits.open(tmp_redux.redux / "kb260101_00001_ea.fits") as hdul:
+        fearea = hdul[0].data[1].copy()
+        earea = hdul[0].data[0].copy()
+    good = (w > 4100.0) & (w < 4500.0)
+    # source: analytic - see the block comment above: eta * 760000 cm^2
+    # Tolerance: 1 %.  The star's spectrum is built with a linear
+    # interpolation of the reference table and the primitive uses a cubic
+    # one (largest difference measured: 6e-4 of the value, plus float32
+    # storage); the fitted row is smoother still (5e-6).  1 % is 17 times the
+    # spread and far below the factor-10 error of a wrong photon constant.
+    np.testing.assert_allclose(earea[good], eta * AREA_KECK, rtol=0.01)
+    np.testing.assert_allclose(fearea[good], eta * AREA_KECK, rtol=0.01)
+
+
+def test_invsens_is_reference_flux_over_observed_rate(
+        run_primitive, synthetic_ccddata, tmp_redux):
+    ccd, w, flux, rate, hc = throughput_cube(synthetic_ccddata, 0.30)
+    run_primitive(MakeInvsens, ccd, config_overrides={"plot_level": 0})
+    with fits.open(tmp_redux.redux / "kb260101_00001_invsens.fits") as hdul:
+        invsens = hdul[0].data[0].copy()
+        fitted = hdul[0].data[1].copy()
+        observed = hdul[0].data[2].copy()
+    good = (w > 4100.0) & (w < 4500.0)
+    # source: analytic - observed spectrum in e-/s per bin is the rate put
+    # into the cube; the inverse sensitivity is F / observed.  Tolerance as
+    # above (1 %).
+    np.testing.assert_allclose(observed[good], rate[good], rtol=1e-6)
+    np.testing.assert_allclose(invsens[good], flux[good] / rate[good],
+                               rtol=0.01)
+    np.testing.assert_allclose(fitted[good], flux[good] / rate[good],
+                               rtol=0.01)

@@ -24,6 +24,7 @@ equal to the current one, negative, or >= the number of bars silently ends
 the review).
 """
 import re
+import sys
 
 import numpy as np
 import pytest
@@ -119,3 +120,39 @@ def test_out_of_range_bar_number_is_asked_again(run_primitive,
     run(run_primitive, synthetic_ccddata, 2,
         ["", "2", "", bad, "4", "", "q"] + [""] * 7)
     assert shown[0] == 0 and shown[-1] == 4
+
+
+# ------------------------------------------------ outlier rejection (T.8)
+# Added by T.8 (suite quality check) in a fresh session, after a deliberate
+# breakage (the iterative rejection of badly fitting lines switched off) went
+# unnoticed: the tests above only use lines that all fit.
+#
+# Specification (code comments/docstring: "iteratively remove outliers"):
+# lines whose residual from the polynomial wavelength fit is large compared
+# with the scatter of the others are removed and the fit is repeated, so one
+# atlas line that was matched to the wrong arc feature must not distort the
+# solution and must not be counted among the lines used (``av_bar_nls``).
+def test_misidentified_line_is_rejected_and_does_not_bias_the_solution(
+        run_primitive, synthetic_ccddata, shown, monkeypatch):
+    nlines = 16
+    lines = list(np.linspace(4470.0, 4730.0, nlines))
+    monkeypatch.setattr(sys.modules[__name__], "LINES", lines)
+    args, ctx = chain_state()
+    # source: analytic - the arc feature of line 8 is at its true place but
+    # the atlas wavelength given for it is 1.5 A too long: a 1.5 px error,
+    # more than 100 times the scatter of the good lines
+    args["at_wave"][nlines // 2] += 1.5
+    out = run_primitive(
+        SolveArcs, synthetic_ccddata(IMTYPE="MARC"),
+        config_overrides={"plot_level": 0, "NBARS": NBARS, "REFBAR": 0},
+        context_extra=ctx, action_extra=args)
+    # source: analytic - exactly the one wrong line is dropped, in every bar
+    assert out.av_bar_nls == nlines - 1
+    # Tolerance: 0.03 A, for Gaussian centroids on 1.5 px lines extrapolated
+    # to the ends of the 300 px bar.  Checked in T.8: with the outlier
+    # rejected the solution is within it everywhere; with rejection disabled
+    # (breakage 15b) the outlier pulls the solution outside it.
+    x = np.arange(NPIX)
+    for coeffs in out.fincoeff:
+        np.testing.assert_allclose(np.polyval(coeffs, x), W0 + DISP * x,
+                                   rtol=0, atol=0.03)
