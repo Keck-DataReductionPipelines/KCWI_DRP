@@ -61,7 +61,7 @@ reduce_kcwi $FLAG -c kcwi.cfg -l files.txt -g < ../L3/answers_${DS}_${CH}_3.txt 
 
 `FLAG` is `-b` or `-r`. Every `kcwi.cfg` differs from the shipped default only in `plot_level` (checked). The Bokeh server was running (`enable_bokeh = True`).
 
-The level-3 answer files are in this directory (`<dataset>/answers_<dataset>_<channel>_3.txt`: 940, 845, 365 and 322 lines). Screenshots of the live-only plots are in each `L3/screenshots/` (60, 13, 9 and 4 files for ds01 blue, ds01 red, ds03 blue, ds03 red).
+The level-3 answer files are in this directory (`<dataset>/answers_<dataset>_<channel>_3.txt`: 939, 844, 364 and 321 lines). As captured by `tee`, each had one more line: a blank line typed after the reduction had finished (while `tee` was still reading the terminal), which no prompt ever read. The first full regression run found it (2026-10-24: each L3 run recorded one prompt fewer than the file had lines, every recorded answer matching its line), and the line was removed from these files and from the regression data directory's copies, with the manifest checksums updated. The originals are still in each `~/drp/kcwi/s3/<dataset>/<channel>/L3/`. When capturing answers, end `tee` with Ctrl-D without pressing Enter first, or check the line count against the prompt record afterwards. Screenshots of the live-only plots are in each `L3/screenshots/` (60, 13, 9 and 4 files for ds01 blue, ds01 red, ds03 blue, ds03 red).
 
 ### Code used
 
