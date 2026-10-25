@@ -1,6 +1,6 @@
 # KCWI DRP upgrade: master implementation plan
 
-Date: 2026-10-22, revised the same day after review (decisions D10–D19). Status: **approved by the maintainer 2026-10-22 (D22); in progress.** Done so far: S.1, S.2, S.4 (except Q10b), S.5, T.0–T.6, T.10, T.11, and the hotfixes for B26/B27 (D21) and B1/B1b (D23). S.3 is done (ds01 and ds03). T.7 is built (first real run pending); T.9 is written (regression half of its check pending).
+Date: 2026-10-22, revised the same day after review (decisions D10–D19). Status: **approved by the maintainer 2026-10-22 (D22); in progress.** Done so far: S.1, S.2, S.4 (except Q10b), S.5, T.0–T.6, T.10, T.11, and the hotfixes for B26/B27 (D21) and B1/B1b (D23). S.3 is done (ds01 and ds03). T.7 is done (quick and full profiles pass on unmodified code); T.9 is written (regression half of its check pending).
 Plan documents live on branch `drp_upgrade_plan`. Code facts in this plan (counts, line numbers, bug locations) were verified at `dfbcf9d` (`master` `12fd4aa` plus planning documents only). Upstream has since released `v1.3.2` (`9be28f5`, PR #218), which differs from `12fd4aa` only in `kcwidrp/core/kcwi_plotting.py`, so primitive line numbers and counts still hold at `v1.3.2`. The work starts from `v1.3.2` (D10).
 
 This document coordinates three upgrades, and the test overhaul that protects them, into one sequence of tasks, pull requests and human checkpoints:
@@ -532,6 +532,8 @@ Depends on: T.1.
 Validation: each of these breakages makes a test fail: a misspelled key reference (`config.instrument.plot_levl`); a duplicated event key; an event pointing to a primitive that does not exist; a "next event" that does not exist; `plot_level = "1"` (string) in a config.
 
 ### T.7 Manual regression suite — Opus 5.5 (medium) for design, Sonnet 5.5 (medium) to build
+
+Status: **done, 2026-10-24.** Built and committed (`3dc6e78`); data directory assembled by the maintainer at `~/drp/kcwi/regression_data` (raw data symlinked, references cloned from the S.3 run directories). First real runs on unmodified code: quick profile 12 min, full profile 36 min, on the maintainer's M4. **No environment drift**: with the viewer off, `plot_pause = 0` and IERS downloads disabled, every entry matches its S.3 reference, so no `environment` bless was needed. The first runs found two problems, both fixed: the geometry pickle stores input file paths, so tier 3 now compares `*.pkl` by content with the header path rule (`a9671bf`); and each level-3 answers file had one unread trailing blank line from the `tee` capture, now removed (`531376c`). The four L3 entries were then blessed with reason `initial: add prompt record to the S.3 reference`, so later runs also compare prompt text.
 
 Depends on: T.1, T.11, S.3. Design (Opus): the runner, the comparison rules and the bless workflow. Build (Sonnet): the report and command-line tooling. The comparison rules are what decide whether every later PR "changed nothing", so they need Opus.
 
