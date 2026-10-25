@@ -122,7 +122,14 @@ Defined in task T.7 of the upgrade plan. The rules that matter for reviewers:
 
 ## 11. Coverage
 
-Coverage is measured (`pytest --cov=kcwidrp`) and reported in PR0 against the baseline. Minimum line coverage per module for `kcwidrp/core/` and `kcwidrp/primitives/kcwi_file_primitives.py` is set by the maintainer after T.8 (proposed: 70 %) and written here. *(T.8)*
+Coverage is measured (`pytest --cov=kcwidrp`) and reported in PR0 against the baseline (`docs/baseline/coverage_upgrade_start.txt`, then `docs/baseline/coverage_t8.txt`).
+
+**Minimum (set by the maintainer after T.8, 2026-10-24): 70 % line coverage per module** for every module in `kcwidrp/core/` and for `kcwidrp/primitives/kcwi_file_primitives.py`. A pull request may not take one of these modules below 70 %, and a new module there starts at 70 % or more. Exempt:
+
+- `kcwidrp/core/bspline/` (vendored third-party code);
+- `kcwidrp/core/kcwi_plotting.py` and `kcwidrp/core/bokeh_plotting.py`, until the Bokeh port (PR1) replaces them; the new plotting modules then follow the rule.
+
+Other modules have no minimum; their coverage is reported, and a pull request should not lower it without saying why.
 
 ## Installing the test dependencies
 
@@ -415,5 +422,5 @@ Do all of the following, and put the results in the pull request description (`.
 4. If the pull request fixes a known bug, the `xfail` marker of its test is removed in the same commit, and the description names the bug ID. No `xfail` is added without a bug or task ID in its reason, and none is left for a bug that is fixed.
 5. No new `skip` unless a required external resource is missing, and it carries a reason (section 7).
 6. Say who wrote the tests and who wrote the code under test (section 8): a different model, or a fresh session. For each new test file, name the deliberate breakage that made a test fail.
-7. Run `pytest --cov=kcwidrp --cov-report=term-missing` and paste the lines for the modules the pull request touches. They must not fall below the minimum in section 11, once the maintainer has set it.
+7. Run `pytest --cov=kcwidrp --cov-report=term-missing` and paste the lines for the modules the pull request touches. They must not fall below the minimum in section 11 (70 % per module for `core/` and `kcwi_file_primitives.py`, with the exemptions listed there).
 8. Check `git status`: no stray files from the tests (`.hypothesis/`, `__pycache__` changes outside what is tracked, files in the repository root).
