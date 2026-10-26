@@ -172,7 +172,15 @@ def _fmt_stats(s):
                if s["n_nan_mismatch"] else ""))
 
 
+def _is_int(v):
+    return isinstance(v, int) and not isinstance(v, bool)
+
+
 def numbers_agree(va, vb, rtol, atol):
+    """Header values: two integers (or bools, strings, ...) exactly; the
+    tolerance applies only when at least one value is a float."""
+    if _is_int(va) and _is_int(vb):
+        return va == vb
     if isinstance(va, float) and isinstance(vb, float):
         if math.isnan(va) and math.isnan(vb):
             return True
