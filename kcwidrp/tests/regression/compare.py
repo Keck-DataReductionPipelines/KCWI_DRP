@@ -6,7 +6,12 @@ tier 5 science metrics and tier 7 timings are here with tiers 2-4 and 6.
 Rules (docs/testing.md sections 6 and 10):
 
 * header cards whose keyword starts with HISTORY, COMMENT, CHECKSUM or
-  DATASUM are ignored, as are string values containing a path separator.
+  DATASUM are ignored;
+* a string value that is a file path (``_is_path``: absolute, or ending in
+  a file extension the DRP writes) only has to agree in its file name, so
+  the same input read from another directory is not a change; every other
+  string (e.g. ``BUNIT = '1e+16 erg / (Angstrom s cm2)'``, ``OBJECT =
+  'DOME/Dark/32.5 sec.'``) is compared exactly.
   DATE* cards are compared: in KCWI DRP outputs they are all observation
   times copied from the raw header (DATE, DATE-OBS, DATE-BEG, DATEREND, ...);
   the DRP writes no write-time date (checked on the S.3 outputs);
@@ -207,9 +212,11 @@ def compare_fits_pair(run_path, ref_path, relname, tolerances, out,
                                       sorted(kb - ka)[:8]))
             for k in sorted(ka & kb):
                 va, vb = a.header[k], b.header[k]
-                if isinstance(va, str) and isinstance(vb, str) and (
-                        "/" in va or "\\" in va or "/" in vb or "\\" in vb):
-                    continue          # file paths differ between run dirs
+                if _is_path(va) and _is_path(vb):
+                    if not _same_file_name(va, vb):
+                        out.headers.append("%s: %s = %r, reference %r" % (
+                            where, k, va, vb))
+                    continue          # same file read from another directory
                 if not numbers_agree(va, vb, rtol, atol):
                     out.headers.append("%s: %s = %r, reference %r" % (
                         where, k, va, vb))
@@ -321,8 +328,24 @@ class OutputComparison:
         self.n_plots = 0
 
 
+PATH_SUFFIXES = (".fits", ".fit", ".txt", ".dat", ".pkl", ".proc", ".cfg")
+
+
 def _is_path(value):
-    return isinstance(value, str) and ("/" in value or "\\" in value)
+    """True for a string that is a file path: absolute, or ending in one of
+    the file extensions the DRP writes. A slash alone does not make a path
+    (units such as ``erg / (Angstrom s cm2)``, object names such as
+    ``DOME/Dark/32.5 sec.``)."""
+    if not isinstance(value, str):
+        return False
+    v = value.strip()
+    return (v.startswith("/") or v.lower().endswith(PATH_SUFFIXES)
+            or re.match(r"^[A-Za-z]:\\", v) is not None)
+
+
+def _same_file_name(va, vb):
+    return os.path.basename(va.strip().replace("\\", "/")) == \
+        os.path.basename(vb.strip().replace("\\", "/"))
 
 
 def diff_objects(a, b, where="", limit=20):
@@ -365,7 +388,7 @@ def diff_objects(a, b, where="", limit=20):
                 found.append("%s: %d array values differ"
                              % (path, int(np.count_nonzero(x != y))))
         elif _is_path(x) and _is_path(y):
-            if os.path.basename(x) != os.path.basename(y):
+            if not _same_file_name(x, y):
                 found.append("%s: %r, reference %r" % (path, x, y))
         elif hasattr(x, "__dict__") and not isinstance(x, type):
             walk(vars(x), vars(y), path)
