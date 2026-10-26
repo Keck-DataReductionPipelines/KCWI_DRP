@@ -5,6 +5,8 @@ unmodified run equals its reference except for the header content that tier
 2/4 must ignore (HISTORY, a path string).
 """
 import shutil
+import subprocess
+import sys
 
 import numpy as np
 import pytest
@@ -200,9 +202,15 @@ def entry_l1(world):
     return mf.get_entry(world.mfst, "ds9_blue_L1")
 
 
-def test_tier1_passes_on_clean_run_with_benign_errors(world, run_copy):
-    # the fake log carries the two documented benign ERROR lines
-    r = compare.tier1_result(run_copy, entry_l1(world))
+def test_tier1_passes_on_clean_run_with_benign_errors(world, tmp_path):
+    # a red run: the fake log carries the two documented benign ERROR lines,
+    # which are allowed for red only (blue runs do not write them any more)
+    run = tmp_path / "redrun"
+    run.mkdir()
+    subprocess.run([sys.executable, str(world.script), "-r"], cwd=str(run),
+                   check=True, stdin=subprocess.DEVNULL)
+    assert "No reference geometry" in (run / "logs" / "KCWI.log").read_text()
+    r = compare.tier1_result(run, dict(entry_l1(world), channel="red"))
     assert r.status == "pass", r.details
 
 

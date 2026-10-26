@@ -43,12 +43,20 @@ TIER_NAMES = {
     4: "header_values", 5: "metrics", 6: "plots", 7: "timings",
 }
 
-# Benign ERROR lines (docs/baseline/README.md): the red channel has no defect
-# list for L2U2L1U1 at 2x2 and solves its geometry from the first of three arcs.
-ALLOWED_ERRORS = [
-    r"CorrectDefects\.py: Defect list not found for .*defect_L2U2L1U1_2x2\.dat",
-    r"MakeCube\.py: No reference geometry, cannot make cube!",
-]
+# Benign ERROR lines (docs/baseline/README.md), each allowed only for the
+# channel that produces it: the red channel has no defect list for L2U2L1U1
+# at 2x2 (B35), and its arcs before the last of a group reach MakeCube before
+# the master arc exists (B34). Elsewhere these lines are failures. Tier 1 also
+# checks that every object frame and master arc has its cube, so an allowed
+# line cannot hide a missing cube.
+ALLOWED_ERRORS = {
+    "red": [
+        r"CorrectDefects\.py: Defect list not found for "
+        r".*defect_L2U2L1U1_2x2\.dat",
+        r"MakeCube\.py: No reference geometry, cannot make cube!",
+    ],
+}
+PROCFILES = {"blue": "kcwib.proc", "red": "kcwir.proc"}
 FAILURE_PATTERNS = ("Failed executing primitive", "while invoking")
 
 
@@ -553,11 +561,14 @@ def read_prompt_record(path):
     return out
 
 
-def scan_logs(run_dir):
-    """(failure lines, other ERROR lines, number of log files)."""
+def scan_logs(run_dir, channel=None):
+    """(failure lines, other ERROR lines, number of log files).
+
+    ERROR lines in ``ALLOWED_ERRORS[channel]`` are not reported.
+    """
     failures, errors, nlogs = [], [], 0
     log_dir = Path(run_dir) / "logs"
-    allowed = [re.compile(p) for p in ALLOWED_ERRORS]
+    allowed = [re.compile(p) for p in ALLOWED_ERRORS.get(channel, [])]
     for log in sorted(log_dir.glob("*.log")) if log_dir.is_dir() else []:
         nlogs += 1
         with open(log, errors="replace") as f:
@@ -569,6 +580,38 @@ def scan_logs(run_dir):
                         r.search(line) for r in allowed):
                     errors.append("%s: %s" % (log.name, line[:300]))
     return failures, errors, nlogs
+
+
+def missing_cubes(run_dir, channel, data=None):
+    """Object frames and master arcs in the run's proctab without a cube.
+
+    Every frame the run's own proctab lists as ``OBJECT`` (science, standard
+    and sky frames) and every ``MARC`` must have ``redux/<frame>_icube.fits``.
+    This holds with or without a reference, so it also protects an initial
+    bless.
+    """
+    run_dir = Path(run_dir)
+    proc = run_dir / PROCFILES.get(channel, "")
+    if not channel or not proc.is_file():
+        return ["no proctab %s: cannot check that every object frame has a "
+                "cube" % proc.name]
+    try:
+        tab = read_proc(proc)
+    except Exception as exc:
+        return ["proctab %s could not be read: %r" % (proc.name, exc)]
+    want = [os.path.basename(str(r["filename"]))
+            for r in tab if str(r["TYPE"]).strip() in ("OBJECT", "MARC")]
+    missing = []
+    for name in want:
+        stem = name[:-len(".fits")] if name.endswith(".fits") else name
+        if not (run_dir / "redux" / (stem + "_icube.fits")).is_file():
+            missing.append(name)
+    if data is not None:
+        data["cubes_expected"] = len(want)
+    if not want:
+        return ["the proctab lists no object frame or master arc"]
+    return ["no cube for %s (%s_icube.fits missing)" % (
+        n, n[:-len(".fits")] if n.endswith(".fits") else n) for n in missing]
 
 
 def failing_primitive(line):
@@ -589,7 +632,7 @@ def tier1_result(run_dir, entry, answers_path=None, ref_dir=None,
                             run_result.reason)
     if not (run_dir / "redux").is_dir():
         problems.append("no redux/ directory: the reduction produced nothing")
-    failures, errors, nlogs = scan_logs(run_dir)
+    failures, errors, nlogs = scan_logs(run_dir, entry.get("channel"))
     if not nlogs:
         problems.append("no logs/*.log: the reduction did not start")
     for line in failures:
@@ -600,6 +643,7 @@ def tier1_result(run_dir, entry, answers_path=None, ref_dir=None,
         {p for p in map(failing_primitive, failures) if p})
     for line in errors:
         problems.append("unexpected ERROR line: %s" % line)
+    problems.extend(missing_cubes(run_dir, entry.get("channel"), data))
 
     record = read_prompt_record(run_dir / "prompt_record.jsonl")
     data["n_prompts"] = len(record)

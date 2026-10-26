@@ -25,7 +25,12 @@ from astropy.io import fits
 args = sys.argv[1:]
 n_inputs = int(args[args.index("--inputs") + 1]) if "--inputs" in args else 0
 fail = "--fail" in args
-proc = "kcwir.proc" if "-r" in args else "kcwib.proc"
+red = "-r" in args
+# The two benign ERROR lines appear in real red reductions only; on blue
+# they are failures. --benign-errors writes them anyway (for tests).
+benign = red or "--benign-errors" in args
+drop_cube = "--drop-cube" in args          # leave out the object's cube
+proc = "kcwir.proc" if red else "kcwib.proc"
 for d in ("redux", "plots", "logs"):
     os.makedirs(d, exist_ok=True)
 rng = np.random.default_rng(7)
@@ -61,10 +66,18 @@ p2 = fits.PrimaryHDU(rng.normal(size=(6, 6)))
 p2.header["EXPTIME"] = 12.0
 p2.writeto("redux/ds_int.fits", overwrite=True)
 open("redux/ds_atlines.txt", "w").write("line list\n")
-open(proc, "w").write(
-    "| FRAMENO | TYPE | filename |\n"
-    "|       1 | BIAS | %s/lev0/KB.1.fits |\n"
-    "|       2 | ARCLAMP | %s/lev0/KB.2.fits |\n" % (os.getcwd(), os.getcwd()))
+# As in a real run: every OBJECT frame and every master arc (MARC) listed in
+# the proctab has redux/<frame>_icube.fits.
+cube = fits.PrimaryHDU(np.ones((2, 3, 4), "f4"))
+cube.writeto("redux/KB.2_icube.fits", overwrite=True)
+if not drop_cube:
+    cube.writeto("redux/KB.3_icube.fits", overwrite=True)
+from astropy.table import Table
+Table({"FRAMENO": [1, 2, 2, 3],
+       "TYPE": ["BIAS", "ARCLAMP", "MARC", "OBJECT"],
+       "filename": [os.getcwd() + "/lev0/KB.%d.fits" % i
+                    for i in (1, 2, 2, 3)]}).write(
+    proc, format="ascii.fixed_width", overwrite=True)  # as the DRP writes it
 png("plots/p1.png", 8, 6)
 png("plots/p2.png", 9, 7)
 with open("logs/DRPF.log", "w") as f:
@@ -77,10 +90,11 @@ with open("logs/DRPF.log", "w") as f:
                 "while invoking MakeCube\n")
 with open("logs/KCWI.log", "w") as f:
     f.write("2026-01-01 10:00:01:KCWI:INFO: started\n")
-    f.write("2026-01-01 10:00:02:KCWI:ERROR:CorrectDefects.py: Defect list not"
-            " found for /x/data/defect_L2U2L1U1_2x2.dat\n")
-    f.write("2026-01-01 10:00:03:KCWI:ERROR:MakeCube.py: No reference "
-            "geometry, cannot make cube!\n")
+    if benign:
+        f.write("2026-01-01 10:00:02:KCWI:ERROR:CorrectDefects.py: Defect list"
+                " not found for /x/data/defect_L2U2L1U1_2x2.dat\n")
+        f.write("2026-01-01 10:00:03:KCWI:ERROR:MakeCube.py: No reference "
+                "geometry, cannot make cube!\n")
     if fail:
         f.write("2026-01-01 10:00:15:KCWI:ERROR:Failed executing primitive "
                 "MakeCube: boom\n")
