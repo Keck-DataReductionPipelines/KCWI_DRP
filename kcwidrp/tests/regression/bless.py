@@ -11,6 +11,7 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+from . import compare
 from . import manifest as mf
 from . import runner
 from .report import SessionResults
@@ -100,10 +101,26 @@ def check_blessable(results, entry_id, run_dir, procfile):
     if rec["run"]["status"] != "ok":
         raise BlessError("the run of %s did not complete (status %s)" % (
             entry_id, rec["run"]["status"]))
+    # Tiers 0 (checksums) and 1 (completion) must have run and passed in this
+    # session: a tier that was deselected (-k) or made informational is not
+    # evidence that the reduction completed.
     for tier in (0, 1):
-        if results.tier_status(entry_id, tier) == "fail":
-            raise BlessError("tier %d failed for %s; a failed reduction "
-                             "cannot become a reference" % (tier, entry_id))
+        status = results.tier_status(entry_id, tier)
+        if status == "pass":
+            continue
+        if status is None:
+            raise BlessError(
+                "tier %d (%s) did not run for %s in this session (deselected "
+                "with -k?); rerun the entry with all tiers before blessing"
+                % (tier, compare.TIER_NAMES[tier], entry_id))
+        if status == "fail":
+            raise BlessError("tier %d failed for %s (%s); a failed reduction "
+                             "cannot become a reference"
+                             % (tier, entry_id, compare.TIER_NAMES[tier]))
+        raise BlessError(
+            "tier %d (%s) is %r for %s, not 'pass'; only a run whose checksums "
+            "and completion checks passed can become a reference"
+            % (tier, compare.TIER_NAMES[tier], status, entry_id))
     redux = run_dir / "redux"
     if rec.get("outputs_deleted") or not redux.is_dir() or not any(
             redux.iterdir()):
