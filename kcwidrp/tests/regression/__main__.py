@@ -28,6 +28,15 @@ def cmd_draft(args):
               file=sys.stderr)
         return 2
     manifest, notes = mf.draft_manifest(data_dir)
+    errors = mf.validate_manifest(manifest)
+    if errors:
+        print("The draft is not a valid manifest; nothing written:",
+              file=sys.stderr)
+        for e in errors:
+            print("  - " + e, file=sys.stderr)
+        for n in notes:
+            print("  note: " + n, file=sys.stderr)
+        return 2
     out_path.parent.mkdir(parents=True, exist_ok=True)
     tmp = out_path.with_suffix(".json.tmp")
     import json

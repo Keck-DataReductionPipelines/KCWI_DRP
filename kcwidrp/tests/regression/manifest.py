@@ -271,10 +271,13 @@ def draft_manifest(data_dir):
     for ds_path in sorted(p for p in raw.iterdir() if p.is_dir()):
         ds_id = ds_path.name
         files = {}
+        ds_entries = []           # added only if the dataset is kept
+        n_lists = 0
         for channel in CHANNELS:
             lst = ds_path / ("files_flatlamp_%s.txt" % channel)
             if not lst.is_file():
                 continue
+            n_lists += 1
             rels = read_file_list(lst)
             for rel in rels:
                 if rel not in files:
@@ -330,11 +333,17 @@ def draft_manifest(data_dir):
                         ent["answers_sha256"] = sha256_file(apath)
                     else:
                         notes.append("%s: answers/%s not found" % (eid, ans))
-                entries.append(ent)
+                ds_entries.append(ent)
         if not files:
-            notes.append("%s: no files_flatlamp_<channel>.txt; dataset "
-                         "skipped" % ds_id)
+            if n_lists:
+                notes.append("%s: every file listed in its files_flatlamp_"
+                             "<channel>.txt is missing; dataset and its "
+                             "entries skipped" % ds_id)
+            else:
+                notes.append("%s: no files_flatlamp_<channel>.txt; dataset "
+                             "skipped" % ds_id)
             continue
+        entries.extend(ds_entries)
         datasets[ds_id] = {
             "id": ds_id,
             "path": "raw/%s" % ds_id,
