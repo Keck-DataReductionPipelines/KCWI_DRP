@@ -206,20 +206,6 @@ def test_declined_confirmation_changes_nothing(first_run):
                         "ds9_blue_L1")["bless_history"] == []
 
 
-def test_bless_replaces_a_symlinked_reference_without_touching_its_target(
-        first_run, tmp_path):
-    w = first_run
-    target = tmp_path / "s3_run"
-    (target / "redux").mkdir(parents=True)
-    (target / "redux" / "keep.txt").write_text("S.3 output")
-    (w.data / "reference").mkdir()
-    (w.data / "reference" / "ds9_blue_L1").symlink_to(target)
-    blessmod.bless(**bless_args(w, "environment: x"))
-    assert (target / "redux" / "keep.txt").read_text() == "S.3 output"
-    ref = w.data / "reference" / "ds9_blue_L1"
-    assert not ref.is_symlink() and (ref / "redux" / "ds_icubes.fits").is_file()
-
-
 def test_blessing_an_against_entry_turns_it_into_self(first_run):
     w = first_run
     m = mf.load_manifest(w.data)

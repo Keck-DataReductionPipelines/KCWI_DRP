@@ -4,6 +4,7 @@ A bless never happens automatically and only the maintainer runs it. It needs
 a reason from the plan's T.7 table, a run whose outputs still exist, and (unless
 ``--yes``) a typed confirmation.
 """
+import os
 import re
 import shutil
 import subprocess
@@ -61,6 +62,24 @@ def clone_path(src, dst):
     else:
         shutil.copy2(src, dst)
     return "copy"
+
+
+def reference_destination(ref):
+    """Where a new reference is written: ``ref`` itself, or, when ``ref`` is
+    a symlink, the directory it points to (so the link and its storage stay
+    in use). Refuses a link whose target's directory cannot be written."""
+    ref = Path(ref)
+    if not ref.is_symlink():
+        return ref
+    target = Path(os.path.realpath(ref))
+    parent = target.parent
+    if not parent.is_dir() or not os.access(parent, os.W_OK | os.X_OK):
+        raise BlessError(
+            "%s is a symlink to %s, whose directory %s does not exist or is "
+            "not writable; bless updates a symlinked reference where it "
+            "points, so make that location writable (or replace the link "
+            "with a directory) and try again" % (ref, target, parent))
+    return target
 
 
 def remove_path(path):
@@ -146,6 +165,9 @@ def bless(data_dir, entry_id, reason, run=None, out_root=None,
 
     data_dir = Path(data_dir)
     ref = data_dir / "reference" / entry_id
+    # A symlinked reference (e.g. to external storage) is updated where the
+    # link points; the link itself is left as it is.
+    dest = reference_destination(ref)
     stamp = today or datetime.now().strftime("%Y-%m-%d")
     sources = [("redux", run_dir / "redux"), ("plots", run_dir / "plots"),
                (procfile, run_dir / procfile),
@@ -161,6 +183,9 @@ def bless(data_dir, entry_id, reason, run=None, out_root=None,
     print("  from run:     %s" % run_dir, file=out)
     print("  replaces:     %s%s" % (ref, "" if ref.exists() else
                                     " (does not exist yet)"), file=out)
+    if dest != ref:
+        print("  symlink to:   %s (updated there; the link is kept)" % dest,
+              file=out)
     print("  copies:       %s" % ", ".join(n for n, _ in sources), file=out)
     print("  old code:     %s %s" % ((old_prov or {}).get("drp_git_version"),
                                     (old_prov or {}).get("drp_version")),
@@ -177,8 +202,8 @@ def bless(data_dir, entry_id, reason, run=None, out_root=None,
         if answer.strip().lower() != "yes":
             raise BlessError("not confirmed; nothing changed")
 
-    new = ref.with_name(".%s.new" % entry_id)
-    old = ref.with_name(".%s.old" % entry_id)
+    new = dest.with_name(".%s.new" % dest.name)
+    old = dest.with_name(".%s.old" % dest.name)
     for leftover in (new, old):
         remove_path(leftover)
     new.mkdir(parents=True)
@@ -189,9 +214,9 @@ def bless(data_dir, entry_id, reason, run=None, out_root=None,
     except BaseException:
         remove_path(new)               # the old reference is untouched
         raise
-    if ref.exists() or ref.is_symlink():
-        ref.rename(old)
-    new.rename(ref)
+    if dest.exists() or (dest == ref and ref.is_symlink()):
+        dest.rename(old)
+    new.rename(dest)
     remove_path(old)
 
     history = {
