@@ -45,19 +45,24 @@ def _install_recorder(path):
     builtins.input = recording_input
 
 
-class _IersLoader(importlib.abc.Loader):
-    def __init__(self, inner):
-        self._inner = inner
+def _disable_download_after_exec(loader):
+    """Wrap ``exec_module`` on this loader instance only.
 
-    def create_module(self, spec):
-        return self._inner.create_module(spec)
+    The module keeps its own loader (``__loader__`` is the real loader, with
+    ``get_resource_reader``, ``get_data``, ``is_package``, ...), so
+    ``importlib.resources``, ``pkgutil.get_data`` and ``inspect`` behave as
+    without the runner; only ``conf.auto_download`` is changed.
+    """
+    original = loader.exec_module
 
-    def exec_module(self, module):
-        self._inner.exec_module(module)
+    def exec_module(module):
+        original(module)
         try:
             module.conf.auto_download = False
         except Exception:                                # pragma: no cover
             pass
+
+    loader.exec_module = exec_module
 
 
 class _IersHook(importlib.abc.MetaPathFinder):
@@ -69,7 +74,7 @@ class _IersHook(importlib.abc.MetaPathFinder):
         spec = importlib.machinery.PathFinder.find_spec(name, path)
         if spec is None or spec.loader is None:
             return None
-        spec.loader = _IersLoader(spec.loader)
+        _disable_download_after_exec(spec.loader)  # a loader for this spec
         return spec
 
 
