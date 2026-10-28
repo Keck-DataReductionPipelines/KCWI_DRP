@@ -690,6 +690,7 @@ Status (2026-10-28, branch `upgrade/pr1-bokeh`, started from PR0's head before P
 - **Regression:** full profile, baseline env, before the D27 style changes: 96 passed (all 12 entries, every tier). Full profile in the development environment at `f593896` (after D27): 96 passed in 35 min, every tier of all 12 entries; the newer `astropy-iers-data` changed no output, so no `environment` bless is needed.
 - **Maintainer browser checks (2026-10-28, macOS, level-3 ds03 blue run):** pan, zoom and cursor readout work; the optional vertical cursor line (added at the maintainer's request, a checkbox on the viewer page) works.
 - **4.3 sign-off (2026-10-28, maintainer): pass.** Reviewed the side-by-side pages of every saved plot of the 12 full-profile entries (Bokeh reference against Matplotlib) and a live level-3 session. Accepted differences: Matplotlib's look in place of Bokeh's (D27). The plot bless with reason `bokeh port 4.3` is the maintainer's to run.
+- **3.1 in `reduce_kcwi` (2026-10-28):** two processes at once (ds03 blue, level 1, viewer on), each on its own port with its URL printed; both complete with all PNGs and cubes; no process or bound port left afterwards. A stale `bokeh serve` on `*:5006` was correctly skipped (the connect probe).
 - **Still open:** 👤 0.3 (`check_proto.py`) on Ubuntu 24.04; 👤 the `bokeh port 4.3` bless of the plots.
 
 ### Amendments
