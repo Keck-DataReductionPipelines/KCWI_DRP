@@ -194,7 +194,7 @@ def ask_next(logger, what, help, n_items=None, current=None, who=None):
 
 
 def ask_value(logger, prompt, help, parse, default, effect, validate=None,
-              who=None):
+              who=None, what=None):
     """Ask for a value that changes the reduction.
 
     The prompt shown is ``prompt`` plus `` (? for help): `` unless it already
@@ -211,6 +211,8 @@ def ask_value(logger, prompt, help, parse, default, effect, validate=None,
     """
     log = _log(logger)
     shown = _with_hint(prompt)
+    if what:
+        print(what)
     while True:
         answer = _read(shown, logger, who, "%r" % (default,))
         if answer is None or answer == "":
@@ -232,7 +234,7 @@ def ask_value(logger, prompt, help, parse, default, effect, validate=None,
         return value
 
 
-def ask_yes_quit(logger, prompt, help, who=None):
+def ask_yes_quit(logger, prompt, help, who=None, what=None):
     """Ask whether to proceed: ``True`` for ``<cr>``, ``False`` for quit.
 
     The prompt shown is ``prompt`` plus `` (? for help): `` unless it already
@@ -246,6 +248,8 @@ def ask_yes_quit(logger, prompt, help, who=None):
     """
     log = _log(logger)
     shown = _with_hint(prompt)
+    if what:
+        print(what)
     while True:
         answer = _read(shown, logger, who, "proceed")
         if answer is None or answer == "":
