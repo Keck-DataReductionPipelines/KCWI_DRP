@@ -70,10 +70,25 @@ def procfile_name(entry):
 
 # -- run directory ------------------------------------------------------------
 
+# The viewer switch was renamed in PR1 (bokeh plan 5.1).  A manifest drafted
+# on either side of the rename must run on code from either side, so an
+# override of one name applies to whichever of the two the config has.
+KEY_ALIASES = {"enable_bokeh": "enable_plot_viewer",
+               "enable_plot_viewer": "enable_bokeh"}
+
+
+def _key_pattern(key):
+    return re.compile(r"^(\s*)%s\s*=.*$" % re.escape(key), re.M)
+
+
 def apply_config_overrides(text, overrides):
     """Rewrite only the ``key = value`` lines named in ``overrides``."""
     for key, value in overrides.items():
-        pattern = re.compile(r"^(\s*)%s\s*=.*$" % re.escape(key), re.M)
+        pattern = _key_pattern(key)
+        if not pattern.search(text) and key in KEY_ALIASES:
+            alias = KEY_ALIASES[key]
+            if _key_pattern(alias).search(text):
+                key, pattern = alias, _key_pattern(alias)
         if not pattern.search(text):
             raise RunError("config key %r not found in kcwi.cfg" % key)
         text = pattern.sub(lambda m: "%s%s = %s" % (m.group(1), key, value),
