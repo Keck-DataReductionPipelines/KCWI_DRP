@@ -9,7 +9,7 @@ from kcwidrp.core.bspline import Bspline
 from kcwidrp.core.kcwi_plotting import figure
 
 import os
-import time
+from kcwidrp.core.kcwi_interactive import pause
 import numpy as np
 from scipy.optimize import curve_fit
 from astropy.io import fits
@@ -343,10 +343,27 @@ class MakeMasterSky(BaseImg):
                 p.line([std_pos_mask_1, std_pos_mask_1], [0, fpk], color='blue')
                 p.line(xx, yy, color='red')
                 bokeh_plot(p, self.context.bokeh_session)
-                if self.config.instrument.plot_level >= 2:
-                    input("Next? <cr>: ")
-                else:
-                    time.sleep(self.config.instrument.plot_pause)
+                pause(self.config.instrument, self.logger,
+                    what="Standard star: profile in its brightest slice and the region masked from the sky model.",
+                    help=(
+                        "What you see:\n"
+                        "  Title \"Std max sl <n>\": flux against position along slice n, the\n"
+                        "  slice with the largest spread, in a 10 % wavelength window around\n"
+                        "  the middle wavelength. Purple dots: data. Red: Gaussian fit. Green\n"
+                        "  vertical: peak position. Blue verticals: +- 5 sigma of the fit; this\n"
+                        "  range of slice positions is excluded from the sky model in all\n"
+                        "  slices.\n"
+                        "What to look for:\n"
+                        "  Good: the Gaussian fits the star and the blue lines enclose its\n"
+                        "  wings.\n"
+                        "  Bad: a fit to the wrong feature, or a mask much too narrow (star\n"
+                        "  light enters the sky model and is subtracted) or too wide.\n"
+                        "Your options:\n"
+                        "  <cr>  continue. Display only.\n"
+                        "Default:\n"
+                        "  <cr> continues. At plot_level 1 the plot is shown for plot_pause\n"
+                        "  seconds; at plot_level 0 it is not drawn."),
+                    who="MakeMasterSky")
 
         # if we are a continuum source,
         # get local mask for bright continuum source
@@ -431,10 +448,27 @@ class MakeMasterSky(BaseImg):
                            color='blue')
                     p.line(xx, yy, color='red')
                     bokeh_plot(p, self.context.bokeh_session)
-                    if self.config.instrument.plot_level >= 2:
-                        input("Next? <cr>: ")
-                    else:
-                        time.sleep(self.config.instrument.plot_pause)
+                    pause(self.config.instrument, self.logger,
+                        what="Continuum source: profile in its brightest slice, source region and local sky windows.",
+                        help=(
+                            "What you see:\n"
+                            "  Title \"Cont source max sl <n>\": flux against position along slice n,\n"
+                            "  in a 10 % wavelength window around the middle wavelength.\n"
+                            "  Purple dots: data. Red: Gaussian fit. Green vertical: peak.\n"
+                            "  Blue verticals, inner pair: +- 7 sigma, the source region; outer\n"
+                            "  pair: 14 unbinned px further out. Only the two windows between inner\n"
+                            "  and outer lines are used for the sky model.\n"
+                            "What to look for:\n"
+                            "  Good: the inner lines enclose the source wings; the windows contain\n"
+                            "  only sky.\n"
+                            "  Bad: a fit to the wrong feature, or source light inside a window.\n"
+                            "  Give the position and width in kcwi.sky to override the fit.\n"
+                            "Your options:\n"
+                            "  <cr>  continue. Display only.\n"
+                            "Default:\n"
+                            "  <cr> continues. At plot_level 1 the plot is shown for plot_pause\n"
+                            "  seconds; at plot_level 0 it is not drawn."),
+                        who="MakeMasterSky")
 
             else:
                 self.logger.info("Using input source position of %.2f and"
@@ -603,10 +637,26 @@ class MakeMasterSky(BaseImg):
             p.y_range.start = yrng[0]
             p.y_range.end = yrng[1]
             bokeh_plot(p, self.context.bokeh_session)
-            if self.config.instrument.plot_level >= 2:
-                input("Next? <cr>: ")
-            else:
-                time.sleep(self.config.instrument.plot_pause)
+            pause(self.config.instrument, self.logger,
+                what="Sky model: sky pixels from all slices against wavelength, with the spline fit.",
+                help=(
+                    "What you see:\n"
+                    "  Title \"Master Sky\", flux (e-) against wavelength.\n"
+                    "  Purple dots: unmasked sky pixels from all slices (subsampled).\n"
+                    "  Red: the spline sky model subtracted from this frame.\n"
+                    "  Green verticals: WAVGOOD.\n"
+                    "What to look for:\n"
+                    "  Good: the red curve runs through the dots, following sky lines and\n"
+                    "  continuum; the dots scatter tightly around it.\n"
+                    "  Bad: many dots well above the curve (object light in the sky region:\n"
+                    "  mask it with a sky mask or a kcwi.sky entry), or line peaks the model\n"
+                    "  misses (over/under-subtracted sky lines in the cube).\n"
+                    "Your options:\n"
+                    "  <cr>  continue. Display only.\n"
+                    "Default:\n"
+                    "  <cr> continues. At plot_level 1 the plot is shown for plot_pause\n"
+                    "  seconds; at plot_level 0 it is not drawn."),
+                who="MakeMasterSky")
             save_plot(p, filename=skyfnam+".png")
 
         # create sky image

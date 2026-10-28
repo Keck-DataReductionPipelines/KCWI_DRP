@@ -9,6 +9,7 @@ from scipy.signal import savgol_filter
 import os
 from skimage import transform as tf
 from kcwidrp.core.kcwi_plotting import figure
+from kcwidrp.core.kcwi_interactive import ask_next, QUIT
 
 
 class ExtractArcs(BasePrimitive):
@@ -146,8 +147,28 @@ class ExtractArcs(BasePrimitive):
                     p.line(xp, bkg, legend_label='Bkg', color='red')
                     p.line(xp, bkgf, legend_label='BkgFit', color='green')
                     bokeh_plot(p, self.context.bokeh_session)
-                    q = input("Next? <cr>, q to quit: ")
-                    if 'Q' in q.upper():
+                    q = ask_next(self.logger,
+                        what="Arc spectrum extracted along this bar's trace, with its background estimate.",
+                        help=(
+                            "What you see:\n"
+                            "  Title \"ARC # <n>\": the arc spectrum extracted along bar n's trace,\n"
+                            "  against CCD y pixel.\n"
+                            "  Blue: arc flux summed across the extraction window.\n"
+                            "  Red: background, the window's minimum times its width, row by row.\n"
+                            "  Green: smoothed background (Savitzky-Golay); this is subtracted.\n"
+                            "What to look for:\n"
+                            "  Good: sharp arc lines on a low background; the green curve runs\n"
+                            "  smoothly under the blue continuum between lines.\n"
+                            "  Bad: green curve following line peaks or lying well above the\n"
+                            "  inter-line level (the window is off the bar: check the trace).\n"
+                            "Your options:\n"
+                            "  <cr>      show the next bar.\n"
+                            "  q / quit  stop showing extracted arcs (all bars are still extracted).\n"
+                            "  Display only: no answer changes the reduction.\n"
+                            "Default:\n"
+                            "  <cr> shows the next bar. Below plot_level 3 these plots are not shown."),
+                        who="ExtractArcs")
+                    if q == QUIT:
                         do_plot = False
                 arc -= bkgf
                 arcs.append(arc)
@@ -212,8 +233,29 @@ class ExtractArcs(BasePrimitive):
                         p.line(xp, arc, legend_label='Arc', color='blue')
                         p.line(xp, bkg, legend_label='Bkg', color='red')
                         bokeh_plot(p, self.context.bokeh_session)
-                        q = input("Next? <cr>, q to quit: ")
-                        if 'Q' in q.upper():
+                        q = ask_next(self.logger,
+                            what="Arc spectrum extracted at this bar (warped arc image), with its fitted background.",
+                            help=(
+                                "What you see:\n"
+                                "  Title \"ARC # <n>\": the arc spectrum of bar n, the median across the\n"
+                                "  bar in the geometrically warped arc image, against CCD y pixel.\n"
+                                "  Blue: arc spectrum.\n"
+                                "  Red: background model, a cubic fitted to the minima of 16 sections of\n"
+                                "  the spectrum; it is subtracted from the arc.\n"
+                                "What to look for:\n"
+                                "  Good: sharp arc lines; the red curve follows the low level between\n"
+                                "  lines and stays below the line-free continuum.\n"
+                                "  Bad: red curve cutting through the spectrum or bending up at the ends\n"
+                                "  (e.g. a section without a line-free minimum); a featureless or very\n"
+                                "  faint blue spectrum (bar missed by the trace).\n"
+                                "Your options:\n"
+                                "  <cr>      show the next bar.\n"
+                                "  q / quit  stop showing extracted arcs (all bars are still extracted).\n"
+                                "  Display only: no answer changes the reduction.\n"
+                                "Default:\n"
+                                "  <cr> shows the next bar. Below plot_level 3 these plots are not shown."),
+                            who="ExtractArcs")
+                        if q == QUIT:
                             do_plot = False
                     # subtract model background
                     arc -= bkg

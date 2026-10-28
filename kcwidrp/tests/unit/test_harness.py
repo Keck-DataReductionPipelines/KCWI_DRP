@@ -224,7 +224,8 @@ def test_input_without_answers_fails_naming_prompt(run_primitive,
                                                    monkeypatch):
     _spy_plotting(monkeypatch)
     with pytest.raises(pytest.fail.Exception,
-                       match=r"SubtractOverscan called input\('Next\? <cr>: "
+                       match=r"SubtractOverscan called input\('Next\? <cr> "
+                             r"\(\? for help\): "
                              r"'\), but the test gave no answers"):
         run_primitive(SubtractOverscan, synthetic_ccddata(**WIDE_OSCAN),
                       config_overrides={"plot_level": 3})

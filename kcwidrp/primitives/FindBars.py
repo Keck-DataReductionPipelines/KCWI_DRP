@@ -5,6 +5,7 @@ from kcwidrp.primitives.kcwi_file_primitives import plotlabel
 import numpy as np
 import logging
 from kcwidrp.core.kcwi_plotting import figure
+from kcwidrp.core.kcwi_interactive import pause, ask_next, QUIT
 from scipy.signal import find_peaks
 import time
 
@@ -94,7 +95,25 @@ class FindBars(BasePrimitive):
                        color='grey', line_dash='dashed')
                 p.legend.location = "bottom_center"
                 bokeh_plot(p, self.context.bokeh_session)
-                input("Next? <cr>: ")
+                pause(self.config.instrument, self.logger,
+                    what="Continuum-bar profile across one CCD row, with the peaks found above the threshold.",
+                    help=(
+                        "What you see:\n"
+                        "  Title \"BARS TRACE at = <row>, TRY <n>\": the continuum-bars image\n"
+                        "  across CCD x, median of a few rows around <row>.\n"
+                        "  Blue: the profile. Red x: peaks found above the threshold.\n"
+                        "  Grey dashed: threshold (mean + 0.5 x standard deviation).\n"
+                        "What to look for:\n"
+                        "  Good: exactly one red x on each of the 120 bars (24 groups of 5), none\n"
+                        "  on noise or between bars.\n"
+                        "  Bad: missing or extra peaks. Then the DRP moves to another row and\n"
+                        "  tries again (up to 5 tries; one plot per try). If no try finds 120\n"
+                        "  bars, FindBars logs an error and the geometry cannot be solved.\n"
+                        "Your options:\n"
+                        "  <cr>  continue. Display only: the reduction is not changed.\n"
+                        "Default:\n"
+                        "  <cr> continues. Below plot_level 3 this plot is not shown."),
+                    who="FindBars")
 
             n_tries += 1
             # do we have the requisite number?
@@ -132,10 +151,23 @@ class FindBars(BasePrimitive):
                        color='grey', line_dash='dashed')
                 p.legend.location = "bottom_center"
                 bokeh_plot(p, self.context.bokeh_session)
-                if self.config.instrument.plot_level >= 2:
-                    input("Next? <cr>: ")
-                else:
-                    time.sleep(self.config.instrument.plot_pause)
+                pause(self.config.instrument, self.logger,
+                    what="Continuum-bar profile at the row used for bar finding: all bars found.",
+                    help=(
+                        "What you see:\n"
+                        "  Title \"BARS MID TRACE Thresh = <value>\": the continuum-bars profile\n"
+                        "  across CCD x at the row where all bars were found.\n"
+                        "  Blue: profile. Red x: the bar peaks. Grey dashed: peak threshold.\n"
+                        "What to look for:\n"
+                        "  Good: one red x on top of every bar, 24 groups of 5, regular spacing.\n"
+                        "  Bad: a red x on a noise spike or between two bars; this shifts the\n"
+                        "  bar numbering and every later step that uses it.\n"
+                        "Your options:\n"
+                        "  <cr>  continue. Display only: the reduction is not changed.\n"
+                        "Default:\n"
+                        "  <cr> continues. At plot_level 1 the plot is shown for plot_pause\n"
+                        "  seconds; at plot_level 0 it is not drawn."),
+                    who="FindBars")
                 # calculate the bar centroids
 
             # Do we plot?
@@ -160,8 +192,28 @@ class FindBars(BasePrimitive):
                            color='green', legend_label='Cntrd')
                     bokeh_plot(p, self.context.bokeh_session)
                     if do_inter:
-                        q = input("Next? <cr>, q - quit: ")
-                        if 'Q' in q.upper():
+                        q = ask_next(self.logger,
+                            what="Profile of this bar across CCD x and its centroid.",
+                            help=(
+                                "What you see:\n"
+                                "  Title \"BAR <n> CENTRD = <x>\": bar n across CCD x, minimum subtracted.\n"
+                                "  Blue line with red circles: the profile (both labelled \"Bar Trace\").\n"
+                                "  Green vertical: the centroid, the x position used for this bar (its\n"
+                                "  height spans threshold to peak of the raw profile, so it need not\n"
+                                "  touch the blue curve).\n"
+                                "What to look for:\n"
+                                "  Good: one clean, roughly symmetric peak with the green line at its\n"
+                                "  centre.\n"
+                                "  Bad: a double or truncated peak, or a flat profile: the centroid, and\n"
+                                "  the trace that starts from it, will be off.\n"
+                                "Your options:\n"
+                                "  <cr>      show the next bar.\n"
+                                "  q / quit  stop showing centroids (all are still computed).\n"
+                                "  Display only: no answer changes the reduction.\n"
+                                "Default:\n"
+                                "  <cr> shows the next bar. Below plot_level 3 these plots are not shown."),
+                            who="FindBars")
+                        if q == QUIT:
                             do_inter = False
                     else:
                         time.sleep(self.config.instrument.plot_pause)

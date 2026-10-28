@@ -6,6 +6,7 @@ import os
 import numpy as np
 from scipy.interpolate import interpolate
 from kcwidrp.core.kcwi_plotting import figure
+from kcwidrp.core.kcwi_interactive import pause
 from astropy.io import fits as pf
 
 
@@ -169,7 +170,25 @@ class SolveAIT(BasePrimitive):
                 bokeh_plot(p, self.context.bokeh_session)
                 save_plot(p, filename=pfname + '_bar%d.png' % ib)
                 if self.config.instrument.plot_level >= 2:
-                    _ = input("Next? <cr>: ")
+                    pause(self.config.instrument, self.logger,
+                        what="AIT data: arc and bar spectrum of this trace on the output wavelength grid.",
+                        help=(
+                            "What you see:\n"
+                            "  Title \"ARC # <n>\": arc (blue) and continuum-bar (red) spectra of AIT\n"
+                            "  trace n, resampled onto the output wavelength grid.\n"
+                            "  Green verticals: good wavelength range (WAVGOOD).\n"
+                            "  Orange verticals: full wavelength range (WAVALL).\n"
+                            "What to look for:\n"
+                            "  Good: sharp arc lines at the right wavelengths, smooth bar spectrum,\n"
+                            "  both covering the green range.\n"
+                            "  Bad: smeared or doubled lines (poor solution for this trace), or the\n"
+                            "  data not reaching the green limits.\n"
+                            "Your options:\n"
+                            "  <cr>  continue (next trace). Display only.\n"
+                            "Default:\n"
+                            "  <cr> continues. At plot_level 1 the plot is shown and saved with no\n"
+                            "  pause; at plot_level 0 it is not drawn."),
+                        who="SolveAIT")
         specout[:, -1] = yout[:]
 
         # Pixel scales

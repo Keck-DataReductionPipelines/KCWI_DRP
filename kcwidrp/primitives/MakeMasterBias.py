@@ -10,7 +10,7 @@ import ccdproc
 import numpy as np
 from scipy.stats import sigmaclip
 from astropy.stats import mad_std
-import time
+from kcwidrp.core.kcwi_interactive import pause
 import os
 
 
@@ -150,10 +150,27 @@ class MakeMasterBias(BaseImg):
                 p.line([bias_rn, bias_rn], [0, np.max(hist)], color='red')
                 p.y_range.start = 0
                 bokeh_plot(p, self.context.bokeh_session)
-                if self.config.instrument.plot_level >= 2:
-                    input("Next? <cr>: ")
-                else:
-                    time.sleep(self.config.instrument.plot_pause)
+                pause(self.config.instrument, self.logger,
+                    what="Read-noise histogram of one amplifier, from the difference of two bias frames.",
+                    help=(
+                        "What you see:\n"
+                        "  Title \"BIAS NOISE amp <n> = <sigma>\" (e-). Navy bars: histogram of\n"
+                        "  (bias 2 - bias 3) x gain / sqrt(2) over amplifier n, within the 3.5\n"
+                        "  sigma clipping range. Pink thick line: Gaussian of the measured sigma\n"
+                        "  (centred on 0, scaled to the histogram peak). Red verticals: +- sigma.\n"
+                        "  Sigma is stored as BIASRN<n> in the master bias header.\n"
+                        "What to look for:\n"
+                        "  Good: a symmetric, Gaussian histogram centred on zero that matches\n"
+                        "  the pink curve; sigma close to the usual read noise of this amp in\n"
+                        "  this readout mode (slow/fast, gain).\n"
+                        "  Bad: a broad, skewed or spiky histogram, or an offset from zero:\n"
+                        "  pattern noise, or a bad bias frame in the stack.\n"
+                        "Your options:\n"
+                        "  <cr>  continue (next amplifier). Display only.\n"
+                        "Default:\n"
+                        "  <cr> continues. At plot_level 1 the plot is shown for plot_pause\n"
+                        "  seconds; at plot_level 0 it is not drawn."),
+                    who="MakeMasterBias")
                 save_plot(p, filename=biasfnam+".png")
 
         log_string = MakeMasterBias.__module__

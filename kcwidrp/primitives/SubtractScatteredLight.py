@@ -6,7 +6,7 @@ from kcwidrp.core.kcwi_plotting import save_plot
 from kcwidrp.core.kcwi_plotting import figure
 import numpy as np
 from scipy.signal import savgol_filter
-import time
+from kcwidrp.core.kcwi_interactive import pause
 
 
 class SubtractScatteredLight(BasePrimitive):
@@ -103,10 +103,27 @@ class SubtractScatteredLight(BasePrimitive):
                        legend_label="Smooth")
                 p.legend.location = "top_left"
                 bokeh_plot(p, self.context.bokeh_session)
-                if self.config.instrument.plot_level >= 2:
-                    input("Next? <cr>: ")
-                else:
-                    time.sleep(self.config.instrument.plot_pause)
+                pause(self.config.instrument, self.logger,
+                    what="Scattered-light profile along CCD y and the smooth model subtracted from every column.",
+                    help=(
+                        "What you see:\n"
+                        "  Title \"SCATTERED LIGHT FIT\": median of the central CCD columns\n"
+                        "  (+- 180 unbinned px about the centre) for every row, in e-.\n"
+                        "  Blue circles (\"Scat\"): the medians. Red thick line (\"Smooth\"):\n"
+                        "  Savitzky-Golay smoothing (window 151, 303 or 501 rows, wider for\n"
+                        "  noisier data); this curve is subtracted from every column.\n"
+                        "What to look for:\n"
+                        "  Good: the red curve follows the slow trend of the points without\n"
+                        "  following individual bumps.\n"
+                        "  Bad: the curve chasing features, or a level that looks like real\n"
+                        "  signal rather than a smooth background: it would be subtracted from\n"
+                        "  the science data.\n"
+                        "Your options:\n"
+                        "  <cr>  continue. Display only.\n"
+                        "Default:\n"
+                        "  <cr> continues. At plot_level 1 the plot is shown for plot_pause\n"
+                        "  seconds; at plot_level 0 it is not drawn."),
+                    who="SubtractScatteredLight")
                 save_plot(p, filename=scfnam+".png")
             # Subtract scattered light
             self.logger.info("Starting scattered light subtraction")

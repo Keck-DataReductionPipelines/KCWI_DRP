@@ -7,7 +7,7 @@ from kcwidrp.core.kcwi_plotting import save_plot
 from kcwidrp.core.kcwi_plotting import figure
 import numpy as np
 import os
-import time
+from kcwidrp.core.kcwi_interactive import pause
 
 
 class TraceBars(BasePrimitive):
@@ -140,10 +140,24 @@ class TraceBars(BasePrimitive):
                 p.scatter(self.action.args.middle_centers,
                           [self.action.args.middle_row]*nbars, color='red')
                 bokeh_plot(p, self.context.bokeh_session)
-                if self.config.instrument.plot_level >= 2:
-                    input("Next? <cr>: ")
-                else:
-                    time.sleep(self.config.instrument.plot_pause)
+                pause(self.config.instrument, self.logger,
+                    what="Continuum-bar traces: control points used for the geometric solution.",
+                    help=(
+                        "What you see:\n"
+                        "  Title \"SPATIAL CONTROL POINTS\" on CCD x, y.\n"
+                        "  Blue x: centroids of each bar traced up and down the CCD from the\n"
+                        "  middle row. Red circles: the bar positions found on the middle row.\n"
+                        "What to look for:\n"
+                        "  Good: 120 continuous traces (24 groups of 5) running the length of\n"
+                        "  the image, each starting from a red circle, without gaps or jumps.\n"
+                        "  Bad: a trace that stops early, jumps to a neighbouring bar, or is\n"
+                        "  missing: the geometry of that slice will be wrong.\n"
+                        "Your options:\n"
+                        "  <cr>  continue. Display only.\n"
+                        "Default:\n"
+                        "  <cr> continues. At plot_level 1 the plot is shown for plot_pause\n"
+                        "  seconds; at plot_level 0 it is not drawn."),
+                    who="TraceBars")
                 save_plot(p, filename=trcfnam+".png")
             trace = {
                 'src': src,

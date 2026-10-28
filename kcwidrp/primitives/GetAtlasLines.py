@@ -11,7 +11,7 @@ from scipy.interpolate import interpolate
 from scipy.signal.windows import boxcar
 from scipy.optimize import curve_fit
 from scipy.stats import sigmaclip
-import time
+from kcwidrp.core.kcwi_interactive import pause
 import os
 import traceback
 
@@ -558,10 +558,31 @@ class GetAtlasLines(BasePrimitive):
                                     max(subwvals))
                 p.y_range = Range1d(-0.04, 1.04)
                 bokeh_plot(p, self.context.bokeh_session)
-                if self.config.instrument.plot_level >= 2:
-                    input("Next? <cr>: ")
-                else:
-                    time.sleep(self.config.instrument.plot_pause)
+                pause(self.config.instrument, self.logger,
+                    what="Atlas lines selected for the wavelength fit, and those rejected, over the arc.",
+                    help=(
+                        "What you see:\n"
+                        "  Title \"ATLAS LINES Ngood = <n>, Nrej = <m>\", normalised flux.\n"
+                        "  Light grey: reference-bar arc spectrum on its central-fit wavelengths.\n"
+                        "  Blue: atlas spectrum of the arc lamp.\n"
+                        "  Large green diamonds: atlas lines kept for the fit (\"Kept\").\n"
+                        "  Small diamonds, rejected lines (plotted at the arc line's height):\n"
+                        "  cyan WinRej (no clean window), red FitRej (Gaussian fit failed),\n"
+                        "  orange ParRej (position/width out of bounds), brown DupRej\n"
+                        "  (duplicate), magenta FntRej (faintest dropped when > 400 lines).\n"
+                        "  Brown verticals: wavelength limits used (\"WavLim\").\n"
+                        "What to look for:\n"
+                        "  Good: grey and blue spectra line up; kept lines sit on clean atlas\n"
+                        "  peaks spread over the whole range between the brown lines.\n"
+                        "  Bad: grey and blue offset (atlas offset wrong); kept lines missing\n"
+                        "  from part of the range, which weakens the solution there.\n"
+                        "Your options:\n"
+                        "  <cr>  continue. Display only (the list is written to\n"
+                        "        arc_..._atlines.txt either way).\n"
+                        "Default:\n"
+                        "  <cr> continues. At plot_level 1 the plot is shown for plot_pause\n"
+                        "  seconds; at plot_level 0 it is not drawn."),
+                    who="GetAtlasLines")
                 save_plot(p, filename=atfnam+".png")
 
         # output directory

@@ -13,6 +13,7 @@ from astropy import units as u
 from astropy.nddata import CCDData
 from kcwidrp.core.bokeh_plotting import bokeh_plot
 from kcwidrp.core.kcwi_plotting import figure
+from kcwidrp.core.kcwi_interactive import ask_next, QUIT
 from multiprocessing import Pool
 
 
@@ -277,8 +278,29 @@ class MakeCube(BasePrimitive):
                             palette="Spectral11", level="image")
                     bokeh_plot(p, self.context.bokeh_session)
                     if do_inter:
-                        q = input("Next? <cr>, q to quit: ")
-                        if 'Q' in q.upper():
+                        q = ask_next(self.logger,
+                            what="One slice of the cube after the geometric and wavelength transformation.",
+                            help=(
+                                "What you see:\n"
+                                "  Title \"WARPED Slice <n>\": slice n resampled onto the cube grid.\n"
+                                "  x: position along the slice (px); y: wavelength pixel (blue at the\n"
+                                "  bottom). Colour scale Spectral11, linear from the slice's minimum\n"
+                                "  (purple/blue) to its maximum (dark red); grey is NaN.\n"
+                                "What to look for:\n"
+                                "  Good: sky and arc lines run straight across the slice (constant\n"
+                                "  wavelength); a point source is a straight vertical streak; the slice\n"
+                                "  edges are clean.\n"
+                                "  Bad: tilted or curved lines, or steps between parts of the slice: the\n"
+                                "  geometry (arc/bars solution) is wrong for this slice.\n"
+                                "Your options:\n"
+                                "  <cr>      show the next slice.\n"
+                                "  q / quit  stop asking; the remaining slices are still drawn, each for\n"
+                                "            plot_pause seconds.\n"
+                                "  Display only: no answer changes the reduction.\n"
+                                "Default:\n"
+                                "  <cr> shows the next slice. Below plot_level 3 these are not shown."),
+                            who="MakeCube")
+                        if q == QUIT:
                             do_inter = False
                     else:
                         time.sleep(self.config.instrument.plot_pause)

@@ -5,6 +5,7 @@ from kcwidrp.core.bokeh_plotting import bokeh_clear
 
 from kcwidrp.core.kcwi_plotting import figure
 from kcwidrp.core.kcwi_plotting import gridplot
+from kcwidrp.core.kcwi_interactive import pause
 import numpy as np
 import math
 import time
@@ -113,7 +114,26 @@ class SubtractOverscan(BasePrimitive):
                     bokeh_plot(p, self.context.bokeh_session)
                     plts.append(p)
                     if self.config.instrument.plot_level >= 3:
-                        input("Next? <cr>: ")
+                        pause(self.config.instrument, self.logger,
+                            what="Overscan of one amplifier along the readout, with the fit used for the noise estimate.",
+                            help=(
+                                "What you see:\n"
+                                "  Title \"Img # <n> OSCAN [x0:x1, y0:y1] amp <a>, noise: <s> e-/px\".\n"
+                                "  Blue circles: median of the overscan columns for each row (counts).\n"
+                                "  Red thick line: polynomial fit; the residuals give the read noise in\n"
+                                "  the title (OSCNRN<a>). The value subtracted from the amplifier is a\n"
+                                "  single number, the median of the overscan region (OSCNVAL<a>).\n"
+                                "What to look for:\n"
+                                "  Good: a flat, smooth level the fit follows; a ramp only in the first\n"
+                                "  or last 50 rows (excluded from the fit).\n"
+                                "  Bad: jumps, strong gradients or a noise value much higher than usual\n"
+                                "  for this amplifier: an electronics problem in this frame.\n"
+                                "Your options:\n"
+                                "  <cr>  continue (next amplifier). Display only.\n"
+                                "Default:\n"
+                                "  <cr> continues. At plot_level 2 each amplifier is shown for\n"
+                                "  plot_pause seconds; below plot_level 2 nothing is drawn."),
+                            who="SubtractOverscan")
                     else:
                         time.sleep(self.config.instrument.plot_pause)
                 # subtract osval
@@ -136,10 +156,21 @@ class SubtractOverscan(BasePrimitive):
                                plot_width=500, plot_height=300,
                                toolbar_location=None),
                       filename="oscan_%05d.png" % frameno)
-            if self.config.instrument.plot_level >= 2:
-                input("Next? <cr>: ")
-            else:
-                time.sleep(self.config.instrument.plot_pause)
+            pause(self.config.instrument, self.logger,
+                what="Overscan of all amplifiers of this frame side by side.",
+                help=(
+                    "What you see:\n"
+                    "  The overscan plots of all amplifiers of this frame in one grid (blue\n"
+                    "  circles: row medians; red: fit), each titled with its noise.\n"
+                    "What to look for:\n"
+                    "  Good: all amplifiers flat and smooth, with similar noise.\n"
+                    "  Bad: one amplifier with jumps, gradients or much higher noise than\n"
+                    "  the others.\n"
+                    "Your options:\n"
+                    "  <cr>  continue. Display only.\n"
+                    "Default:\n"
+                    "  <cr> continues. Below plot_level 3 this grid is not shown."),
+                who="SubtractOverscan")
             bokeh_clear(self.context.bokeh_session)
 
         self.action.args.ccddata.header[key] = (performed, keycom)
