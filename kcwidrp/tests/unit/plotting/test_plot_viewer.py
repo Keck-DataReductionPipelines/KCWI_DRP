@@ -336,19 +336,12 @@ def test_two_viewers_get_two_ports(make_viewer):
     assert abs(a.port - b.port) == 1
 
 
-def test_url_printed_on_its_own_line_and_logged(make_viewer, capsys,
-                                                kcwi_log):
+def test_url_logged(make_viewer, kcwi_log):
     v = make_viewer()
     v.start()
-    out = capsys.readouterr().out
-    lines = [ln.strip() for ln in out.splitlines()]
-    # source: 0.3/3.1 -- "logged at INFO and printed to the terminal on its
-    # own line".  A label before the URL is tolerated; only one line holds it.
-    holding = [ln for ln in lines if v.url in ln]
-    assert len(holding) == 1
-    assert any(v.url in m for m in kcwi_log.messages(logging.INFO))
-    info = [r for r in kcwi_log.records if v.url in r.getMessage()]
-    assert info and info[0].levelno >= logging.INFO
+    # source: 0.3/3.1 -- the URL is logged.  The INFO line and the printed
+    # line come from StartPlotViewer (test_run_StartPlotViewer.py).
+    assert any(v.url in r.getMessage() for r in kcwi_log.records)
 
 
 # ---------------------------------------------------------- show never fails
