@@ -106,9 +106,57 @@ document.addEventListener("DOMContentLoaded", function () {
       "The pipeline has stopped, or the viewer is not reachable. "
       + "Reload this page when the pipeline is running again.";
   });
-  new mpl.figure(1, websocket, mpl_ondownload,
-                 document.getElementById("figure"));
+  var fig = new mpl.figure(1, websocket, mpl_ondownload,
+                           document.getElementById("figure"));
+  add_cursor_line(fig);
 });
+
+// Optional vertical line at the cursor, drawn in the page only (nothing is
+// sent to the pipeline).  The server sends where the axes are after every
+// draw; the line spans the axes under the cursor.
+function add_cursor_line(fig) {
+  var box = document.getElementById("vline");
+  try { box.checked = localStorage.getItem("kcwi_vline") === "1"; }
+  catch (e) {}
+  var layer = document.createElement("canvas");
+  layer.setAttribute("style", "position: absolute; left: 0; top: 0; "
+                     + "pointer-events: none; z-index: 2;");
+  fig.canvas_div.appendChild(layer);
+  var ctx = layer.getContext("2d");
+  var extents = [];
+  fig.handle_axes_extents = function (fig, msg) { extents = msg.extents; };
+
+  function clear() { ctx.clearRect(0, 0, layer.width, layer.height); }
+  fig.canvas_div.addEventListener("mousemove", function (event) {
+    var w = fig.canvas_div.clientWidth, h = fig.canvas_div.clientHeight;
+    if (layer.width !== w || layer.height !== h) {
+      layer.width = w;
+      layer.height = h;
+    }
+    clear();
+    if (!box.checked) { return; }
+    var r = fig.canvas.getBoundingClientRect();
+    var x = event.clientX - r.left, y = event.clientY - r.top;
+    for (var i = 0; i < extents.length; i++) {
+      var e = extents[i];
+      if (x >= e[0] && x <= e[2] && y >= e[1] && y <= e[3]) {
+        var px = Math.round(x) + 0.5;
+        ctx.strokeStyle = "rgba(200, 0, 0, 0.8)";
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(px, e[1]);
+        ctx.lineTo(px, e[3]);
+        ctx.stroke();
+      }
+    }
+  });
+  fig.canvas_div.addEventListener("mouseleave", clear);
+  box.addEventListener("change", function () {
+    clear();
+    try { localStorage.setItem("kcwi_vline", box.checked ? "1" : "0"); }
+    catch (e) {}
+  });
+}
 </script>
 <title>%(title)s</title></head>
 <body>
@@ -117,6 +165,9 @@ document.addEventListener("DOMContentLoaded", function () {
 </div>
 <div id="status" style="margin: 10px; font-family: sans-serif;
      color: #b00;"></div>
+<div style="margin: 10px; font-family: sans-serif;">
+<label><input type="checkbox" id="vline"> Show vertical line at cursor</label>
+</div>
 <div id="figure" style="margin: 10px;"></div>
 </body></html>
 """
@@ -458,7 +509,30 @@ def _webagg_classes():
     class _Canvas(FigureCanvasWebAggCore):
         manager_class = _Manager
 
+        def draw(self):
+            super().draw()
+            # After the draw, when constrained layout has placed the axes
+            self.send_event('axes_extents', extents=axes_extents(self.figure))
+
     return _Canvas, _Manager
+
+
+def axes_extents(figure):
+    """Where each axes is on the page: ``[left, top, right, bottom]`` in CSS
+    pixels from the top-left corner of the figure, one entry per distinct
+    area (a twin axis shares its parent's).  Used by the page to draw the
+    optional vertical line at the cursor."""
+    ratio = getattr(figure, '_original_dpi', None)
+    ratio = figure.dpi / ratio if ratio else 1.0     # device pixel ratio
+    height = figure.bbox.height / ratio
+    extents = []
+    for ax in figure.axes:
+        b = ax.bbox
+        e = [round(b.x0 / ratio, 1), round(height - b.y1 / ratio, 1),
+             round(b.x1 / ratio, 1), round(height - b.y0 / ratio, 1)]
+        if e not in extents:
+            extents.append(e)
+    return extents
 
 
 def _make_app(viewer):
