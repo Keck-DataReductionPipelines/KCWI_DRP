@@ -163,7 +163,7 @@ def fetch_page(viewer):
 
 def test_page_has_vline_checkbox_and_label(viewer):
     html = fetch_page(viewer)
-    # source: spec -- checkbox id "vline", label text as given
+    # source: published - viewer cursor-line spec (maintainer request, 2026-10-28) -- checkbox id "vline", label text as given
     assert 'id="vline"' in html
     assert "Show vertical line at cursor" in html
     assert 'type="checkbox"' in html
@@ -172,7 +172,7 @@ def test_page_has_vline_checkbox_and_label(viewer):
 def test_page_checkbox_is_unchecked_in_html(viewer):
     html = fetch_page(viewer)
     tag = re.search(r'<input[^>]*id="vline"[^>]*>', html).group(0)
-    # source: spec -- unchecked in the HTML (state comes from localStorage)
+    # source: published - viewer cursor-line spec (maintainer request, 2026-10-28) -- unchecked in the HTML (state comes from localStorage)
     assert "checked" not in tag
 
 
@@ -181,7 +181,7 @@ def test_single_figure_sends_extents(viewer):
     tab = observe(viewer, single_plot(640, 400))
     sent = tab.extents()
     assert sent, "no axes_extents message received"
-    # source: spec -- one axes area, inside the figure's pixel size
+    # source: published - viewer cursor-line spec (maintainer request, 2026-10-28) -- one axes area, inside the figure's pixel size
     assert len(sent[-1]) == 1
     check_inside(sent[-1], 640, 400)
 
@@ -191,7 +191,7 @@ def test_grid_extents_in_four_quadrants(viewer):
     sent = tab.extents()
     assert sent, "no axes_extents message received"
     ext = sent[-1]
-    # source: spec -- 2x2 grid of 500x300 cells: 1000x600 figure
+    # source: published - viewer cursor-line spec (maintainer request, 2026-10-28) -- 2x2 grid of 500x300 cells: 1000x600 figure
     assert len(ext) == 4
     check_inside(ext, 1000, 600)
     found = set()
@@ -206,7 +206,7 @@ def test_twin_axis_gives_one_entry(viewer):
     tab = observe(viewer, twin_plot())
     sent = tab.extents()
     assert sent, "no axes_extents message received"
-    # source: spec -- the twin x-axis shares its parent's area
+    # source: published - viewer cursor-line spec (maintainer request, 2026-10-28) -- the twin x-axis shares its parent's area
     assert len(sent[-1]) == 1
     check_inside(sent[-1], 800, 500)
 
@@ -216,7 +216,7 @@ def test_new_plot_sends_new_extents(viewer):
     sent = tab.extents()
     assert len(sent) >= 2
     first, last = sent[0], sent[-1]
-    # source: spec -- first plot has one area, the 2x2 grid that follows has four
+    # source: published - viewer cursor-line spec (maintainer request, 2026-10-28) -- first plot has one area, the 2x2 grid that follows has four
     assert len(first) == 1
     assert len(last) == 4
     assert first != last
@@ -229,6 +229,6 @@ def test_axes_extents_on_rendered_figure():
     fig = render(single_plot(640, 400))
     fig.canvas.draw()
     ext = axes_extents(fig)
-    # source: spec -- one entry inside the 640x400 figure, left<right, top<bottom
+    # source: published - viewer cursor-line spec (maintainer request, 2026-10-28) -- one entry inside the 640x400 figure, left<right, top<bottom
     assert len(ext) == 1
     check_inside(ext, 640, 400)
