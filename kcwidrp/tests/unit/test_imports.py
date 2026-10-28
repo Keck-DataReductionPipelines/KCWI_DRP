@@ -17,10 +17,6 @@ PACKAGES = ("kcwidrp.primitives", "kcwidrp.core", "kcwidrp.pipelines",
 # will fix or remove the failure. strict=True: when the cause is fixed the
 # test XPASSes, fails, and this entry must be deleted (docs/testing.md s.7).
 KNOWN_IMPORT_FAILURES = {
-    # ModuleNotFoundError: No module named 'regions'. The script moved from
-    # pyregion to regions (2aba1ef) but pyproject still declares pyregion.
-    "kcwidrp.scripts.kcwi_masksky_ds9": "B14: needs the undeclared package "
-        "'regions'; pyproject still declares pyregion",
     # ModuleNotFoundError: No module named 'keckdrpframework.utils.easyHTTP'
     # (absent from keckdrpframework 1.0.0).
     "kcwidrp.scripts.reduce_server": "B15: imports "

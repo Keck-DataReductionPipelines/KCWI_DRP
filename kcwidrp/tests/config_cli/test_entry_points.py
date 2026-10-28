@@ -28,10 +28,7 @@ REPO_ROOT = Path(__file__).resolve().parents[3]
 
 # Entry points that fail today, with the plan ID that fixes them (same IDs as
 # tests/unit/test_imports.py). strict=True: remove the entry with the fix.
-IMPORT_FAILURES = {
-    "kcwi_masksky_ds9": "B14: kcwidrp.scripts.kcwi_masksky_ds9 needs the "
-        "undeclared package 'regions'; pyproject still declares pyregion",
-}
+IMPORT_FAILURES = {}
 
 # Entry points whose --help fails although they import.
 HELP_FAILURES = {
