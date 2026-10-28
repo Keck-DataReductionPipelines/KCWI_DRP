@@ -14,7 +14,6 @@ from astropy.io import fits as pf
 from astropy.nddata import CCDData
 from astropy import units as u
 
-from types import SimpleNamespace
 import time
 import os
 import numpy as np
@@ -789,13 +788,10 @@ class MakeInvsens(BasePrimitive):
                 set_plot_lims(prsd, xlim=[wall0, wall1], ylim=yran)
                 bokeh_plot(prsd, self.context.bokeh_session)
                 if self.config.instrument.plot_level >= 2:
-                    # The effect is logged below, once the refit has worked
-                    # (ask_value would log it on acceptance): the helper's
-                    # INFO line is dropped here, its DEBUG/WARNING lines kept.
+                    # effect=None: the order is logged below, once the
+                    # refit with it has worked
                     qstr = ask_value(
-                        SimpleNamespace(info=lambda msg: None,
-                                        debug=self.logger.debug,
-                                        warning=self.logger.warning),
+                        self.logger,
                         "Current fit order = %d. New fit order? <int> "
                         "(<cr> = accept)" % ford,
                         help=("What you see:\n"
@@ -817,7 +813,7 @@ class MakeInvsens(BasePrimitive):
                               "  <cr> keeps the current order: 9 (7 for BL) times the dichroic\n"
                               "  fraction, at least 3, unless you changed it. Below plot_level 2 the\n"
                               "  default order is used without review."),
-                        parse=int, default=None, effect=ford_effect,
+                        parse=int, default=None, effect=None,
                         who="MakeInvsens",
                         what="Calibration residuals; accept the fit or enter a new polynomial order to refit.")
                     if qstr is None:

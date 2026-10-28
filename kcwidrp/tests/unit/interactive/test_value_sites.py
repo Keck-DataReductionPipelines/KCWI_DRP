@@ -313,13 +313,13 @@ def test_fit_order_default_and_last_answer_wins(run_primitive,
 def test_fit_order_invalid_text_is_asked_again(run_primitive,
                                                 synthetic_ccddata, tmp_redux,
                                                 bad):
-    # source: analytic - P19: text and decimals are refused ("Bad fit order,
-    # try again"); the loop goes round again (P16-P18 are shown again) and
-    # the order in force stays
+    # source: analytic - P19: text and decimals are refused and the order is
+    # asked for again; the next valid order is used.  Before Track P a refused
+    # order also showed P16-P18 again; P.4 asks again at once, which D12
+    # allows for input that is invalid today (one P19 prompt fewer per pass)
     hdr = run_invsens(run_primitive, synthetic_ccddata, tmp_redux,
-                      ["", ""] + FIT_DONE + [bad] + FIT_DONE + ["6"]
-                      + FIT_DONE + [""])
-    assert len(run_primitive.last.prompts) == 2 + 4 + 4 + 4
+                      ["", ""] + FIT_DONE + [bad, "6"] + FIT_DONE + [""])
+    assert len(run_primitive.last.prompts) == 2 + 4 + 1 + 4
     assert hdr["INVFORD"] == 6
 
 

@@ -203,7 +203,9 @@ def ask_value(logger, prompt, help, parse, default, effect, validate=None,
     ``validate(value)``, if given, returns ``None`` or the reason it is
     refused; a refusal prints the reason and asks again.  ``?``/``help``
     prints ``help`` and asks again.  An accepted typed value is logged at
-    INFO as ``"<who>: " + effect.format(value=value)``.
+    INFO as ``"<who>: " + effect.format(value=value)``; with ``effect=None``
+    nothing is logged, for a caller that logs the effect itself once it has
+    been applied.
 
     End of input: by default warns once and returns ``default`` (later
     prompts return their defaults without asking); with
@@ -230,7 +232,8 @@ def ask_value(logger, prompt, help, parse, default, effect, validate=None,
         if reason:
             print("Not accepted (%s), try again." % reason)
             continue
-        log.info(_prefix(who) + effect.format(value=value))
+        if effect is not None:
+            log.info(_prefix(who) + effect.format(value=value))
         return value
 
 

@@ -7,7 +7,6 @@ import logging
 from kcwidrp.core.kcwi_plotting import figure
 from kcwidrp.core.kcwi_interactive import pause, ask_next, QUIT
 from scipy.signal import find_peaks
-import time
 
 
 class FindBars(BasePrimitive):
@@ -215,8 +214,6 @@ class FindBars(BasePrimitive):
                             who="FindBars")
                         if q == QUIT:
                             do_inter = False
-                    else:
-                        time.sleep(self.config.instrument.plot_pause)
             self.logger.info("Found middle centroids for continuum bars")
         # store threshold
         self.action.args.bar_thresh = bar_thresh
