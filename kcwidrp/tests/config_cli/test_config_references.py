@@ -94,6 +94,10 @@ KOARTI_VALUE_DIFFERENCES = {
 # call with config.instrument (the scan cannot see inside it).
 VIEWER_REQUESTED_KEYS = ("enable_plot_viewer", "enable_bokeh")
 
+# Keys read as attributes inside kcwi_interactive.pause(), which the
+# primitives call with self.config.instrument (Track P, plan 8.2).
+PAUSE_KEYS = ("plot_level", "plot_pause")
+
 
 # --- the scan ------------------------------------------------------------------
 
@@ -161,6 +165,14 @@ class Scan:
                     for key in VIEWER_REQUESTED_KEYS:
                         self.getattr_keys.setdefault(key, []).append(
                             (where(par), True))
+                elif (isinstance(par, ast.Call) and par.args
+                        and par.args[0] is node
+                        and isinstance(par.func, ast.Name)
+                        and par.func.id == "pause"):
+                    # kcwi_interactive.pause(self.config.instrument, ...)
+                    # reads these two keys as attributes
+                    for key in PAUSE_KEYS:
+                        self.attr_reads.setdefault(key, []).append(where(par))
                 else:
                     self.aliases.append(where(node))
             if is_script:
