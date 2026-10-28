@@ -5,6 +5,7 @@ from kcwidrp.core.kcwi_get_std import kcwi_get_std
 from kcwidrp.core.kcwi_plotting import set_plot_lims, save_plot
 from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer, \
     kcwi_fits_reader, strip_fname
+from kcwidrp.core.kcwi_interactive import ask_next, ask_value, pause, QUIT
 
 from kcwidrp.core.kcwi_plotting import figure
 from scipy.signal import find_peaks
@@ -13,6 +14,7 @@ from astropy.io import fits as pf
 from astropy.nddata import CCDData
 from astropy import units as u
 
+from types import SimpleNamespace
 import time
 import os
 import numpy as np
@@ -193,8 +195,27 @@ class MakeInvsens(BasePrimitive):
                 p.scatter(px, py, marker='x')
                 bokeh_plot(p, self.context.bokeh_session)
                 print("sl, std: %02d, %.3f" % (i, tstd))
-                qstr = input("Next? <cr>, q - quit: ")
-                if 'Q' in qstr.upper():
+                qstr = ask_next(
+                    self.logger,
+                    what="Standard-star cube: flux summed over wavelength along this slice.",
+                    help=("What you see:\n"
+                          '  Title "Std Slice <n> (DAR padded)". Blue x: flux summed over the\n'
+                          "  good wavelength range, against position along slice n. The line\n"
+                          "  printed above gives the slice and the standard deviation of this\n"
+                          "  profile; the slice with the largest value is taken as the star's.\n"
+                          "What to look for:\n"
+                          "  Good: the star is a clear peak in one slice (fainter in its\n"
+                          "  neighbours); other slices are flat sky.\n"
+                          "  Bad: no clear peak anywhere, or the largest spread in a slice without\n"
+                          "  the star (e.g. an edge artefact): the wrong slices would be summed.\n"
+                          "Your options:\n"
+                          "  <cr>      show the next slice.\n"
+                          "  q / quit  stop showing slices.\n"
+                          "  Display only: no answer changes the reduction.\n"
+                          "Default:\n"
+                          "  <cr> shows the next slice. Below plot_level 3 these are not shown."),
+                    who="MakeInvsens")
+                if qstr == QUIT:
                     do_plots = False
 
         # relevant slices
@@ -339,7 +360,18 @@ class MakeInvsens(BasePrimitive):
                   "(blue vertical lines)" % (wlm0, wlm1))
             print("A <cr> will accept current values, "
                   "or enter new values to avoid edge problems (if present).")
-            print("Hover the cursor over spectrum to find wavelengths.")
+
+            def parse_limits(text):
+                vals = text.split()
+                if len(vals) < 2:
+                    raise ValueError("two numbers needed")
+                return float(vals[0]), float(vals[1])
+
+            def check_limits(lims):
+                if lims[1] < lims[0] or lims[0] < wall0 or lims[1] > wall1:
+                    return "range/order error: need lo <= hi within " \
+                           "%.1f - %.1f A" % (wall0, wall1)
+                return None
             # yran = [np.min(obsspec), np.max(obsspec)]
             yran = [np.min(obsspec[wl_good]), np.max(obsspec[wl_good])]
             done = False
@@ -361,21 +393,42 @@ class MakeInvsens(BasePrimitive):
                 p.line([cwv, cwv], yran, line_color='red', legend_label='CWAV')
                 set_plot_lims(p, xlim=[wall0, wall1], ylim=yran)
                 bokeh_plot(p, self.context.bokeh_session)
-                qstr = input("New values? <float> <float> (or <cr> - done): ")
-                if len(qstr) <= 0:
+                lims = ask_value(
+                    self.logger,
+                    "New fit limits? <float> <float> (<cr> = accept)",
+                    help=("What you see:\n"
+                          "  Title \"<std> Obs Spec\": the standard star's observed spectrum\n"
+                          "  (black; e-/s, summed over the star's slices, extinction corrected).\n"
+                          "  Green verticals: WAVGOOD, the range covered by all slices.\n"
+                          '  Blue verticals: the current fit limits ("LIMITS").\n'
+                          "  Red vertical: CWAVE. The x range is WAVALL0 - WAVALL1.\n"
+                          "  The viewer shows the cursor position, to read off wavelengths.\n"
+                          "What to look for:\n"
+                          "  Good: between the blue lines the spectrum is smooth and well exposed.\n"
+                          "  Bad: the range includes a steep edge, noisy ends, or an artefact\n"
+                          "  (e.g. near the dichroic or the end of the detector); a polynomial\n"
+                          "  fitted over it will be distorted everywhere. Move the limits inward.\n"
+                          "Your options:\n"
+                          "  <cr>     accept the limits shown and continue.\n"
+                          '  lo hi    new limits in Angstrom, e.g. "3700 5500"; must satisfy\n'
+                          "           lo <= hi within WAVALL0 - WAVALL1. The plot is redrawn and\n"
+                          "           you are asked again.\n"
+                          "  The limits set the fit range of the inverse sensitivity and\n"
+                          "  effective area (*_invsens.fits, *_ea.fits, INVFW0/INVFW1).\n"
+                          "Default:\n"
+                          "  <cr> keeps the current limits: WAVGOOD0 - WAVGOOD1 (WAVGOOD0 raised\n"
+                          "  to 3650 A if lower) unless you changed them. Below plot_level 2 the\n"
+                          "  WAVGOOD limits are used."),
+                    parse=parse_limits, default=None,
+                    effect="fit wavelength limits set by user to "
+                           "{value[0]:.1f} - {value[1]:.1f} A "
+                           "(WAVGOOD %.1f - %.1f A)" % (wgoo0, wgoo1),
+                    validate=check_limits, who="MakeInvsens",
+                    what="Check the wavelength limits of the sensitivity fit; enter new limits to avoid bad edges.")
+                if lims is None:
                     done = True
                 else:
-                    try:
-                        wlm0 = float(qstr.split()[0])
-                        wlm1 = float(qstr.split()[1])
-                        if wlm1 < wlm0 or wlm0 < wall0 or wlm1 > wall1:
-                            wlm0 = wgoo0
-                            wlm1 = wgoo1
-                            print("range/order error, try again")
-                    except (IndexError, ValueError):
-                        wlm0 = wgoo0
-                        wlm1 = wgoo1
-                        print("format error, try again")
+                    wlm0, wlm1 = lims
             # update region of interest
             wl_good = [i for i, v in enumerate(w) if wlm0 <= v <= wlm1]
             nwl_good = len(wl_good)
@@ -435,11 +488,23 @@ class MakeInvsens(BasePrimitive):
             print("To mask, enter starting and stopping wavelengths "
                   "followed by an optional comment (string) for each line "
                   "you want to mask.")
-            print("Current masks are shown as vertical dashed yellow lines.")
-            print("Hover the cursor over spectrum to find wavelengths.")
+            print("Current masks are shown as vertical dashed orange lines.")
             print("Mask values and comments are saved to this file: %s." %
                   local_lmfile)
             print("A <cr> with no line limits will accept current masks.")
+
+            def parse_mask(text):
+                vals = text.split()
+                if len(vals) < 2:
+                    raise ValueError("start and stop wavelengths needed")
+                return (float(vals[0]), float(vals[1]),
+                        " ".join(vals[2:]).strip())
+
+            def check_mask(newl):
+                if wlm0 < newl[0] < wlm1 and wlm0 < newl[1] < wlm1:
+                    return None
+                return "line mask outside wl range %.1f - %.1f A" % (wlm0,
+                                                                     wlm1)
             done = False
             while not done:
                 p = figure(
@@ -465,23 +530,42 @@ class MakeInvsens(BasePrimitive):
                                line_dash='dashed')
                 set_plot_lims(p, xlim=[wall0, wall1], ylim=yran)
                 bokeh_plot(p, self.context.bokeh_session)
-                qstr = input("Mask line: wavelength start stop (Ang) comment "
-                             "(str) <float> <float> <str> (<cr> - done): ")
-                if len(qstr) <= 0:
+                newl = ask_value(
+                    self.logger,
+                    "Mask line: <start> <stop> [comment] in A (<cr> = done)",
+                    help=("What you see:\n"
+                          '  Title "<std> Obs Spec": the observed standard spectrum (black), with\n'
+                          "  WAVGOOD (green), the fit limits (blue) and CWAVE (red), as before.\n"
+                          "  Orange dashed pairs: line masks already defined (from a local .lmsk\n"
+                          "  file or entered here).\n"
+                          "What to look for:\n"
+                          "  Narrow features that the reference spectrum does not reproduce at\n"
+                          "  KCWI's resolution: stellar absorption lines (e.g. Balmer lines in hot\n"
+                          "  standards), telluric bands (e.g. O2 B and A at 6870 and 7600 A),\n"
+                          "  residual cosmic rays. Unmasked, they bend the smooth fit. Mask only\n"
+                          "  the feature itself, not broad stretches of continuum.\n"
+                          "Your options:\n"
+                          "  <cr>               done; use the masks shown.\n"
+                          "  start stop [text]  add a mask from start to stop (Angstrom, start <\n"
+                          "                     stop), optional comment; both ends must be inside\n"
+                          "                     the blue limits. The plot is redrawn with it.\n"
+                          "  Masks cannot be removed here: edit or delete <star>.lmsk (in the\n"
+                          "  directory you started the DRP from) and rerun. Masked points are left\n"
+                          "  out of the fits for *_invsens.fits and *_ea.fits.\n"
+                          "Default:\n"
+                          "  <cr> keeps the masks shown. Below plot_level 2 only masks from the\n"
+                          "  local .lmsk file are used (none if there is no file)."),
+                    parse=parse_mask, default=None,
+                    effect="line mask added by user: {value[0]:.2f} - "
+                           "{value[1]:.2f} A, saved to %s" %
+                           local_lmfile.replace("{", "{{").replace("}", "}}"),
+                    validate=check_mask, who="MakeInvsens",
+                    what="Mask narrow features (absorption lines, telluric bands, cosmic rays) out of the fit.")
+                if newl is None:
                     done = True
                 else:
-                    try:
-                        newl = {'w0': float(qstr.split()[0]),
-                                'w1': float(qstr.split()[1]),
-                                'com': " ".join(qstr.split()[2:]).strip()}
-                        # newl = [float(val) for val in qstr.split()]
-                    except ValueError:
-                        print("bad line: %s" % qstr)
-                        continue
-                    if wlm0 < newl['w0'] < wlm1 and wlm0 < newl['w1'] < wlm1:
-                        lmasks.append(newl)
-                    else:
-                        print("line mask outside wl range: %s" % qstr)
+                    lmasks.append({'w0': newl[0], 'w1': newl[1],
+                                   'com': newl[2]})
         # END: interactively identify lines
         # Write out a local copy of line masks so user can edit
         if len(lmasks) > 0:
@@ -555,6 +639,8 @@ class MakeInvsens(BasePrimitive):
         prsd = None
         # interactively adjust fit
         if self.config.instrument.plot_level >= 1:
+            ford_effect = "inverse sensitivity refitted by user with " \
+                          "polynomial order {value} (default %d)" % ford
             done = False
             while not done:
                 yran = [np.min(100.*af/area), np.max(100.*af/area)]
@@ -581,7 +667,26 @@ class MakeInvsens(BasePrimitive):
                 set_plot_lims(peff, xlim=[wall0, wall1], ylim=yran)
                 bokeh_plot(peff, self.context.bokeh_session)
                 if self.config.instrument.plot_level >= 2:
-                    input("Next? <cr>: ")
+                    pause(self.config.instrument, self.logger,
+                          what="Effective efficiency of telescope + KCWI (+ atmosphere) from the standard, with fit.",
+                          help=("What you see:\n"
+                                '  Title "<std> Efficiency": observed photons / expected photons on the\n'
+                                "  Keck aperture, in per cent (not extinction corrected).\n"
+                                '  Black: data. Red: polynomial fit. Blue x: masked points ("Rej").\n'
+                                "  Green verticals: fit limits. Black dashed / dash-dot horizontal: peak\n"
+                                "  and mean of the fit.\n"
+                                "What to look for:\n"
+                                "  Good: a smooth throughput curve; the red fit follows it without\n"
+                                "  wiggles, also near the green limits.\n"
+                                "  Bad: the fit oscillating at the ends (order too high, or limits too\n"
+                                "  wide), or bumps at absorption lines that were not masked.\n"
+                                "Your options:\n"
+                                "  <cr>  continue to the next plot. The fit order is chosen after the\n"
+                                "        residuals plot. Display only.\n"
+                                "Default:\n"
+                                "  <cr> continues. At plot_level 1 the plot is shown for twice\n"
+                                "  plot_pause seconds; at plot_level 0 it is not drawn."),
+                          who="MakeInvsens")
                 else:
                     time.sleep(2. * self.config.instrument.plot_pause)
 
@@ -602,7 +707,24 @@ class MakeInvsens(BasePrimitive):
                 set_plot_lims(pivs, xlim=[wall0, wall1], ylim=yran)
                 bokeh_plot(pivs, self.context.bokeh_session)
                 if self.config.instrument.plot_level >= 2:
-                    input("Next? <cr>: ")
+                    pause(self.config.instrument, self.logger,
+                          what="Inverse sensitivity (flux per e-/s) from the standard star, with its polynomial fit.",
+                          help=("What you see:\n"
+                                '  Title "<std> Inverse sensitivity", logarithmic y axis: reference flux\n'
+                                "  divided by observed e-/s, the curve that flux-calibrates later data.\n"
+                                "  Black: data. Red: polynomial fit (also drawn outside the limits,\n"
+                                "  where it is extrapolated). Blue x: masked points. Green verticals:\n"
+                                "  fit limits.\n"
+                                "What to look for:\n"
+                                "  Good: the red fit follows the black data closely between the limits.\n"
+                                "  Bad: systematic departures, or the fit turning sharply up or down\n"
+                                "  just outside the limits where you still need calibrated data.\n"
+                                "Your options:\n"
+                                "  <cr>  continue to the next plot. Display only.\n"
+                                "Default:\n"
+                                "  <cr> continues. At plot_level 1 the plot is shown for twice\n"
+                                "  plot_pause seconds; at plot_level 0 it is not drawn."),
+                          who="MakeInvsens")
                 else:
                     time.sleep(2. * self.config.instrument.plot_pause)
 
@@ -621,7 +743,23 @@ class MakeInvsens(BasePrimitive):
                 set_plot_lims(pcal, xlim=[wall0, wall1], ylim=yran)
                 bokeh_plot(pcal, self.context.bokeh_session)
                 if self.config.instrument.plot_level >= 2:
-                    input("Next? <cr>: ")
+                    pause(self.config.instrument, self.logger,
+                          what="Standard star calibrated with the fitted inverse sensitivity, over its reference spectrum.",
+                          help=("What you see:\n"
+                                '  Title "<std> Calibrated", flux in erg/s/cm^2/A.\n'
+                                "  Black: observed spectrum times the fitted inverse sensitivity.\n"
+                                "  Red: the star's reference spectrum. Green verticals: fit limits.\n"
+                                "What to look for:\n"
+                                "  Good: black lies on red between the limits, apart from narrow\n"
+                                "  features (absorption lines, telluric bands) that differ in resolution.\n"
+                                "  Bad: broad differences (fit order or limits) or a mismatch at a\n"
+                                "  feature you meant to mask.\n"
+                                "Your options:\n"
+                                "  <cr>  continue to the residuals. Display only.\n"
+                                "Default:\n"
+                                "  <cr> continues. At plot_level 1 the plot is shown for twice\n"
+                                "  plot_pause seconds; at plot_level 0 it is not drawn."),
+                          who="MakeInvsens")
                 else:
                     time.sleep(2. * self.config.instrument.plot_pause)
 
@@ -651,13 +789,42 @@ class MakeInvsens(BasePrimitive):
                 set_plot_lims(prsd, xlim=[wall0, wall1], ylim=yran)
                 bokeh_plot(prsd, self.context.bokeh_session)
                 if self.config.instrument.plot_level >= 2:
-                    qstr = input("Current fit order = %d, "
-                                 "New fit order? <int>, <cr> - done: " % ford)
-                    if len(qstr) <= 0:
+                    # The effect is logged below, once the refit has worked
+                    # (ask_value would log it on acceptance): the helper's
+                    # INFO line is dropped here, its DEBUG/WARNING lines kept.
+                    qstr = ask_value(
+                        SimpleNamespace(info=lambda msg: None,
+                                        debug=self.logger.debug,
+                                        warning=self.logger.warning),
+                        "Current fit order = %d. New fit order? <int> "
+                        "(<cr> = accept)" % ford,
+                        help=("What you see:\n"
+                              '  Title "<std> Residuals = <mean> +- <std> (%)": (calibrated -\n'
+                              "  reference) / reference in per cent, over the fit range.\n"
+                              "  Black: residuals. Blue x: masked points (if any). Green verticals:\n"
+                              "  fit limits. Red: mean. Black dashed: mean +- 1 standard deviation.\n"
+                              "What to look for:\n"
+                              "  Good: residuals scatter around zero with no large-scale wave.\n"
+                              "  Bad: a slow wave across the range (order too low), or oscillations\n"
+                              "  growing towards the limits (order too high, or limits too wide).\n"
+                              "Your options:\n"
+                              "  <cr>      accept the current fit order and finish.\n"
+                              "  <number>  refit with that polynomial order; the efficiency, inverse\n"
+                              "            sensitivity, calibrated and residual plots are shown again\n"
+                              "            and you are asked again.\n"
+                              "  The order goes into *_invsens.fits and *_ea.fits (keyword INVFORD).\n"
+                              "Default:\n"
+                              "  <cr> keeps the current order: 9 (7 for BL) times the dichroic\n"
+                              "  fraction, at least 3, unless you changed it. Below plot_level 2 the\n"
+                              "  default order is used without review."),
+                        parse=int, default=None, effect=ford_effect,
+                        who="MakeInvsens",
+                        what="Calibration residuals; accept the fit or enter a new polynomial order to refit.")
+                    if qstr is None:
                         done = True
                     else:
                         try:
-                            ford = int(qstr)
+                            ford = qstr
                             # update fit of inverse sensitivity
                             res = np.polyfit(wf - wf0, sf, deg=ford, w=mw)
                             finvsen = np.polyval(res, w - wf0)
@@ -678,6 +845,8 @@ class MakeInvsens(BasePrimitive):
                             self.logger.info(
                                 "Calibration residuals = %f +- %f %%" %
                                 (rsd_mean, rsd_stdv))
+                            self.logger.info("MakeInvsens: " +
+                                             ford_effect.format(value=ford))
                         except ValueError:
                             print("Bad fit order, try again")
                 else:

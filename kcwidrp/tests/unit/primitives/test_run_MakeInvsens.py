@@ -2,23 +2,30 @@
 
 Prompt sites (docs/plot_inventory.md, section 3.1):
 
-* P13 (plot_level >= 3): per slice, ``Next? <cr>, q - quit: ``.
-* P14 (plot_level > 1): wavelength limits, ``New values? <float> <float>
-  (or <cr> - done): `` -- two floats inside [WAVALL0, WAVALL1] set the fit
-  limits (INVFW0 / INVFW1), <cr> accepts.
-* P15 (plot_level >= 2): line masks, ``Mask line: wavelength start stop
-  (Ang) comment (str) <float> <float> <str> (<cr> - done): `` -- each
-  accepted mask is written to the local ``<std>.lmsk`` file.
-* P16-P18 (plot_level >= 2): ``Next? <cr>: `` after each of three figures.
-* P19 (plot_level >= 2): ``Current fit order = %d, New fit order? <int>,
-  <cr> - done: `` -- an integer refits with that polynomial order (INVFORD).
+* P13 (plot_level >= 3): per slice, ``Next? <cr>, q to quit (? for
+  help): ``.
+* P14 (plot_level > 1): wavelength limits, ``New fit limits? <float>
+  <float> (<cr> = accept) (? for help): `` -- two floats inside [WAVALL0,
+  WAVALL1] set the fit limits (INVFW0 / INVFW1), <cr> accepts.
+* P15 (plot_level >= 2): line masks, ``Mask line: <start> <stop> [comment]
+  in A (<cr> = done) (? for help): `` -- each accepted mask is written to
+  the local ``<std>.lmsk`` file.
+* P16-P18 (plot_level >= 2): ``Next? <cr> (? for help): `` after each of
+  three figures.
+* P19 (plot_level >= 2): ``Current fit order = %d. New fit order? <int>
+  (<cr> = accept) (? for help): `` -- an integer refits with that
+  polynomial order (INVFORD).
+(P.4 changed the prompt texts to the kcwi_interactive helper's; count and
+order are unchanged.)
 
-Known bugs pinned here as strict xfails (D8): B2 (one-number line mask),
-B3 (recorded fit order after a failed fit), B5 (an answer containing "q"
-quits, at P13), B6 (an invalid limits entry resets accepted limits), B13
-(the local .lmsk header is written back without newlines) and one new bug
-(B32, the shipped .lmsk files are never found).  The passing tests
-characterize today's behaviour for valid answers (D3/D12).
+Known bugs pinned here as strict xfails (D8): B3 (recorded fit order after
+a failed fit), B13 (the local .lmsk header is written back without
+newlines) and one new bug (B32, the shipped .lmsk files are never found).
+B2 (one-number line mask), B5 (an answer containing "q" quit, at P13) and
+B6 (an invalid limits entry reset accepted limits) were pinned too; P.4
+fixed them by converting the sites to kcwi_interactive and removed the
+markers.  The passing tests characterize today's behaviour for valid
+answers (D3/D12).
 
 Input: a synthetic DAR-corrected standard-star cube (the frame's OBJECT
 names a standard shipped in data/stds), built in memory.  At plot_level >= 1
@@ -48,16 +55,15 @@ WALL = (4000.0, 4599.0)        # WAVALL0/1 -> allowed range for new limits
 OUT = "kb260101_00001_invsens.fits"
 
 # Exact prompt strings (docs/plot_inventory.md P13-P19)
-P13 = "Next? <cr>, q - quit: "
-P14 = "New values? <float> <float> (or <cr> - done): "
-P15 = ("Mask line: wavelength start stop (Ang) comment (str) <float> "
-       "<float> <str> (<cr> - done): ")
-NEXT = "Next? <cr>: "
+P13 = "Next? <cr>, q to quit (? for help): "
+P14 = "New fit limits? <float> <float> (<cr> = accept) (? for help): "
+P15 = "Mask line: <start> <stop> [comment] in A (<cr> = done) (? for help): "
+NEXT = "Next? <cr> (? for help): "
 
 
 def P19(order):
-    return ("Current fit order = %d, New fit order? <int>, <cr> - done: "
-            % order)
+    return ("Current fit order = %d. New fit order? <int> (<cr> = accept) "
+            "(? for help): " % order)
 
 
 @pytest.fixture(autouse=True)
@@ -168,9 +174,6 @@ def test_slice_review_shows_every_slice(run_primitive, synthetic_ccddata,
 
 
 # ----------------------------------------------------------- known bugs
-@pytest.mark.xfail(strict=True, raises=AssertionError, reason=(
-    "B6: an invalid limits entry resets both limits to WAVGOOD, discarding "
-    "the limits accepted earlier in the loop (MakeInvsens.py:369-379)"))
 def test_invalid_limits_keep_accepted_limits(run_primitive,
                                              synthetic_ccddata, tmp_redux):
     # source: analytic @ c0fed5c - plan section 8.2 (ask_value keeps the
@@ -181,9 +184,6 @@ def test_invalid_limits_keep_accepted_limits(run_primitive,
     assert (hdr["INVFW0"], hdr["INVFW1"]) == (4100.0, 4500.0)
 
 
-@pytest.mark.xfail(strict=True, raises=IndexError, reason=(
-    "B2: a line mask with only one number raises IndexError at "
-    "qstr.split()[1]; only ValueError is caught (MakeInvsens.py:474-481)"))
 def test_one_number_line_mask_is_asked_again(run_primitive,
                                              synthetic_ccddata, tmp_redux):
     # source: analytic @ c0fed5c - plan section 8.2 - invalid input re-prompts
@@ -208,10 +208,6 @@ def test_failed_refit_keeps_recorded_order(run_primitive, synthetic_ccddata,
     assert hdr["INVFORD"] == 7
 
 
-@pytest.mark.xfail(strict=True, raises=pytest.fail.Exception, reason=(
-    "B5: 'Q' in qstr.upper() quits the per-slice review on any answer "
-    "containing q (MakeInvsens.py:196-198), so 'eq' ends the review and the "
-    "answers meant for the remaining slices are left over"))
 def test_answer_containing_q_does_not_quit(run_primitive, synthetic_ccddata,
                                            tmp_redux):
     # source: analytic @ c0fed5c - plan section 8.2 - quit is an exact match on
