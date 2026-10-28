@@ -72,9 +72,12 @@ KNOWN_UNREACHABLE = {
     "kcwi_pipeline": {
         "next_file_stop": "last entry of the table; nothing pushes it, no "
                           "event has it as next event, no script uses it",
+        "start_bokeh": "bokeh plan 3.1: alias of start_plot_viewer kept for "
+                       "old callers; the scripts now push start_plot_viewer",
     },
     "keck_rti_pipeline": {
         "next_file_stop": "same as in kcwi_pipeline",
+        "start_bokeh": "same as in kcwi_pipeline",
     },
 }
 

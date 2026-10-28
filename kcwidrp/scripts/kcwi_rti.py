@@ -8,19 +8,16 @@ from keckdrpframework.core.framework import Framework
 from keckdrpframework.config.framework_config import ConfigClass
 from keckdrpframework.models.arguments import Arguments
 from keckdrpframework.utils.drpf_logger import getLogger
-from kcwidrp.core.bokeh_plotting import check_running_process
 from kcwidrp.core.bokeh_plotting import init_plot_session
+from kcwidrp.core.plot_config import viewer_requested
 from kcwidrp.core.kcwi_get_std import is_file_kcwi_std
 from kcwidrp.core.kcwi_pkg_resources import get_resource_path
 
-import subprocess
-import time
 import datetime
 import argparse
 import sys
 import traceback
 import os
-import psutil
 import shutil
 
 from kcwidrp.pipelines.keck_rti_pipeline import Keck_RTI_Pipeline
@@ -360,18 +357,6 @@ def main():
         framework.config.instrument.minoscanpix = kcwi_config.minoscanpix
         framework.config.instrument.oscanbuf = kcwi_config.oscanbuf
 
-    # start the bokeh server is requested by the configuration parameters
-    if framework.config.instrument.enable_bokeh is True:
-        if check_running_process(process='bokeh') is False:
-            with open("bokeh_output.txt", "wb") as out:
-                subprocess.Popen('bokeh serve', shell=True, stderr=out,
-                                 stdout=out)
-            # --session-ids=unsigned --session-token-expiration=86400',
-            # shell=True)
-            time.sleep(5)
-        # subprocess.Popen('open http://localhost:5006?bokeh-session-id=kcwi',
-        # shell=True)
-
     # initialize the proctab and read it
     framework.context.proctab = Proctab()
     framework.context.proctab.read_proctab(framework.config.instrument.procfile)
@@ -379,10 +364,11 @@ def main():
     framework.logger.info("Framework initialized")
     framework.logger.info(f"RTI url is {framework.config.rti.rti_url}")
 
-    # add a start_bokeh event to the processing queue,
+    # add a start_plot_viewer event to the processing queue,
     # if requested by the configuration parameters
-    if framework.config.instrument.enable_bokeh:
-        framework.append_event('start_bokeh', None)
+    if viewer_requested(framework.config.instrument,
+                        framework.context.pipeline_logger):
+        framework.append_event('start_plot_viewer', None)
 
     # important: to be able to use the grouping mode, we need to reset
     # the default ingestion action to no-event,
