@@ -3,6 +3,7 @@ from kcwidrp.core.bokeh_plotting import bokeh_plot
 from kcwidrp.core.kcwi_plotting import save_plot
 from kcwidrp.core.kcwi_pkg_resources import get_resource_path
 from kcwidrp.primitives.kcwi_file_primitives import plotlabel
+from kcwidrp.core.kcwi_interactive import ask_value, pause
 
 
 from kcwidrp.core.kcwi_plotting import figure
@@ -13,7 +14,6 @@ import numpy as np
 from scipy.ndimage import gaussian_filter1d
 from scipy.interpolate import interpolate
 from scipy import signal
-import time
 
 
 class ReadAtlas(BasePrimitive):
@@ -189,15 +189,29 @@ class ReadAtlas(BasePrimitive):
                 p.line([req_offset_pix, req_offset_pix], [ylim_min, ylim_max],
                        color='green', legend_label='Reqested')
             bokeh_plot(p, self.context.bokeh_session)
-            if self.config.instrument.plot_level >= 2:
-                input("Next? <cr>: ")
-            else:
-                time.sleep(self.config.instrument.plot_pause)
+            pause(self.config.instrument, self.logger,
+                  what="Cross-correlation of the reference-bar arc with the lamp atlas: offset found.",
+                  help=("What you see:\n"
+                        '  Title "ATLAS OFFSET = <n> px": cross-correlation of the reference-bar\n'
+                        "  arc spectrum (on its calculated wavelengths) with the atlas spectrum,\n"
+                        "  against offset in atlas pixels (central third of the range).\n"
+                        '  Blue: cross-correlation. Red vertical ("Peak"): offset found.\n'
+                        "  Green vertical: offset requested with ATOFF (only if set).\n"
+                        "What to look for:\n"
+                        "  Good: one sharp peak clearly above the rest, with the red line on it.\n"
+                        "  Bad: several similar peaks or a broad hump: the offset is ambiguous.\n"
+                        "  Check the overlay in the next plot and set the offset there.\n"
+                        "Your options:\n"
+                        "  <cr>  continue to the overlay. Display only.\n"
+                        "Default:\n"
+                        "  <cr> continues. At plot_level 1 the plot is shown for plot_pause\n"
+                        "  seconds; at plot_level 0 it is not drawn."),
+                  who="ReadAtlas")
             # Get central wavelength
             cwave = self.action.args.cwave
             # Set up offset tweaking
             q = 'test'
-            while q:
+            while q is not None:
                 # Plot the two spectra
                 p = figure(title=plab + "ATLAS OFFSET = %.1f Ang (%d px)" %
                            (offset_wav, offset_pix),
@@ -221,16 +235,41 @@ class ReadAtlas(BasePrimitive):
                 bokeh_plot(p, self.context.bokeh_session)
 
                 if self.config.instrument.plot_level >= 2:
-                    q = input("Enter: <cr> - next, new offset (int px): ")
-                    if q:
-                        try:
-                            offset_pix = int(q)
-                            offset_wav = offset_pix * refdisp
-                        except ValueError:
-                            print("Try again: integer pixel values accepted")
-                            q = 'test'
+                    q = ask_value(
+                        self.logger, "New offset <int px> (<cr> = accept)",
+                        help=("What you see:\n"
+                              '  Title "ATLAS OFFSET = <A> Ang (<n> px)".\n'
+                              "  Blue: reference-bar arc spectrum (bar REFBAR), normalised, on its\n"
+                              "  calculated wavelengths minus the current offset.\n"
+                              "  Red: atlas spectrum of the lamp, normalised.\n"
+                              "  Magenta dash-dot: CWAVE.\n"
+                              "What to look for:\n"
+                              "  Good: blue and red lines coincide line for line over the range\n"
+                              "  (relative strengths differ; small misalignments at the ends are\n"
+                              "  fixed later, since the dispersion is not yet refined).\n"
+                              "  Bad: a constant shift between the two patterns. Enter a new offset:\n"
+                              "  a larger offset moves the blue spectrum to shorter wavelengths; the\n"
+                              "  title gives the offset in A and px, i.e. the atlas A per px.\n"
+                              "Your options:\n"
+                              "  <cr>      accept the offset shown and continue.\n"
+                              "  <number>  try that offset (integer atlas px); the plot is redrawn and\n"
+                              "            you are asked again.\n"
+                              "  The offset sets the starting wavelengths of every bar's fit, so it\n"
+                              "  changes the whole wavelength solution and all cubes using this arc.\n"
+                              "Default:\n"
+                              "  <cr> keeps the offset shown: the calculated one (or ATOFF if set)\n"
+                              "  unless you changed it. Below plot_level 2 that offset is used."),
+                        parse=int, default=None,
+                        effect="atlas offset set by user to {value} px "
+                               "(calculated %d px)" % calc_offset_pix,
+                        who="ReadAtlas",
+                        what="Reference-bar arc over the lamp atlas: accept the offset or enter a new one (atlas px).")
+                    if q is not None:
+                        offset_pix = q
+                        offset_wav = offset_pix * refdisp
                 else:
-                    time.sleep(self.config.instrument.plot_pause)
+                    # sleeps plot_pause (plot_level < 2), no prompt
+                    pause(self.config.instrument, self.logger)
                     q = None
             # save final plot of arc/atlas offset
             pfname = "arc_%05d_%s_%s_%s" % (
