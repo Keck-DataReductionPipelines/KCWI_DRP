@@ -39,8 +39,7 @@ STRICT = os.environ.get('KCWI_PLOT_STRICT', '') == '1'
 __all__ = ['STRICT', 'UnsupportedPlotFeature', 'figure', 'PlotFigure',
            'Range1d', 'LinearAxis', 'gridplot', 'PlotGrid', 'render',
            'pixel_size', 'snapshot', 'plot_label', 'save_plot',
-           'get_plot_lims', 'set_plot_lims', 'oplot_slices',
-           'configure_plot_driver']
+           'get_plot_lims', 'set_plot_lims', 'oplot_slices']
 
 
 class UnsupportedPlotFeature(TypeError):
@@ -789,15 +788,6 @@ def save_plot(fig, filename=None):
         logger.info(">>> Saving to %s" % fnam)
     except Exception as e:
         _failed("save_plot()", e)
-
-
-def configure_plot_driver(firefox_compat=False, prewarm=False):
-    """No-op.  PNGs are now written by Matplotlib, with no browser.
-
-    Kept only because ``StartBokeh`` still imports and calls it; remove it
-    when ``StartBokeh`` is replaced by ``StartPlotViewer`` (bokeh-plan 3.1).
-    """
-    return None
 
 
 # ---------------------------------------------------------------------------
