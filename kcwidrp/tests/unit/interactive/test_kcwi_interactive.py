@@ -169,10 +169,16 @@ def test_ask_next_quit_words(ki, script, log, answer):
 
 @pytest.mark.parametrize("answer", ["quiet", "sq", "Q1", "qq", "quits", "aqb"])
 @pytest.mark.parametrize("n_items", [None, 10])
-def test_ask_next_text_containing_q_is_not_quit(ki, script, log, answer, n_items):
-    # B5: any input containing q used to quit.  Other text is NEXT (D12).
-    script(answer)
-    assert ki.ask_next(log, "w", "h", n_items=n_items) == ki.NEXT
+def test_ask_next_text_containing_q_is_not_quit(ki, script, capsys, log,
+                                                answer, n_items):
+    # source: analytic - plan 8.2 rule: B5, any input containing q used to
+    # quit; now only q/quit quits and "other input containing a q
+    # re-prompts".  The second answer, q, shows the question was asked again
+    # (an exhausted script would also give NEXT, by the end-of-input default).
+    s = script(answer, "q")
+    assert ki.ask_next(log, "w", "h", n_items=n_items) == ki.QUIT
+    assert len(s.prompts) == 2 and s.consumed_all
+    assert capsys.readouterr().out.strip() != ""
 
 
 def test_ask_next_other_text_is_next(ki, script, log):
@@ -365,12 +371,22 @@ def test_yes_quit_quit_words(ki, script, log, answer):
     assert ki.ask_yes_quit(log, "Proceed? ", "h") is False
 
 
-@pytest.mark.parametrize("answer", ["quiet", "sq", "Q1", "yes", "no"])
-def test_yes_quit_other_text_reprompts(ki, script, log, answer):
-    # B5: text containing q must not quit; other text re-prompts.
-    s = script(answer, "")
-    assert ki.ask_yes_quit(log, "Proceed? ", "h") is True
+@pytest.mark.parametrize("answer", ["quiet", "sq", "Q1"])
+def test_yes_quit_text_containing_q_reprompts(ki, script, log, answer):
+    # source: analytic - plan 8.2 rule: B5, text containing q must not quit;
+    # it re-prompts.  The second answer, q, shows it was asked again.
+    s = script(answer, "q")
+    assert ki.ask_yes_quit(log, "Proceed? ", "h") is False
     assert len(s.prompts) == 2 and s.consumed_all
+
+
+@pytest.mark.parametrize("answer", ["yes", "no", "y", "zzz"])
+def test_yes_quit_other_text_proceeds_as_before(ki, script, log, answer):
+    # source: analytic - D12: today any text without a q proceeds
+    # (reduce_kcwi.py and kcwi_rti.py 'Proceed?' prompts), so it still does.
+    s = script(answer)
+    assert ki.ask_yes_quit(log, "Proceed? ", "h") is True
+    assert len(s.prompts) == 1 and s.consumed_all
 
 
 def test_yes_quit_help_then_quit(ki, script, capsys, log):
@@ -381,7 +397,7 @@ def test_yes_quit_help_then_quit(ki, script, capsys, log):
 
 
 def test_yes_quit_invalid_then_valid_prints_reason(ki, script, capsys, log):
-    script("zzz", "")
+    script("quiet", "")
     ki.ask_yes_quit(log, "Proceed? ", "h")
     assert capsys.readouterr().out.strip() != ""
 

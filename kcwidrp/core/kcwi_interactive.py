@@ -14,8 +14,10 @@ Every prompt the pipeline asks goes through one of four functions:
 
 Answers common to all of them (whitespace is stripped first):
 
-* **Quit** is exactly ``q`` or ``quit``, in any case.  Other text that
-  contains a ``q`` is not a quit.
+* **Quit** is exactly ``q`` or ``quit``, in any case.  In ``ask_next`` and
+  ``ask_yes_quit``, other text that contains a ``q`` is not a quit: it asks
+  again (before Track P it quit, bug B5).  Text without a ``q`` keeps the
+  meaning it had before (D12): "next" or "proceed".
 * **Help** is ``?`` or ``help``: the long ``help`` text is printed and the
   question is asked again.  It never counts as an answer.
 
@@ -50,6 +52,7 @@ QUIT = "quit"
 _QUIT_WORDS = ("q", "quit")
 _HELP_WORDS = ("?", "help")
 _HELP_HINT = " (? for help): "
+_NOT_QUIT = "To quit, type q or quit; press <cr> to go on."
 
 _end_of_input = False
 
@@ -139,7 +142,8 @@ def ask_next(logger, what, help, n_items=None, current=None, who=None):
 
     Returns ``QUIT`` for ``q``/``quit`` (exact, any case), the item number
     for an integer in ``current+1 ... n_items-1`` (``current=None`` is read
-    as -1), and ``NEXT`` for an empty answer or any other text.  With
+    as -1), and ``NEXT`` for an empty answer or other text without a ``q``.
+    Text containing a ``q`` that is not a quit word asks again (B5).  With
     ``n_items`` given, an integer outside that range prints the valid range
     and asks again.  ``?``/``help`` prints ``help`` and asks again.
 
@@ -168,6 +172,9 @@ def ask_next(logger, what, help, n_items=None, current=None, who=None):
                 _prefix(who),
                 "" if current is None else " at item %d" % current))
             return QUIT
+        if "q" in word:
+            print(_NOT_QUIT)
+            continue
         if n_items is None:
             break
         try:
@@ -230,7 +237,8 @@ def ask_yes_quit(logger, prompt, help, who=None):
 
     The prompt shown is ``prompt`` plus `` (? for help): `` unless it already
     ends with ``": "``.  ``q``/``quit`` (exact, any case) returns ``False``;
-    ``?``/``help`` prints ``help`` and asks again; any other text asks again.
+    ``?``/``help`` prints ``help`` and asks again; other text containing a
+    ``q`` asks again (B5); any other text proceeds, as before (D12).
 
     End of input: by default warns once and returns ``True`` (later prompts
     return their defaults without asking); with ``KCWI_STRICT_INPUT=1``
@@ -249,5 +257,8 @@ def ask_yes_quit(logger, prompt, help, who=None):
             return False
         if word in _HELP_WORDS:
             _show_help(help)
+        elif "q" in word:
+            print(_NOT_QUIT)
         else:
-            print("Press <cr> to proceed or q to quit.")
+            log.debug("%sproceed" % _prefix(who))
+            return True
