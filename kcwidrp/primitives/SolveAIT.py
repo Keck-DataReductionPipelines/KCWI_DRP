@@ -5,7 +5,7 @@ from kcwidrp.core.kcwi_plotting import set_plot_lims, save_plot
 import os
 import numpy as np
 from scipy.interpolate import interpolate
-from bokeh.plotting import figure
+from kcwidrp.core.kcwi_plotting import figure
 from astropy.io import fits as pf
 
 

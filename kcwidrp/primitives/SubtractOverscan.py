@@ -3,8 +3,8 @@ from kcwidrp.core.bokeh_plotting import bokeh_plot
 from kcwidrp.core.kcwi_plotting import save_plot
 from kcwidrp.core.bokeh_plotting import bokeh_clear
 
-from bokeh.plotting import figure
-from bokeh.layouts import gridplot
+from kcwidrp.core.kcwi_plotting import figure
+from kcwidrp.core.kcwi_plotting import gridplot
 import numpy as np
 import math
 import time

@@ -4,8 +4,7 @@ from kcwidrp.primitives.kcwi_file_primitives import plotlabel
 
 import numpy as np
 import logging
-from bokeh.util.logconfig import basicConfig
-from bokeh.plotting import figure
+from kcwidrp.core.kcwi_plotting import figure
 from scipy.signal import find_peaks
 import time
 
@@ -23,7 +22,6 @@ class FindBars(BasePrimitive):
     def __init__(self, action, context):
         BasePrimitive.__init__(self, action, context)
         self.logger = context.pipeline_logger
-        basicConfig(level=logging.ERROR)
 
     def _pre_condition(self):
         self.logger.info("Checking for master contbars")
