@@ -5,6 +5,7 @@ from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer, \
 import numpy as np
 
 from astropy.nddata import CCDData
+from kcwidrp.core.kcwi_interactive import ask_value
 
 
 class NandshuffSubtractSky(BasePrimitive):
@@ -179,19 +180,38 @@ class NandshuffSubtractSky(BasePrimitive):
             else:
                 self.logger.warning(
                     "non-standard nod-and-shuffle configuration")
-                skyscl = -1.
-                while skyscl < 0.:
-                    if self.config.instrument.plot_level >= 2:
-                        q = input("Enter scale factor for sky to match obj "
-                                  "(float): ")
-                        try:
-                            skyscl = float(q)
-                        except ValueError:
-                            self.logger.warning(
-                                "Invalid input: %s, try again" % q)
-                            skyscl = -1.0
-                    else:
-                        skyscl = 1.0
+                if self.config.instrument.plot_level >= 2:
+                    # today's check: anything float() reads that is not
+                    # negative (0, nan and inf included: B7, PR3b)
+                    skyscl = ask_value(
+                        self.logger,
+                        "Enter scale factor for sky to match obj <float> "
+                        "(<cr> = 1.0)",
+                        help=("What you see:\n"
+                              "  No new plot. This blue-camera frame has its nod-and-shuffle panels in\n"
+                              "  the inverted order left by an aborted N&S script, so the sky panel\n"
+                              "  need not have the same sky exposure as the object panel.\n"
+                              "What to look for:\n"
+                              "  Estimate the ratio of the sky level in the object panel to that in\n"
+                              "  the sky panel, e.g. from a bright sky line in the *_int.fits image\n"
+                              "  (ds9). 1.0 means equal sky in both panels.\n"
+                              "Your options:\n"
+                              "  <number>  multiply the sky panel by it, then subtract it from the\n"
+                              "            object panel. Changes *_intk.fits and *_sky.fits; the value\n"
+                              "            is recorded as NASSCL. 0 means no sky subtraction.\n"
+                              "  <cr>      use 1.0.\n"
+                              "  Negative numbers and text are refused.\n"
+                              "Default:\n"
+                              "  <cr> uses 1.0, as the reduction does below plot_level 2."),
+                        parse=float, default=1.0,
+                        effect="nod-and-shuffle sky scale set by user to "
+                               "{value} (default 1.0)",
+                        validate=lambda v: "must not be negative"
+                        if v < 0. else None,
+                        who="NandshuffSubtractSky",
+                        what="Aborted (inverted) nod-and-shuffle frame: enter the scale for the sky panel.")
+                else:
+                    skyscl = 1.0
                 self.logger.info("Sky scaling used = %.2f" % skyscl)
                 objstd = self.action.args.ccddata.uncertainty.array.copy()
                 objmsk = self.action.args.ccddata.mask.copy()
@@ -263,19 +283,39 @@ class NandshuffSubtractSky(BasePrimitive):
             else:
                 self.logger.warning(
                     "non-standard nod-and-shuffle configuration")
-                skyscl = -1.
-                while skyscl < 0.:
-                    if self.config.instrument.plot_level >= 2:
-                        q = input("Enter scale factor for sky to match obj "
-                                  "(float): ")
-                        try:
-                            skyscl = float(q)
-                        except ValueError:
-                            self.logger.warning(
-                                "Invalid input: %s, try again" % q)
-                            skyscl = -1.0
-                    else:
-                        skyscl = 1.0
+                if self.config.instrument.plot_level >= 2:
+                    # today's check: anything float() reads that is not
+                    # negative (0, nan and inf included: B7, PR3b)
+                    skyscl = ask_value(
+                        self.logger,
+                        "Enter scale factor for sky to match obj <float> "
+                        "(<cr> = 1.0)",
+                        help=("What you see:\n"
+                              "  No new plot. This red-camera frame has its nod-and-shuffle panels in\n"
+                              "  a non-standard order, so the sky panel need not have the same sky\n"
+                              "  exposure as the object panel.\n"
+                              "What to look for:\n"
+                              "  Estimate the ratio of the sky level in the object panel to that in\n"
+                              "  the sky panel, e.g. from a bright sky line in the *_int.fits image\n"
+                              "  (ds9). 1.0 means equal sky in both panels.\n"
+                              "Your options:\n"
+                              "  <number>  scale factor for the sky panel, recorded as NASSCL.\n"
+                              "  <cr>      use 1.0.\n"
+                              "  Negative numbers and text are refused.\n"
+                              "  Note: in this version the red-channel branch does not apply the\n"
+                              "  factor and stops with an error after this prompt (known bug), so no\n"
+                              "  *_intk.fits is written for this frame.\n"
+                              "Default:\n"
+                              "  <cr> uses 1.0, as the reduction does below plot_level 2."),
+                        parse=float, default=1.0,
+                        effect="nod-and-shuffle sky scale set by user to "
+                               "{value} (default 1.0)",
+                        validate=lambda v: "must not be negative"
+                        if v < 0. else None,
+                        who="NandshuffSubtractSky",
+                        what="Aborted (inverted) nod-and-shuffle frame: enter the scale for the sky panel.")
+                else:
+                    skyscl = 1.0
                 self.logger.info("Sky scaling used = %.2f" % skyscl)
                 skystd = self.action.args.ccddata.uncertainty.array.copy()
                 skymsk = self.action.args.ccddata.mask.copy()

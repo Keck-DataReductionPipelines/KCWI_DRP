@@ -7,9 +7,10 @@ observation was aborted and the panels are inverted, sky in rows SHUFROWS
 "non-standard" configuration, where the user is asked for a sky scale
 factor (docs/plot_inventory.md P37/P38):
 
-    ``Enter scale factor for sky to match obj (float): ``
+    ``Enter scale factor for sky to match obj <float> (<cr> = 1.0)
+    (? for help): ``  (P.4; was ``... obj (float): ``)
 
-at plot_level >= 2 (1.0 is used below that).  The object panel is moved onto
+at plot_level >= 2 (1.0 is used below that, and for <cr>).  The object panel is moved onto
 the sky panel and ``obj - scale * sky`` is formed there; NASSCL records the
 scale.  Negative or non-numeric answers are asked again.
 
@@ -24,7 +25,8 @@ from kcwidrp.primitives.NandshuffSubtractSky import NandshuffSubtractSky
 
 HEAD = "c0fed5c"
 SHUF = 20
-PROMPT = "Enter scale factor for sky to match obj (float): "
+PROMPT = ("Enter scale factor for sky to match obj <float> (<cr> = 1.0) "
+          "(? for help): ")
 NS = {"nasmask": True, "numopen": 2}     # set by ingest from BNASNAM/NUMOPEN
 SKY, OBJ = 100.0, 350.0
 
@@ -70,10 +72,12 @@ def test_valid_scale_is_applied(run_primitive, synthetic_ccddata):
 
 def test_negative_and_non_numeric_are_asked_again(run_primitive,
                                                   synthetic_ccddata):
-    # source: characterization @ c0fed5c (inventory P37)
+    # source: characterization @ c0fed5c (inventory P37).  (An empty answer
+    # was asked again too until P.4; it now takes the default 1.0,
+    # docs/interactive_prompts P37, so it is no longer in this list.)
     out = run(run_primitive, blue_frame(synthetic_ccddata), 2,
-              ["-1", "abc", "", "0.5"])
-    assert run_primitive.last.prompts == [PROMPT] * 4
+              ["-1", "abc", "0.5"])
+    assert run_primitive.last.prompts == [PROMPT] * 3
     assert out.header["NASSCL"] == 0.5
 
 
