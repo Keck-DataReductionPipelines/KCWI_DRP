@@ -315,9 +315,6 @@ class Keck_RTI_Pipeline(BasePipeline):
         "nandshuff_flux_calibrate":  ("FluxCalibrate",
                                       "flux_calibration_started",   # icubes
                                       "alert_rti"),
-        "alert_rti":                 ("SendHTTP",
-                                      "http_started",
-                                      None),
         "next_file_stop":            ("ingest_file", "file_ingested", None)
     }
 

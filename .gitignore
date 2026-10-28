@@ -8,3 +8,12 @@
 /dist
 *.DS_STORE
 settings.json
+# S.3 reference reductions: commit only text files under docs/baseline/
+docs/baseline/**
+!docs/baseline/**/
+!docs/baseline/**/*.md
+!docs/baseline/**/*.txt
+!docs/baseline/**/*.json
+
+# Local virtual environment (docs/testing.md)
+.venv/

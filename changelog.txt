@@ -29,3 +29,9 @@
 	-Fixed StackFlats reading only the first flat N times (since 1.2.0): stacked flats now combine every input flat, and the stacked uncertainty is rescaled with the data
 1.3.4:
 	-Fixed MakeMasterFlat BM ledge correction: with several ledge peaks the highest one is now used (previously a position near the start of the search window), and when no ledge peak is found the correction is skipped with a warning instead of failing (previously no master flat was made, so no object frame could be reduced)
+Unreleased:
+	-Removed the Travis CI configuration (.travis.yml) and the Travis references in README.rst
+	-There is currently no CI; tests are run locally, see docs/testing.md
+	-pytest moved from the runtime dependencies to a "test" extra (with hypothesis and pytest-cov); install with pip install -e ".[test]"
+	-enable_bokeh = False now works at every plot_level (previously plotting primitives failed with AttributeError, and SubtractOverscan failed at plot_level 3 when no Bokeh session was available)
+	-Removed a duplicate alert_rti event definition from the RTI pipeline (no behaviour change)
