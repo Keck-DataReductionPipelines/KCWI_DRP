@@ -763,6 +763,23 @@ Rules:
 - **Text location:** short `what` and long `help` strings live at the call site, as keyword arguments, so a reader of the primitive sees what the user is told. No central text registry.
 - **Text template** for `help`: *What you see* (plot title, which colour is which) / *What to look for* (good vs. bad) / *Your options* (each answer and its effect on the reduction) / *Default*.
 
+#### Interface fixed for parallel work (2026-10-28)
+
+P.0, P.1 and P.2 run in parallel, so the names are fixed here; semantics are §8.2's. In `kcwidrp/core/kcwi_interactive.py`:
+
+- `NEXT`, `QUIT`: return values of `ask_next`.
+- `pause(config, logger, what=None, help=None, who=None)`: `config` is `self.config.instrument`. At `plot_level >= 2` prints `what` (if given) and asks `Next? <cr> (? for help): `; otherwise `time.sleep(config.plot_pause)` and no input. Returns `None`.
+- `ask_next(logger, what, help, n_items=None, current=None, who=None)`: always asks (call sites keep today's `plot_level` guards). Prompt `Next? <cr>, q to quit (? for help): `, or with `n_items` given `Next? <cr>, <int> to jump, q to quit (? for help): `. Returns `NEXT`, `QUIT`, or an int in `current+1 … n_items-1` (with `current=None` read as -1); any other number re-prompts with the valid range. Text that is neither empty, `?`/`help`, a quit word nor a valid number is `NEXT`, as today (D12: input accepted today keeps its meaning), except that a number outside the range re-prompts (B4).
+- `ask_value(logger, prompt, help, parse, default, effect, validate=None, who=None)`: `parse(text) -> value` raises `ValueError` on bad input; `validate(value) -> None or reason string`; an empty answer returns `default`; a parse or validation failure prints the reason and asks again (the previously accepted value is kept by the caller, B6). On acceptance of a non-default value, logs INFO `"<who>: " + effect.format(value=value)`. The prompt shown is `prompt` plus ` (? for help): ` if it does not already end with `:`-space.
+- `ask_yes_quit(logger, prompt, help, who=None) -> bool`: `True` to proceed (`<cr>`), `False` for `q`/`quit`; other text re-prompts.
+- Quit words (§8.2): `q` or `quit`, exact, case-insensitive, whitespace stripped. Help words: `?` or `help`; they print `help` and ask again, never counting as an answer.
+- Input is read with `builtins.input` looked up at each call (never bound at import), so the regression prompt recorder (D15) sees every prompt.
+- End of input (D4): default mode logs one WARNING naming the prompt, returns the default, and every later prompt in the process returns its default without reading input or warning again (`pause` → proceed, `ask_next` → `NEXT`, `ask_value` → `default`, `ask_yes_quit` → `True`). `KCWI_STRICT_INPUT=1`, read at each call, re-raises `EOFError`. `reset_end_of_input()` clears the end-of-input state (for tests).
+- `who` is the primitive's name, used as the `"<who>: "` prefix of log lines (no prefix when `None`). Pure "next" answers are logged at DEBUG. Explanations (`what`, `help`) go to stdout only.
+- The module imports neither Matplotlib nor Bokeh nor any `kcwidrp` plotting module.
+
+P.0 writes each prompt's `what` (one line) and `help` (template above) in `docs/interactive_prompts.md`; P.3/P.4 paste them into the call sites.
+
 ### P.0 Prompt catalogue and explanation text — Opus 5.5 (medium)
 
 Depends on: S.5. Produces `docs/interactive_prompts.md`: one section per logical prompt, using the S.5 prompt table, with the drafted `what` and `help` text following the template. This is domain writing (what a good arc fit or atlas cross-correlation looks like), hence Opus.
