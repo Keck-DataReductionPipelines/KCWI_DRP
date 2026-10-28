@@ -497,17 +497,30 @@ def test_line_alpha_keyword_line_alpha():
     assert li['alpha'] == pytest.approx(0.25, rel=1e-12)
 
 
-@pytest.mark.parametrize("name, ls", [
-    # source: published - plan 1.1 trap "Dash names": 'dashed', 'dashdot',
-    # 'dotted' map by name to Matplotlib's '--', '-.', ':'
-    ('dashed', '--'), ('dashdot', '-.'), ('dotted', ':')])
-def test_trap_dash_names(name, ls):
+def dash_shape(line):
+    """The on/off dash sequence of a Line2D relative to its first dash, or
+    None for a solid line (independent of line width and units)."""
+    seq = line._unscaled_dash_pattern[1]
+    return None if not seq else [v / seq[0] for v in seq]
+
+
+# source: published - Bokeh 2.4.3 dash patterns (core/property/
+# visual.py DashPattern): dashed [6, 6], dotted [2, 4], dashdot [6, 4, 2, 4]
+BOKEH_DASH = {'dashed': [1., 1.], 'dotted': [1., 2.],
+              'dashdot': [1., 4 / 6, 2 / 6, 4 / 6]}
+
+
+@pytest.mark.parametrize("name", ['dashed', 'dashdot', 'dotted'])
+def test_trap_dash_names(name):
     p = fig_()
     p.line(X, Y)
     p.line(X, Y + 1, line_dash=name)
-    got = [line_info(l)['ls'] for l in glyph_lines(rendered(p).axes[0])]
-    # source: published - Matplotlib: a solid line is '-'
-    assert got == ['-', ls]
+    got = [dash_shape(l) for l in glyph_lines(rendered(p).axes[0])]
+    # source: published - plan 1.1 trap "Dash names": each name maps to its
+    # own pattern; the shape is Bokeh's (a solid line has no dashes)
+    # Tolerance: ratios of float64 lengths, relative 1e-9.
+    assert got[0] is None
+    assert got[1] == pytest.approx(BOKEH_DASH[name], rel=1e-9)
 
 
 @pytest.mark.parametrize("glyph", ['circle', 'scatter', 'diamond'])
@@ -528,8 +541,18 @@ def test_marker_shapes():
     p.diamond(X, Y + 3)
     ms = markers(rendered(p).axes[0])
     # source: published - plan 1.1 table: `scatter` with no marker is a
-    # circle (FitCenter); 'x' is the only named marker; diamond is a diamond
-    assert [m['kind'] for m in ms] == ['o', 'o', 'x', 'D']
+    # circle (FitCenter); 'x' is the only named marker
+    assert [m['kind'] for m in ms][:3] == ['o', 'o', 'x']
+    # source: published - Bokeh 2.4.3 diamond marker (markers/defs.ts): a
+    # rhombus as tall as `size` and 2/3 as wide, not Matplotlib's square 'D'
+    # Tolerance: path vertices are exact fractions, absolute 1e-12.
+    verts = np.asarray(ms[3]['kind'].vertices)
+    w = verts[:, 0].max() - verts[:, 0].min()
+    h = verts[:, 1].max() - verts[:, 1].min()
+    assert w / h == pytest.approx(2 / 3, abs=1e-12)
+    unit = verts / (h / 2)
+    for corner in [(0., 1.), (2 / 3, 0.), (0., -1.), (-2 / 3, 0.)]:
+        assert np.min(np.hypot(*(unit - corner).T)) < 1e-12, corner
 
 
 def test_circle_and_scatter_default_size_is_four_pixels():
@@ -640,10 +663,11 @@ def test_quad_rectangles():
     # source: published - Bokeh alpha applies to the fill (and line); the
     # RGBA of a Matplotlib patch already carries the alpha
     assert rs[0]['face'][3] == pytest.approx(0.5, rel=1e-12)
-    # source: analytic - x data 0..3, y data 0..3, 10 % padding of span 3
+    # source: analytic - x data 0..3, y data 0..3, Bokeh's padding of 5 % of
+    # the span 3 at each end (Bokeh 2.4.3 data_range1d.js)
     # Tolerance: float64 arithmetic, relative 1e-12.
-    assert ax.get_xlim() == pytest.approx((-0.3, 3.3), rel=1e-9)
-    assert ax.get_ylim() == pytest.approx((-0.3, 3.3), rel=1e-9)
+    assert ax.get_xlim() == pytest.approx((-0.15, 3.15), rel=1e-9)
+    assert ax.get_ylim() == pytest.approx((-0.15, 3.15), rel=1e-9)
 
 
 def test_quad_scalar_edges_broadcast():
@@ -762,12 +786,13 @@ def test_default_limits_pad_ten_percent_like_bokeh(glyph):
     p = fig_()
     getattr(p, glyph)(X, Y)
     ax = rendered(p).axes[0]
-    # source: published - plan 1.1 appearance defaults: Bokeh DataRange1d
-    # pads 10 % of the span, not Matplotlib's 5 %.
-    # x span 10 -> (-1, 11); y span 100 -> (-10, 110)
+    # source: published - Bokeh 2.4.3 DataRange1d (data_range1d.js):
+    # span = (max - min) * (1 + range_padding), range_padding = 0.1, centred,
+    # so 5 % of the span is added at each end.
+    # x span 10 -> (-0.5, 10.5); y span 100 -> (-5, 105)
     # Tolerance: float64 arithmetic on values ~1e2, relative 1e-12.
-    assert ax.get_xlim() == pytest.approx((-1., 11.), rel=1e-9)
-    assert ax.get_ylim() == pytest.approx((-10., 110.), rel=1e-9)
+    assert ax.get_xlim() == pytest.approx((-0.5, 10.5), rel=1e-9)
+    assert ax.get_ylim() == pytest.approx((-5., 105.), rel=1e-9)
 
 
 def test_limits_cover_all_glyphs_on_the_axes():
@@ -775,10 +800,11 @@ def test_limits_cover_all_glyphs_on_the_axes():
     p.line(X, Y)
     p.circle([20.], [-50.])
     ax = rendered(p).axes[0]
-    # source: analytic - x data 0..20 (pad 2), y data -50..100 (pad 15)
+    # source: analytic - x data 0..20 (pad 1), y data -50..100 (pad 7.5),
+    # 5 % of the span at each end as Bokeh's DataRange1d
     # Tolerance: float64 arithmetic, relative 1e-12.
-    assert ax.get_xlim() == pytest.approx((-2., 22.), rel=1e-9)
-    assert ax.get_ylim() == pytest.approx((-65., 115.), rel=1e-9)
+    assert ax.get_xlim() == pytest.approx((-1., 21.), rel=1e-9)
+    assert ax.get_ylim() == pytest.approx((-57.5, 107.5), rel=1e-9)
 
 
 @pytest.mark.parametrize("make", [
@@ -792,7 +818,7 @@ def test_figure_y_range_forms(make):
     # source: published - plan 1.1 table: figure(y_range=[lo, hi]) accepts a
     # list, tuple or Range1d and sets fixed y limits; x stays automatic
     assert ax.get_ylim() == (2., 8.)
-    assert ax.get_xlim() == pytest.approx((-1., 11.), rel=1e-9)
+    assert ax.get_xlim() == pytest.approx((-0.5, 10.5), rel=1e-9)
 
 
 def test_range1d_both_forms():
@@ -824,13 +850,14 @@ def test_range_start_and_end_are_settable_on_their_own():
     ax = rendered(p).axes[0]
     # source: published - plan 1.1 table: each of x/y_range.start/.end
     # settable on its own, leaving the other end automatic (SolveArcs sets
-    # only y_range.start = 0).  The automatic end keeps Bokeh's 10 % pad:
-    # y end = 100 + 10 = 110; x start = 0 - 1 = -1.
+    # only y_range.start = 0).  The automatic end keeps Bokeh's padding
+    # (5 % of the data span at each end, Bokeh 2.4.3 data_range1d.js):
+    # y end = 100 + 5 = 105; x start = 0 - 0.5 = -0.5.
     # Tolerance: float64 arithmetic, relative 1e-12.
     assert ax.get_ylim()[0] == 0
-    assert ax.get_ylim()[1] == pytest.approx(110., rel=1e-9)
+    assert ax.get_ylim()[1] == pytest.approx(105., rel=1e-9)
     assert ax.get_xlim()[1] == 7
-    assert ax.get_xlim()[0] == pytest.approx(-1., rel=1e-9)
+    assert ax.get_xlim()[0] == pytest.approx(-0.5, rel=1e-9)
 
 
 def test_all_four_range_ends_set_like_set_plot_lims():
@@ -871,9 +898,10 @@ def test_range_padding_zero_on_one_axis_only():
     p.line(X, Y)
     p.x_range.range_padding = 0
     ax = rendered(p).axes[0]
-    # source: published - plan 1.1 table; y keeps the default 10 % pad
+    # source: published - plan 1.1 table; y keeps Bokeh's default padding
+    # (5 % of the span at each end, Bokeh 2.4.3 data_range1d.js)
     assert ax.get_xlim() == (0., 10.)
-    assert ax.get_ylim() == pytest.approx((-10., 110.), rel=1e-9)
+    assert ax.get_ylim() == pytest.approx((-5., 105.), rel=1e-9)
 
 
 def test_set_plot_lims_sets_the_four_ends():
@@ -894,7 +922,7 @@ def test_set_plot_lims_with_one_argument_leaves_the_other_automatic():
     ax = rendered(p).axes[0]
     # source: published - inventory 2.5: only the given limit is assigned
     assert ax.get_ylim() == (10., 70.)
-    assert ax.get_xlim() == pytest.approx((-1., 11.), rel=1e-9)
+    assert ax.get_xlim() == pytest.approx((-0.5, 10.5), rel=1e-9)
 
 
 def test_set_plot_lims_before_or_after_the_glyphs_is_the_same():
@@ -923,7 +951,9 @@ def test_oplot_slices_draws_23_black_dashdot_lines():
     assert all(np.array_equal(line_info(l)['y'], [0., 100.]) for l in ls)
     assert all(mcolors.to_hex(line_info(l)['colour']) == '#000000'
                for l in ls)
-    assert all(line_info(l)['ls'] == '-.' for l in ls)
+    # Tolerance: ratios of float64 lengths, relative 1e-9.
+    assert all(dash_shape(l) == pytest.approx(BOKEH_DASH['dashdot'],
+                                              rel=1e-9) for l in ls)
     assert ax.get_legend() is None
 
 
