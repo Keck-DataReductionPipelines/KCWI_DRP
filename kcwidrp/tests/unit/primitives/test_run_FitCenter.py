@@ -6,10 +6,11 @@ pascal_shift.)
 Prompt sites (docs/plot_inventory.md, section 3.1):
 
 * P08 (plot_level >= 2), after the central-dispersion figure of bar
-  ``next_bar_to_plot``: ``Next? <int> or <cr>, q to quit: `` -- <cr> next
+  ``next_bar_to_plot``: ``Next? <cr>, <int> to jump, q to quit (? for
+  help): `` (P.4: was ``Next? <int> or <cr>, q to quit: ``) -- <cr> next
   bar, integer n jumps to bar n, q stops the review.
-* P09, P10 (plot_level >= 2): ``Next? <cr>: `` after the two summary
-  figures.
+* P09, P10 (plot_level >= 2): ``Next? <cr> (? for help): `` (P.4: was
+  ``Next? <cr>: ``) after the two summary figures.
 
 Input: the arc-chain state that ExtractArcs, ArcOffsets, CalcPrelimDisp and
 ReadAtlas leave (``context.arcs``, ``bar_offsets``, ``prelim_disp``; args
@@ -24,9 +25,10 @@ through the builtin ``map``.  ``bokeh_plot`` is replaced by a recorder of
 figure titles (it is a no-op with bokeh_session None), and ``save_plot``
 (PNG export through a browser) by a no-op.
 
-Known bug pinned as a strict xfail (D8): B4 (a bar number lower than or
-equal to the current one, negative, or >= the number of bars silently ends
-the review).
+B4 (a bar number lower than or equal to the current one, negative, or >=
+the number of bars silently ended the review) was pinned as a strict xfail
+(D8); P.4 fixed it by converting the site to ``kcwi_interactive.ask_next``
+and removed the marker.
 """
 import re
 from types import SimpleNamespace
@@ -39,8 +41,8 @@ from kcwidrp.primitives.FitCenter import FitCenter
 
 HEAD = "c0fed5c"
 NBARS, NPIX, CWAVE, DISP = 8, 200, 4600.0, 1.0
-P08 = "Next? <int> or <cr>, q to quit: "
-NEXT = "Next? <cr>: "
+P08 = "Next? <cr>, <int> to jump, q to quit (? for help): "
+NEXT = "Next? <cr> (? for help): "
 LINES = [4520.0, 4547.0, 4580.0, 4601.0, 4633.0, 4655.0, 4690.0]
 
 
@@ -122,11 +124,6 @@ def test_number_jumps_and_q_quits(run_primitive, synthetic_ccddata, shown):
     assert shown == [0, 3, 4]
 
 
-@pytest.mark.xfail(strict=True, raises=pytest.fail.Exception, reason=(
-    "B4: a bar number <= the current bar, negative, or >= the number of "
-    "bars never matches the loop index (FitCenter.py:339-346), so the "
-    "review silently ends and the answers meant for later bars are left "
-    "over"))
 @pytest.mark.parametrize("bad", ["1", "3", "-2", str(NBARS)])
 def test_out_of_range_bar_number_is_asked_again(run_primitive,
                                                 synthetic_ccddata, shown,

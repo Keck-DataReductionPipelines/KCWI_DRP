@@ -3,6 +3,7 @@ from kcwidrp.core.bokeh_plotting import bokeh_plot
 from kcwidrp.core.kcwi_plotting import get_plot_lims, oplot_slices, \
     set_plot_lims, save_plot
 from kcwidrp.primitives.kcwi_file_primitives import plotlabel
+from kcwidrp.core.kcwi_interactive import ask_next, pause, NEXT, QUIT
 
 from kcwidrp.core.kcwi_plotting import figure
 import numpy as np
@@ -10,7 +11,6 @@ import math
 from scipy.interpolate import interpolate
 from multiprocessing import get_context
 from scipy import signal
-import time
 
 
 def pascal_shift(coefficients=None, x0=None):
@@ -336,14 +336,35 @@ class FitCenter(BasePrimitive):
                 p.line([self.context.prelim_disp, self.context.prelim_disp],
                        ylim, color='red', legend_label="Calc Disp")
                 bokeh_plot(p, self.context.bokeh_session)
-                q = input("Next? <int> or <cr>, q to quit: ")
-                if 'Q' in q.upper():
+                q = ask_next(
+                    self.logger,
+                    what="Atlas cross-correlation peak against trial central dispersion for this bar.",
+                    help=("What you see:\n"
+                          '  Title "CENTRAL DISPERSION FIT for Bar: <n> Slice: <s>".\n'
+                          "  x: trial central dispersion (A/px), within 5 % of the calculated one.\n"
+                          "  y: peak of the cross-correlation of this bar's central arc spectrum\n"
+                          "  with the atlas at that dispersion.\n"
+                          '  Red circles joined by a blue line: the scan ("Data").\n'
+                          "  Green vertical: dispersion adopted (maximum of the interpolated scan,\n"
+                          "  searched in the middle third of the range).\n"
+                          "  Red vertical: dispersion calculated from the grating equation.\n"
+                          "What to look for:\n"
+                          "  Good: one clear maximum, green line on it, close to the red line.\n"
+                          "  Bad: flat, noisy or multi-peaked scan, or the maximum at the edge of\n"
+                          "  the middle third: the atlas offset (ReadAtlas) or the arc is suspect.\n"
+                          "Your options:\n"
+                          "  <cr>      show the next bar.\n"
+                          "  <number>  jump to that bar (after the current one, up to 119).\n"
+                          "  q / quit  stop showing bars. Display only: nothing is changed.\n"
+                          "Default:\n"
+                          "  <cr> shows the next bar. Below plot_level 2 these plots are not shown."),
+                    n_items=len(results), current=ir, who="FitCenter")
+                if q == QUIT:
                     do_inter = False
+                elif q == NEXT:
+                    next_bar_to_plot = ir + 1
                 else:
-                    try:
-                        next_bar_to_plot = int(q)
-                    except ValueError:
-                        next_bar_to_plot = ir + 1
+                    next_bar_to_plot = q
 
         self.action.args.twkcoeff = twkcoeff
         # Plot results
@@ -366,10 +387,24 @@ class FitCenter(BasePrimitive):
             p.legend.location = "top_center"
             set_plot_lims(p, xlim=xlim, ylim=ylim)
             bokeh_plot(p, self.context.bokeh_session)
-            if self.config.instrument.plot_level >= 2:
-                input("Next? <cr>: ")
-            else:
-                time.sleep(self.config.instrument.plot_pause)
+            pause(self.config.instrument, self.logger,
+                  what="Central wavelength found for every bar, against bar number.",
+                  help=("What you see:\n"
+                        '  Title "CENTRAL VALUES", y "Central Wavelength (A)".\n'
+                        "  Blue x: the central wavelength fitted for each bar.\n"
+                        "  Red line: CWAVE, the grating central wavelength from the header.\n"
+                        "  Black dash-dot lines: slice boundaries.\n"
+                        "What to look for:\n"
+                        "  Good: values close to CWAVE, a smooth repeating pattern from slice to\n"
+                        "  slice, no isolated points.\n"
+                        "  Bad: a bar far from its neighbours has a wrong central fit; its final\n"
+                        "  wavelength solution starts from a wrong guess.\n"
+                        "Your options:\n"
+                        "  <cr>  continue. Display only: the reduction is not changed.\n"
+                        "Default:\n"
+                        "  <cr> continues. At plot_level 1 the plot is shown for plot_pause\n"
+                        "  seconds; at plot_level 0 it is not drawn."),
+                  who="FitCenter")
             # save plots of central wavelengths
             pfname = "arc_%05d_%s_%s_%s" % (
                 self.action.args.ccddata.header['FRAMENO'],
@@ -394,10 +429,24 @@ class FitCenter(BasePrimitive):
             p.legend.location = "bottom_center"
             set_plot_lims(p, xlim=xlim, ylim=ylim)
             bokeh_plot(p, self.context.bokeh_session)
-            if self.config.instrument.plot_level >= 2:
-                input("Next? <cr>: ")
-            else:
-                time.sleep(self.config.instrument.plot_pause)
+            pause(self.config.instrument, self.logger,
+                  what="Central dispersion found for every bar, against bar number.",
+                  help=("What you see:\n"
+                        '  Title "CENTRAL VALUES", y "Central Dispersion (A)".\n'
+                        "  Blue x: the central dispersion (A/px) fitted for each bar.\n"
+                        "  Red line: dispersion calculated from the grating equation.\n"
+                        "  Black dash-dot lines: slice boundaries.\n"
+                        "What to look for:\n"
+                        "  Good: all bars close to each other and to the red line, varying\n"
+                        "  smoothly across the field.\n"
+                        "  Bad: isolated bars far off, or values at the edge of the scanned range\n"
+                        "  (5 % either side of the red line): a failed central fit.\n"
+                        "Your options:\n"
+                        "  <cr>  continue. Display only: the reduction is not changed.\n"
+                        "Default:\n"
+                        "  <cr> continues. At plot_level 1 the plot is shown for plot_pause\n"
+                        "  seconds; at plot_level 0 it is not drawn."),
+                  who="FitCenter")
             save_plot(p, filename=pfname + '_cdisp.png')
 
         log_string = FitCenter.__module__
