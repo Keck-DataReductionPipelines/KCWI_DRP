@@ -235,14 +235,14 @@ def test_scan_finds_expected_reads(scan):
     # (58 after bokeh plan 5.1: enable_bokeh is no longer read as an
     # attribute by the scripts; viewer_requested() reads it via getattr)
     assert len(scan.attr_reads) == 58, sorted(scan.attr_reads)
-    # source: characterization @ upgrade-start. reduce_kcwi.py and
-    # kcwi_rti.py (8 override checks each, same keys), plus the two keys read
-    # through viewer_requested() (bokeh plan 5.1). The plot viewer's own
-    # options are read by StartPlotViewer.py (bokeh plan 3.1): when that
-    # merges, add its keys here.
+    # source: characterization @ upgrade-start, amended by bokeh 3.1 and 5.1:
+    # reduce_kcwi.py and kcwi_rti.py (8 override checks each, same keys), the
+    # two keys read through viewer_requested(), and StartPlotViewer.py's two
+    # keys (StartBokeh.py's three keys are gone)
     assert sorted(scan.getattr_keys) == [
         "atoff", "enable_bokeh", "enable_plot_viewer", "fracmax", "linelist",
-        "linethresh", "midfrac", "skipsky", "taperfrac", "tukeyalpha"]
+        "linethresh", "midfrac", "plot_viewer_open_browser",
+        "plot_viewer_port", "skipsky", "taperfrac", "tukeyalpha"]
 
 
 def test_no_aliases_of_config_instrument(scan):

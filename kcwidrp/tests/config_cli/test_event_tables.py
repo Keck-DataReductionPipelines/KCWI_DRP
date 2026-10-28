@@ -384,5 +384,6 @@ def test_event_counts():
     # a parser that silently found nothing would pass every other test).
     # Entries counted in the dict literal, duplicates included; the RTI
     # table had 99 before its duplicate `alert_rti` was removed (B23).
+    # bokeh 3.1 added `start_plot_viewer` to both tables (+1 each).
     counts = {key: len(_entries(*PIPELINES[key])) for key in PIPELINES}
-    assert counts == {"kcwi_pipeline": 97, "keck_rti_pipeline": 98}, counts
+    assert counts == {"kcwi_pipeline": 98, "keck_rti_pipeline": 99}, counts

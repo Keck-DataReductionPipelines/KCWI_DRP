@@ -1,56 +1,57 @@
 """
+Hand-off from the primitives to the live plot viewer.
+
+The names are kept from the Bokeh era so primitives do not change: the
+viewer is a :class:`kcwidrp.core.plot_viewer.PlotViewer`, still stored as
+``context.bokeh_session`` (None when no viewer runs).
+
 Created on Aug 8, 2019
 
 @author: lrizzi
 """
+import logging
 
-# from bokeh.io import curdoc
-from bokeh.plotting import output_file, save
-from bokeh.plotting.figure import Figure
-from bokeh.models import Column
-from bokeh.plotting.figure import figure
-from bokeh.layouts import column
 import psutil
-# import subprocess
-import os
-# import time
+
+logger = logging.getLogger('KCWI')
 
 
 def bokeh_plot(plot, session):
+    """Show a recorded plot in the viewer ``session``.
 
-    # NOT TESTED YET
-
+    Returns at once; does nothing when ``session`` is None; never raises.
+    """
     if session is None:
         return
-
-    new_figure = session.document.select_one(selector=dict(type=Figure))
-    layout = session.document.select_one(selector=dict(type=Column))
-
-    layout.children.remove(new_figure)
-    layout.children.insert(0, plot)
-    session.push()
-
-
-def init_plot_session(context):
-    """Ensure context.bokeh_session exists (None if Bokeh is not running).
-
-    Primitives read context.bokeh_session unconditionally, but StartBokeh
-    only sets it when enable_bokeh is true (B9).
-    """
-    if not hasattr(context, 'bokeh_session'):
-        context.bokeh_session = None
+    try:
+        session.show(plot)
+    except Exception as e:
+        logger.warning("Could not send the plot to the plot viewer: %s", e)
+        logger.debug("bokeh_plot failure", exc_info=True)
 
 
 def bokeh_clear(session):
+    """Show an empty figure in the viewer ``session``.
 
+    Returns at once; does nothing when ``session`` is None; never raises.
+    """
     if session is None:
         return
+    try:
+        session.clear()
+    except Exception as e:
+        logger.warning("Could not clear the plot viewer: %s", e)
+        logger.debug("bokeh_clear failure", exc_info=True)
 
-    session.document.clear()
-    p = figure()
-    c = column(children=[p])
-    session.document.clear()
-    session.document.add_root(c)
+
+def init_plot_session(context):
+    """Ensure context.bokeh_session exists (None if no viewer is running).
+
+    Primitives read context.bokeh_session unconditionally, but
+    StartPlotViewer only sets it when the viewer is enabled (B9).
+    """
+    if not hasattr(context, 'bokeh_session'):
+        context.bokeh_session = None
 
 
 def check_running_process(process=None):
@@ -69,20 +70,3 @@ def check_running_process(process=None):
                 psutil.ZombieProcess):
             pass
     return False
-
-
-def bokeh_save(plot):
-
-    # NOT TESTED YET
-
-    cwd = os.getcwd()
-    filename = os.path.join(cwd, 'plots', 'plot.html')
-    # try:
-    #    os.remove(filename)
-    # except OSError:
-    #    pass
-    output_file(filename)
-    save(plot)
-
-    # time.sleep(1)
-    # subprocess.Popen("open %s" % filename, shell=True)
