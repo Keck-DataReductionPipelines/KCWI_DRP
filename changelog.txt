@@ -44,4 +44,4 @@ Unreleased:
 	-Dropped the preference for non-snap Firefox/geckodriver added in PR #218 (v1.3.2): Firefox is no longer used
 	-Dependencies: removed bokeh, selenium, phantomjs and the jinja2 < 3.1 pin; added tornado; replaced pyregion with regions. This fixes kcwi_masksky_ds9, which already imported regions and failed with ModuleNotFoundError in a clean install
 	-smart_reduce_kcwi imports again (it imported check_bokeh_server, which no longer existed)
-	-environment.yml brought into line with pyproject.toml (Python 3.12, current pins, none of the Bokeh/Firefox packages)
+	-Removed requirements.txt and environment.yml: pyproject.toml is the only dependency list (install with pip install . or pip install -e ".[test]")
