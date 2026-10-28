@@ -156,25 +156,39 @@ class Tab:
                   {"type": "refresh"}):
             await self.conn.write_message(json.dumps(m))
 
+    QUIET = 0.15    # s of silence that ends a pump early
+
     async def pump(self, seconds):
+        """Handle messages for up to ``seconds``.  Returns early once the
+        exchange has settled: something arrived, no requested frame is
+        outstanding, and nothing more came for QUIET seconds."""
         end = time.time() + seconds
+        got_any = awaiting_frame = False
         while time.time() < end:
+            wait = end - time.time()
+            if got_any and not awaiting_frame:
+                wait = min(wait, self.QUIET)
             try:
                 msg = await asyncio.wait_for(self.conn.read_message(),
-                                             max(0.01, end - time.time()))
+                                             max(0.01, wait))
             except asyncio.TimeoutError:
-                break
+                if got_any and not awaiting_frame:
+                    break
+                continue
             if msg is None:
                 break
+            got_any = True
             if isinstance(msg, bytes):
                 w, h = struct.unpack(">II", msg[16:24])
                 self.frames.append((w, h))
                 self.blobs.append(msg)
+                awaiting_frame = False
                 await self.conn.write_message(json.dumps({"type": "ack"}))
             else:
                 ev = json.loads(msg)
                 self.events.append(ev)
                 if ev["type"] == "draw":
+                    awaiting_frame = True
                     await self.conn.write_message(json.dumps({"type": "draw"}))
 
     async def send(self, **m):
