@@ -30,6 +30,10 @@ import pytest
 
 LOW, HIGH = 25000, 55000
 
+# Real servers and WebSocket round trips (~12 s for the file): kept out of
+# the default run for the 60 s budget; run with `pytest -m viewer`.
+pytestmark = pytest.mark.viewer
+
 
 # ----------------------------------------------------------------- helpers
 def _bindable(port):

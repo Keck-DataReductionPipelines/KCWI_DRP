@@ -11,9 +11,10 @@ There is no CI. Tests are run locally before every pull request (see [Before ope
 | Suite | Command | What it contains | Limits |
 |---|---|---|---|
 | **Fast** | `pytest` | Unit, property (invariant), config and CLI tests | Whole suite under 60 s on a laptop; no display, no network, no data outside the repository |
+| **Viewer** | `pytest -m viewer` | Tests that start the live plot viewer and drive it through a fake browser tab (`unit/plotting/test_plot_viewer.py`) | About 12 s; no display, no network beyond `127.0.0.1`. Kept out of `pytest` to keep the fast suite under 60 s (maintainer decision, 2026-10-28) |
 | **Regression** | `pytest -m regression` (quick profile), `pytest -m regression --regression-profile=full` | Full reductions of real datasets from `$KCWI_REGRESSION_DATA`, compared with blessed reference outputs | Run by hand; skipped with the reason `KCWI_REGRESSION_DATA not set` when the variable is unset |
 
-`pytest` with no arguments never runs a regression test (`-m "not regression"` is the default in `pyproject.toml`).
+`pytest` with no arguments never runs a regression or viewer test (`-m "not regression and not viewer"` is the default in `pyproject.toml`).
 
 ## 2. Layout
 
@@ -42,6 +43,7 @@ Registered in `pyproject.toml`; `--strict-markers` rejects any other marker.
 |---|---|
 | `regression` | Needs `$KCWI_REGRESSION_DATA`; runs a full reduction. Only in `regression/` |
 | `slow` | A fast-suite test that takes more than 2 s. Each use carries a comment saying why it cannot be faster. Expected to be rare |
+| `viewer` | Starts the live plot viewer and talks to it as a browser would. Run with `pytest -m viewer` |
 
 ## 4. What counts as a fast-suite test
 
@@ -167,7 +169,7 @@ From the repository root:
 pytest
 ```
 
-This runs `kcwidrp/tests/` without the regression tests (`-m "not regression"` is the default in `pyproject.toml`). It needs no display, no network and no data directory. It must finish in under 60 s (section 1), measured as the time pytest reports at the end of a run in an environment that has run the suite before. On the maintainer's laptop (Apple M4) that is about 32 s. The first run in a new environment takes longer (49 s reported, about a minute of wall time, in a fresh venv) because Python first compiles every module. A suite that gets close to the limit is a problem to fix, not to live with.
+This runs `kcwidrp/tests/` without the regression and viewer tests (`-m "not regression and not viewer"` is the default in `pyproject.toml`). It needs no display, no network and no data directory. It must finish in under 60 s (section 1), measured as the time pytest reports at the end of a run in an environment that has run the suite before. On the maintainer's laptop (Apple M4) that is about 32 s. The first run in a new environment takes longer (49 s reported, about a minute of wall time, in a fresh venv) because Python first compiles every module. A suite that gets close to the limit is a problem to fix, not to live with.
 
 The run prints many warnings (about 1100: polynomial-fit `RankWarning`s, deprecations in pipeline code, `SyntaxWarning: invalid escape sequence` from docstrings). They are expected and are not failures; deprecations raised from `kcwidrp` code are deliberately left visible (only third-party ones are filtered in `pyproject.toml`).
 
@@ -418,7 +420,7 @@ Notes for real tests:
 
 Do all of the following, and put the results in the pull request description (`.github/pull_request_template.md` has a heading for each item; it is a proposal and can be dropped or changed by the maintainer).
 
-1. Run `pytest` and paste its summary line into the pull request description.
+1. Run `pytest` and paste its summary line into the pull request description. If the pull request touches plotting (`core/kcwi_plotting.py`, `core/_plot_render.py`, `core/plot_viewer.py`, `core/bokeh_plotting.py`, `StartPlotViewer`), also run `pytest -m viewer` and paste its summary line.
 2. If the pull request changes reduction code, run `pytest -m regression` (quick profile; full profile for pull requests that touch plotting or prompt code, and for releases) and paste the report's summary table. If it does not touch reduction code, say "not reduction code" and why.
 3. A regression failure is resolved by a fix, or by a bless with a reason from the allowed list (section 10). Quote each bless in the description: the entry, the reason text and the diff summary. Only the maintainer runs a bless.
 4. If the pull request fixes a known bug, the `xfail` marker of its test is removed in the same commit, and the description names the bug ID. No `xfail` is added without a bug or task ID in its reason, and none is left for a bug that is fixed.

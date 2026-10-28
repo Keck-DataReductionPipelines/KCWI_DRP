@@ -60,10 +60,11 @@ testpaths = ["kcwidrp/tests"]
 # importlib import mode: test files need no __init__.py and same-named files
 # in different directories (e.g. test_x.py in unit/core and unit/primitives)
 # do not clash.
-addopts = "--import-mode=importlib --strict-markers -m 'not regression'"
+addopts = "--import-mode=importlib --strict-markers -m 'not regression and not viewer'"
 markers = [
     "regression: needs $KCWI_REGRESSION_DATA; runs a full reduction (only in kcwidrp/tests/regression/)",
     "slow: a fast-suite test that takes more than 2 s (rare; the test says why)",
+    "viewer: drives a live plot viewer through a fake browser tab (pytest -m viewer)",
 ]
 filterwarnings = [
     # Ignore DeprecationWarning only where the warning is raised by a
