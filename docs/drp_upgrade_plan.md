@@ -684,6 +684,12 @@ No workflow is added now (Q15). The suite is built so that adding one later is a
 
 Execute [bokeh_port_plan.md](bokeh_port_plan.md) tasks 0.3, 1.1, 1.2, 2.1, 2.2, 3.1, 3.2, 4.1, 4.2, 4.3 and 5.1 as written, with these amendments. Task 5.1b is out of scope (amendment 13).
 
+Status (2026-10-28, branch `upgrade/pr1-bokeh`, started from PR0's head before PR0 merged):
+- **Done:** 0.3 (prototype and decision; Ubuntu run and browser checks still 👤), 1.1, 1.2, 2.1, 2.2 (MakeCube keeps its `fork` pool), 3.1, 3.2, 4.1 (`kcwidrp/tests/regression/plot_compare_page.py`), 5.1 (with D26: `requirements.txt` and `environment.yml` deleted). 1.1, 1.2, 2.x, 3.x, 4.1 and 5.1 were built in parallel against the interfaces in bokeh plan 0.3, then integrated; plot style per D27.
+- **Development environment** (S.2 step 3): `kcwidrp-dev`, recorded in `docs/baseline/env_dev.txt`.
+- **Regression:** full profile, baseline env, before the D27 style changes: 96 passed (all 12 entries, every tier). Full profile in the development environment: see the PR1 description.
+- **Still open:** 👤 0.3 on Ubuntu and in a browser; 👤 3.1 interactive MakeInvsens cursor-readout session and the in-`reduce_kcwi` checks (two processes, `lsof` before and after); 4.2 first-pass comparison and 👤 4.3 sign-off, then the "bokeh port 4.3" bless of the plots; the PR1 description.
+
 ### Amendments
 
 1. **Shared tasks.** Bokeh 0.1 → S.3; 0.2 → S.5; 0.4 → S.4; 0.5 → S.1. Bokeh 5.2 → R.1; 5.3 → R.2; 5.4 → R.3 (which also covers Track M).
