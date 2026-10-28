@@ -35,3 +35,13 @@ Unreleased:
 	-pytest moved from the runtime dependencies to a "test" extra (with hypothesis and pytest-cov); install with pip install -e ".[test]"
 	-enable_bokeh = False now works at every plot_level (previously plotting primitives failed with AttributeError, and SubtractOverscan failed at plot_level 3 when no Bokeh session was available)
 	-Removed a duplicate alert_rti event definition from the RTI pipeline (no behaviour change)
+	-Bokeh is replaced by Matplotlib for all plots. Saved PNG files keep their names and sizes; their appearance has changed
+	-Live plot viewer: each pipeline process serves its plots at a URL on 127.0.0.1 (default port 5006; if taken, the next 9 ports are tried), printed at start-up. There is one viewer, and one browser tab, per process. The tab no longer opens by itself; open the printed URL, or set plot_viewer_open_browser = True
+	-No bokeh server, Firefox, geckodriver, selenium or phantomjs are needed any more; the bokeh server launch and its 5 second start-up wait are gone from reduce_kcwi, start_kcwi_rti and smart_reduce_kcwi
+	-New config keys (kcwi.cfg and kcwi_koarti.cfg): enable_plot_viewer, plot_viewer_port (default 5006) and plot_viewer_open_browser (default False). enable_plot_viewer controls the live viewer only; saved PNGs follow plot_level
+	-enable_bokeh is deprecated: it is still honoured when enable_plot_viewer is absent, and a deprecation warning is logged once per process
+	-Removed config keys plot_firefox_compat, plot_prewarm_firefox and terminate_on_failed_bokeh_start (old config files that still contain them load without error). A failed viewer start now always logs a warning and the reduction continues
+	-Dropped the preference for non-snap Firefox/geckodriver added in PR #218 (v1.3.2): Firefox is no longer used
+	-Dependencies: removed bokeh, selenium, phantomjs and the jinja2 < 3.1 pin; added tornado; replaced pyregion with regions. This fixes kcwi_masksky_ds9, which already imported regions and failed with ModuleNotFoundError in a clean install
+	-smart_reduce_kcwi imports again (it imported check_bokeh_server, which no longer existed)
+	-environment.yml brought into line with pyproject.toml (Python 3.12, current pins, none of the Bokeh/Firefox packages)

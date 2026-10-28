@@ -45,19 +45,21 @@ RUNTIME_SET_KEYS = {
 }
 
 # getattr(..., 'key', default) / hasattr(..., 'key') keys that may be absent
-# from kcwi.cfg. Empty today: the keys read this way (StartBokeh.py's three
-# bokeh options; the command-line override checks in reduce_kcwi.py and
-# kcwi_rti.py) are all in kcwi.cfg. Add an entry, with a reason, only for a
+# from kcwi.cfg. Empty today: the keys read this way (the plot viewer options;
+# the command-line override checks in reduce_kcwi.py and kcwi_rti.py) are all
+# in kcwi.cfg. Add an entry, with a reason, only for a
 # key whose absence from kcwi.cfg is intended.
 GETATTR_MAY_BE_ABSENT = {}
 
 # "Deprecated" allow-list: keys the code still reads for backward
 # compatibility although kcwi.cfg no longer defines them (so they are exempt
-# from the "must exist in kcwi.cfg" rule). Empty now. Bokeh plan 5.1 will add
-# `enable_bokeh` here, when the plot viewer replaces the bokeh server and the
-# code only reads the old key to warn about it. Each entry must still be read
-# by the code (a stale entry fails).
-DEPRECATED_READ_ONLY = {}
+# from the "must exist in kcwi.cfg" rule). Each entry must still be read by
+# the code (a stale entry fails).
+DEPRECATED_READ_ONLY = {
+    "enable_bokeh": "bokeh plan 5.1: deprecated alias of enable_plot_viewer, "
+                    "read by plot_config.viewer_requested() to honour old "
+                    "config files and warn",
+}
 
 # Keys defined in kcwi.cfg that no code reads. Each needs a reason. The
 # CRR_* entries are bug B25 (plan §13); remove them when it is fixed.
@@ -86,6 +88,11 @@ KOARTI_VALUE_DIFFERENCES = {
     # cosmic ray rejection off in effect (no frame is that long).
     "crr_minexptime": (60.0, 100000.0),
 }
+
+
+# Keys read inside plot_config.viewer_requested(), which the launch scripts
+# call with config.instrument (the scan cannot see inside it).
+VIEWER_REQUESTED_KEYS = ("enable_plot_viewer", "enable_bokeh")
 
 
 # --- the scan ------------------------------------------------------------------
@@ -145,6 +152,15 @@ class Scan:
                     self._getattr(path, par)
                 elif (isinstance(par, ast.Assign) and node in par.targets):
                     pass  # `framework.config.instrument = kcwi_config`
+                elif (isinstance(par, ast.Call) and par.args
+                        and par.args[0] is node
+                        and isinstance(par.func, ast.Name)
+                        and par.func.id == "viewer_requested"):
+                    # plot_config.viewer_requested(config.instrument, ...)
+                    # reads these two keys with getattr(..., None)
+                    for key in VIEWER_REQUESTED_KEYS:
+                        self.getattr_keys.setdefault(key, []).append(
+                            (where(par), True))
                 else:
                     self.aliases.append(where(node))
             if is_script:
@@ -216,13 +232,17 @@ def koarti_keys():
 
 def test_scan_finds_expected_reads(scan):
     # source: characterization @ dfbcf9d (plan T.6: 59 distinct keys)
-    assert len(scan.attr_reads) == 59, sorted(scan.attr_reads)
-    # source: characterization @ upgrade-start. StartBokeh.py (3 keys),
-    # reduce_kcwi.py and kcwi_rti.py (8 override checks each, same keys)
+    # (58 after bokeh plan 5.1: enable_bokeh is no longer read as an
+    # attribute by the scripts; viewer_requested() reads it via getattr)
+    assert len(scan.attr_reads) == 58, sorted(scan.attr_reads)
+    # source: characterization @ upgrade-start. reduce_kcwi.py and
+    # kcwi_rti.py (8 override checks each, same keys), plus the two keys read
+    # through viewer_requested() (bokeh plan 5.1). The plot viewer's own
+    # options are read by StartPlotViewer.py (bokeh plan 3.1): when that
+    # merges, add its keys here.
     assert sorted(scan.getattr_keys) == [
-        "atoff", "fracmax", "linelist", "linethresh", "midfrac",
-        "plot_firefox_compat", "plot_prewarm_firefox", "skipsky",
-        "taperfrac", "terminate_on_failed_bokeh_start", "tukeyalpha"]
+        "atoff", "enable_bokeh", "enable_plot_viewer", "fracmax", "linelist",
+        "linethresh", "midfrac", "skipsky", "taperfrac", "tukeyalpha"]
 
 
 def test_no_aliases_of_config_instrument(scan):

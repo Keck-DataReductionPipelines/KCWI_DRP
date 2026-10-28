@@ -274,7 +274,7 @@ The draft is a starting point. The maintainer reads every entry in `manifest.jso
 
 - **Entries.** One per dataset, channel and level: `ds01_blue_L0`, `_L1`, `_L3`, and the same for red. A level for which you made no reference still gets an entry; remove it, or leave it and bless it with reason `initial` after a first run (see below).
 - **Profile and plot level.** `L1` is `quick`; `L0` and `L3` are `full` (decision D16). `plot_level` agrees with the level. A level-3 entry has an `answers` file.
-- **Config overrides.** `enable_bokeh` is off and `plot_pause` is 0, so no viewer opens during a run.
+- **Config overrides.** `enable_plot_viewer` is off and `plot_pause` is 0, so no viewer opens during a run.
 - **Tolerances.** The drafted manifest has none: every float comparison is exact. A tolerance may be added only with a written `reason` in the entry, approved by the maintainer (section 6); the manifest loader refuses a tolerance without a reason.
 - **Provenance gaps.** The draft prints what it could not find under "Could not determine / check by hand". Typical gaps: a reference with no `git version=` in its HISTORY (the S.3 ds01 runs were a plain `pip install .`, so only the version is recorded), `iers: null` (the IERS table versions are not determined until a bless records them), and references that do not exist yet. Fill in what you know; leave `null` rather than guess.
 - **Checksums.** `verify-checksums` must say `ok` for every entry.

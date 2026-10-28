@@ -31,7 +31,7 @@ def test_draft_manifest_entries_and_checksums(make_world):
     assert by["ds9_blue_L3"]["answers_sha256"] == sha(
         w.data / "answers" / "answers_ds9_fake_blue_3.txt")
     assert by["ds9_blue_L1"]["config_overrides"] == {
-        "enable_bokeh": False, "plot_pause": 0, "plot_level": 1}
+        "enable_plot_viewer": False, "plot_pause": 0, "plot_level": 1}
     assert by["ds9_blue_L1"]["sky_file"] == "kcwi.sky"
     assert any("no reference/ds9_blue_L1" in n for n in notes)
     assert mf.validate_manifest(manifest) == []

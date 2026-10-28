@@ -10,7 +10,7 @@ astropy==6.1.7
     #   astroscrappy
     #   ccdproc
     #   kcwidrp (pyproject.toml)
-    #   pyregion
+    #   regions
     #   reproject
 astropy-healpix==1.1.3
     # via reproject
@@ -20,18 +20,10 @@ astroscrappy==1.1.0
     # via
     #   ccdproc
     #   kcwidrp (pyproject.toml)
-attrs==26.1.0
-    # via
-    #   outcome
-    #   trio
-bokeh==2.4.3
-    # via kcwidrp (pyproject.toml)
 ccdproc==2.4.3
     # via kcwidrp (pyproject.toml)
 certifi==2026.2.25
-    # via
-    #   requests
-    #   selenium
+    # via requests
 charset-normalizer==3.4.6
     # via requests
 click==8.3.1
@@ -60,12 +52,8 @@ fsspec==2026.2.0
     #   reproject
 google-crc32c==1.8.0
     # via zarr
-h11==0.16.0
-    # via wsproto
 idna==3.11
-    # via
-    #   requests
-    #   trio
+    # via requests
 imageio==2.37.3
     # via
     #   pims
@@ -74,10 +62,6 @@ importlib-resources==6.5.2
     # via
     #   kcwidrp (pyproject.toml)
     #   keckdrpframework
-jinja2==3.0.3
-    # via
-    #   bokeh
-    #   kcwidrp (pyproject.toml)
 keckdrpframework==1.0.0
     # via kcwidrp (pyproject.toml)
 kiwisolver==1.5.0
@@ -86,8 +70,6 @@ lazy-loader==0.5
     # via scikit-image
 locket==1.0.0
     # via partd
-markupsafe==3.0.3
-    # via jinja2
 matplotlib==3.9.4
     # via kcwidrp (pyproject.toml)
 networkx==3.6.1
@@ -99,7 +81,6 @@ numpy==1.26.4
     #   astropy
     #   astropy-healpix
     #   astroscrappy
-    #   bokeh
     #   ccdproc
     #   contourpy
     #   dask
@@ -112,20 +93,15 @@ numpy==1.26.4
     #   pandas
     #   pims
     #   pyerfa
-    #   pyregion
+    #   regions
     #   reproject
     #   scikit-image
     #   scipy
     #   tifffile
     #   zarr
-outcome==1.3.0.post0
-    # via
-    #   trio
-    #   trio-websocket
 packaging==26.0
     # via
     #   astropy
-    #   bokeh
     #   dask
     #   lazy-loader
     #   matplotlib
@@ -140,11 +116,8 @@ pandas==2.3.3
     #   keckdrpframework
 partd==1.4.2
     # via dask
-phantomjs==1.4.1
-    # via kcwidrp (pyproject.toml)
 pillow==12.1.1
     # via
-    #   bokeh
     #   imageio
     #   matplotlib
     #   reproject
@@ -162,13 +135,7 @@ pyerfa==2.0.1.5
     #   astropy
     #   kcwidrp (pyproject.toml)
 pyparsing==3.3.2
-    # via
-    #   matplotlib
-    #   pyregion
-pyregion==2.3.0
-    # via kcwidrp (pyproject.toml)
-pysocks==1.7.1
-    # via urllib3
+    # via matplotlib
 python-dateutil==2.9.0.post0
     # via
     #   matplotlib
@@ -178,10 +145,11 @@ pytz==2026.1.post1
 pyyaml==6.0.3
     # via
     #   astropy
-    #   bokeh
     #   dask
     #   donfig
 ref-index==1.0
+    # via kcwidrp (pyproject.toml)
+regions==0.11
     # via kcwidrp (pyproject.toml)
 reproject==0.19.0
     # via ccdproc
@@ -198,16 +166,10 @@ scipy==1.14.1
     #   kcwidrp (pyproject.toml)
     #   reproject
     #   scikit-image
-selenium==4.41.0
-    # via kcwidrp (pyproject.toml)
 six==1.17.0
     # via python-dateutil
 slicerator==1.1.0
     # via pims
-sniffio==1.3.1
-    # via trio
-sortedcontainers==2.4.0
-    # via trio
 tifffile==2026.3.3
     # via
     #   dask-image
@@ -218,28 +180,14 @@ toolz==1.1.0
     #   dask
     #   partd
 tornado==6.5.5
-    # via bokeh
-trio==0.33.0
-    # via
-    #   selenium
-    #   trio-websocket
-trio-websocket==0.12.2
-    # via selenium
+    # via kcwidrp (pyproject.toml)
 typing-extensions==4.15.0
     # via
-    #   bokeh
     #   numcodecs
-    #   selenium
     #   zarr
 tzdata==2025.3
     # via pandas
-urllib3[socks]==2.6.3
-    # via
-    #   requests
-    #   selenium
-websocket-client==1.9.0
-    # via selenium
-wsproto==1.3.2
-    # via trio-websocket
+urllib3==2.6.3
+    # via requests
 zarr==3.1.5
     # via reproject

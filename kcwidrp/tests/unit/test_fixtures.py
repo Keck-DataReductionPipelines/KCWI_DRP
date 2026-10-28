@@ -31,7 +31,7 @@ def test_kcwi_config_defaults(kcwi_config):
     # source: characterization @ b685577 -- values in configs/kcwi.cfg.
     assert config.output_directory == "redux"
     assert config.NBARS == 120
-    assert config.enable_bokeh is True
+    assert config.enable_plot_viewer is True
 
 
 def test_kcwi_config_overrides(kcwi_config):
