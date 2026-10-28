@@ -393,19 +393,20 @@ def test_title_is_left_aligned_and_bold():
     assert w == 'bold' or (isinstance(w, (int, float)) and w >= 700)
 
 
-def test_grid_is_light_grey_by_default():
+def test_grid_is_grey_by_default():
     ax = rendered(fig_()).axes[0]
     ax.figure.canvas.draw()
     lines = [g for g in ax.xaxis.get_gridlines() + ax.yaxis.get_gridlines()
              if g.get_visible()]
-    # source: published - plan 1.1 appearance defaults: "light grey grid"
+    # source: published - plan 1.1 appearance defaults: a grey grid, on both
+    # axes.  Its shade is Matplotlib's default (maintainer, 2026-10-28: same
+    # information, not Bokeh's exact look).
     assert grid_visible(ax, 'x') and grid_visible(ax, 'y')
     for g in lines:
         r, gr, b, _ = rgba(g.get_color())
         assert abs(r - gr) < 0.02 and abs(gr - b) < 0.02   # grey
-        # Tolerance: "light" is not numeric in the spec; > 0.7 of full
-        # scale excludes Matplotlib's dark defaults and any black grid.
-        assert r > 0.7
+        # Tolerance: excludes a black grid; Matplotlib's default is 0.69.
+        assert r > 0.5
 
 
 def test_tooltips_are_accepted_and_ignored():
@@ -497,30 +498,18 @@ def test_line_alpha_keyword_line_alpha():
     assert li['alpha'] == pytest.approx(0.25, rel=1e-12)
 
 
-def dash_shape(line):
-    """The on/off dash sequence of a Line2D relative to its first dash, or
-    None for a solid line (independent of line width and units)."""
-    seq = line._unscaled_dash_pattern[1]
-    return None if not seq else [v / seq[0] for v in seq]
-
-
-# source: published - Bokeh 2.4.3 dash patterns (core/property/
-# visual.py DashPattern): dashed [6, 6], dotted [2, 4], dashdot [6, 4, 2, 4]
-BOKEH_DASH = {'dashed': [1., 1.], 'dotted': [1., 2.],
-              'dashdot': [1., 4 / 6, 2 / 6, 4 / 6]}
-
-
-@pytest.mark.parametrize("name", ['dashed', 'dashdot', 'dotted'])
-def test_trap_dash_names(name):
+@pytest.mark.parametrize("name, ls", [
+    # source: published - plan 1.1 trap "Dash names": 'dashed', 'dashdot',
+    # 'dotted' map by name to Matplotlib's '--', '-.', ':' (maintainer,
+    # 2026-10-28: named styles, not Bokeh's exact pixel patterns)
+    ('dashed', '--'), ('dashdot', '-.'), ('dotted', ':')])
+def test_trap_dash_names(name, ls):
     p = fig_()
     p.line(X, Y)
     p.line(X, Y + 1, line_dash=name)
-    got = [dash_shape(l) for l in glyph_lines(rendered(p).axes[0])]
-    # source: published - plan 1.1 trap "Dash names": each name maps to its
-    # own pattern; the shape is Bokeh's (a solid line has no dashes)
-    # Tolerance: ratios of float64 lengths, relative 1e-9.
-    assert got[0] is None
-    assert got[1] == pytest.approx(BOKEH_DASH[name], rel=1e-9)
+    got = [line_info(l)['ls'] for l in glyph_lines(rendered(p).axes[0])]
+    # source: published - Matplotlib: a solid line is '-'
+    assert got == ['-', ls]
 
 
 @pytest.mark.parametrize("glyph", ['circle', 'scatter', 'diamond'])
@@ -951,9 +940,7 @@ def test_oplot_slices_draws_23_black_dashdot_lines():
     assert all(np.array_equal(line_info(l)['y'], [0., 100.]) for l in ls)
     assert all(mcolors.to_hex(line_info(l)['colour']) == '#000000'
                for l in ls)
-    # Tolerance: ratios of float64 lengths, relative 1e-9.
-    assert all(dash_shape(l) == pytest.approx(BOKEH_DASH['dashdot'],
-                                              rel=1e-9) for l in ls)
+    assert all(line_info(l)['ls'] == '-.' for l in ls)
     assert ax.get_legend() is None
 
 

@@ -127,15 +127,10 @@ def _is_color(v):
     return is_color_like(v)
 
 
+# The locations the primitives use, plus Bokeh's default (inventory 2.6)
 LEGEND_LOCATIONS = {
     'top_left': 'upper left', 'top_center': 'upper center',
-    'top_right': 'upper right', 'center_left': 'center left',
-    'center': 'center', 'center_right': 'center right',
-    'bottom_left': 'lower left', 'bottom_center': 'lower center',
-    'bottom_right': 'lower right',
-    # Bokeh's short aliases
-    'top': 'upper center', 'bottom': 'lower center',
-    'left': 'center left', 'right': 'center right',
+    'top_right': 'upper right', 'bottom_center': 'lower center',
 }
 LINE_DASHES = ('solid', 'dashed', 'dashdot', 'dotted')
 MARKERS = ('circle', 'x')
@@ -193,15 +188,16 @@ def _check_end(self, v):
 
 
 def _check_padding(self, v):
-    if not _is_number(v) or v < 0:
-        raise ValueError("must be a number >= 0")
-    return float(v)
+    # Only MakeCube's ``range_padding = 0`` is in use (inventory 2.3)
+    if not _is_number(v) or v != 0:
+        raise ValueError("only 0 is supported")
+    return 0.0
 
 
 class _DataRange(_Model):
     """The automatic range a figure starts with (Bokeh's ``DataRange1d``):
-    data bounds plus ``range_padding`` (a fraction of the span, split
-    between the two ends); ``start``/``end`` override either end."""
+    autoscaled to the data with a small margin, or none after
+    ``range_padding = 0``; ``start``/``end`` override either end."""
 
     _KIND = 'DataRange1d'
     _ATTRS = {'start': _check_end, 'end': _check_end,
@@ -446,7 +442,7 @@ class PlotFigure(_Model):
                 object.__setattr__(self, '_' + name, int(v))
         if 'y_axis_type' in kw:
             v = kw['y_axis_type']
-            if v in ('log', 'linear'):
+            if v == 'log':
                 object.__setattr__(self, '_y_log', v == 'log')
             else:
                 _unsupported("figure(y_axis_type=%r)" % (v,))
@@ -628,8 +624,8 @@ def figure(**kwargs):
 
     Supported keywords: ``title``, ``x_axis_label``, ``y_axis_label``,
     ``plot_width``, ``plot_height`` (pixels, default 600), ``y_range`` (a
-    two-element list/tuple or a ``Range1d``), ``y_axis_type`` (``'log'``;
-    ``'linear'`` is the default) and ``tooltips`` (ignored).
+    two-element list/tuple or a ``Range1d``), ``y_axis_type`` (``'log'``
+    only) and ``tooltips`` (ignored).
     """
     try:
         return PlotFigure(**kwargs)
