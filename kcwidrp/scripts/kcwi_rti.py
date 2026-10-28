@@ -12,6 +12,7 @@ from kcwidrp.core.bokeh_plotting import init_plot_session
 from kcwidrp.core.plot_config import viewer_requested
 from kcwidrp.core.kcwi_get_std import is_file_kcwi_std
 from kcwidrp.core.kcwi_pkg_resources import get_resource_path
+from kcwidrp.core.kcwi_interactive import ask_yes_quit
 
 import datetime
 import argparse
@@ -396,15 +397,49 @@ def main():
         for frame in args.frames:
             # Verify we have the correct channel selected
             if args.blue and ('kr' in frame or 'KR' in frame):
-                print('Blue channel requested, but red files in list')
-                qstr = input('Proceed? <cr>=yes or Q=quit: ')
-                if 'Q' in qstr.upper():
+                if not ask_yes_quit(
+                        framework.context.pipeline_logger,
+                        'Proceed? <cr>=yes or q=quit',
+                        what="Blue channel requested (-b), but this file name looks like a red-channel (kr) file.",
+                        help=("What you see:\n"
+                              "  No plot. The real-time reduction was started for the blue channel,\n"
+                              '  and the path of one of the frames given with -f contains "kr" or\n'
+                              '  "KR" (red files are named kr<date>_<n>.fits).\n'
+                              "What to look for:\n"
+                              "  Check the file: a red frame in a blue reduction will not combine\n"
+                              '  with the blue calibrations. A directory name containing "kr" also\n'
+                              "  triggers this check (known issue); then it is safe to proceed.\n"
+                              "Your options:\n"
+                              "  <cr>      keep this frame and go on (the next file is checked too).\n"
+                              "  q / quit  stop checking. Note: in this version all frames given\n"
+                              "            with -f are still reduced (known bug); press Ctrl-C to\n"
+                              "            stop the run.\n"
+                              "Default:\n"
+                              "  <cr> proceeds with this frame."),
+                        who="kcwi_rti"):
                     frames = []
                     break
             if args.red and ('kb' in frame or 'KB' in frame):
-                print('Red channel requested, but blue files in list')
-                qstr = input('Proceed? <cr>=yes or Q=quit: ')
-                if 'Q' in qstr.upper():
+                if not ask_yes_quit(
+                        framework.context.pipeline_logger,
+                        'Proceed? <cr>=yes or q=quit',
+                        what="Red channel requested (-r), but this file name looks like a blue-channel (kb) file.",
+                        help=("What you see:\n"
+                              "  No plot. The real-time reduction was started for the red channel,\n"
+                              '  and the path of one of the frames given with -f contains "kb" or\n'
+                              '  "KB" (blue files are named kb<date>_<n>.fits).\n'
+                              "What to look for:\n"
+                              "  Check the file: a blue frame in a red reduction will not combine\n"
+                              '  with the red calibrations. A directory name containing "kb" also\n'
+                              "  triggers this check (known issue); then it is safe to proceed.\n"
+                              "Your options:\n"
+                              "  <cr>      keep this frame and go on (the next file is checked too).\n"
+                              "  q / quit  stop checking. Note: in this version all frames given\n"
+                              "            with -f are still reduced (known bug); press Ctrl-C to\n"
+                              "            stop the run.\n"
+                              "Default:\n"
+                              "  <cr> proceeds with this frame."),
+                        who="kcwi_rti"):
                     frames = []
                     break
             frames.append(frame)
@@ -418,15 +453,45 @@ def main():
                 if "#" not in frame:
                     # Verify we have the correct channel selected
                     if args.blue and ('kr' in frame or 'KR' in frame):
-                        print('Blue channel requested, but red files in list')
-                        qstr = input('Proceed? <cr>=yes or Q=quit: ')
-                        if 'Q' in qstr.upper():
+                        if not ask_yes_quit(
+                                framework.context.pipeline_logger,
+                                'Proceed? <cr>=yes or q=quit',
+                                what="Blue channel requested (-b), but this file in the list looks like a red-channel (kr) file.",
+                                help=("What you see:\n"
+                                      "  No plot. The real-time reduction was started for the blue channel,\n"
+                                      '  and a line of the file list given with -l contains "kr" or "KR"\n'
+                                      "  (red files are named kr<date>_<n>.fits).\n"
+                                      "What to look for:\n"
+                                      "  Check the list: a red frame in a blue reduction will not combine\n"
+                                      '  with the blue calibrations. A directory name containing "kr" also\n'
+                                      "  triggers this check (known issue); then it is safe to proceed.\n"
+                                      "Your options:\n"
+                                      "  <cr>      keep this frame and go on (the next line is checked too).\n"
+                                      "  q / quit  stop: no frames from the list are reduced.\n"
+                                      "Default:\n"
+                                      "  <cr> proceeds with this frame."),
+                                who="kcwi_rti"):
                             frames = []
                             break
                     if args.red and ('kb' in frame or 'KB' in frame):
-                        print('Red channel requested, but blue files in list')
-                        qstr = input('Proceed? <cr>=yes or Q=quit: ')
-                        if 'Q' in qstr.upper():
+                        if not ask_yes_quit(
+                                framework.context.pipeline_logger,
+                                'Proceed? <cr>=yes or q=quit',
+                                what="Red channel requested (-r), but this file in the list looks like a blue-channel (kb) file.",
+                                help=("What you see:\n"
+                                      "  No plot. The real-time reduction was started for the red channel,\n"
+                                      '  and a line of the file list given with -l contains "kb" or "KB"\n'
+                                      "  (blue files are named kb<date>_<n>.fits).\n"
+                                      "What to look for:\n"
+                                      "  Check the list: a blue frame in a red reduction will not combine\n"
+                                      '  with the red calibrations. A directory name containing "kb" also\n'
+                                      "  triggers this check (known issue); then it is safe to proceed.\n"
+                                      "Your options:\n"
+                                      "  <cr>      keep this frame and go on (the next line is checked too).\n"
+                                      "  q / quit  stop: no frames from the list are reduced.\n"
+                                      "Default:\n"
+                                      "  <cr> proceeds with this frame."),
+                                who="kcwi_rti"):
                             frames = []
                             break
                     frames.append(frame.strip('\n'))
