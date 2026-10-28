@@ -7,9 +7,9 @@ from kcwidrp.core.kcwi_plotting import save_plot
 from kcwidrp.core.bspline import Bspline
 from kcwidrp.core.kcwi_plotting import figure
 from kcwidrp.core.kcwi_plotting import Range1d
+from kcwidrp.core.kcwi_interactive import ask_value, pause
 
 import os
-import time
 import numpy as np
 from scipy.signal.windows import boxcar
 import scipy as sp
@@ -266,10 +266,24 @@ class MakeMasterFlat(BaseImg):
                 p.line(wflat, wslfit, line_color='red', line_width=3,
                        legend_label="Fit")
                 bokeh_plot(p, self.context.bokeh_session)
-                if self.config.instrument.plot_level >= 2:
-                    input("Next? <cr>: ")
-                else:
-                    time.sleep(self.config.instrument.plot_pause)
+                pause(self.config.instrument, self.logger,
+                      what="Internal flat: lamp spectrum slope near the middle wavelength, reference slice.",
+                      help=("What you see:\n"
+                            '  Title "WAVE SLOPE FIT". Blue circles: counts of the un-vignetted part\n'
+                            "  of the reference slice (slice 9) in a narrow window (1/15 of the\n"
+                            "  range) around the middle wavelength; x is wavelength in A (the axis\n"
+                            '  label says "wave px"). Red: quadratic fit, divided out before the\n'
+                            "  vignetting is measured.\n"
+                            "What to look for:\n"
+                            "  Good: the red line follows the trend of the points.\n"
+                            "  Bad: a fit pulled away by outliers, which then tilts the vignetting\n"
+                            "  correction in the next plots.\n"
+                            "Your options:\n"
+                            "  <cr>  continue. Display only.\n"
+                            "Default:\n"
+                            "  <cr> continues. At plot_level 1 the plot is shown for plot_pause\n"
+                            "  seconds; at plot_level 0 it is not drawn."),
+                      who="MakeMasterFlat")
             # take out slope
             yflat = yflat / wslfit
             # now sort on slice position
@@ -327,10 +341,26 @@ class MakeMasterFlat(BaseImg):
                 p.line([xinter, xinter], [ycmin, ycmax], line_color='red')
                 p.y_range = Range1d(ycmin, ycmax)
                 bokeh_plot(p, self.context.bokeh_session)
-                if self.config.instrument.plot_level >= 2:
-                    input("Next? <cr>: ")
-                else:
-                    time.sleep(self.config.instrument.plot_pause)
+                pause(self.config.instrument, self.logger,
+                      what="Internal flat: vignetting along the slice edge and its linear correction.",
+                      help=("What you see:\n"
+                            '  Title "Vignetting": slope-corrected flat ratio against position along\n'
+                            "  the reference slice (px); y range fixed at 0.5 - 1.25.\n"
+                            "  Blue circles: data. Purple: linear fit to the vignetted part (between\n"
+                            "  the blue verticals). Red line: linear fit to the un-vignetted part\n"
+                            "  (between the green verticals). Red vertical: where the two fits cross.\n"
+                            "  Black verticals: buffer zone either side of the crossing.\n"
+                            "What to look for:\n"
+                            "  Good: each fit follows the data in its own region and they cross at\n"
+                            "  the knee where the fall-off begins.\n"
+                            "  Bad: fits that miss the data, or a crossing far from the knee: the\n"
+                            "  internal flat will over- or under-correct that slice edge.\n"
+                            "Your options:\n"
+                            "  <cr>  continue. Display only.\n"
+                            "Default:\n"
+                            "  <cr> continues. At plot_level 1 the plot is shown for plot_pause\n"
+                            "  seconds; at plot_level 0 it is not drawn."),
+                      who="MakeMasterFlat")
 
             # figure out where the correction applies
             if self.action.args.camera == 0:
@@ -371,10 +401,22 @@ class MakeMasterFlat(BaseImg):
                 p.circle(xbuff, ybuff)
                 p.line(xbuff, np.polyval(buffit, xbuff), line_color='red')
                 bokeh_plot(p, self.context.bokeh_session)
-                if self.config.instrument.plot_level >= 2:
-                    input("Next? <cr>: ")
-                else:
-                    time.sleep(self.config.instrument.plot_pause)
+                pause(self.config.instrument, self.logger,
+                      what="Internal flat: smooth fit across the buffer zone between corrected and uncorrected parts.",
+                      help=("What you see:\n"
+                            '  Title "Buffer Region": ratio data within the buffer zone around the\n'
+                            "  vignetting knee, against slice position. Blue circles: data. Red:\n"
+                            "  cubic fit used to join the corrected and uncorrected parts smoothly.\n"
+                            "What to look for:\n"
+                            "  Good: a smooth red curve through the points.\n"
+                            "  Bad: a curve that swings away from the data at either end, which\n"
+                            "  leaves a step in the flat at the edge of the buffer.\n"
+                            "Your options:\n"
+                            "  <cr>  continue. Display only.\n"
+                            "Default:\n"
+                            "  <cr> continues. At plot_level 1 the plot is shown for plot_pause\n"
+                            "  seconds; at plot_level 0 it is not drawn."),
+                      who="MakeMasterFlat")
             # get all buffer points in image
             qbuf = [i for i, v in enumerate(posmap.data.flat)
                     if (xinter-buffer) <= v <= (xinter+buffer)]
@@ -448,10 +490,24 @@ class MakeMasterFlat(BaseImg):
                 ylim = get_plot_lims(ylfit)
                 p.line([ledge_wave, ledge_wave], ylim, color='red')
                 bokeh_plot(p, self.context.bokeh_session)
-                if self.config.instrument.plot_level >= 2:
-                    input("Next? <cr>: ")
-                else:
-                    time.sleep(self.config.instrument.plot_pause)
+                pause(self.config.instrument, self.logger,
+                      what="BM grating flat: the 'ledge' step near its predicted wavelength, reference slice.",
+                      help=("What you see:\n"
+                            '  Title "Ledge": reference-slice flat within +- 25 A of the wavelength\n'
+                            "  where the BM grating's ledge (a step in the flat-field spectrum) is\n"
+                            "  predicted from CWAVE. Green circles (blue outline): smoothed data.\n"
+                            "  Blue line: spline fit. Red vertical: predicted ledge wavelength.\n"
+                            "What to look for:\n"
+                            "  Good: a clear step near the red line. Its position is found from the\n"
+                            "  derivative in the next plot.\n"
+                            "  Bad: no step, or several similar steps; then the peak choice in the\n"
+                            "  next step needs care.\n"
+                            "Your options:\n"
+                            "  <cr>  continue. Display only.\n"
+                            "Default:\n"
+                            "  <cr> continues. Below plot_level 2 the plot is shown for plot_pause\n"
+                            "  seconds (also at plot_level 0)."),
+                      who="MakeMasterFlat")
                 p = figure(title=plab + ' Deriv',
                            x_axis_label='px (Wavelength)',
                            y_axis_label='Value',
@@ -472,11 +528,51 @@ class MakeMasterFlat(BaseImg):
                 elif len(peaks) != 1:
                     self.logger.warning("Single peak not found!")
                     if self.config.instrument.plot_level >= 2:
-                        print("Please indicate the integer pixel value of the peak")
-                        spk = input("Peak? <int>: ")
-                        while not spk.isnumeric():
-                            spk = input("Peak? <int>: ")
-                        ipk = int(spk)
+                        auto_ipk = peaks[properties['peak_heights'].argmax()]
+
+                        def parse_peak(text):
+                            # today's test: str.isnumeric(), then int()
+                            if not text.isnumeric():
+                                raise ValueError("a non-negative integer "
+                                                 "is needed")
+                            return int(text)
+
+                        def check_peak(value):
+                            if value > len(xvals) - 1:
+                                return "index must be from 0 to %d" % (
+                                    len(xvals) - 1)
+                            return None
+                        ipk = ask_value(
+                            self.logger,
+                            "Peak? <int> (<cr> = highest peak, index %d)" %
+                            auto_ipk,
+                            help=("What you see:\n"
+                                  '  Title "Deriv": derivative of the ledge fit, in 0.5 A steps, against\n'
+                                  '  index 0-59 (axis "px (Wavelength)"; index i is at predicted ledge\n'
+                                  "  wavelength - 15 A + 0.5 i A). Blue circles: derivative.\n"
+                                  "  Green vertical (index 30): the predicted ledge wavelength.\n"
+                                  "  Red verticals: peaks found (height >= 20); there is more than one.\n"
+                                  "What to look for:\n"
+                                  "  The ledge is a single sharp peak, usually the strongest one close to\n"
+                                  "  the green line. Smaller or broader peaks come from noise or spectral\n"
+                                  "  structure in the flat.\n"
+                                  "Your options:\n"
+                                  "  <index>  put the ledge at that index (read it off the x axis). The\n"
+                                  "           step size is measured from linear fits 3-8 A either side,\n"
+                                  "           and the reference-slice flat redward of it is divided by it.\n"
+                                  "           This changes the master flat (*_mflat or *_mdome) and every\n"
+                                  "           frame flat-fielded with it.\n"
+                                  "  <cr>     use the automatic choice, the highest peak.\n"
+                                  "Default:\n"
+                                  "  <cr> takes the highest peak, as the reduction does below plot_level\n"
+                                  "  2. The highest peak is not always the ledge: check the next plots\n"
+                                  "  (BM Ledge Region) and rerun at plot_level 2 if the step remains."),
+                            parse=parse_peak, default=auto_ipk,
+                            effect="BM ledge peak set by user to index "
+                                   "{value} (automatic choice: index %d)" %
+                                   auto_ipk,
+                            validate=check_peak, who="MakeMasterFlat",
+                            what="Several BM ledge peaks found: enter the index (x value) of the peak that is the ledge.")
                     else:
                         # Pick the highest peak, using the peaks properties
                         self.logger.warning("Picking the highest peak. This may not be the correct peak!")
@@ -496,10 +592,21 @@ class MakeMasterFlat(BaseImg):
                         p.line([apk, apk], [-50, 200], line_color='red',
                                legend_label='Pk')
                         bokeh_plot(p, self.context.bokeh_session)
-                        if self.config.instrument.plot_level >= 2:
-                            input("Next? <cr>: ")
-                        else:
-                            time.sleep(self.config.instrument.plot_pause)
+                        pause(self.config.instrument, self.logger,
+                              what="BM ledge: derivative against wavelength with the chosen ledge position.",
+                              help=("What you see:\n"
+                                    '  Title "Peak of ledge": the derivative of the ledge fit against\n'
+                                    '  wavelength (A). Blue circles: data. Red vertical ("Pk"): the ledge\n'
+                                    "  position used.\n"
+                                    "What to look for:\n"
+                                    "  Good: the red line sits on the sharp peak you intended.\n"
+                                    "  Bad: it sits on a noise peak; the correction will put a step into\n"
+                                    "  the flat instead of removing one.\n"
+                                    "Your options:\n"
+                                    "  <cr>  continue. Display only.\n"
+                                    "Default:\n"
+                                    "  <cr> continues. Below plot_level 3 this plot is not shown."),
+                              who="MakeMasterFlat")
                     xlow = apk - 3 - 5
                     xhi = apk - 3
                     zlow = apk + 3
@@ -553,10 +660,26 @@ class MakeMasterFlat(BaseImg):
                         p.y_range = Range1d(ylmin, ylmax)
                         p.legend.location = 'top_left'
                         bokeh_plot(p, self.context.bokeh_session)
-                        if self.config.instrument.plot_level >= 2:
-                            input("Next? <cr>: ")
-                        else:
-                            time.sleep(self.config.instrument.plot_pause)
+                        pause(self.config.instrument, self.logger,
+                              what="BM ledge: flat data before and after the step correction.",
+                              help=("What you see:\n"
+                                    '  Title "BM Ledge Region", within +- 25 A of the predicted ledge.\n'
+                                    "  Blue-filled circles: reference-slice flat data. Orange-filled\n"
+                                    "  circles: the same data redward of the ledge after dividing by the\n"
+                                    '  step ratio ("Corrected"). Red: spline fit to the smoothed data.\n'
+                                    "  Blue verticals: window of the blueward linear fit (purple line);\n"
+                                    "  black verticals: window of the redward linear fit (green line).\n"
+                                    '  Green vertical ("Pk"): ledge position.\n'
+                                    "What to look for:\n"
+                                    "  Good: the orange points continue the level of the blue points below\n"
+                                    "  the ledge, with no step left.\n"
+                                    "  Bad: a step remains or is overcorrected: the wrong peak was taken.\n"
+                                    "Your options:\n"
+                                    "  <cr>  continue. Display only.\n"
+                                    "Default:\n"
+                                    "  <cr> continues. At plot_level 1 the plot is shown for plot_pause\n"
+                                    "  seconds; at plot_level 0 it is not drawn."),
+                              who="MakeMasterFlat")
         # END: handling BM grating ledge
 
         # if we are fitting a twilight flat, treat it like a sky image with a
@@ -660,10 +783,26 @@ class MakeMasterFlat(BaseImg):
             p.line(xdplt, ydplt, line_color='red', legend_label='Red')
             p.circle(xdplt, ydplt_d, size=1, line_alpha=0., fill_color='red')
             bokeh_plot(p, self.context.bokeh_session)
-            if self.config.instrument.plot_level >= 2:
-                input("Next? <cr>: ")
-            else:
-                time.sleep(self.config.instrument.plot_pause)
+            pause(self.config.instrument, self.logger,
+                  what="Flat spectra of the reference slice and of the slices reaching furthest blue and red.",
+                  help=("What you see:\n"
+                        '  Title "Blue/Red fits", flux (e-) against wavelength.\n'
+                        "  Black: reference slice (9), data (dots) and spline fit (line).\n"
+                        "  Blue: the slice reaching furthest to the blue (12 for the blue\n"
+                        "  camera, 11 for red). Red: the slice reaching furthest to the red\n"
+                        "  (23 for the blue camera, 0 for red). These extend the illumination\n"
+                        "  spectrum beyond the reference slice's wavelength range.\n"
+                        "What to look for:\n"
+                        "  Good: each line follows its dots; the curves have the same shape\n"
+                        "  where they overlap.\n"
+                        "  Bad: a fit that departs from its data, or very different shapes\n"
+                        "  in the overlap.\n"
+                        "Your options:\n"
+                        "  <cr>  continue. Display only.\n"
+                        "Default:\n"
+                        "  <cr> continues. At plot_level 1 the plot is shown for plot_pause\n"
+                        "  seconds; at plot_level 0 it is not drawn."),
+                  who="MakeMasterFlat")
             save_plot(p, filename=rbfnam+'.png')
 
         wavebuffer = 0.1
@@ -729,10 +868,24 @@ class MakeMasterFlat(BaseImg):
                        legend_label='Blue')
                 p.circle(waves[qbluefit], bluefit, fill_color='blue')
                 bokeh_plot(p, self.context.bokeh_session)
-                if self.config.instrument.plot_level >= 2:
-                    input("Next? <cr>: ")
-                else:
-                    time.sleep(self.config.instrument.plot_pause)
+                pause(self.config.instrument, self.logger,
+                      what="Blue overlap: reference-slice and blue-slice flat fits.",
+                      help=("What you see:\n"
+                            '  Title "Blue fits": the spline fits in the overlap near the blue end\n'
+                            "  of the reference slice (5-10 % into its range).\n"
+                            "  Black line and filled circles: reference slice. Blue line and filled\n"
+                            "  circles: the blue-end slice. (Circles have a blue outline.)\n"
+                            "What to look for:\n"
+                            "  Good: both curves smooth, with similar shapes; their ratio (next\n"
+                            "  plot) scales the blue slice to join the reference.\n"
+                            "  Bad: noisy or diverging curves: the blue extension of the flat will\n"
+                            "  have a step or slope error.\n"
+                            "Your options:\n"
+                            "  <cr>  continue. Display only.\n"
+                            "Default:\n"
+                            "  <cr> continues. At plot_level 1 the plot is shown for plot_pause\n"
+                            "  seconds; at plot_level 0 it is not drawn."),
+                      who="MakeMasterFlat")
                 # plot blue ratios
                 p = figure(
                     title=plab + ' Blue ratios',
@@ -749,10 +902,23 @@ class MakeMasterFlat(BaseImg):
                 p.circle(waves[qbluefit], bluelinfity,
                          fill_color='blue')
                 bokeh_plot(p, self.context.bokeh_session)
-                if self.config.instrument.plot_level >= 2:
-                    input("Next? <cr>: ")
-                else:
-                    time.sleep(self.config.instrument.plot_pause)
+                pause(self.config.instrument, self.logger,
+                      what="Blue overlap: ratio of reference to blue-slice fit, and its linear fit.",
+                      help=("What you see:\n"
+                            '  Title "Blue ratios". Black line and filled circles: reference-slice\n'
+                            "  fit divided by blue-slice fit. Blue line and filled circles: linear\n"
+                            "  fit to that ratio, used to scale the blue-slice data blueward of the\n"
+                            "  reference slice. (Circles have a blue outline.)\n"
+                            "What to look for:\n"
+                            "  Good: a smooth, nearly constant ratio, well followed by the line.\n"
+                            "  Bad: a strongly curved or noisy ratio; the linear scaling will not\n"
+                            "  match it. (If either fit crosses zero only an offset is applied.)\n"
+                            "Your options:\n"
+                            "  <cr>  continue. Display only.\n"
+                            "Default:\n"
+                            "  <cr> continues. At plot_level 1 the plot is shown for plot_pause\n"
+                            "  seconds; at plot_level 0 it is not drawn."),
+                      who="MakeMasterFlat")
             if nqr > 1:
                 # plot red fits
                 p = figure(
@@ -768,10 +934,24 @@ class MakeMasterFlat(BaseImg):
                        legend_label='Red')
                 p.circle(waves[qredfit], redfit, fill_color='red')
                 bokeh_plot(p, self.context.bokeh_session)
-                if self.config.instrument.plot_level >= 2:
-                    input("Next? <cr>: ")
-                else:
-                    time.sleep(self.config.instrument.plot_pause)
+                pause(self.config.instrument, self.logger,
+                      what="Red overlap: reference-slice and red-slice flat fits.",
+                      help=("What you see:\n"
+                            '  Title "Red fits": the spline fits in the overlap near the red end of\n'
+                            "  the reference slice (90-95 % into its range).\n"
+                            "  Black line and filled circles: reference slice. Red line and filled\n"
+                            "  circles: the red-end slice. (Circles have a blue outline.)\n"
+                            "What to look for:\n"
+                            "  Good: both curves smooth, with similar shapes; their ratio (next\n"
+                            "  plot) scales the red slice to join the reference.\n"
+                            "  Bad: noisy or diverging curves: the red extension of the flat will\n"
+                            "  have a step or slope error.\n"
+                            "Your options:\n"
+                            "  <cr>  continue. Display only.\n"
+                            "Default:\n"
+                            "  <cr> continues. At plot_level 1 the plot is shown for plot_pause\n"
+                            "  seconds; at plot_level 0 it is not drawn."),
+                      who="MakeMasterFlat")
                 # plot red ratios
                 p = figure(
                     title=plab + ' Red ratios',
@@ -786,10 +966,23 @@ class MakeMasterFlat(BaseImg):
                        line_color='red', legend_label='Red')
                 p.circle(waves[qredfit], redlinfity, fill_color='red')
                 bokeh_plot(p, self.context.bokeh_session)
-                if self.config.instrument.plot_level >= 2:
-                    input("Next? <cr>: ")
-                else:
-                    time.sleep(self.config.instrument.plot_pause)
+                pause(self.config.instrument, self.logger,
+                      what="Red overlap: ratio of reference to red-slice fit, and its linear fit.",
+                      help=("What you see:\n"
+                            '  Title "Red ratios". Black line and filled circles: reference-slice\n'
+                            "  fit divided by red-slice fit. Red line and filled circles: linear fit\n"
+                            "  to that ratio, used to scale the red-slice data redward of the\n"
+                            "  reference slice. (Circles have a blue outline.)\n"
+                            "What to look for:\n"
+                            "  Good: a smooth, nearly constant ratio, well followed by the line.\n"
+                            "  Bad: a strongly curved or noisy ratio; the linear scaling will not\n"
+                            "  match it. (If either fit crosses zero only an offset is applied.)\n"
+                            "Your options:\n"
+                            "  <cr>  continue. Display only.\n"
+                            "Default:\n"
+                            "  <cr> continues. At plot_level 1 the plot is shown for plot_pause\n"
+                            "  seconds; at plot_level 0 it is not drawn."),
+                      who="MakeMasterFlat")
 
         # at this point we are going to try to merge the points
         self.logger.info("Correcting points outside %.1f - %.1f A"
@@ -890,10 +1083,25 @@ class MakeMasterFlat(BaseImg):
             p.line([maxrwave, maxrwave], yran, line_color='orange')
             p.legend.location = "top_left"
             bokeh_plot(p, self.context.bokeh_session)
-            if self.config.instrument.plot_level >= 2:
-                input("Next? <cr>: ")
-            else:
-                time.sleep(self.config.instrument.plot_pause)
+            pause(self.config.instrument, self.logger,
+                  what="Master illumination spectrum: combined flat data over the full range, with fit.",
+                  help=("What you see:\n"
+                        '  Title "Master Illumination", flux (e-) against wavelength.\n'
+                        "  Black dots: reference-slice data plus the scaled blue- and red-end\n"
+                        "  slice data. Red thick line: the spline fit, the illumination\n"
+                        '  spectrum the flat is divided by. Orange verticals ("Cor lim"): the\n'
+                        "  reference slice's range; outside it the end slices are used.\n"
+                        "What to look for:\n"
+                        "  Good: the red curve follows the data over the whole range, with no\n"
+                        "  jump at the orange lines and no ringing at the ends.\n"
+                        "  Bad: a jump or kink at an orange line (end-slice scaling), or wiggles\n"
+                        "  where the data are smooth: these go straight into the master flat.\n"
+                        "Your options:\n"
+                        "  <cr>  continue. Display only.\n"
+                        "Default:\n"
+                        "  <cr> continues. At plot_level 1 the plot is shown for plot_pause\n"
+                        "  seconds; at plot_level 0 it is not drawn."),
+                  who="MakeMasterFlat")
             save_plot(p, filename=fltfnam+".png")
 
         # OK, Now we have extended to the full range... so... we are going to

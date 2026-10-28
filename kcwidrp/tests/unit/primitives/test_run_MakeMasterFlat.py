@@ -10,11 +10,14 @@ a B-spline, takes its derivative on a 0.5 A grid, and finds the peaks of the
 derivative.  One peak: that is the ledge.  Several or none: at plot_level
 >= 2 the user is asked
 
-    ``Peak? <int>: ``   (an index into the trimmed grid, xvals[n] =
+    ``Peak? <int> (<cr> = highest peak, index <n>) (? for help): ``
+                        (an index into the trimmed grid, xvals[n] =
                         ledge - 15 + 0.5 n A)
 
-after the ledge figure's ``Next? <cr>: ``; below plot_level 2 the highest
-peak is meant to be chosen automatically.  Data at wavelengths >= the chosen
+after the ledge figure's ``Next? <cr> (? for help): ``; below plot_level 2
+the highest peak is chosen automatically, and <cr> at the prompt takes that
+choice.  (P.4 changed the prompt texts; before: ``Peak? <int>: `` and
+``Next? <cr>: ``.)  Data at wavelengths >= the chosen
 ledge position ``apk`` are then divided by the step ratio measured across
 ``apk`` (fits at apk-8 ... apk-3 and apk+3 ... apk+8 A), which removes the
 ledge from the master-flat input.
@@ -55,8 +58,9 @@ BCWAVE = 4500.0
 # the fixture's header has RCWAVE, so the dichroic is in
 LEDGE = bm_ledge_position(BCWAVE, True)          # 5143.899 A
 EXTRA = {"new_type": "MDOME", "stack_type": "SDOME", "min_files": 1}
-NEXT = "Next? <cr>: "
-PEAK = "Peak? <int>: "
+NEXT = "Next? <cr> (? for help): "
+# the automatic choice for [SMALL, BIG] is the BIG step: index 40
+PEAK = "Peak? <int> (<cr> = highest peak, index 40) (? for help): "
 
 
 class ReachedMasterFit(Exception):
@@ -189,12 +193,14 @@ def test_interactive_peak_choice(run_primitive, synthetic_ccddata,
 def test_interactive_peak_reasks_non_numeric(run_primitive,
                                              synthetic_ccddata, tmp_redux,
                                              capture):
-    # source: characterization @ c0fed5c (inventory P25): empty, negative
-    # and decimal answers are asked again
+    # source: characterization @ c0fed5c (inventory P25): negative and
+    # decimal answers are asked again.  (An empty answer was asked again too
+    # until P.4; it now takes the automatic choice, docs/interactive_prompts
+    # P25, so it is no longer in this list.)
     frame, _ = setup_flat(synthetic_ccddata, tmp_redux, [SMALL, BIG])
     run_to_master_fit(run_primitive, frame, 2,
-                      ["", "", "-3", "4.5", "40", ""])
-    assert run_primitive.last.prompts == [NEXT] + [PEAK] * 4 + [NEXT]
+                      ["", "-3", "4.5", "40", ""])
+    assert run_primitive.last.prompts == [NEXT] + [PEAK] * 3 + [NEXT]
 
 
 # ----------------------------------------------------------- known bugs
@@ -221,18 +227,11 @@ def test_no_peak_does_not_fail(run_primitive, synthetic_ccddata, tmp_redux,
     assert first is None
 
 
-@pytest.mark.parametrize("bad", [
-    pytest.param("999", marks=pytest.mark.xfail(
-        strict=True, raises=IndexError, reason=(
-            "B1c: the peak index is not bounds-checked; 999 >= len(xvals) "
-            "raises IndexError at apk = xvals[ipk] "
-            "(MakeMasterFlat.py:469-479)"))),
-    pytest.param("\u00b2", marks=pytest.mark.xfail(
-        strict=True, raises=ValueError, reason=(
-            "B1c: '\u00b2' (superscript two).isnumeric() is True, so the "
-            "loop accepts it and int() raises ValueError "
-            "(MakeMasterFlat.py:471-474)"))),
-], ids=["out-of-range", "superscript-two"])
+# B1c (999 >= len(xvals) raised IndexError; '\u00b2'.isnumeric() is True and
+# int() raised ValueError) was pinned by strict xfails; P.4 fixed it with
+# kcwi_interactive.ask_value and removed the markers.
+@pytest.mark.parametrize("bad", ["999", "\u00b2"],
+                         ids=["out-of-range", "superscript-two"])
 def test_invalid_peak_index_is_asked_again(run_primitive, synthetic_ccddata,
                                            tmp_redux, capture, bad):
     # source: analytic @ c0fed5c - plan section 8.2 / 13 B1c - invalid input
