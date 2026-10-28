@@ -61,15 +61,10 @@ SCHEMA = {
                      "sets it from -k (a bool)"),
     "air_to_vacuum": _bool("cfg comment 'Correct to vacuum wavelengths?'; "
                            "truth value in WavelengthCorrections.py"),
-    "enable_bokeh": _bool("cfg comment 'Enable BOKEH to see plots'; the "
-                          "scripts test it with `is True`"),
-    "terminate_on_failed_bokeh_start": _bool(
-        "cfg comment; StartBokeh.py getattr(..., False) used as a truth "
-        "value"),
-    "plot_firefox_compat": _bool("cfg comment; StartBokeh.py getattr(..., "
-                                 "False) used as a truth value"),
-    "plot_prewarm_firefox": _bool("cfg comment; StartBokeh.py getattr(..., "
-                                  "False) used as a truth value"),
+    "enable_plot_viewer": _bool("cfg comment 'Show plots in the live plot "
+                                "viewer'; plot_config.viewer_requested()"),
+    "plot_viewer_open_browser": _bool("cfg comment; StartPlotViewer.py "
+                                      "truth value"),
     "saveintims": _bool("cfg comment 'Save intermediate images?'; truth "
                         "value in TrimOverscan.py"),
     "clobber": _bool("cfg comment 'Overwrite outputs?'; truth value in the "
@@ -84,6 +79,8 @@ SCHEMA = {
         "cfg comment 'Plot level: 0 - no plots nor interaction ... 3'; "
         "primitives compare it with >= 1, 2, 3",
         choices={0, 1, 2, 3}),
+    "plot_viewer_port": _int("cfg comment; first port the viewer tries "
+                             "(then the next 9)", lo=1, hi=65526),
     "plot_pause": _num("cfg comment 'pause between plots (seconds)'; "
                        "passed to time.sleep()", lo=0),
     "verbose": _int("cfg comment 'Wavelength fitting verbosity: 1 - normal, "

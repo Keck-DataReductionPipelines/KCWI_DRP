@@ -5,7 +5,7 @@ from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_reader, \
 from kcwidrp.core.bokeh_plotting import bokeh_plot
 from kcwidrp.core.kcwi_plotting import save_plot
 
-from bokeh.plotting import figure
+from kcwidrp.core.kcwi_plotting import figure
 import ccdproc
 import numpy as np
 from scipy.stats import sigmaclip

@@ -11,8 +11,8 @@ import scipy as sp
 from scipy.optimize import curve_fit
 from scipy.interpolate import interpolate
 from scipy.stats import sigmaclip
-from bokeh.plotting import figure
-from bokeh.models import Range1d, LinearAxis
+from kcwidrp.core.kcwi_plotting import figure
+from kcwidrp.core.kcwi_plotting import Range1d, LinearAxis
 import time
 
 

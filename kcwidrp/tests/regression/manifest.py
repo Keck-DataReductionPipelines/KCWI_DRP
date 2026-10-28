@@ -23,7 +23,7 @@ PROFILES = ("quick", "full")
 LEVELS = (0, 1, 3)
 # S.3 conventions (docs/baseline/README.md): L1 is the quick profile.
 LEVEL_PROFILE = {0: "full", 1: "quick", 3: "full"}
-DEFAULT_OVERRIDES = {"enable_bokeh": False, "plot_pause": 0}
+DEFAULT_OVERRIDES = {"enable_plot_viewer": False, "plot_pause": 0}
 DEFAULT_ENVIRONMENT_FILE = "docs/baseline/env_baseline.txt"
 
 

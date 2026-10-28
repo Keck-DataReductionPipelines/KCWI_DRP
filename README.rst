@@ -26,6 +26,16 @@ Documentation for this project is maintained with ReadTheDocs at the following l
    :target: https://kcwi-drp.readthedocs.io/en/latest/?badge=latest
    :alt: Documentation Status
 
+Plot viewer
+-----------
+
+With ``enable_plot_viewer = True`` in the configuration file, each reduction
+process serves its plots live at ``http://127.0.0.1:5006/`` (if that port is
+taken it tries the next nine, and prints the URL it used). Open the URL in a
+browser on the machine running the pipeline, or set ``plot_viewer_open_browser
+= True`` to have the tab opened for you. Saved PNG files are governed by
+``plot_level`` alone.
+
 Tests
 -----
 

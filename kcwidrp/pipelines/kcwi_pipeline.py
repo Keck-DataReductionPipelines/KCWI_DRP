@@ -28,7 +28,9 @@ class Kcwi_pipeline(BasePipeline):
         # it is defined lower in this file
         "add_only":                  ("add_to_dataframe_only", None, None),
         #
-        "start_bokeh":               ("StartBokeh", None, None),
+        "start_plot_viewer":         ("StartPlotViewer", None, None),
+        # alias kept for launch scripts and configs that queue it
+        "start_bokeh":               ("StartPlotViewer", None, None),
         # For every file do this
         "next_file":                 ("ingest_file",
                                       "ingest_file_started",

@@ -38,8 +38,8 @@ def test_run_directory_files_and_config(world):
     changed = {a.split("=")[0].strip() for a, b in zip(shipped, cfg) if a != b}
     # the packaged default has plot_level = 1 already, so only the other two
     # named keys differ from it
-    assert changed == {"enable_bokeh", "plot_pause"}
-    assert "enable_bokeh = False" in cfg and "plot_pause = 0" in cfg
+    assert changed == {"enable_plot_viewer", "plot_pause"}
+    assert "enable_plot_viewer = False" in cfg and "plot_pause = 0" in cfg
     assert "plot_level = 1" in cfg
     assert len(cfg) == len(shipped)
     assert res.exit_code == 0 and res.wall_time > 0

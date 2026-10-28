@@ -7,7 +7,7 @@ from kcwidrp.primitives.kcwi_file_primitives import plotlabel
 import time
 
 import numpy as np
-from bokeh.plotting import figure
+from kcwidrp.core.kcwi_plotting import figure
 from scipy import signal
 
 

@@ -11,9 +11,10 @@ There is no CI. Tests are run locally before every pull request (see [Before ope
 | Suite | Command | What it contains | Limits |
 |---|---|---|---|
 | **Fast** | `pytest` | Unit, property (invariant), config and CLI tests | Whole suite under 60 s on a laptop; no display, no network, no data outside the repository |
+| **Viewer** | `pytest -m viewer` | Tests that start the live plot viewer and drive it through a fake browser tab (`unit/plotting/test_plot_viewer.py`) | About 12 s; no display, no network beyond `127.0.0.1`. Kept out of `pytest` to keep the fast suite under 60 s (maintainer decision, 2026-10-28) |
 | **Regression** | `pytest -m regression` (quick profile), `pytest -m regression --regression-profile=full` | Full reductions of real datasets from `$KCWI_REGRESSION_DATA`, compared with blessed reference outputs | Run by hand; skipped with the reason `KCWI_REGRESSION_DATA not set` when the variable is unset |
 
-`pytest` with no arguments never runs a regression test (`-m "not regression"` is the default in `pyproject.toml`).
+`pytest` with no arguments never runs a regression or viewer test (`-m "not regression and not viewer"` is the default in `pyproject.toml`).
 
 ## 2. Layout
 
@@ -42,6 +43,7 @@ Registered in `pyproject.toml`; `--strict-markers` rejects any other marker.
 |---|---|
 | `regression` | Needs `$KCWI_REGRESSION_DATA`; runs a full reduction. Only in `regression/` |
 | `slow` | A fast-suite test that takes more than 2 s. Each use carries a comment saying why it cannot be faster. Expected to be rare |
+| `viewer` | Starts the live plot viewer and talks to it as a browser would. Run with `pytest -m viewer` |
 
 ## 4. What counts as a fast-suite test
 
@@ -126,8 +128,9 @@ Coverage is measured (`pytest --cov=kcwidrp`) and reported in PR0 against the ba
 
 **Minimum (set by the maintainer after T.8, 2026-10-24): 70 % line coverage per module** for every module in `kcwidrp/core/` and for `kcwidrp/primitives/kcwi_file_primitives.py`. A pull request may not take one of these modules below 70 %, and a new module there starts at 70 % or more. Exempt:
 
-- `kcwidrp/core/bspline/` (vendored third-party code);
-- `kcwidrp/core/kcwi_plotting.py` and `kcwidrp/core/bokeh_plotting.py`, until the Bokeh port (PR1) replaces them; the new plotting modules then follow the rule.
+- `kcwidrp/core/bspline/` (vendored third-party code).
+
+The plotting modules were exempt until the Bokeh port; from PR1 they follow the rule (PR1: `_plot_render.py` 92 %, `kcwi_plotting.py` 85 %, `plot_viewer.py` 74 %, `bokeh_plotting.py` and `plot_config.py` 100 %). Coverage is measured with the viewer tests included, `pytest -m "not regression" --cov=kcwidrp`, since `plot_viewer.py` is mostly exercised by them.
 
 Other modules have no minimum; their coverage is reported, and a pull request should not lower it without saying why.
 
@@ -167,7 +170,7 @@ From the repository root:
 pytest
 ```
 
-This runs `kcwidrp/tests/` without the regression tests (`-m "not regression"` is the default in `pyproject.toml`). It needs no display, no network and no data directory. It must finish in under 60 s (section 1), measured as the time pytest reports at the end of a run in an environment that has run the suite before. On the maintainer's laptop (Apple M4) that is about 32 s. The first run in a new environment takes longer (49 s reported, about a minute of wall time, in a fresh venv) because Python first compiles every module. A suite that gets close to the limit is a problem to fix, not to live with.
+This runs `kcwidrp/tests/` without the regression and viewer tests (`-m "not regression and not viewer"` is the default in `pyproject.toml`). It needs no display, no network and no data directory. It must finish in under 60 s (section 1), measured as the time pytest reports at the end of a run in an environment that has run the suite before. On the maintainer's laptop (Apple M4) that is about 32 s. The first run in a new environment takes longer (49 s reported, about a minute of wall time, in a fresh venv) because Python first compiles every module. A suite that gets close to the limit is a problem to fix, not to live with.
 
 The run prints many warnings (about 1100: polynomial-fit `RankWarning`s, deprecations in pipeline code, `SyntaxWarning: invalid escape sequence` from docstrings). They are expected and are not failures; deprecations raised from `kcwidrp` code are deliberately left visible (only third-party ones are filtered in `pyproject.toml`).
 
@@ -274,7 +277,7 @@ The draft is a starting point. The maintainer reads every entry in `manifest.jso
 
 - **Entries.** One per dataset, channel and level: `ds01_blue_L0`, `_L1`, `_L3`, and the same for red. A level for which you made no reference still gets an entry; remove it, or leave it and bless it with reason `initial` after a first run (see below).
 - **Profile and plot level.** `L1` is `quick`; `L0` and `L3` are `full` (decision D16). `plot_level` agrees with the level. A level-3 entry has an `answers` file.
-- **Config overrides.** `enable_bokeh` is off and `plot_pause` is 0, so no viewer opens during a run.
+- **Config overrides.** `enable_plot_viewer` is off and `plot_pause` is 0, so no viewer opens during a run.
 - **Tolerances.** The drafted manifest has none: every float comparison is exact. A tolerance may be added only with a written `reason` in the entry, approved by the maintainer (section 6); the manifest loader refuses a tolerance without a reason.
 - **Provenance gaps.** The draft prints what it could not find under "Could not determine / check by hand". Typical gaps: a reference with no `git version=` in its HISTORY (the S.3 ds01 runs were a plain `pip install .`, so only the version is recorded), `iers: null` (the IERS table versions are not determined until a bless records them), and references that do not exist yet. Fill in what you know; leave `null` rather than guess.
 - **Checksums.** `verify-checksums` must say `ok` for every entry.
@@ -418,11 +421,11 @@ Notes for real tests:
 
 Do all of the following, and put the results in the pull request description (`.github/pull_request_template.md` has a heading for each item; it is a proposal and can be dropped or changed by the maintainer).
 
-1. Run `pytest` and paste its summary line into the pull request description.
+1. Run `pytest` and paste its summary line into the pull request description. If the pull request touches plotting (`core/kcwi_plotting.py`, `core/_plot_render.py`, `core/plot_viewer.py`, `core/bokeh_plotting.py`, `StartPlotViewer`), also run `pytest -m viewer` and paste its summary line.
 2. If the pull request changes reduction code, run `pytest -m regression` (quick profile; full profile for pull requests that touch plotting or prompt code, and for releases) and paste the report's summary table. If it does not touch reduction code, say "not reduction code" and why.
 3. A regression failure is resolved by a fix, or by a bless with a reason from the allowed list (section 10). Quote each bless in the description: the entry, the reason text and the diff summary. Only the maintainer runs a bless.
 4. If the pull request fixes a known bug, the `xfail` marker of its test is removed in the same commit, and the description names the bug ID. No `xfail` is added without a bug or task ID in its reason, and none is left for a bug that is fixed.
 5. No new `skip` unless a required external resource is missing, and it carries a reason (section 7).
 6. Say who wrote the tests and who wrote the code under test (section 8): a different model, or a fresh session. For each new test file, name the deliberate breakage that made a test fail.
-7. Run `pytest --cov=kcwidrp --cov-report=term-missing` and paste the lines for the modules the pull request touches. They must not fall below the minimum in section 11 (70 % per module for `core/` and `kcwi_file_primitives.py`, with the exemptions listed there).
+7. Run `pytest -m "not regression" --cov=kcwidrp --cov-report=term-missing` (the fast and viewer tests) and paste the lines for the modules the pull request touches. They must not fall below the minimum in section 11 (70 % per module for `core/` and `kcwi_file_primitives.py`, with the exemptions listed there).
 8. Check `git status`: no stray files from the tests (`.hypothesis/`, `__pycache__` changes outside what is tracked, files in the repository root).

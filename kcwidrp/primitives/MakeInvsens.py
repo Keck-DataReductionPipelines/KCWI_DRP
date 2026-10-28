@@ -6,7 +6,7 @@ from kcwidrp.core.kcwi_plotting import set_plot_lims, save_plot
 from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer, \
     kcwi_fits_reader, strip_fname
 
-from bokeh.plotting import figure, ColumnDataSource
+from kcwidrp.core.kcwi_plotting import figure
 from scipy.signal import find_peaks
 from scipy.interpolate import interp1d
 from astropy.io import fits as pf
@@ -342,7 +342,6 @@ class MakeInvsens(BasePrimitive):
             print("Hover the cursor over spectrum to find wavelengths.")
             # yran = [np.min(obsspec), np.max(obsspec)]
             yran = [np.min(obsspec[wl_good]), np.max(obsspec[wl_good])]
-            source = ColumnDataSource(data=dict(x=w, y=obsspec))
             done = False
             while not done:
                 p = figure(
@@ -352,7 +351,7 @@ class MakeInvsens(BasePrimitive):
                     y_axis_label='Intensity (e-)',
                     plot_width=self.config.instrument.plot_width,
                     plot_height=self.config.instrument.plot_height)
-                p.line('x', 'y', line_color='black', source=source)
+                p.line(w, obsspec, line_color='black')
                 p.line([wgoo0, wgoo0], yran, line_color='green',
                        legend_label='WAVGOOD')
                 p.line([wgoo1, wgoo1], yran, line_color='green')
