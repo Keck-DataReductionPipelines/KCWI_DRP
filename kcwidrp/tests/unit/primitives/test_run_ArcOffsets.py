@@ -3,9 +3,11 @@
 Prompt sites (docs/plot_inventory.md, section 3.1):
 
 * P01 (plot_level >= 2), after the figure of bar ``next_bar_to_plot``:
-  ``Next? <int> or <cr>, q to quit: `` -- <cr> shows the next bar, an
+  ``Next? <cr>, <int> to jump, q to quit (? for help): `` (P.4: was
+  ``Next? <int> or <cr>, q to quit: ``) -- <cr> shows the next bar, an
   integer n jumps to bar n, q stops the review.
-* P02 (plot_level >= 2): ``Next? <cr>: `` after the bar-offsets figure.
+* P02 (plot_level >= 2): ``Next? <cr> (? for help): `` (P.4: was
+  ``Next? <cr>: ``) after the bar-offsets figure.
 
 Input: ``context.arcs`` as ExtractArcs leaves it, here 12 synthetic bar
 spectra (the same line list shifted by a known number of pixels per bar);
@@ -14,9 +16,10 @@ read from the figure title (``... BAR OFFSET for Arc: <n> ...``), recorded by
 replacing ``bokeh_plot`` (a no-op here anyway: bokeh_session is None).
 save_plot (PNG export through a browser) is replaced by a no-op.
 
-Known bugs pinned as strict xfails (D8): B4 (a bar number lower than or
-equal to the current one, negative, or >= the number of bars silently ends
-the review) and B5 (an answer containing "q" quits).
+B4 (a bar number lower than or equal to the current one, negative, or >=
+the number of bars silently ended the review) and B5 (an answer containing
+"q" quit) were pinned as strict xfails (D8); P.4 fixed both by converting
+the site to ``kcwi_interactive.ask_next`` and removed the markers.
 """
 import re
 
@@ -28,8 +31,8 @@ from kcwidrp.primitives.ArcOffsets import ArcOffsets
 
 HEAD = "c0fed5c"
 NBARS, REFBAR, NPIX = 12, 5, 300
-P01 = "Next? <int> or <cr>, q to quit: "
-P02 = "Next? <cr>: "
+P01 = "Next? <cr>, <int> to jump, q to quit (? for help): "
+P02 = "Next? <cr> (? for help): "
 SHIFTS = [(b - REFBAR) % 4 - 1 for b in range(NBARS)]   # -1 ... 2 px
 
 
@@ -101,10 +104,6 @@ def test_text_without_q_acts_as_enter(run_primitive, synthetic_ccddata,
     assert shown == [0, 1]
 
 
-@pytest.mark.xfail(strict=True, raises=pytest.fail.Exception, reason=(
-    "B4: a bar number <= the current bar, negative, or >= the number of "
-    "bars never matches the loop index (ArcOffsets.py:92-99), so the review "
-    "silently ends and the answers meant for later bars are left over"))
 @pytest.mark.parametrize("bad", ["3", "5", "-1", str(NBARS)])
 def test_out_of_range_bar_number_is_asked_again(run_primitive,
                                                 synthetic_ccddata, shown,
@@ -115,9 +114,6 @@ def test_out_of_range_bar_number_is_asked_again(run_primitive,
     assert shown[0] == 0 and shown[-1] == 7
 
 
-@pytest.mark.xfail(strict=True, raises=pytest.fail.Exception, reason=(
-    "B5: 'Q' in q.upper() quits the bar review on any answer containing q "
-    "(ArcOffsets.py:93), so 'eq' ends the review"))
 def test_answer_containing_q_does_not_quit(run_primitive, synthetic_ccddata,
                                            shown):
     # source: analytic @ c0fed5c - plan section 8.2 - only q/quit quit; other

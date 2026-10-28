@@ -3,8 +3,7 @@ from kcwidrp.core.bokeh_plotting import bokeh_plot
 from kcwidrp.core.kcwi_plotting import get_plot_lims, oplot_slices, \
     set_plot_lims, save_plot
 from kcwidrp.primitives.kcwi_file_primitives import plotlabel
-
-import time
+from kcwidrp.core.kcwi_interactive import ask_next, pause, NEXT, QUIT
 
 import numpy as np
 from kcwidrp.core.kcwi_plotting import figure
@@ -89,14 +88,36 @@ class ArcOffsets(BasePrimitive):
                     p.line(x, np.roll(arc, offset), color='red',
                            legend_label='bar %d' % arc_number)
                     bokeh_plot(p, self.context.bokeh_session)
-                    q = input("Next? <int> or <cr>, q to quit: ")
-                    if 'Q' in q.upper():
+                    q = ask_next(
+                        self.logger,
+                        what="Arc spectrum of this bar, shifted by its cross-correlation offset, over the reference bar.",
+                        help=("What you see:\n"
+                              '  Title "BAR OFFSET for Arc: <bar> Slice: <slice> = <offset>".\n'
+                              "  Green: arc spectrum of the reference bar (REFBAR) along CCD y.\n"
+                              "  Red: arc spectrum of this bar, shifted by the offset (px) that\n"
+                              "  maximises its cross-correlation with the reference bar. Both are\n"
+                              "  tapered at the ends (Tukey window, TUKEYALPHA).\n"
+                              "What to look for:\n"
+                              "  Good: red and green arc lines coincide line for line over the whole\n"
+                              "  range; different relative line strengths are normal.\n"
+                              "  Bad: red lines displaced from green everywhere, or aligned in one part\n"
+                              "  only. A bright line near an end can pull the correlation; a larger\n"
+                              "  TUKEYALPHA reduces its weight.\n"
+                              "Your options:\n"
+                              "  <cr>      show the next bar.\n"
+                              "  <number>  jump to that bar (after the current one, up to 119);\n"
+                              "            bars in between are not shown. Other numbers are refused.\n"
+                              "  q / quit  stop showing bars; offsets are still found for all bars.\n"
+                              "  Display only: no answer changes the reduction.\n"
+                              "Default:\n"
+                              "  <cr> shows the next bar. Below plot_level 2 these plots are not shown."),
+                        n_items=nbars, current=arc_number, who="ArcOffsets")
+                    if q == QUIT:
                         do_plot = False
+                    elif q == NEXT:
+                        next_bar_to_plot = arc_number + 1
                     else:
-                        try:
-                            next_bar_to_plot = int(q)
-                        except ValueError:
-                            next_bar_to_plot = arc_number + 1
+                        next_bar_to_plot = q
             # plot output name stub
             pfname = "arc_%05d_%s_%s_%s_ta%03d" % (
                 self.action.args.ccddata.header['FRAMENO'],
@@ -117,10 +138,25 @@ class ArcOffsets(BasePrimitive):
                 oplot_slices(p, ylim)
                 set_plot_lims(p, xlim=xlim, ylim=ylim)
                 bokeh_plot(p, self.context.bokeh_session)
-                if self.config.instrument.plot_level >= 2:
-                    input("Next? <cr>: ")
-                else:
-                    time.sleep(self.config.instrument.plot_pause)
+                pause(self.config.instrument, self.logger,
+                      what="Offset of every bar's arc spectrum from the reference bar (px), by bar number.",
+                      help=("What you see:\n"
+                            '  Title "BAR OFFSETS". Blue diamonds: the offset (px along CCD y) of\n'
+                            "  each bar's arc spectrum from the reference bar, against bar number.\n"
+                            "  Black dash-dot lines: slice boundaries (every 5 bars).\n"
+                            "What to look for:\n"
+                            "  Good: the reference bar is at 0; the five bars of a slice have similar\n"
+                            "  offsets and the pattern changes smoothly from slice to slice.\n"
+                            "  Bad: an isolated point far from its neighbours is a failed\n"
+                            "  cross-correlation for that bar (check that bar in the next steps).\n"
+                            "  These offsets are the starting points of the per-bar wavelength fits.\n"
+                            "Your options:\n"
+                            "  <cr>  continue. Display only: the reduction is not changed.\n"
+                            "Default:\n"
+                            "  <cr> continues. At plot_level 1 the plot is shown for plot_pause\n"
+                            "  seconds; at plot_level 0 it is not drawn. The PNG is saved either way\n"
+                            "  at plot_level >= 1."),
+                      who="ArcOffsets")
                 # save offset plot
                 save_plot(p, filename=pfname + '_baroffs.png')
             self.context.bar_offsets = offsets
