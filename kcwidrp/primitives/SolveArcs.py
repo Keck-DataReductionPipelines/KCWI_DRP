@@ -4,6 +4,7 @@ from kcwidrp.core.kcwi_plotting import get_plot_lims, oplot_slices, \
     set_plot_lims, save_plot
 from kcwidrp.primitives.GetAtlasLines import get_line_window, gaus
 from kcwidrp.primitives.kcwi_file_primitives import plotlabel
+from kcwidrp.core.kcwi_interactive import ask_next, pause, NEXT, QUIT
 
 import numpy as np
 from scipy.signal.windows import boxcar
@@ -13,7 +14,6 @@ from scipy.interpolate import interpolate
 from scipy.stats import sigmaclip
 from kcwidrp.core.kcwi_plotting import figure
 from kcwidrp.core.kcwi_plotting import Range1d, LinearAxis
-import time
 
 
 class SolveArcs(BasePrimitive):
@@ -259,8 +259,32 @@ class SolveArcs(BasePrimitive):
                         p.y_range.start = 0
                         bokeh_plot(p, self.context.bokeh_session)
 
-                        q = input(ptitle + " - Next? <cr>, q to quit: ")
-                        if 'Q' in q.upper():
+                        q = ask_next(
+                            self.logger,
+                            what="Line fit: bar %d, line %d/%d, arc peak at %.1f px, atlas %.2f A." % (
+                                ib, iw + 1, len(self.action.args.at_wave),
+                                peak, aw),
+                            help=("What you see:\n"
+                                  '  Title "ATLAS/ARC LINE FITS Bar# <n> - line <i>/<N> ...". Two x axes:\n'
+                                  "  wavelength (bottom, atlas) and CCD y pixel (top, arc), matched over\n"
+                                  "  this window by the central wavelength fit.\n"
+                                  "  Atlas: blue line with green circles; red vertical = atlas line.\n"
+                                  "  Arc: red circles = smoothed data in the fit window; black line =\n"
+                                  "  interpolation; green dashed = centroid; magenta dash-dot = Gaussian\n"
+                                  "  peak; black dash-dot = interpolated peak, the position used.\n"
+                                  "What to look for:\n"
+                                  "  Good: one clean arc line whose three verticals coincide, at the same\n"
+                                  "  place as the red atlas line.\n"
+                                  "  Bad: blended or distorted lines, or an arc line far from the atlas\n"
+                                  "  line (misidentification); the residual clipping may then reject it.\n"
+                                  "Your options:\n"
+                                  "  <cr>      show the next line of this bar.\n"
+                                  "  q / quit  stop the line plots for all bars (bar plots continue).\n"
+                                  "  Display only: no answer changes the reduction.\n"
+                                  "Default:\n"
+                                  "  <cr> shows the next line. Below plot_level 3 these are not shown."),
+                            who="SolveArcs")
+                        if q == QUIT:
                             do_inter = False
                 except IndexError:
                     if verbose:
@@ -409,7 +433,26 @@ class SolveArcs(BasePrimitive):
                        line_dash='dashdot')
                 set_plot_lims(p, xlim=xlim, ylim=ylim)
                 bokeh_plot(p, self.context.bokeh_session)
-                input("Next? <cr>: ")
+                pause(self.config.instrument, self.logger,
+                      what="Wavelength-fit residuals of this bar, with kept and rejected lines.",
+                      help=("What you see:\n"
+                            '  Title "RESIDUALS for Bar <n>, Slice <s>, RMS = <r>, N = <k>": fit\n'
+                            "  minus atlas wavelength (A) for each line.\n"
+                            "  Green diamonds: lines kept. Orange: lines rejected as outliers in the\n"
+                            "  iterative clipping. Red (at 0): lines rejected before the fit (no\n"
+                            "  clean window, failed Gaussian, centroid off). Black dotted: zero.\n"
+                            "  Grey dash-dot: +- RMS. Magenta dash-dot: CWAVE.\n"
+                            "What to look for:\n"
+                            "  Good: green points scatter randomly about zero over the whole range,\n"
+                            "  RMS well below the dispersion of one pixel.\n"
+                            "  Bad: a trend or curve with wavelength (misidentified lines or too\n"
+                            "  low a polynomial order), large gaps, many orange/red lines (often a\n"
+                            "  wrong atlas offset).\n"
+                            "Your options:\n"
+                            "  <cr>  show the fit overlay for this bar. Display only.\n"
+                            "Default:\n"
+                            "  <cr> continues. Below plot_level 2 this plot is not shown."),
+                      who="SolveArcs")
 
                 # overplot atlas and bar using fit wavelengths
                 p = figure(title=plab + "ATLAS/ARC FIT" + ptitle,
@@ -435,14 +478,37 @@ class SolveArcs(BasePrimitive):
                 p.diamond(rej_wave, [rj*atnorm for rj in rej_flux],
                           color='red', legend_label='RejFit', size=6)
                 bokeh_plot(p, self.context.bokeh_session)
-                q = input("Next? <int> or <cr>, q - quit: ")
-                if 'Q' in q.upper():
+                q = ask_next(
+                    self.logger,
+                    what="Arc spectrum of this bar on its final wavelength solution, over the atlas.",
+                    help=("What you see:\n"
+                          '  Title "ATLAS/ARC FIT for Bar <n> ...".\n'
+                          "  Dark grey line: this bar's arc on its final wavelength solution; dark\n"
+                          "  grey diamonds: lines used in the fit, at their fitted wavelengths.\n"
+                          '  Blue: atlas spectrum (scaled). Green diamonds ("Kept"): every line of\n'
+                          "  the atlas line list. Orange: lines rejected as residual outliers.\n"
+                          "  Red: lines rejected before the fit. Magenta dash-dot: CWAVE.\n"
+                          "What to look for:\n"
+                          "  Good: grey arc lines fall on the blue atlas lines over the whole\n"
+                          "  range, with grey diamonds on most green ones.\n"
+                          "  Bad: grey lines shifted from blue in part of the range: the solution\n"
+                          "  for this bar is wrong there.\n"
+                          "Your options:\n"
+                          "  <cr>      show the next bar.\n"
+                          "  <number>  jump to that bar (after the current one, up to 119); at\n"
+                          "            plot_level 3 the line plots follow the jump.\n"
+                          "  q / quit  stop the bar review (line plots stop too).\n"
+                          "  Display only: no answer changes the reduction.\n"
+                          "Default:\n"
+                          "  <cr> shows the next bar. Below plot_level 2 these are not shown."),
+                    n_items=len(self.context.arcs), current=ib,
+                    who="SolveArcs")
+                if q == QUIT:
                     master_inter = False
+                elif q == NEXT:
+                    next_bar_to_plot = ib + 1
                 else:
-                    try:
-                        next_bar_to_plot = int(q)
-                    except ValueError:
-                        next_bar_to_plot = ib + 1
+                    next_bar_to_plot = q
 
         # Plot final results
         nbars = self.config.instrument.NBARS
@@ -489,10 +555,25 @@ class SolveArcs(BasePrimitive):
                 oplot_slices(p, ylim)
                 set_plot_lims(p, xlim=xlim, ylim=ylim)
                 bokeh_plot(p, self.context.bokeh_session)
-                if self.config.instrument.plot_level >= 2:
-                    input("Next? <cr>: ")
-                else:
-                    time.sleep(self.config.instrument.plot_pause)
+                pause(self.config.instrument, self.logger,
+                      what="One coefficient of the wavelength solution for every bar.",
+                      help=("What you see:\n"
+                            '  Title "COEF <k> VALUES <Ck> = <mean> +- <std>": coefficient k of each\n'
+                            "  bar's wavelength polynomial in CCD pixel, against bar number. C0 is\n"
+                            "  the wavelength (A) at the first pixel, C1 the dispersion (A/px),\n"
+                            "  higher terms the curvature. Blue diamonds: values. Black dash-dot\n"
+                            "  lines: slice boundaries. One plot per coefficient.\n"
+                            "What to look for:\n"
+                            "  Good: a smooth pattern within and between slices, no isolated\n"
+                            "  points.\n"
+                            "  Bad: a bar far off its neighbours has a poor solution (compare its\n"
+                            "  N lines and RMS in the next plots).\n"
+                            "Your options:\n"
+                            "  <cr>  next coefficient (or the next plot). Display only.\n"
+                            "Default:\n"
+                            "  <cr> continues. At plot_level 1 the plot is shown for plot_pause\n"
+                            "  seconds; at plot_level 0 it is not drawn."),
+                      who="SolveArcs")
                 # save coefficients plot
                 save_plot(p, filename=pfname + '_coef%d.png' % cn)
 
@@ -529,10 +610,23 @@ class SolveArcs(BasePrimitive):
         set_plot_lims(p, xlim=xlim, ylim=ylim)
         if self.config.instrument.plot_level >= 1:
             bokeh_plot(p, self.context.bokeh_session)
-            if self.config.instrument.plot_level >= 2:
-                input("Next? <cr>: ")
-            else:
-                time.sleep(self.config.instrument.plot_pause)
+            pause(self.config.instrument, self.logger,
+                  what="Number of arc lines used in the wavelength fit of every bar.",
+                  help=("What you see:\n"
+                        '  Title "FIT STATS <Nlns> = <mean> +- <std>": number of lines in each\n'
+                        "  bar's final fit, against bar number. Blue diamonds: values. Red:\n"
+                        "  mean. Green dashed: mean +- 1 standard deviation. Black dash-dot:\n"
+                        "  slice boundaries.\n"
+                        "What to look for:\n"
+                        "  Good: similar numbers for all bars.\n"
+                        "  Bad: bars with far fewer lines than the rest; their solutions are\n"
+                        "  less constrained, especially at the ends of the range.\n"
+                        "Your options:\n"
+                        "  <cr>  continue. Display only.\n"
+                        "Default:\n"
+                        "  <cr> continues. At plot_level 1 the plot is shown for plot_pause\n"
+                        "  seconds; at plot_level 0 it is not drawn (the PNG is still saved)."),
+                  who="SolveArcs")
         # save N lines plot
         save_plot(p, filename=pfname + '_nlines.png')
 
@@ -569,10 +663,23 @@ class SolveArcs(BasePrimitive):
         set_plot_lims(p, xlim=xlim, ylim=ylim)
         if self.config.instrument.plot_level >= 1:
             bokeh_plot(p, self.context.bokeh_session)
-            if self.config.instrument.plot_level >= 2:
-                input("Next? <cr>: ")
-            else:
-                time.sleep(self.config.instrument.plot_pause)
+            pause(self.config.instrument, self.logger,
+                  what="RMS of the wavelength fit of every bar (Angstrom).",
+                  help=("What you see:\n"
+                        '  Title "FIT STATS <RMS> = <mean> +- <std>": RMS residual (A) of each\n'
+                        "  bar's final fit, against bar number. Blue diamonds: values. Red:\n"
+                        "  mean. Green dashed: mean +- 1 standard deviation. Black dash-dot:\n"
+                        "  slice boundaries.\n"
+                        "What to look for:\n"
+                        "  Good: uniformly low RMS, well below one pixel's dispersion.\n"
+                        "  Bad: isolated bars or whole slices with high RMS: check them with\n"
+                        "  the bar review (plot_level 2) before trusting those slices.\n"
+                        "Your options:\n"
+                        "  <cr>  continue. Display only.\n"
+                        "Default:\n"
+                        "  <cr> continues. At plot_level 1 the plot is shown for plot_pause\n"
+                        "  seconds; at plot_level 0 it is not drawn (the PNG is still saved)."),
+                  who="SolveArcs")
 
         # save residual plot
         save_plot(p, filename=pfname + '_resid.png')

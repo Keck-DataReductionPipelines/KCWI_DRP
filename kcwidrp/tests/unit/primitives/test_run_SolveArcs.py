@@ -2,13 +2,16 @@
 
 Prompt sites (docs/plot_inventory.md, section 3.1), at plot_level 2:
 
-* P43 ``Next? <cr>: `` after the residuals figure of bar
+* P43 ``Next? <cr> (? for help): `` after the residuals figure of bar
   ``next_bar_to_plot``, then
-* P44 ``Next? <int> or <cr>, q - quit: `` after its atlas/arc figure --
-  <cr> next bar, integer n jumps to bar n, q stops the review;
-* P45 ``Next? <cr>: `` after each coefficient figure (5 for the default
-  order-4 fit), P46 and P47 ``Next? <cr>: `` after the two statistics
+* P44 ``Next? <cr>, <int> to jump, q to quit (? for help): `` after its
+  atlas/arc figure -- <cr> next bar, integer n jumps to bar n, q stops the
+  review;
+* P45 ``Next? <cr> (? for help): `` after each coefficient figure (5 for
+  the default order-4 fit), P46 and P47 the same after the two statistics
   figures.
+(P.4 changed the prompt texts; before: ``Next? <cr>: `` and
+``Next? <int> or <cr>, q - quit: ``.)
 
 Input: the arc-chain state FitCenter, GetAtlasLines and ReadAtlas leave
 (``context.arcs``; args ``twkcoeff``, ``at_wave``, ``at_flux``,
@@ -19,9 +22,10 @@ P44 prompt is read from the figure title (``ATLAS/ARC FIT for Bar <n>``),
 recorded by replacing ``bokeh_plot`` (a no-op with bokeh_session None);
 ``save_plot`` (PNG export through a browser) is replaced by a no-op.
 
-Known bug pinned as a strict xfail (D8): B4 (a bar number lower than or
-equal to the current one, negative, or >= the number of bars silently ends
-the review).
+B4 (a bar number lower than or equal to the current one, negative, or >=
+the number of bars silently ended the review) was pinned as a strict xfail
+(D8); P.4 fixed it by converting the site to ``kcwi_interactive.ask_next``
+and removed the marker.
 """
 import re
 import sys
@@ -35,8 +39,8 @@ from kcwidrp.primitives.SolveArcs import SolveArcs
 HEAD = "c0fed5c"
 NBARS, NPIX, W0, DISP = 6, 300, 4450.0, 1.0
 LINES = [4480.0, 4512.0, 4547.0, 4590.0, 4633.0, 4671.0, 4702.0, 4730.0]
-P44 = "Next? <int> or <cr>, q - quit: "
-NEXT = "Next? <cr>: "
+P44 = "Next? <cr>, <int> to jump, q to quit (? for help): "
+NEXT = "Next? <cr> (? for help): "
 TAIL = [NEXT] * 7               # 5 coefficient figures + 2 statistics
 
 
@@ -106,11 +110,6 @@ def test_number_jumps_and_q_quits(run_primitive, synthetic_ccddata, shown):
     assert shown == [0, 3, 4]
 
 
-@pytest.mark.xfail(strict=True, raises=pytest.fail.Exception, reason=(
-    "B4: a bar number <= the current bar, negative, or >= the number of "
-    "bars never matches the loop index (SolveArcs.py:438-445), so the "
-    "review silently ends and the answers meant for later bars are left "
-    "over"))
 @pytest.mark.parametrize("bad", ["1", "2", "-1", str(NBARS)])
 def test_out_of_range_bar_number_is_asked_again(run_primitive,
                                                 synthetic_ccddata, shown,
