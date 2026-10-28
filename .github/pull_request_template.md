@@ -5,7 +5,8 @@
 ## Fast suite
 
 <!-- Paste the last line of `pytest`, e.g. "710 passed, 8 deselected, 60 xfailed in 32s".
-     Plotting changed: also the last line of `pytest -m viewer`. -->
+     Plotting changed: also the last line of `pytest -m viewer`.
+     Regression tooling changed: also the last line of `pytest -m regression_tools`. -->
 
 ## Regression suite
 

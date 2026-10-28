@@ -10,6 +10,7 @@ the real framework (plan section 6.1).
 """
 import shutil
 import sys
+from pathlib import Path
 from types import SimpleNamespace
 
 import pytest
@@ -103,6 +104,18 @@ for i in range(n_inputs):
 '''
 
 DATASET = "ds9_fake"
+
+HERE = Path(__file__).resolve().parent
+
+
+@pytest.hookimpl(tryfirst=True)
+def pytest_collection_modifyitems(config, items):
+    # Every test in this directory gets the regression_tools marker, so the
+    # default run (addopts in pyproject.toml) leaves them out: they launch fake
+    # reductions as subprocesses (~25 s).  Run them with -m regression_tools.
+    for item in items:
+        if HERE in Path(str(item.fspath)).resolve().parents:
+            item.add_marker(pytest.mark.regression_tools)
 
 
 def write_fake_script(root):
