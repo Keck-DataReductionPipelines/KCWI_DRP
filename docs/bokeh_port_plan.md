@@ -158,6 +158,36 @@ Verification (all must hold for WebAgg to be chosen):
 
 Output: a short written decision added to this document, covering: WebAgg or fallback; one figure reused or one per submission; the port and browser-opening behaviour; and the fork result. If the `fork` criterion fails but `spawn` passes, the decision is to switch `MakeCube` to `get_context("spawn").Pool()`, as `FitCenter` already does, and that change is added to task 2.2. If any other criterion fails and cannot be fixed, phase 3 uses the fallback (an auto-refreshing page showing the latest PNG) and the loss of zoom and cursor readout is raised with the team before continuing. The port, URL-printing, exit and fork criteria apply to the fallback as well.
 
+#### 0.3 decision (2026-10-28)
+
+Prototype and checker: `docs/prototype/viewer_0.3/` (`python check_proto.py` runs every automatable criterion; a WebSocket client speaking `mpl.js`'s protocol stands in for the browser).
+
+- **WebAgg is chosen.** On macOS (Darwin 25.5, Python 3.12, Matplotlib 3.9.4, Tornado 6.5) every automatable criterion passes: plot shown while the worker is in `input()`; 200 submissions at 0.1 s with one `Figure` alive throughout; cursor readout (`(x, y) = (…)`); zoom; zoom history cleared on a new plot; 1000×600, 1000×600 2×2 grid, 500×600 1×2 grid and twin-axis submissions each shown at their own size; in-place mutation after submission not shown; reopened and second tabs show the current plot; two instances on two ports each showing their own plots; all ten ports taken gives one warning and harmless submissions; with no tab connected nothing is rendered and the browser is tried at most once; Ctrl-C leaves through `os._exit` in under 0.1 s with nothing on disk and the port free at once.
+- **One long-lived figure per viewer**, cleared and re-rendered per submission, with the toolbar history reset (`toolbar.update()`), a `resize` event sent to every tab, and the figure label set so a reconnecting tab gets the right title. Rendering is lazy: a submission stores the description and only draws when a tab is connected.
+- **Ports.** `127.0.0.1` only; `plot_viewer_port` to `+9`. A port is skipped if a `connect()` to it succeeds before binding: on macOS a `127.0.0.1` bind with `SO_REUSEADDR` silently shadows a wildcard (`0.0.0.0`) listener on the same port. The URL `http://127.0.0.1:<port>/` is logged and printed on its own line. Browser opened only if `plot_viewer_open_browser` (default `False`, S4-Q4).
+- **Fork.** 50 × `get_context("fork").Pool()` while a tab is connected and renders are in progress: no hang (1.2 s); 50 × spawn: no hang (59 s). The listening socket is closed in forked children by `os.register_at_fork(after_in_child=...)`; after the parent exits, no child holds the port. **`MakeCube` keeps its default pool**; no spawn switch.
+- 👤 Still to do: the same `check_proto.py` run on Ubuntu 24.04 (the Docker daemon was not running here), and pan, zoom and cursor readout checked by hand in a real browser.
+
+#### Interfaces fixed for parallel implementation (2026-10-28)
+
+Tasks 1.1, 1.2, 2.x, 3.1, 3.2, 4.1 and 5.1 were front-loaded in parallel; they meet at these names.
+
+`kcwidrp/core/kcwi_plotting.py` (1.1):
+- `STRICT` (module bool; true when `KCWI_PLOT_STRICT=1` at import; tests set it directly).
+- `figure(**kw)` → a recorder (class `PlotFigure`); `Range1d`, `LinearAxis`, `gridplot(...)` → `PlotGrid`. `p.title.text` is readable.
+- `render(obj, fig=None)` → a `matplotlib.figure.Figure` drawn from a `PlotFigure` or `PlotGrid`; with `fig` given, that figure is cleared, resized to the object's pixel size and drawn into. Used by `save_plot` and by the viewer. One `Axes` per recorded figure (row-major for a grid), plus one `twiny` `Axes` when `extra_x_ranges` is used. The title is the left title (`ax.get_title(loc='left')`); the legend is one legend on the top-most axes.
+- `pixel_size(obj)` → `(width, height)`; `snapshot(obj)` → an independent deep copy for hand-off; `plot_label(obj)` → title text (a grid: its first figure's title).
+- Unchanged: `save_plot(fig, filename=None)`, `get_plot_lims`, `set_plot_lims`, `oplot_slices`.
+- Logger `logging.getLogger('KCWI')`.
+
+`kcwidrp/core/plot_viewer.py` (3.1): `PlotViewer(port=5006, open_browser=False)` with `start()` → bool, `show(obj)`, `clear()`, `stop()`, attributes `url`, `port`, `dead`. `show` snapshots on the caller's thread, never blocks, never raises.
+
+`kcwidrp/core/bokeh_plotting.py` (3.1): `bokeh_plot(plot, session)` → `session.show(plot)`; `bokeh_clear(session)` → `session.clear()`; both no-ops for `None` and never raise. `init_plot_session`, `check_running_process` kept. The session is a `PlotViewer`, still stored as `context.bokeh_session`.
+
+`kcwidrp/core/plot_config.py` (3.2/5.1): `viewer_requested(config_instrument, logger=None)` → bool, implementing the 5.1 rules for `enable_plot_viewer` and `enable_bokeh` (deprecation logged once per process). No Matplotlib import.
+
+Primitive `StartPlotViewer` (3.1), event `start_plot_viewer` with `start_bokeh` kept as an alias in both pipeline tables. Config keys `enable_plot_viewer`, `plot_viewer_port` (5006), `plot_viewer_open_browser` (`False`).
+
 ### 0.4 Confirm assumptions — Human
 
 - Whether anything downstream (RTI, KOA ingestion) reads `plots/*.png`, and whether it depends on more than file name and format.
