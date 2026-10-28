@@ -688,7 +688,8 @@ Status (2026-10-28, branch `upgrade/pr1-bokeh`, started from PR0's head before P
 - **Done:** 0.3 (prototype and decision; Ubuntu run and browser checks still 👤), 1.1, 1.2, 2.1, 2.2 (MakeCube keeps its `fork` pool), 3.1, 3.2, 4.1 (`kcwidrp/tests/regression/plot_compare_page.py`), 5.1 (with D26: `requirements.txt` and `environment.yml` deleted). 1.1, 1.2, 2.x, 3.x, 4.1 and 5.1 were built in parallel against the interfaces in bokeh plan 0.3, then integrated; plot style per D27.
 - **Development environment** (S.2 step 3): `kcwidrp-dev`, recorded in `docs/baseline/env_dev.txt`.
 - **Regression:** full profile, baseline env, before the D27 style changes: 96 passed (all 12 entries, every tier). Full profile in the development environment at `f593896` (after D27): 96 passed in 35 min, every tier of all 12 entries; the newer `astropy-iers-data` changed no output, so no `environment` bless is needed.
-- **Still open:** 👤 0.3 on Ubuntu and in a browser; 👤 3.1 interactive MakeInvsens cursor-readout session and the in-`reduce_kcwi` checks (two processes, `lsof` before and after); 4.2 first-pass comparison and 👤 4.3 sign-off, then the "bokeh port 4.3" bless of the plots; the PR1 description.
+- **Maintainer browser checks (2026-10-28, macOS, level-3 ds03 blue run):** pan and cursor readout work; the optional vertical cursor line (added at the maintainer's request, a checkbox on the viewer page) works. Zoom not yet checked on a plot that stays on screen.
+- **Still open:** 👤 0.3 on Ubuntu, and zoom on a held plot; 👤 3.1 interactive MakeInvsens cursor-readout session and the in-`reduce_kcwi` checks (two processes, `lsof` before and after); 4.2 first-pass comparison and 👤 4.3 sign-off, then the "bokeh port 4.3" bless of the plots; the PR1 description.
 
 ### Amendments
 
