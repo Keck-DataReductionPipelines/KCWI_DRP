@@ -209,7 +209,7 @@ def test_fit_limits_cr_keeps_wavgood_and_last_pair_wins(run_primitive,
                                                          tmp_redux):
     hdr = run_invsens(run_primitive, synthetic_ccddata, tmp_redux,
                       ["", ""] + FIT_DONE + [""])
-    assert (hdr["INVFW0"], hdr["INVFW1"]) == WGOOD     # source: P14 default
+    assert (hdr["INVFW0"], hdr["INVFW1"]) == WGOOD     # source: characterization - P14 default (WAVGOOD)
     hdr = run_invsens(run_primitive, synthetic_ccddata, tmp_redux,
                       ["4100 4500", "4200 4400", "", ""] + FIT_DONE + [""])
     assert len(run_primitive.last.prompts) == 3 + 1 + 3 + 1
@@ -270,7 +270,7 @@ def test_fit_limits_nonfinite_alone_leaves_wavgood(
         run_primitive, synthetic_ccddata, tmp_redux, bad):
     hdr = run_invsens(run_primitive, synthetic_ccddata, tmp_redux,
                       [bad, "", ""] + FIT_DONE + [""])
-    # source: P14 default - nothing accepted, so WAVGOOD stays
+    # source: characterization - P14 default (WAVGOOD) - nothing accepted, so WAVGOOD stays
     assert len(run_primitive.last.prompts) == 2 + 1 + 3 + 1
     assert (hdr["INVFW0"], hdr["INVFW1"]) == WGOOD
 
