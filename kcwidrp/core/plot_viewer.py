@@ -620,6 +620,7 @@ def _make_app(viewer):
         (r'/mpl.js', _MplJs),
         (r'/_static/(.*)', _Static,
          dict(path=FigureManagerWebAgg.get_static_file_path())),
-        (r'/download.([a-z0-9.]+)', _Download),
+        # mpl_tornado.js's mpl_ondownload asks for <fignum>/download.<fmt>
+        (r'/(?:\d+/)?download\.([a-z0-9.]+)', _Download),
         (r'/ws', _Socket),
     ])
