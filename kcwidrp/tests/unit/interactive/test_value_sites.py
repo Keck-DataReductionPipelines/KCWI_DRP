@@ -232,6 +232,49 @@ def test_fit_limits_refused_pair_leaves_wavgood(run_primitive,
     assert (hdr["INVFW0"], hdr["INVFW1"]) == WGOOD
 
 
+# "nan 4500" is in range apart from the nan, so only the finiteness check
+# refuses it; "nan 5000" would also be refused as out of range
+NONFINITE = ["nan nan", "nan 5000", "nan 4500", "4000 nan"]
+NONFINITE_IDS = ["both-nan", "lo-nan-hi-out", "lo-nan", "hi-nan"]
+
+
+@pytestmark_invsens
+@pytest.mark.parametrize("bad", NONFINITE, ids=NONFINITE_IDS)
+def test_fit_limits_nonfinite_refused_then_valid_pair_used(
+        run_primitive, synthetic_ccddata, tmp_redux, bad):
+    hdr = run_invsens(run_primitive, synthetic_ccddata, tmp_redux,
+                      [bad, "4200 4400", "", ""] + FIT_DONE + [""])
+    # source: analytic - P14: a non-finite entry is refused and the question
+    # asked again, so it adds exactly one prompt (bad, valid, <cr>, masks,
+    # P16-P18, order); the valid pair that follows is the fit range
+    assert len(run_primitive.last.prompts) == 3 + 1 + 3 + 1
+    assert (hdr["INVFW0"], hdr["INVFW1"]) == (4200.0, 4400.0)
+
+
+@pytestmark_invsens
+@pytest.mark.parametrize("bad", NONFINITE, ids=NONFINITE_IDS)
+def test_fit_limits_nonfinite_keeps_limits_accepted_before(
+        run_primitive, synthetic_ccddata, tmp_redux, bad):
+    hdr = run_invsens(run_primitive, synthetic_ccddata, tmp_redux,
+                      ["4100 4500", bad, "", ""] + FIT_DONE + [""])
+    # source: analytic - P14: the refused entry changes nothing, so the pair
+    # accepted before it is still in force at the <cr>; one prompt for each
+    # of the pair, the refused entry and the <cr>
+    assert len(run_primitive.last.prompts) == 3 + 1 + 3 + 1
+    assert (hdr["INVFW0"], hdr["INVFW1"]) == (4100.0, 4500.0)
+
+
+@pytestmark_invsens
+@pytest.mark.parametrize("bad", NONFINITE, ids=NONFINITE_IDS)
+def test_fit_limits_nonfinite_alone_leaves_wavgood(
+        run_primitive, synthetic_ccddata, tmp_redux, bad):
+    hdr = run_invsens(run_primitive, synthetic_ccddata, tmp_redux,
+                      [bad, "", ""] + FIT_DONE + [""])
+    # source: P14 default - nothing accepted, so WAVGOOD stays
+    assert len(run_primitive.last.prompts) == 2 + 1 + 3 + 1
+    assert (hdr["INVFW0"], hdr["INVFW1"]) == WGOOD
+
+
 @pytestmark_invsens
 def test_line_masks_are_saved_and_asked_until_cr(run_primitive,
                                                   synthetic_ccddata,

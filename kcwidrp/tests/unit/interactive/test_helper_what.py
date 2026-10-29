@@ -111,6 +111,37 @@ def test_ask_value_what_not_logged(script, caplog):
     assert WHAT not in caplog.text
 
 
+def test_ask_value_effect_none_logs_nothing_at_info(script, caplog):
+    # source: ask_value docstring - effect=None: nothing is logged for an
+    # accepted typed value (the caller logs the effect itself)
+    script("5")
+    with caplog.at_level(logging.DEBUG, logger=LOG.name):
+        assert ki.ask_value(LOG, "Offset? ", HELP, parse=int, default=None,
+                            effect=None, who="Prim") == 5
+    assert [r for r in caplog.records if r.levelno == logging.INFO] == []
+
+
+def test_ask_value_effect_string_logs_info_line(script, caplog):
+    # source: ask_value docstring - INFO "<who>: " + effect.format(value=)
+    script("5")
+    with caplog.at_level(logging.DEBUG, logger=LOG.name):
+        assert ki.ask_value(LOG, "Offset? ", HELP, parse=int, default=None,
+                            effect="set to {value}", who="Prim") == 5
+    info = [r.getMessage() for r in caplog.records
+            if r.levelno == logging.INFO]
+    assert len(info) == 1 and info[0].endswith("Prim: set to 5")
+
+
+def test_ask_value_effect_none_default_still_logs_at_debug(script, caplog):
+    # source: ask_value code/docstring - a <cr> logs "default kept" at DEBUG
+    script("")
+    with caplog.at_level(logging.DEBUG, logger=LOG.name):
+        assert ki.ask_value(LOG, "Offset? ", HELP, parse=int, default=7,
+                            effect=None, who="Prim") == 7
+    assert [r.levelno for r in caplog.records] == [logging.DEBUG]
+    assert "default kept" in caplog.text
+
+
 # ----------------------------------------------------------- ask_yes_quit
 def test_ask_yes_quit_prints_what_once_before_the_question(script, capsys):
     script("")
