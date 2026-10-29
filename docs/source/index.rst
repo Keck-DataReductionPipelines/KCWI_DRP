@@ -42,7 +42,9 @@ Follow the documentation in this section to reduce KCWI data.
    quickstart
    configuration
    running
+   processing
    sky_subtraction
+   nod_and_shuffle
    calibration
    data_products
    scripts

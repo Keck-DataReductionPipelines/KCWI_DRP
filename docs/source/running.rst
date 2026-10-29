@@ -54,6 +54,11 @@ parameter), one per line in the file.
 
    reduce_kcwi -b -f kb001.fits
 
+.. note::
+
+    In 1.3.x, group mode (``-g``) does not process ``DARK`` frames. See
+    :doc:`processing` for the order in which group mode processes frames.
+
 For the "list" and "single file" cases, please note that the preliminary
 calibrations needed to reduce the file or the file list must be already on
 disk.  For example, if the file you are trying to reduce is a science frame,
@@ -116,18 +121,20 @@ example:
 
 This will create a list of images (with extension .txt) that group images into
 processing blocks.  If you had a set of Blue channel biases, it might produce a
-list called `bias2x2TUP010.txt`, for example.  This can then be input as a list
+list called ``bias2x2TUP010_0.txt``, for example.  Lists for other frame types
+end with the last four characters of the ``STATEID`` header keyword, so that
+identical configurations from different states can be told apart.  This can then be input as a list
 to produce a master bias, which should be the first step in the pipeline
 reduction:
 
 .. code-block:: shell
 
-   reduce_kcwi -b -l bias2x2TUP010.txt
+   reduce_kcwi -b -l bias2x2TUP010_0.txt
 
 Because the files are all and only bias, the pipeline will only proceed as far
 as generating the master bias.  Next, you can reduce a list of continuum bars,
 which will have a list for each configuration, for example:
-`cbars2x2MedKBlueBL_4500_0.7.txt`.  This can be followed by arcs and then flats,
+``cbars2x2MedKBlueBL_4500_0.7_75fe.txt``.  This can be followed by arcs and then flats,
 etc.
 
 For an even finer control, each file in the bias list could be run individually,
@@ -174,6 +181,8 @@ Other command line options
 
 * ``-a atlas_line_list`` Specify an input line list for the atlas instead of
   generating it on the fly.
+
+* ``-v`` or ``--verbose``  Write debug messages to the log as well.
 
 * ``-p proctable.proc``  When the DRP runs, it keeps track of the files
   processed using a processing table. Normally that table is called

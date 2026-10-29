@@ -1,0 +1,7 @@
+Suffix,Written by,Description
+fsat,FlagSaturation,"Raw image with saturated pixels flagged"
+trim,TrimOverscan,"Overscan subtracted and trimmed image"
+gain,CorrectGain,"Image converted to electrons"
+def,CorrectDefects,"Image with known detector defects replaced"
+crr,RemoveCosmicRays,"Image with cosmic rays cleaned"
+warped,TraceBars and ExtractArcs,"Continuum bars or arc image warped with the geometric solution"

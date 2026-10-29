@@ -21,6 +21,14 @@ For plotting without interaction, enable Bokeh and set the plot level to 1 (this
 is the default configuration). For interactive plotting (where you have to hit
 <cr> to proceed after each step) set the plot level to 2 or more.
 
+Before reducing, you can check that every science frame has the calibrations
+it needs:
+
+.. code-block:: bash
+
+   cd mydata
+   check_cals kb*.fits
+
 Next, go to the data directory and run the startup script:
 
 .. code-block:: bash
@@ -40,6 +48,8 @@ channel data run:
 Three directories will be created: a ``redux`` directory with the results of the
 reduction, a ``logs`` directory with separate logs for the framework itself
 and for the DRP, and a ``plots`` directory containing diagnostic plots.
+The file you most likely want is the flux-calibrated cube, ``redux/*_icubes.fits``;
+see :doc:`data_products`.
 
 
 

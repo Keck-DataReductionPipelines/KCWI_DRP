@@ -35,6 +35,59 @@ report about what calibrations it matched with what science frames. If any are
 missing, it tells you which, and how many are needed. More details can be found
 :ref:`here <scripts:check_cals>`.
 
+Can I reduce files with KOA names (``KB.20230605.12345.67.fits``)?
+-------------------------------------------------------------------
+
+Yes. Since 1.2.0, input files can have any name; for example
+``reduce_kcwi -b -f KB.*.fits -g``. The outputs are named after the input
+files (``KB.20230605.12345.67_icubes.fits``), and the rows in ``kcwi.sky``
+must use the same names as the files you give the pipeline.
+
+Why was my frame not reduced?
+-----------------------------
+
+Look for these in the log (``logs`` directory):
+
+* ``Already processed``: the frame is already in the proc file. See
+  :ref:`Re-reducing frames <running:Re-reducing frames>`.
+* ``BIAS frame with exposure time ... > 0. Discarding``: a bias with a
+  non-zero exposure time (for example a focus image) is ignored.
+* A missing calibration, for example no master arc or flat for the frame's
+  configuration. A step whose calibration is missing is skipped (the log says
+  so in the ``Checking precondition for ...`` messages), and the frame goes on
+  without it, so later steps that need its output also produce nothing. Run
+  ``check_cals`` to see which calibrations are missing.
+
+Why is there no ``icubes`` file for my science frame?
+-----------------------------------------------------
+
+``icubes`` is only made when a standard star taken with the same instrument
+configuration was reduced in the same directory, before the science frame. See
+:ref:`calibration:How flux calibration works`.
+
+Why did my ``kcwi.sky`` file have no effect?
+--------------------------------------------
+
+In 1.3.x, ``kcwi.sky`` is only read when you run ``reduce_kcwi`` in the
+directory that contains it and the raw files, and give the raw files without a
+directory path. See the warning in :doc:`sky_subtraction`.
+
+Can I reduce Blue and Red data at the same time?
+------------------------------------------------
+
+Yes, since 1.2.0. Run one ``reduce_kcwi -b`` and one ``reduce_kcwi -r`` in
+separate terminals, in the same directory: each channel has its own proc file
+(``kcwib.proc`` and ``kcwir.proc``).
+
+Which ``plot_level`` should I use?
+----------------------------------
+
+``1`` (the default) shows and saves the main diagnostic plots without stopping.
+``0`` turns plots off, which is fastest for unattended reductions. ``2`` and
+``3`` show more plots and stop for you to inspect and answer questions,
+mainly during wavelength calibration; use them when a solution needs checking.
+See :ref:`configuration:Plotting parameters`.
+
 Known Issues
 ============
 
