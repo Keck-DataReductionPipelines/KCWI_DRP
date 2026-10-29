@@ -4,27 +4,18 @@
 # list see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
-# -- Path setup --------------------------------------------------------------
-
-# If extensions (or modules to document with autodoc) are in another directory,
-# add these directories to sys.path here. If the directory is relative to the
-# documentation root, use os.path.abspath to make it absolute, like shown here.
-#
-import os
-import sys
-
-sys.path.insert(0, os.path.abspath('../../'))
-
+from importlib.metadata import version
 
 # -- Project information -----------------------------------------------------
 
 project = 'Keck Cosmic Web Imager DRP'
-copyright = '2023, Don Neill, KCWI Team, Luca Rizzi, Max Brodheim'
+copyright = '2020-2026, Don Neill, KCWI Team, Luca Rizzi, Max Brodheim'
 author = 'Don Neill, KCWI Team, Luca Rizzi, Max Brodheim'
-# sys.path.append(os.path.abspath('./docs/'))
 
-# The full version, including alpha/beta/rc tags
-release = '1.3.1'
+# The full version, including alpha/beta/rc tags, taken from the installed
+# kcwidrp package (see docs/requirements.txt)
+release = version('kcwidrp')
+version = '.'.join(release.split('.')[:2])
 
 
 # -- General configuration ---------------------------------------------------
@@ -34,26 +25,22 @@ release = '1.3.1'
 # ones.
 extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.napoleon',
-              'sphinx.ext.autodoc',
               'sphinx.ext.viewcode',
-              'sphinx_automodapi.automodapi',
               'sphinx.ext.autosectionlabel'
               ]
 napoleon_numpy_docstring = True
-# autosummary_generate = False
 autosectionlabel_prefix_document = True
-
-# automodapi_toctreedirnm = 'api'
 
 # Class documentation should contain *both* the class docstring and
 # the __init__ docstring
 autoclass_content = "class"
 
+# kcwi_masksky_ds9 imports regions, which kcwidrp 1.3.x does not list as a
+# dependency (it lists pyregion instead), so autodoc could not import it
+autodoc_mock_imports = ['regions']
+
 
 master_doc = 'index'
-
-# Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -68,10 +55,7 @@ exclude_patterns = []
 #
 html_theme = 'sphinx_rtd_theme'
 html_theme_options = {
-    'canonical_url': '',
-    'analytics_id': 'UA-XXXXXXX-1',  # Provided by Google in your dashboard
     'logo_only': True,
-    'display_version': True,
     'prev_next_buttons_location': 'bottom',
     'style_external_links': False,
     'style_nav_header_background': 'white',
@@ -82,7 +66,6 @@ html_theme_options = {
     'includehidden': True,
     'titles_only': False
 }
-html_theme_path = ["../.."]
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,

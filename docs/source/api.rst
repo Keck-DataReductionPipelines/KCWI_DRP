@@ -103,6 +103,12 @@ Primitives/API
 .. automodule:: kcwidrp.primitives.RemoveCosmicRays
    :members:
 
+.. automodule:: kcwidrp.primitives.SendHTTP
+   :members:
+
+.. automodule:: kcwidrp.primitives.SolveAIT
+   :members:
+
 .. automodule:: kcwidrp.primitives.SolveArcs
    :members:
 
@@ -146,11 +152,5 @@ Primitives/API
    :members:
 
 .. automodule:: kcwidrp.scripts.kcwi_masksky_ds9
-   :members:
-
-.. automodule:: kcwidrp.scripts.wb
-   :members:
-
-.. automodule:: kcwidrp.scripts.wr
    :members:
 
