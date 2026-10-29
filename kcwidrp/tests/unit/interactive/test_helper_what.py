@@ -21,6 +21,13 @@ LOG = logging.getLogger("test_helper_what")
 
 
 @pytest.fixture(autouse=True)
+def _log_enabled():
+    # logging.config.fileConfig (the framework's, run by other tests) disables
+    # every logger that already exists and is not in its config, this one too
+    LOG.disabled = False
+
+
+@pytest.fixture(autouse=True)
 def fresh_state(monkeypatch):
     monkeypatch.delenv("KCWI_STRICT_INPUT", raising=False)
     ki.reset_end_of_input()
@@ -104,7 +111,7 @@ def test_ask_value_default_for_what_is_none(script, capsys):
 
 
 def test_ask_value_what_not_logged(script, caplog):
-    # source: plan 8.2 - explanations go to stdout and are not logged
+    # source: published - plan 8.2: explanations go to stdout and are not logged
     script("3")
     with caplog.at_level(logging.DEBUG, logger=LOG.name):
         ask_value(what=WHAT)
@@ -112,7 +119,7 @@ def test_ask_value_what_not_logged(script, caplog):
 
 
 def test_ask_value_effect_none_logs_nothing_at_info(script, caplog):
-    # source: ask_value docstring - effect=None: nothing is logged for an
+    # source: published - plan 8.2 interface, effect=None: nothing is logged for an
     # accepted typed value (the caller logs the effect itself)
     script("5")
     with caplog.at_level(logging.DEBUG, logger=LOG.name):
@@ -122,7 +129,7 @@ def test_ask_value_effect_none_logs_nothing_at_info(script, caplog):
 
 
 def test_ask_value_effect_string_logs_info_line(script, caplog):
-    # source: ask_value docstring - INFO "<who>: " + effect.format(value=)
+    # source: published - plan 8.2 interface, INFO "<who>: " + effect.format(value=)
     script("5")
     with caplog.at_level(logging.DEBUG, logger=LOG.name):
         assert ki.ask_value(LOG, "Offset? ", HELP, parse=int, default=None,
@@ -133,7 +140,7 @@ def test_ask_value_effect_string_logs_info_line(script, caplog):
 
 
 def test_ask_value_effect_none_default_still_logs_at_debug(script, caplog):
-    # source: ask_value code/docstring - a <cr> logs "default kept" at DEBUG
+    # source: characterization - ask_value: a <cr> logs "default kept" at DEBUG
     script("")
     with caplog.at_level(logging.DEBUG, logger=LOG.name):
         assert ki.ask_value(LOG, "Offset? ", HELP, parse=int, default=7,
