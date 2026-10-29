@@ -367,6 +367,10 @@ class MakeInvsens(BasePrimitive):
                 return float(vals[0]), float(vals[1])
 
             def check_limits(lims):
+                # nan passes every comparison below and leaves no wavelength
+                # selected, so MakeInvsens failed further on
+                if not np.all(np.isfinite(lims)):
+                    return "limits must be finite numbers"
                 if lims[1] < lims[0] or lims[0] < wall0 or lims[1] > wall1:
                     return "range/order error: need lo <= hi within " \
                            "%.1f - %.1f A" % (wall0, wall1)

@@ -594,10 +594,10 @@ Default:
 - Figure: F14 (pl >= 2)
 - Changes reduction: **Yes**: the wavelength range of the inverse-sensitivity and effective-area fits, so `*_invsens.fits` and `*_ea.fits` (header `INVFW0`, `INVFW1`), and every object later flux-calibrated with them.
 - Prompt: `New fit limits? <float> <float> (<cr> = accept)`
-- Accepted input (D12): two numbers separated by spaces, each read by Python `float()` (e.g. `3700 5500`, `3.7e3 5500.5`); words after the second number are ignored. Valid if `lo <= hi`, `lo >= WAVALL0` and `hi <= WAVALL1`. One number, a non-number, or failing the check: the reason is printed and the previous limits are kept (B6, fixed in PR3a; today both limits are reset to WAVGOOD).
+- Accepted input (D12): two numbers separated by spaces, each read by Python `float()` (e.g. `3700 5500`, `3.7e3 5500.5`); words after the second number are ignored. Valid if both are finite, `lo <= hi`, `lo >= WAVALL0` and `hi <= WAVALL1` (`nan` is refused from PR3a: today it passes the check, leaves no wavelength in the fit range and MakeInvsens fails; maintainer decision 2026-10-28). One number, a non-number, or failing the check: the reason is printed and the previous limits are kept (B6, fixed in PR3a; today both limits are reset to WAVGOOD).
 - Effect: `fit wavelength limits set by user to {value[0]:.1f} - {value[1]:.1f} A (WAVGOOD %.1f - %.1f A)`
 - Status:
-- Reviewer notes: (1) `nan` passes today's check (every comparison with `nan` is false), so `nan nan` is "valid" today and empties the fit range; per D12 the PR3a validator keeps accepting it unless the maintainer classes it as invalid. (2) The `print` lines before the loop (L337-342) say "Hover the cursor over spectrum to find wavelengths"; after PR1 tooltips are ignored, but the viewer's toolbar shows the cursor position (to confirm in P.6). P.4 should replace those prints with `what`/`help`.
+- Reviewer notes: (1) `nan` passed today's check (every comparison with `nan` is false), emptied the fit range and made MakeInvsens fail; the maintainer classed it as invalid input (2026-10-28), so PR3a refuses it and asks again. (2) The `print` lines before the loop (L337-342) say "Hover the cursor over spectrum to find wavelengths"; after PR1 tooltips are ignored, but the viewer's toolbar shows the cursor position (to confirm in P.6). P.4 should replace those prints with `what`/`help`.
 
 **what**
 ```text
