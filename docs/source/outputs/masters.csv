@@ -1,8 +1,8 @@
 File Extension,Full Name,Note
-marcs,Master Arc,"New with the red side, required due to sensitvity to cosmic rays."
+marc,Master Arc,"New with the red side, required due to sensitvity to cosmic rays."
 mbias,Master Bias,
 mcbars,Master Continuum Bars,
-mdarks,Master Dark,
+mdark,Master Dark,
 mdome,Master Dome Flat,
 mflat,Master Internal Flat,
 mobj,Master Object,"Only created if multiple exposures of the same target are collected. Can mitigate cosmic rays, in certain situations."

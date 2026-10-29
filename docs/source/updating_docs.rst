@@ -2,7 +2,7 @@
 Updating documentation
 ======================
 
-The documentation is generated automatically by ReadTheDocs, and triggerd by
+The documentation is generated automatically by ReadTheDocs, and triggered by
 pushing commits to the ``main`` branch of the
 `KCWI_DRP-Docs <https://github.com/Keck-DataReductionPipelines/KCWI_DRP-Docs/tree/main>`_ repository.
 
@@ -52,6 +52,6 @@ around after the codebase has changed. For example, a copy of the blue-side-only
 documentation is permanently available.
 
 To preserve a locked version of the documentation, the documentation source code
-should be put into a separate branch and tagged on GitHub. Then, the `DSI Team <dsi-team@keck.hawaii.edi>`_
+should be put into a separate branch and tagged on GitHub. Then, the `DSI Team <dsi-team@keck.hawaii.edu>`_
 can configure ReadTheDocs to display that branch as a version option.
 

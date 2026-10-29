@@ -7,7 +7,7 @@ standard star must be chosen and observed.  The standard stars that are
 compatible with the pipeline can be found in the kcwidrp/data/stds
 directory in the pipeline install directory (KCWI_DRP).  In that directory, you
 will find a WMKO starlist file called
-`kcwi_stds_starlist.txt <https://github.com/Keck-DataReductionPipelines/KCWI_DRP/tree/kcrm_merge/kcwidrp/data/stds/kcwi_stds_starlist.txt>`_
+`kcwi_stds_starlist.txt <https://github.com/Keck-DataReductionPipelines/KCWI_DRP/blob/master/kcwidrp/data/stds/kcwi_stds_starlist.txt>`_
 with the stars in RA order.
 
 You will also find in that directory plots of each standard star showing the
@@ -20,7 +20,7 @@ configuration.
 
 You can also examine the standard star plots in the github repository by
 following
-`this link <https://github.com/Keck-DataReductionPipelines/KCWI_DRP/tree/kcrm_merge/kcwidrp/data/stds>`_.
+`this link <https://github.com/Keck-DataReductionPipelines/KCWI_DRP/tree/master/kcwidrp/data/stds>`_.
 Click on the \*.png files and they should display in your browser with flux
 versus wavelength and the reference samples indicated by plus (+) signs.
 

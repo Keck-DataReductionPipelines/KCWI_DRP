@@ -15,9 +15,10 @@ Why are my output cubes reduced with this pipeline slightly offset from cubes ma
 ---------------------------------------------------------------------------------------------------------
 
 This version of the pipeline includes functionality that the IDL pipeline did not,
-notably an air-to-vacuum wavelength correction, and a barycentric wavelength
-correction. These, predictably, result in small but noticable offsets between 
-new and old cubes.
+notably an air-to-vacuum wavelength correction, and a heliocentric (or
+barycentric) wavelength correction. These, predictably, result in small but
+noticeable offsets between new and old cubes. Both can be changed in the
+:ref:`configuration <configuration:Wavelength correction parameters>`.
 
 What are all of these output files?
 -----------------------------------
@@ -52,15 +53,15 @@ As a first check, try to kill any hanging ``bokeh`` processes:
 
 Try running the pipeline again, sometimes this is enough to clear any issues.
 
-Failing that, add/update the following parameter to you ``kcwi.cfg`` config file:
+Failing that, add/update the following parameter in your ``kcwi.cfg`` config file:
 
 .. code-block:: bash
 
     terminate_on_failed_bokeh_start = True
 
-This tells the pipeline to immediately exit if Bokeh fails to initialize. When
-you run the pipeline again, if it makes it immediately fails at ``StartBokeh``,
-that confirms that Bokeh is the problem.
+This tells the pipeline to exit immediately if Bokeh fails to start. If the
+pipeline then stops at ``StartBokeh`` when you run it again, Bokeh is the
+problem.
 
 Next, try adding/updating the following to your config:
 

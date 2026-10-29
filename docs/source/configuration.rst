@@ -21,7 +21,7 @@ pointing to that file. For example,
 
     .. code-block:: bash
 
-        reduce_kcwi -r -c PATH/TO/CONFIG/kcwi.cfg -f kb0001.fits
+        reduce_kcwi -b -c PATH/TO/CONFIG/kcwi.cfg -f kb0001.fits
 
 The configuration file contains a number of parameters connected to the
 structure of the files and to the specifications of the instrument, e.g., the
@@ -124,8 +124,8 @@ KCWI has two calibration lamps, Thorium/Argon (ThAr) and Iron/Argon (FeAr).
 This parameter specifies which of the two lamps should be used by the DRP.
 The default is to use the ThAr lamp.
 
-Wavelength correction parameters:
----------------------------------
+Wavelength correction parameters
+--------------------------------
 
 .. code-block:: python
 

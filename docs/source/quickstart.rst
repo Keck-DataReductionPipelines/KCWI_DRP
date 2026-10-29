@@ -10,7 +10,8 @@ names of the files are those assigned at the telescope, ``kb*.fits`` and
 ``kr*.fits``.
 
 Give a quick look at the :doc:`configuration parameters <configuration>` for the
-pipeline, contained in the file ``kcwidrp/config/kcwi.cfg``.
+pipeline. To get an editable copy of the default configuration file
+(``kcwi.cfg``) in the current directory, run ``reduce_kcwi --write_config``.
 
 For a quick start, it is enough to decide if you want to see plots as the
 pipeline runs or not.  This is controlled by
