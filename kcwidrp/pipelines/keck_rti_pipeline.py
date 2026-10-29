@@ -23,7 +23,9 @@ class Keck_RTI_Pipeline(BasePipeline):
         # it is defined lower in this file
         "add_only":                  ("add_to_dataframe_only", None, None),
         #
-        "start_bokeh":               ("StartBokeh", None, None),
+        "start_plot_viewer":         ("StartPlotViewer", None, None),
+        # alias kept for launch scripts and configs that queue it
+        "start_bokeh":               ("StartPlotViewer", None, None),
         # For every file do this
         "next_file":                 ("ingest_file",
                                       "ingest_file_started",
@@ -315,9 +317,6 @@ class Keck_RTI_Pipeline(BasePipeline):
         "nandshuff_flux_calibrate":  ("FluxCalibrate",
                                       "flux_calibration_started",   # icubes
                                       "alert_rti"),
-        "alert_rti":                 ("SendHTTP",
-                                      "http_started",
-                                      None),
         "next_file_stop":            ("ingest_file", "file_ingested", None)
     }
 

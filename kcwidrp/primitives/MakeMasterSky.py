@@ -6,7 +6,7 @@ from kcwidrp.core.kcwi_get_std import kcwi_get_std
 from kcwidrp.core.bokeh_plotting import bokeh_plot
 from kcwidrp.core.kcwi_plotting import save_plot
 from kcwidrp.core.bspline import Bspline
-from bokeh.plotting import figure
+from kcwidrp.core.kcwi_plotting import figure
 
 import os
 import time

@@ -12,7 +12,7 @@ from astropy.coordinates import SkyCoord
 from astropy import units as u
 from astropy.nddata import CCDData
 from kcwidrp.core.bokeh_plotting import bokeh_plot
-from bokeh.plotting import figure
+from kcwidrp.core.kcwi_plotting import figure
 from multiprocessing import Pool
 
 

@@ -8,12 +8,11 @@ from keckdrpframework.core.framework import Framework
 from keckdrpframework.config.framework_config import ConfigClass
 from keckdrpframework.models.arguments import Arguments
 from keckdrpframework.utils.drpf_logger import getLogger
-from kcwidrp.core.bokeh_plotting import check_running_process
+from kcwidrp.core.bokeh_plotting import init_plot_session
+from kcwidrp.core.plot_config import viewer_requested
 from kcwidrp.core.kcwi_get_std import is_file_kcwi_std
 from kcwidrp.core.kcwi_pkg_resources import get_resource_path
 
-import subprocess
-import time
 import datetime
 import argparse
 import sys
@@ -216,6 +215,7 @@ def main():
         print("Failed to initialize framework, exiting ...", e)
         traceback.print_exc()
         sys.exit(1)
+    init_plot_session(framework.context)
     framework.context.pipeline_logger = getLogger(framework_logcfg_fullpath,
                                                   name="KCWI")
     framework.logger = getLogger(framework_logcfg_fullpath, name="DRPF")
@@ -378,32 +378,17 @@ def main():
     framework.context.pipeline_logger.debug(
         f"oscanbuf={framework.config.instrument.oscanbuf}")
 
-    # start the bokeh server is requested by the configuration parameters
-    if framework.config.instrument.enable_bokeh is True:
-        framework.context.pipeline_logger.debug("Config requests bokeh server, checking if already running ...")
-        if check_running_process(process='bokeh') is False:
-            with open("bokeh_output.txt", "wb") as out:
-                framework.context.pipeline_logger.debug("Starting bokeh server ...")
-                subprocess.Popen('bokeh serve', shell=True, stderr=out,
-                                 stdout=out)
-            # --session-ids=unsigned --session-token-expiration=86400',
-            # shell=True)
-            time.sleep(5)
-        else:
-            framework.context.pipeline_logger.debug("Bokeh server already running")
-        # subprocess.Popen('open http://localhost:5006?bokeh-session-id=kcwi',
-        # shell=True)
-
     # initialize the proctab and read it
     framework.context.proctab = Proctab()
     framework.context.proctab.read_proctab(framework.config.instrument.procfile)
 
     framework.logger.info("Framework initialized")
 
-    # add a start_bokeh event to the processing queue,
+    # add a start_plot_viewer event to the processing queue,
     # if requested by the configuration parameters
-    if framework.config.instrument.enable_bokeh:
-        framework.append_event('start_bokeh', None)
+    if viewer_requested(framework.config.instrument,
+                        framework.context.pipeline_logger):
+        framework.append_event('start_plot_viewer', None)
 
     # important: to be able to use the grouping mode, we need to reset
     # the default ingestion action to no-event,
