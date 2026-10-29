@@ -63,35 +63,50 @@ reference bar (config, default 57); *slice boundaries* = the black
 dash-dot vertical lines that `oplot_slices` draws every 5 bars
 (`kcwi_plotting.py:807`).
 
+## Check these first
+
+The P.0 author was least sure of the science in these prompts. Each
+is marked ⚠ in the index below and has a **⚠ Check first** line under
+its heading.
+
+| Prompts | What to check |
+|---|---|
+| [P37](#p37--sky-scale-blue-camera), [P38](#p38--sky-scale-red-camera) | Why a sky scale is needed in aborted nod-and-shuffle (the agent's own reading) |
+| [P24](#p24--bm-ledge), [P25](#p25--bm-ledge-peak-choice) | The description of the BM ledge and of a good peak |
+| [P02](#p02--bar-offsets-summary), [P09](#p09--central-wavelengths), [P45](#p45--wavelength-coefficients) | The claim that a good result repeats smoothly from slice to slice |
+| [P14](#p14--fit-wavelength-limits), [P15](#p15--line-masks) | The features suggested for masking (Balmer lines, O2 B/A bands at 6870/7600 Å) |
+| [P20](#p20--bias-noise-histogram), [P43](#p43--residuals-of-one-bar), [P47](#p47--fit-rms-per-bar) | No numbers for read noise or RMS, only "close to the amp's usual value" |
+| [P50](#p50--scattered-light) | What the ±180 px columns used for scattered light sample on the detector |
+
 ## Index
 
 | ID | Site | Helper | Changes reduction | Status |
 |---|---|---|---|---|
 | P01 | ArcOffsets.py:92 | ask_next (n_items) | No | |
-| P02 | ArcOffsets.py:121 | pause | No | |
+| ⚠ P02 | ArcOffsets.py:121 | pause | No | |
 | P03 | ExtractArcs.py:149 | ask_next | No | |
 | P04 | ExtractArcs.py:215 | ask_next | No | |
 | P05 | FindBars.py:97 | pause | No | |
 | P06 | FindBars.py:136 | pause | No | |
 | P07 | FindBars.py:163 | ask_next | No | |
 | P08 | FitCenter.py:339 | ask_next (n_items) | No | |
-| P09 | FitCenter.py:370 | pause | No | |
+| ⚠ P09 | FitCenter.py:370 | pause | No | |
 | P10 | FitCenter.py:398 | pause | No | |
 | P11 | GetAtlasLines.py:562 | pause | No | |
 | P12 | MakeCube.py:280 | ask_next | No | |
 | P13 | MakeInvsens.py:196 | ask_next | No | |
-| P14 | MakeInvsens.py:364 | ask_value | **Yes** | |
-| P15 | MakeInvsens.py:468 | ask_value | **Yes** | |
+| ⚠ P14 | MakeInvsens.py:364 | ask_value | **Yes** | |
+| ⚠ P15 | MakeInvsens.py:468 | ask_value | **Yes** | |
 | P16 | MakeInvsens.py:584 | pause | No | |
 | P17 | MakeInvsens.py:605 | pause | No | |
 | P18 | MakeInvsens.py:624 | pause | No | |
 | P19 | MakeInvsens.py:654 | ask_value | **Yes** | |
-| P20 | MakeMasterBias.py:154 | pause | No | |
+| ⚠ P20 | MakeMasterBias.py:154 | pause | No | |
 | P21 | MakeMasterFlat.py:270 | pause | No | |
 | P22 | MakeMasterFlat.py:331 | pause | No | |
 | P23 | MakeMasterFlat.py:375 | pause | No | |
-| P24 | MakeMasterFlat.py:452 | pause | No | |
-| P25 | MakeMasterFlat.py:476/478 | ask_value | **Yes** | |
+| ⚠ P24 | MakeMasterFlat.py:452 | pause | No | |
+| ⚠ P25 | MakeMasterFlat.py:476/478 | ask_value | **Yes** | |
 | P26 | MakeMasterFlat.py:500 | pause | No | |
 | P27 | MakeMasterFlat.py:557 | pause | No | |
 | P28 | MakeMasterFlat.py:664 | pause | No | |
@@ -103,20 +118,20 @@ dash-dot vertical lines that `oplot_slices` draws every 5 bars
 | P34 | MakeMasterSky.py:347 | pause | No | |
 | P35 | MakeMasterSky.py:435 | pause | No | |
 | P36 | MakeMasterSky.py:607 | pause | No | |
-| P37 | NandshuffSubtractSky.py:185 | ask_value | **Yes** | |
-| P38 | NandshuffSubtractSky.py:269 | ask_value | **Yes** (header only, see note) | |
+| ⚠ P37 | NandshuffSubtractSky.py:185 | ask_value | **Yes** | |
+| ⚠ P38 | NandshuffSubtractSky.py:269 | ask_value | **Yes** (header only, see note) | |
 | P39 | ReadAtlas.py:193 | pause | No | |
 | P40 | ReadAtlas.py:224 | ask_value | **Yes** | |
 | P41 | SolveAIT.py:172 | pause | No | |
 | P42 | SolveArcs.py:262 | ask_next | No | |
-| P43 | SolveArcs.py:412 | pause | No | |
+| ⚠ P43 | SolveArcs.py:412 | pause | No | |
 | P44 | SolveArcs.py:438 | ask_next (n_items) | No | |
-| P45 | SolveArcs.py:493 | pause | No | |
+| ⚠ P45 | SolveArcs.py:493 | pause | No | |
 | P46 | SolveArcs.py:533 | pause | No | |
-| P47 | SolveArcs.py:573 | pause | No | |
+| ⚠ P47 | SolveArcs.py:573 | pause | No | |
 | P48 | SubtractOverscan.py:116 | pause | No | |
 | P49 | SubtractOverscan.py:140 | pause | No | |
-| P50 | SubtractScatteredLight.py:107 | pause | No | |
+| ⚠ P50 | SubtractScatteredLight.py:107 | pause | No | |
 | P51 | TraceBars.py:144 | pause | No | |
 | S01 | reduce_kcwi.py:422 | ask_yes_quit | **Yes** (frames ingested) | |
 | S02 | reduce_kcwi.py:428 | ask_yes_quit | **Yes** | |
@@ -169,6 +184,8 @@ Default:
 ```
 
 ### P02 — bar offsets summary
+
+> ⚠ **Check first:** The claim that a good result repeats smoothly from slice to slice.
 
 - Site: `ArcOffsets.py:121` (sleep at :123)
 - Helper: `pause(self.config.instrument, self.logger, what=..., help=..., who="ArcOffsets")`
@@ -412,6 +429,8 @@ Default:
 
 ### P09 — central wavelengths
 
+> ⚠ **Check first:** The claim that a good result repeats smoothly from slice to slice.
+
 - Site: `FitCenter.py:370` (sleep :372)
 - Helper: `pause(...)`
 - Figure: F09 (pl >= 1; saved as `arc_..._cwaves.png` after the prompt)
@@ -589,6 +608,8 @@ Default:
 
 ### P14 — fit wavelength limits
 
+> ⚠ **Check first:** The features suggested for masking (Balmer lines, O2 B/A bands at 6870/7600 Å).
+
 - Site: `MakeInvsens.py:364` (inventory :365)
 - Helper: `ask_value(self.logger, prompt, help, parse, default=None, effect, validate, who="MakeInvsens")` in the existing `while not done` loop: `None` (empty answer) ends the loop; a pair sets `wlm0, wlm1` and the loop redraws.
 - Figure: F14 (pl >= 2)
@@ -632,6 +653,8 @@ Default:
 ```
 
 ### P15 — line masks
+
+> ⚠ **Check first:** The features suggested for masking (Balmer lines, O2 B/A bands at 6870/7600 Å).
 
 - Site: `MakeInvsens.py:468` (inventory :469)
 - Helper: `ask_value(self.logger, prompt, help, parse, default=None, effect, validate, who="MakeInvsens")` in the existing loop; `None` ends it; a value `(w0, w1, comment)` is appended to `lmasks`.
@@ -816,6 +839,8 @@ Default:
 
 ### P20 — bias noise histogram
 
+> ⚠ **Check first:** No numbers for read noise or RMS, only "close to the amp's usual value".
+
 - Site: `MakeMasterBias.py:154` (sleep :156)
 - Helper: `pause(...)`
 - Figure: F20 (pl >= 1; one per amplifier; saved as `bias_..._amp<n>_rdnoise.png` after the prompt)
@@ -948,6 +973,8 @@ Default:
 
 ### P24 — BM ledge
 
+> ⚠ **Check first:** The description of the BM ledge and of a good peak.
+
 - Site: `MakeMasterFlat.py:452` (sleep :454)
 - Helper: `pause(...)`
 - Figure: F24 (BM grating, not a twilight flat, ledge inside WAVGOOD; **no `plot_level` guard**: drawn and paused at every level)
@@ -980,6 +1007,8 @@ Default:
 ```
 
 ### P25 — BM ledge peak choice
+
+> ⚠ **Check first:** The description of the BM ledge and of a good peak.
 
 - Site: `MakeMasterFlat.py:476` and `:478` (one logical prompt; inventory :471/:473); the line `Please indicate the integer pixel value of the peak` is printed first (:475)
 - Helper: `ask_value(self.logger, prompt, help, parse, default=<automatic index>, effect, validate, who="MakeMasterFlat")`, replacing the `isnumeric()` loop; the automatic index is `peaks[properties['peak_heights'].argmax()]`.
@@ -1386,6 +1415,8 @@ Default:
 
 ### P37 — sky scale, blue camera
 
+> ⚠ **Check first:** Why a sky scale is needed in aborted nod-and-shuffle (the agent's own reading).
+
 - Site: `NandshuffSubtractSky.py:185`
 - Helper: `ask_value(self.logger, prompt, help, parse=float, default=1.0, effect, validate, who="NandshuffSubtractSky")`, replacing the `while skyscl < 0.` loop (inside its `plot_level >= 2` test).
 - Figure: none (this primitive draws nothing; the last figure stays up)
@@ -1422,6 +1453,8 @@ Default:
 ```
 
 ### P38 — sky scale, red camera
+
+> ⚠ **Check first:** Why a sky scale is needed in aborted nod-and-shuffle (the agent's own reading).
 
 - Site: `NandshuffSubtractSky.py:269`
 - Helper: as P37.
@@ -1608,6 +1641,8 @@ Default:
 
 ### P43 — residuals of one bar
 
+> ⚠ **Check first:** No numbers for read noise or RMS, only "close to the amp's usual value".
+
 - Site: `SolveArcs.py:412`; no sleep branch (inside `master_inter`)
 - Helper: `pause(...)` inside the existing `master_inter` block (pl >= 2, so it always prompts).
 - Figure: F41 (pl >= 2, bar `next_bar_to_plot` only)
@@ -1679,6 +1714,8 @@ Default:
 
 ### P45 — wavelength coefficients
 
+> ⚠ **Check first:** The claim that a good result repeats smoothly from slice to slice.
+
 - Site: `SolveArcs.py:493` (sleep :495)
 - Helper: `pause(...)`
 - Figure: F43 (pl >= 1; one per coefficient, C0 first; saved as `arc_..._coef<k>.png` after the prompt)
@@ -1742,6 +1779,8 @@ Default:
 ```
 
 ### P47 — fit RMS per bar
+
+> ⚠ **Check first:** No numbers for read noise or RMS, only "close to the amp's usual value".
 
 - Site: `SolveArcs.py:573` (sleep :575)
 - Helper: `pause(...)`
@@ -1839,6 +1878,8 @@ Default:
 ## SubtractScatteredLight
 
 ### P50 — scattered light
+
+> ⚠ **Check first:** What the ±180 px columns used for scattered light sample on the detector.
 
 - Site: `SubtractScatteredLight.py:107` (sleep :109)
 - Helper: `pause(...)`
