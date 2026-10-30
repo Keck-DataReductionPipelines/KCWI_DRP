@@ -39,6 +39,30 @@ def atm_disper(w0, w1, airmass, temperature=10.0, pressure_pa=61100.0,
     return 206265.0 * (n0 - n1) * math.tan(z)
 
 
+def shift_normalized(plane, offset, coverage):
+    """
+
+    Shift one wavelength plane by linear interpolation, normalized by the
+    shifted footprint of the real data
+
+    Args:
+        plane (2D array): padded wavelength plane (zero in the padding)
+        offset (tuple): (y, x) shift in pixels
+        coverage (2D array): the footprint (one on the real data, zero in
+            the padding) shifted by the same offset
+
+    Pixels partly covered by real data get the weighted mean of the real
+    pixels instead of being diluted by the padding; pixels with no real data
+    stay at zero.
+
+    """
+
+    out = shift(plane, offset, order=1)
+    good = coverage > 0.
+    out[good] /= coverage[good]
+    return out
+
+
 class CorrectDar(BasePrimitive):
     """
     Correct for Differential Atmospheric Refraction
@@ -46,7 +70,10 @@ class CorrectDar(BasePrimitive):
     Accounts for rotator orientation, zenith angle, and parallactic angle to
     correct input data cube into a padded, DAR corrected output cube.
     Calculates the DAR correction for each wavelength slice and adjusts position
-    in cube using scipy.nddata.shift to implement correction.
+    in cube using scipy.ndimage.shift to implement correction: linear
+    interpolation normalized by the shifted footprint of the real data for the
+    data, uncertainty, noskysub, obj, sky and delta wavelength cubes, nearest
+    pixel for the mask and flags.
 
     Sets flags in padded region of output cube to a value of 128.
 
@@ -168,6 +195,12 @@ class CorrectDar(BasePrimitive):
         # DAR padded pixel flag
         output_flags += 128
 
+        # footprint of the real data in the padded plane
+        footprint = np.zeros(output_image.shape[1:], dtype=np.float64)
+        footprint[padding_y:(padding_y+image_size[1]),
+                  padding_x:(padding_x+image_size[2])] = 1.
+        coverage = np.zeros(output_image.shape, dtype=np.float64)
+
         output_image[:, padding_y:(padding_y+image_size[1]),
                      padding_x:(padding_x+image_size[2])] = \
             self.action.args.ccddata.data
@@ -245,17 +278,25 @@ class CorrectDar(BasePrimitive):
                 math.sin(projection_angle) / x_scale
             y_shift = dispersion_correction * \
                 math.cos(projection_angle) / y_scale
-            output_image[j, :, :] = shift(output_image[j, :, :],
-                                          (y_shift, x_shift))
-            output_stddev[j, :, :] = shift(output_stddev[j, :, :],
-                                           (y_shift, x_shift))
+            coverage[j, :, :] = shift(footprint, (y_shift, x_shift), order=1)
+            output_image[j, :, :] = shift_normalized(output_image[j, :, :],
+                                                     (y_shift, x_shift),
+                                                     coverage[j, :, :])
+            output_stddev[j, :, :] = shift_normalized(output_stddev[j, :, :],
+                                                      (y_shift, x_shift),
+                                                      coverage[j, :, :])
+            # mask and flags: nearest pixel, so bit values are not
+            # interpolated; flags shifted in from outside keep the padding
+            # value
             output_mask[j, :, :] = shift(output_mask[j, :, :],
-                                         (y_shift, x_shift))
+                                         (y_shift, x_shift), order=0)
             output_flags[j, :, :] = shift(output_flags[j, :, :],
-                                          (y_shift, x_shift))
+                                          (y_shift, x_shift), order=0,
+                                          cval=128)
             if output_noskysub is not None:
-                output_noskysub[j, :, :] = shift(output_noskysub[j, :, :],
-                                                 (y_shift, x_shift))
+                output_noskysub[j, :, :] = shift_normalized(
+                    output_noskysub[j, :, :], (y_shift, x_shift),
+                    coverage[j, :, :])
         # for obj, sky if they exist
         if output_obj is not None:
             for j, wl in enumerate(waves):
@@ -264,8 +305,9 @@ class CorrectDar(BasePrimitive):
                     math.sin(projection_angle) / x_scale
                 y_shift = dispersion_correction * \
                     math.cos(projection_angle) / y_scale
-                output_obj[j, :, :] = shift(output_obj[j, :, :],
-                                            (y_shift, x_shift))
+                output_obj[j, :, :] = shift_normalized(output_obj[j, :, :],
+                                                       (y_shift, x_shift),
+                                                       coverage[j, :, :])
 
         if output_sky is not None:
             for j, wl in enumerate(waves):
@@ -274,8 +316,9 @@ class CorrectDar(BasePrimitive):
                     math.sin(projection_angle) / x_scale
                 y_shift = dispersion_correction * \
                     math.cos(projection_angle) / y_scale
-                output_sky[j, :, :] = shift(output_sky[j, :, :],
-                                            (y_shift, x_shift))
+                output_sky[j, :, :] = shift_normalized(output_sky[j, :, :],
+                                                       (y_shift, x_shift),
+                                                       coverage[j, :, :])
 
         # for delta wavelength cube, if it exists
         if output_del is not None:
@@ -285,8 +328,9 @@ class CorrectDar(BasePrimitive):
                     math.sin(projection_angle) / x_scale
                 y_shift = dispersion_correction * \
                     math.cos(projection_angle) / y_scale
-                output_del[j, :, :] = shift(output_del[j, :, :],
-                                            (y_shift, x_shift))
+                output_del[j, :, :] = shift_normalized(output_del[j, :, :],
+                                                       (y_shift, x_shift),
+                                                       coverage[j, :, :])
 
         self.action.args.ccddata.data = output_image
         self.action.args.ccddata.uncertainty.array = output_stddev
