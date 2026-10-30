@@ -29,7 +29,7 @@ bokeh==2.4.3
     # via kcwidrp (pyproject.toml)
 ccdproc==2.4.3
     # via kcwidrp (pyproject.toml)
-certifi==2026.2.25
+certifi==2026.10.18
     # via
     #   requests
     #   selenium
