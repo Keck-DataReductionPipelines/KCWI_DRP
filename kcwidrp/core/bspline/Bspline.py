@@ -412,7 +412,7 @@ class Bspline(object):
 
         Parameters
         ----------
-        err : :class:`numpy.ndarray`
+        err : :class:`numpy.ndarray` or :class:`int`
             The list of indexes returned by the cholesky routines.
 
         Returns
@@ -432,6 +432,7 @@ class Bspline(object):
         nbkpt = len(goodbkpt)
         if nbkpt <= 2*self.nord:
             return -2
+        err = np.atleast_1d(err)
         hmm = err[uniq(err//self.npoly)]//self.npoly
         n = nbkpt - self.nord
         if np.any(hmm >= n):
@@ -591,18 +592,26 @@ def cholesky_band(ndl, mininf=0.0):
         lower = cholesky_banded(ndl[:, 0:n], lower=True)
     except LinAlgError:
         #
-        # Figure out where the error is.
+        # Figure out where the error is by redoing the decomposition one
+        # column at a time (ported from PypeIt's pypeit.bspline.util).  The
+        # first column whose pivot is not finite is the bad one.
         #
         lower = ndl.copy()
         kn = bw - 1
         spot = np.arange(kn, dtype='i4') + 1
+        bi = np.concatenate([np.arange(i) + (kn - i) * (kn + 1)
+                             for i in range(kn, 0, -1)])
+        here = bi[:, None] + (np.arange(n)[None, :] + 1) * bw
         for j in range(n):
             lower[0, j] = np.sqrt(lower[0, j])
             lower[spot, j] /= lower[0, j]
             x = lower[spot, j]
             if not np.all(np.isfinite(x)):
                 warn('NaN found in cholesky_band.', PydlutilsUserWarning)
-                return j, ndl
+                return np.array([j]), ndl
+            hmm = x[:, None] * x[None, :]
+            lower.T.flat[here[:, j]] -= hmm.flat[bi]
+        lower = lower[:, 0:n]
     #
     # Restore padding.
     #
