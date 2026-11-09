@@ -17,9 +17,8 @@ call with no colour is drawn in the wrapper's default `#1f77b4` (blue,
 `kcwidrp/core/_plot_render.py:35`), and a marker given only `fill_color`
 keeps a default-blue outline (`_plot_render.py:238`). `scatter` without a
 `marker` draws circles (`_plot_render.py:236`).
-Since 2026-11-09 the help texts describe the plots in the
-[plot colour scheme](#plot-colour-scheme); the plot code is brought in
-line with it in the commits that follow.
+Since 2026-11-09 the plots and their help texts follow the
+[plot colour scheme](#plot-colour-scheme).
 
 Order: sections and tables follow the order in which a reduction reaches
 the prompts: the scripts first (before the framework starts), then the
@@ -2386,11 +2385,11 @@ inventory §2.7 except P38 and S05/S06, which the notes explain.
 ## Colours named per site
 
 Every colour named in a help text, in the [scheme](#plot-colour-scheme)
-above, with the line that draws it (files in `kcwidrp/primitives/` unless
-stated). The "Code" column gives the line and its colour at `cb7444c`;
-the plot commits that follow this catalogue change those lines to the
-"Colour in help" column. ★ = an element the plot does not draw yet
-(WAVGOOD lines, the P12 colour bar).
+above (files in `kcwidrp/primitives/` unless stated). The plots draw the
+"Colour in help" column. The "Code" column gives the line that drew each
+element at `cb7444c` and the colour it had then, before the colour scheme;
+the WAVGOOD lines of P16-P19, P28 and P33 and the P12 colour bar (drawn by
+`_plot_render.py`, `_draw`) are new.
 
 | ID | Colour in help | Code (line, colour at `cb7444c`) |
 |---|---|---|
@@ -2425,7 +2424,7 @@ the plot commits that follow this catalogue change those lines to the
 | P46 | black diamonds / red / red dashed / black dash-dot | SolveArcs.py:509 default / :515-516 red / :517-525 green dashed / :528 |
 | P47 | black diamonds / red / red dashed / black dash-dot | SolveArcs.py:552 default / :555-556 red / :557-565 green dashed / :568 |
 | P41 | black / cyan / green / grey | SolveAIT.py:160 blue / :161 red / :162-164 green / :165-167 orange |
-| P12 | Spectral11, grey NaN, ★ colour bar | MakeCube.py:276-277; `_plot_render.py:268` (`_image`, no colour bar) |
+| P12 | Spectral11, grey NaN, colour bar | MakeCube.py:276-277; `_plot_render.py:268` (`_image`, no colour bar) |
 | P50 | black circles / red thick | SubtractScatteredLight.py:101 default / :102 red |
 | P21 | black circles / red | MakeMasterFlat.py:265 default / :266 red |
 | P22 | black circles / red dashed, red / magenta vertical | MakeMasterFlat.py:314 default / :315-316 purple, :317 red / :327 red |
@@ -2438,22 +2437,22 @@ the plot commits that follow this catalogue change those lines to the
 | P27 | red dashed, purple dashed verticals (blueward) | MakeMasterFlat.py:547-548 purple / :543-544 blue |
 | P27 | red dotted, purple dotted verticals (redward) | MakeMasterFlat.py:549-550 green / :545-546 black |
 | P27 | magenta vertical (Pk) | MakeMasterFlat.py:551 green |
-| P28 | black / blue / cyan (dots and lines), ★ green verticals | MakeMasterFlat.py:656-657 black / :658-659 blue / :660-661 red |
+| P28 | black / blue / cyan (dots and lines), green verticals | MakeMasterFlat.py:656-657 black / :658-659 blue / :660-661 red |
 | P29 | black / blue (line and circles) | MakeMasterFlat.py:725, :727 black / :728, :730 blue (outline default) |
 | P30 | black / red (line and circles) | MakeMasterFlat.py:743, :745-746 black / :747-750 blue |
 | P31 | black / cyan (line and circles) | MakeMasterFlat.py:764, :766 black / :767, :769 red |
 | P32 | black / red (line and circles) | MakeMasterFlat.py:782, :784 black / :785-787 red |
-| P33 | black dots / red thick / purple verticals, ★ green verticals | MakeMasterFlat.py:884 black / :886 red / :888, :890 orange |
+| P33 | black dots / red thick / purple verticals, green verticals | MakeMasterFlat.py:884 black / :886 red / :888, :890 orange |
 | P34 | black dots / red / magenta vertical / purple verticals | MakeMasterSky.py:338-339 purple / :341 red / :342-343 green / :344 blue |
 | P35 | black dots / red / magenta vertical / purple, purple dashed | MakeMasterSky.py:420-421 purple / :423 red / :424-431 green / :432 blue |
 | P36 | black dots / red / green verticals | MakeMasterSky.py:598 purple / :600 red / :601-602 green |
 | P13 | black x | MakeInvsens.py:193 default |
 | P14 | black / green / purple / orange dash-dot-dot | MakeInvsens.py:354 black / :355, :357 green / :358, :360 blue / :361 red |
 | P15 | as P14, plus purple dashed pairs | MakeInvsens.py:452-459 as P14 / :462, :464 orange dashed |
-| P16 | black / red / grey x / purple, ★ green verticals | MakeInvsens.py:569 black / :571 red / :573 default / :574, :576 green |
+| P16 | black / red / grey x / purple, green verticals | MakeInvsens.py:569 black / :571 red / :573 default / :574, :576 green |
 | P16 | red dashed / red dash-dot horizontals | MakeInvsens.py:577-578 / :579-580 black |
-| P17 | black / red / grey x / purple, ★ green verticals | MakeInvsens.py:596 black / :597 red / :598 default / :599, :601 green |
-| P18 | black / blue / purple, ★ green verticals | MakeInvsens.py:616 black / :617 red / :618, :620 green |
-| P19 | black / grey x / purple, ★ green verticals | MakeInvsens.py:636 black / :639 default / :640, :642 green |
+| P17 | black / red / grey x / purple, green verticals | MakeInvsens.py:596 black / :597 red / :598 default / :599, :601 green |
+| P18 | black / blue / purple, green verticals | MakeInvsens.py:616 black / :617 red / :618, :620 green |
+| P19 | black / grey x / purple, green verticals | MakeInvsens.py:636 black / :639 default / :640, :642 green |
 | P19 | red / red dashed | MakeInvsens.py:643-644 red / :645-650 black dashed |
 | P37, P38 | none (no figure) | — |
