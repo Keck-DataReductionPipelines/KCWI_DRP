@@ -98,7 +98,7 @@ class SubtractScatteredLight(BasePrimitive):
                            x_axis_label='y pixel', y_axis_label='e-',
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height)
-                p.circle(xvals, yvals, legend_label="Scat")
+                p.circle(xvals, yvals, color='black', legend_label="Scat")
                 p.line(xvals, scat, color='red', line_width=3,
                        legend_label="Smooth")
                 p.legend.location = "top_left"
