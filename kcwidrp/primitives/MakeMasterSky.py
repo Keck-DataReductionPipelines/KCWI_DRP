@@ -336,11 +336,13 @@ class MakeMasterSky(BaseImg):
                     plot_width=self.config.instrument.plot_width,
                     plot_height=self.config.instrument.plot_height)
                 p.circle(std_sl_max_pos_data, std_sl_max_flx_data, size=1,
-                         line_alpha=0., fill_color='purple',
+                         line_alpha=0., fill_color='black',
                          legend_label='Data')
-                p.line([ppk, ppk], [0, fpk], color='green')
-                p.line([std_pos_mask_0, std_pos_mask_0], [0, fpk], color='blue')
-                p.line([std_pos_mask_1, std_pos_mask_1], [0, fpk], color='blue')
+                p.line([ppk, ppk], [0, fpk], color='magenta')
+                p.line([std_pos_mask_0, std_pos_mask_0], [0, fpk],
+                       color='purple')
+                p.line([std_pos_mask_1, std_pos_mask_1], [0, fpk],
+                       color='purple')
                 p.line(xx, yy, color='red')
                 bokeh_plot(p, self.context.bokeh_session)
                 pause(self.config.instrument, self.logger,
@@ -437,17 +439,17 @@ class MakeMasterSky(BaseImg):
                         plot_width=self.config.instrument.plot_width,
                         plot_height=self.config.instrument.plot_height)
                     p.circle(con_sl_max_pos_data, con_sl_max_flx_data,
-                             size=1, line_alpha=0., fill_color='purple',
+                             size=1, line_alpha=0., fill_color='black',
                              legend_label='Data')
-                    p.line([ppk, ppk], [0, fpk], color='green')
+                    p.line([ppk, ppk], [0, fpk], color='magenta')
                     p.line([con_pos_mask_lo_0, con_pos_mask_lo_0], [0, fpk],
-                           color='blue')
+                           color='purple', line_dash='dashed')
                     p.line([con_pos_mask_0, con_pos_mask_0], [0, fpk],
-                           color='blue')
+                           color='purple')
                     p.line([con_pos_mask_1, con_pos_mask_1], [0, fpk],
-                           color='blue')
+                           color='purple')
                     p.line([con_pos_mask_up_1, con_pos_mask_up_1], [0, fpk],
-                           color='blue')
+                           color='purple', line_dash='dashed')
                     p.line(xx, yy, color='red')
                     bokeh_plot(p, self.context.bokeh_session)
                     pause(self.config.instrument, self.logger,
@@ -634,7 +636,7 @@ class MakeMasterSky(BaseImg):
                 y_axis_label='Flux (e-)',
                 plot_width=self.config.instrument.plot_width,
                 plot_height=self.config.instrument.plot_height)
-            p.circle(xplt, yplt, size=1, line_alpha=0., fill_color='purple',
+            p.circle(xplt, yplt, size=1, line_alpha=0., fill_color='black',
                      legend_label='Data')
             p.line(xplt, fplt, line_color='red', legend_label='Fit')
             p.line([wavegood0, wavegood0], yrng, line_color='green')
