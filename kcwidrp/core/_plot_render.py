@@ -43,7 +43,8 @@ SPECTRAL11 = ('#5e4fa2', '#3288bd', '#66c2a5', '#abdda4', '#e6f598',
 _CMAPS = {'Spectral11': ListedColormap(list(SPECTRAL11), name='Spectral11')
           .with_extremes(bad='gray')}   # Bokeh's default nan_color
 
-_DASHES = {'solid': '-', 'dashed': '--', 'dotted': ':', 'dashdot': '-.'}
+_DASHES = {'solid': '-', 'dashed': '--', 'dotted': ':', 'dashdot': '-.',
+           'dashdotdot': (0, (6, 2, 1, 2, 1, 2))}
 
 # Bokeh's diamond: height = size, width = size / 1.5.  Matplotlib scales a
 # custom path so its largest extent equals markersize.
@@ -160,6 +161,8 @@ def _draw(ax, pf, cell_w, scale, measure):
             kp._failed("drawing %s()" % g['kind'], e)
             continue
         artist.set_zorder(2 + i * 1e-4)     # Bokeh draws in call order
+        if g['kind'] == 'image':
+            target.figure.colorbar(artist, ax=target)
         label = g.get('legend_label')
         if label:
             legend.setdefault(label, []).append(artist)

@@ -70,7 +70,7 @@ POSITIONAL_DATA = {"line": 2, "circle": 2, "diamond": 2, "scatter": 2,
                    "quad": 0, "image": 1}
 LITERAL_KW = {  # keyword -> supported literal values
     "marker": {"x"},
-    "line_dash": {"dashed", "dashdot", "dotted"},
+    "line_dash": {"dashed", "dashdot", "dotted", "dashdotdot"},
     "palette": {"Spectral11"},
     "y_axis_type": {"log"},
 }

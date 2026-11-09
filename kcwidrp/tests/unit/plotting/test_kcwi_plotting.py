@@ -512,6 +512,17 @@ def test_trap_dash_names(name, ls):
     assert got == ['-', ls]
 
 
+def test_dashdotdot_is_a_dash_dot_dot_pattern():
+    p = fig_()
+    p.line(X, Y, line_dash='dashdotdot')
+    l = glyph_lines(rendered(p).axes[0])[0]
+    offset, seq = l._unscaled_dash_pattern
+    # source: published - docs/interactive_prompts.md "Plot colour scheme":
+    # CWAVE is drawn dash-dot-dot, a style used for nothing else
+    assert len(seq) == 6
+    assert seq[0] > seq[2] and seq[2] == seq[4]
+
+
 @pytest.mark.parametrize("glyph", ['circle', 'scatter', 'diamond'])
 def test_marker_glyph_positions(glyph):
     p = fig_()
@@ -757,6 +768,18 @@ def test_spectral11_is_not_matplotlibs_continuous_spectral():
     # continuous and runs in the opposite direction
     assert mcolors.to_hex(cmap(0.0)) != mcolors.to_hex(spectral(0.0))
     assert mcolors.to_hex(cmap(0.0)) == SPECTRAL11[0]
+
+
+def test_image_has_a_colour_bar_on_the_data_range():
+    a = np.linspace(-3., 7., 40).reshape(5, 8)
+    fig = rendered(_image_fig(a))
+    # source: published - docs/interactive_prompts.md "Plot colour scheme":
+    # images (P12) have a colour bar; it is a second axes, after the plot
+    assert len(fig.axes) == 2
+    im = fig.axes[0].images[0]
+    assert im.colorbar is not None
+    assert im.colorbar.ax is fig.axes[1]
+    assert fig.axes[1].get_ylim() == pytest.approx((a.min(), a.max()))
 
 
 def test_image_level_and_tooltips_accepted():

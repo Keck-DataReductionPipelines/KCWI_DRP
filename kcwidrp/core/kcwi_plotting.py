@@ -132,7 +132,9 @@ LEGEND_LOCATIONS = {
     'top_left': 'upper left', 'top_center': 'upper center',
     'top_right': 'upper right', 'bottom_center': 'lower center',
 }
-LINE_DASHES = ('solid', 'dashed', 'dashdot', 'dotted')
+# 'dashdotdot' is not a Bokeh name; it is kept for CWAVE (colour scheme,
+# docs/interactive_prompts.md)
+LINE_DASHES = ('solid', 'dashed', 'dashdot', 'dotted', 'dashdotdot')
 MARKERS = ('circle', 'x')
 PALETTES = ('Spectral11',)
 
