@@ -142,12 +142,13 @@ class MakeMasterBias(BaseImg):
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height)
                 p.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:],
-                       fill_color="navy", line_color="white", alpha=0.5)
-                p.line(x, pdf, line_color="#ff8888", line_width=4, alpha=0.7,
+                       fill_color="black", line_color="white", alpha=0.5)
+                p.line(x, pdf, line_color="red", line_width=4, alpha=0.7,
                        legend_label="PDF")
                 p.line([-bias_rn, -bias_rn], [0, np.max(hist)], color='red',
-                       legend_label="Sigma")
-                p.line([bias_rn, bias_rn], [0, np.max(hist)], color='red')
+                       line_dash='dashed', legend_label="Sigma")
+                p.line([bias_rn, bias_rn], [0, np.max(hist)], color='red',
+                       line_dash='dashed')
                 p.y_range.start = 0
                 bokeh_plot(p, self.context.bokeh_session)
                 pause(self.config.instrument, self.logger,

@@ -136,9 +136,9 @@ class TraceBars(BasePrimitive):
                            x_axis_label="CCD X (px)", y_axis_label="CCD Y (px)",
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height)
-                p.scatter(xi, yi, marker='x', size=2, color='blue')
+                p.scatter(xi, yi, marker='x', size=2, color='black')
                 p.scatter(self.action.args.middle_centers,
-                          [self.action.args.middle_row]*nbars, color='red')
+                          [self.action.args.middle_row]*nbars, color='magenta')
                 bokeh_plot(p, self.context.bokeh_session)
                 pause(self.config.instrument, self.logger,
                     what="Continuum-bar traces: control points used for the geometric solution.",

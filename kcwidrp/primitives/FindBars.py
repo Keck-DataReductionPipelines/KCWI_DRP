@@ -86,10 +86,10 @@ class FindBars(BasePrimitive):
                     x_axis_label='CCD X (px)', y_axis_label='e-',
                     plot_width=self.config.instrument.plot_width,
                     plot_height=self.config.instrument.plot_height)
-                p.line(x, middle_vector, color='blue', legend_label="Trace")
+                p.line(x, middle_vector, color='black', legend_label="Trace")
                 p.scatter(peaks_vector,
                           middle_vector[peaks_vector], marker='x',
-                          color='red', legend_label="FoundBar")
+                          color='magenta', legend_label="FoundBar")
                 p.line([0, x_size], [bar_thresh, bar_thresh],
                        color='grey', line_dash='dashed')
                 p.legend.location = "bottom_center"
@@ -143,10 +143,10 @@ class FindBars(BasePrimitive):
                     x_axis_label='CCD X (px)', y_axis_label='e-',
                     plot_width=self.config.instrument.plot_width,
                     plot_height=self.config.instrument.plot_height)
-                p.line(x, middle_vector, color='blue', legend_label="MidTrace")
+                p.line(x, middle_vector, color='black', legend_label="MidTrace")
                 p.scatter(peaks_vector,
                           middle_vector[peaks_vector], marker='x',
-                          color='red', legend_label="FoundBar")
+                          color='magenta', legend_label="FoundBar")
                 p.line([0, x_size], [bar_thresh, bar_thresh],
                        color='grey', line_dash='dashed')
                 p.legend.location = "bottom_center"
@@ -189,10 +189,10 @@ class FindBars(BasePrimitive):
                         x_axis_label='CCD X (px)', y_axis_label='e-',
                         plot_width=self.config.instrument.plot_width,
                         plot_height=self.config.instrument.plot_height)
-                    p.line(xs, ys, color='blue', legend_label='Bar Trace')
-                    p.circle(xs, ys, color='red', legend_label='Bar Trace')
+                    p.line(xs, ys, color='black', legend_label='Bar Trace')
+                    p.circle(xs, ys, color='black', legend_label='Bar Trace')
                     p.line([xc, xc], [bar_thresh, middle_vector[peak]],
-                           color='green', legend_label='Cntrd')
+                           color='magenta', legend_label='Cntrd')
                     bokeh_plot(p, self.context.bokeh_session)
                     if do_inter:
                         q = ask_next(self.logger,
