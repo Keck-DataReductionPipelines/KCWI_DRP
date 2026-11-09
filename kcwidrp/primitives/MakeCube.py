@@ -270,12 +270,29 @@ class MakeCube(BasePrimitive):
                     p = figure(tooltips=[("x", "$x"), ("y", "$y"),
                                          ("value", "@image")],
                                title=ptitle,
-                               x_axis_label="X (px)", y_axis_label="Y (px)",
-                               plot_width=self.config.instrument.plot_width,
+                               x_axis_label="X (px)",
+                               y_axis_label="Wavelength (A)",
+                               plot_width=int(
+                                   0.4 * self.config.instrument.plot_width),
                                plot_height=self.config.instrument.plot_height)
                     p.x_range.range_padding = p.y_range.range_padding = 0
-                    p.image([warped], x=0, y=0, dw=xsize, dh=ysize,
+                    # y in wavelength: pixel i is centred on wave0out + i*dw
+                    w0 = geom['wave0out'] - geom['dwout'] / 2.
+                    w1 = w0 + ysize * geom['dwout']
+                    p.image([warped], x=0, y=w0, dw=xsize,
+                            dh=ysize * geom['dwout'],
                             palette="Spectral11", level="image")
+                    # pixel boundaries along the slice: ticks at both ends
+                    # (full-height lines would hide the image)
+                    tick = 0.02 * (w1 - w0)
+                    for ix in range(xsize + 1):
+                        p.line([ix, ix], [w0, w0 + tick], color='black',
+                               legend_label='Pixel')
+                        p.line([ix, ix], [w1 - tick, w1], color='black')
+                    p.line([0, xsize], [geom['wavegood0'], geom['wavegood0']],
+                           color='green', legend_label='WavGood')
+                    p.line([0, xsize], [geom['wavegood1'], geom['wavegood1']],
+                           color='green')
                     bokeh_plot(p, self.context.bokeh_session)
                     if do_inter:
                         q = ask_next(self.logger,
@@ -283,12 +300,16 @@ class MakeCube(BasePrimitive):
                             help=(
                                 "What you see:\n"
                                 "  Title \"WARPED Slice <n>\": slice n resampled onto the cube grid.\n"
-                                "  x: position along the slice (px); y: wavelength pixel (blue at the\n"
-                                "  bottom).\n"
-                                "  Colour: Spectral11, linear from the slice's minimum (purple/blue) to\n"
-                                "    its maximum (dark red); the colour bar on the right gives the\n"
-                                "    values.\n"
-                                "  Grey: NaN.\n"
+                                "  x: position along the slice (cube px); y: wavelength (A), shorter\n"
+                                "  wavelengths at the bottom.\n"
+                                "  Colour: signal (e-) in each cube pixel; the colour bar on the right\n"
+                                "    gives the e- for each colour, from the slice's lowest value\n"
+                                "    (purple) to its highest (dark red).\n"
+                                "  Black ticks at the top and bottom (\"Pixel\"): one at each boundary\n"
+                                "    between pixels along the slice.\n"
+                                "  Green horizontals (\"WavGood\"): WAVGOOD, the wavelength range with\n"
+                                "    good data in every slice.\n"
+                                "  Grey blocks: no data (NaN).\n"
                                 "What to look for:\n"
                                 "  Good: sky and arc lines run straight across the slice (constant\n"
                                 "  wavelength); a point source is a straight vertical streak; the slice\n"

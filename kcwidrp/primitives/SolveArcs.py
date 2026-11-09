@@ -413,11 +413,15 @@ class SolveArcs(BasePrimitive):
             # do plotting?
             if master_inter and ib == next_bar_to_plot:
                 # plot bar fit residuals
-                ptitle = " for Bar %03d, Slice %02d, RMS = %.3f, N = %d" % \
-                         (ib, int(ib / 5), wsig, len(arc_pix_dat))
+                # dispersion of this bar (A/px) for the RMS in px
+                bar_disp = abs(wfit[-2])
+                ptitle = " for Bar %03d, Slice %02d, RMS = %.3f A " \
+                         "(%.2f px), N = %d" % \
+                         (ib, int(ib / 5), wsig, wsig / bar_disp,
+                          len(arc_pix_dat))
                 p = figure(title=plab + "RESIDUALS" + ptitle,
                            x_axis_label="Wavelength (A)",
-                           y_axis_label="Fit - Inp (A)",
+                           y_axis_label="Fit - Atlas (A)",
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height)
                 p.diamond(at_wave_dat, resid, color='black',
@@ -428,11 +432,16 @@ class SolveArcs(BasePrimitive):
                 if rej_wave:
                     p.scatter(rej_wave, np.zeros(len(rej_wave)), marker='x',
                               color='grey', legend_label='RejFit', size=6)
-                xlim = [self.action.args.atminwave, self.action.args.atmaxwave]
+                wlim = [self.action.args.atminwave, self.action.args.atmaxwave]
+                xlim = get_plot_lims(wlim, padding=0.02)
                 ylim = get_plot_lims(list(resid)+list(rej_rsd))
-                p.line(xlim, [0., 0.], color='grey', line_dash='dotted')
-                p.line(xlim, [wsig, wsig], color='red', line_dash='dashed')
-                p.line(xlim, [-wsig, -wsig], color='red', line_dash='dashed')
+                p.line(wlim, [0., 0.], color='grey', line_dash='dotted')
+                p.line(wlim, [wsig, wsig], color='red', line_dash='dashed',
+                       legend_label='+-RMS')
+                p.line(wlim, [-wsig, -wsig], color='red', line_dash='dashed')
+                p.line([wlim[0], wlim[0]], ylim, color='purple',
+                       legend_label='WavLim')
+                p.line([wlim[1], wlim[1]], ylim, color='purple')
                 p.line([self.action.args.cwave, self.action.args.cwave],
                        ylim, legend_label='CWAV', color='orange',
                        line_dash='dashdotdot')
@@ -441,18 +450,24 @@ class SolveArcs(BasePrimitive):
                 pause(self.config.instrument, self.logger,
                       what="Wavelength-fit residuals of this bar, with kept and rejected lines.",
                       help=("What you see:\n"
-                            "  Title \"RESIDUALS for Bar <n>, Slice <s>, RMS = <r>, N = <k>\": fit\n"
-                            "  minus atlas wavelength (A) for each line.\n"
+                            "  Title \"RESIDUALS for Bar <n>, Slice <s>, RMS = <r> A (<p> px),\n"
+                            "  N = <k>\": for each line, the wavelength the fit gives at the arc\n"
+                            "  line's pixel minus the atlas wavelength (A). RMS is that of the kept\n"
+                            "  lines; the px value divides it by this bar's dispersion.\n"
                             "  Black diamonds: lines kept.\n"
                             "  Gold diamonds: lines rejected as outliers in the iterative clipping.\n"
                             "  Grey x (at 0): lines rejected before the fit (no clean window,\n"
                             "    failed Gaussian, centroid off).\n"
                             "  Grey dotted: zero.\n"
                             "  Red dashed: +- RMS.\n"
+                            "  Purple verticals (\"WavLim\"): the wavelength limits of the atlas line\n"
+                            "    list (as in P11); lines are only used between them.\n"
                             "  Orange dash-dot-dot: CWAVE.\n"
+                            "  No WAVGOOD lines: WAVGOOD is only known after SolveGeom.\n"
                             "What to look for:\n"
-                            "  Good: black points scatter randomly about zero over the whole range,\n"
-                            "  RMS well below the dispersion of one pixel.\n"
+                            "  Good: black points scatter randomly about zero over the whole range;\n"
+                            "  RMS (A) well below this bar's dispersion, so the px value in the\n"
+                            "  title is well below 1.\n"
                             "  Bad: a trend or curve with wavelength (misidentified lines or too\n"
                             "  low a polynomial order), large gaps, many gold or grey lines (often\n"
                             "  a wrong atlas offset).\n"
@@ -507,7 +522,8 @@ class SolveArcs(BasePrimitive):
                           "  <cr>      show the next bar.\n"
                           "  <number>  jump to that bar (after the current one, up to 119); at\n"
                           "            plot_level 3 the line plots follow the jump.\n"
-                          "  q / quit  stop the bar review (line plots stop too).\n"
+                          "  q / quit  stop the bar review (line plots stop too). The summary\n"
+                          "            plots (coefficients, lines per bar, RMS) still follow.\n"
                           "  Display only: no answer changes the reduction.\n"
                           "Default:\n"
                           "  <cr> shows the next bar. Below plot_level 2 these are not shown."),
@@ -547,11 +563,13 @@ class SolveArcs(BasePrimitive):
                 cf_st = float(np.nanstd(coef))
                 cn = poly_order - ic
                 if cn > 0:
-                    ptitle = plab + "COEF %d VALUES <C%d> = " \
-                                    "%.3g +- %.3g" % (cn, cn, cf_av, cf_st)
+                    ptitle = plab + "COEF %d OF C0-C%d VALUES <C%d> = " \
+                                    "%.3g +- %.3g" % (cn, poly_order, cn,
+                                                      cf_av, cf_st)
                 else:
-                    ptitle = plab + "COEF %d VALUES <C%d> = " \
-                                    "%.2f +- %.2f" % (cn, cn, cf_av, cf_st)
+                    ptitle = plab + "COEF %d OF C0-C%d VALUES <C%d> = " \
+                                    "%.2f +- %.2f" % (cn, poly_order, cn,
+                                                      cf_av, cf_st)
                 self.logger.info(ptitle)
                 p = figure(title=ptitle, x_axis_label="Bar #",
                            y_axis_label="Coef %d (%s)" % (cn, ylabs[ic]),
@@ -568,10 +586,11 @@ class SolveArcs(BasePrimitive):
                 pause(self.config.instrument, self.logger,
                       what="One coefficient of the wavelength solution for every bar.",
                       help=("What you see:\n"
-                            "  Title \"COEF <k> VALUES <Ck> = <mean> +- <std>\": coefficient k of each\n"
-                            "  bar's wavelength polynomial in CCD pixel, against bar number. C0 is\n"
-                            "  the wavelength (A) at the first pixel, C1 the dispersion (A/px),\n"
-                            "  higher terms the curvature. One plot per coefficient.\n"
+                            "  Title \"COEF <k> OF C0-C<n> VALUES <Ck> = <mean> +- <std>\": coefficient\n"
+                            "  k of each bar's wavelength polynomial in CCD pixel, against bar\n"
+                            "  number. The polynomial has n + 1 coefficients, C0 to Cn: C0 is the\n"
+                            "  wavelength (A) at the first pixel, C1 the dispersion (A/px), higher\n"
+                            "  terms the curvature. One plot per coefficient.\n"
                             "  Black diamonds: values.\n"
                             "  Black dash-dot lines: slice boundaries.\n"
                             "What to look for:\n"
@@ -598,19 +617,26 @@ class SolveArcs(BasePrimitive):
                    y_axis_label="N Lines",
                    plot_width=self.config.instrument.plot_width,
                    plot_height=self.config.instrument.plot_height)
-        p.diamond(list(range(nbars)), bar_nls, color='black', size=8)
+        p.diamond(list(range(nbars)), bar_nls, color='black', size=8,
+                  legend_label='Bars')
         xlim = [-1, nbars]
         ylim = get_plot_lims(bar_nls)
+        # mean of each slice's 5 bars
+        for isl in range(nbars // 5):
+            sl_av = float(np.nanmean(bar_nls[isl*5:isl*5+5]))
+            p.line([isl*5 - 0.5, isl*5 + 4.5], [sl_av, sl_av],
+                   color='blue', line_width=3, legend_label='Slice mean')
         self.logger.info("<N Lines> = %.1f +- %.1f" %
                          (self.action.args.av_bar_nls,
                           self.action.args.st_bar_nls))
         p.line(xlim, [self.action.args.av_bar_nls,
-                      self.action.args.av_bar_nls], color='red')
+                      self.action.args.av_bar_nls], color='red',
+               legend_label='Mean')
         p.line(xlim, [(self.action.args.av_bar_nls -
                        self.action.args.st_bar_nls),
                       (self.action.args.av_bar_nls -
                        self.action.args.st_bar_nls)], color='red',
-               line_dash='dashed')
+               line_dash='dashed', legend_label='+-1 sigma')
         p.line(xlim, [(self.action.args.av_bar_nls +
                        self.action.args.st_bar_nls),
                       (self.action.args.av_bar_nls +
@@ -626,14 +652,18 @@ class SolveArcs(BasePrimitive):
                   help=("What you see:\n"
                         "  Title \"FIT STATS <Nlns> = <mean> +- <std>\": number of lines in each\n"
                         "  bar's final fit, against bar number.\n"
-                        "  Black diamonds: values.\n"
-                        "  Red: mean.\n"
+                        "  Black diamonds (\"Bars\"): values.\n"
+                        "  Red (\"Mean\"): mean of all bars.\n"
                         "  Red dashed: mean +- 1 standard deviation.\n"
+                        "  Blue thick, one per slice (\"Slice mean\"): mean of the slice's 5 bars.\n"
                         "  Black dash-dot: slice boundaries.\n"
                         "What to look for:\n"
-                        "  Good: similar numbers for all bars.\n"
-                        "  Bad: bars with far fewer lines than the rest; their solutions are\n"
-                        "  less constrained, especially at the ends of the range.\n"
+                        "  Good: similar numbers for all bars and slices.\n"
+                        "  Bad: bars or slices with far fewer lines than the rest; their\n"
+                        "  solutions are less constrained, especially at the ends of the range.\n"
+                        "  A red mean far below what this grating usually gives means the line\n"
+                        "  identification failed: check the atlas offset (P39, P40) and the\n"
+                        "  line list (P11).\n"
                         "Your options:\n"
                         "  <cr>  continue. Display only.\n"
                         "Default:\n"
@@ -650,22 +680,28 @@ class SolveArcs(BasePrimitive):
                          (self.action.args.av_bar_sig,
                           self.action.args.st_bar_sig))
 
+        # mean dispersion (A/px) for the RMS in px
+        av_disp = float(np.nanmean([abs(c[-2]) for c in
+                                    self.action.args.fincoeff]))
         ptitle = plab + \
-            "FIT STATS <RMS> = %.3f +- %.3f" % (self.action.args.av_bar_sig,
-                                                self.action.args.st_bar_sig)
+            "FIT STATS <RMS> = %.3f +- %.3f A (%.2f px)" % (
+                self.action.args.av_bar_sig, self.action.args.st_bar_sig,
+                self.action.args.av_bar_sig / av_disp)
         p = figure(title=ptitle, x_axis_label="Bar #", y_axis_label="RMS (A)",
                    plot_width=self.config.instrument.plot_width,
                    plot_height=self.config.instrument.plot_height)
-        p.diamond(list(range(nbars)), bar_sig, color='black', size=8)
+        p.diamond(list(range(nbars)), bar_sig, color='black', size=8,
+                  legend_label='Bars')
         xlim = [-1, nbars]
         ylim = get_plot_lims(bar_sig)
         p.line(xlim, [self.action.args.av_bar_sig,
-                      self.action.args.av_bar_sig], color='red')
+                      self.action.args.av_bar_sig], color='red',
+               legend_label='Mean')
         p.line(xlim, [(self.action.args.av_bar_sig -
                        self.action.args.st_bar_sig),
                       (self.action.args.av_bar_sig -
                        self.action.args.st_bar_sig)], color='red',
-               line_dash='dashed')
+               line_dash='dashed', legend_label='+-1 sigma')
         p.line(xlim, [(self.action.args.av_bar_sig +
                        self.action.args.st_bar_sig),
                       (self.action.args.av_bar_sig +
@@ -679,14 +715,18 @@ class SolveArcs(BasePrimitive):
             pause(self.config.instrument, self.logger,
                   what="RMS of the wavelength fit of every bar (Angstrom).",
                   help=("What you see:\n"
-                        "  Title \"FIT STATS <RMS> = <mean> +- <std>\": RMS residual (A) of each\n"
-                        "  bar's final fit, against bar number.\n"
-                        "  Black diamonds: values.\n"
-                        "  Red: mean.\n"
+                        "  Title \"FIT STATS <RMS> = <mean> +- <std> A (<p> px)\": RMS residual\n"
+                        "  (A) of each bar's final fit, against bar number. A bar's RMS is that\n"
+                        "  of its kept lines' residuals: the wavelength the fit gives at the arc\n"
+                        "  line's pixel minus the atlas wavelength (as in P43). The px value\n"
+                        "  divides the mean by the mean dispersion.\n"
+                        "  Black diamonds (\"Bars\"): values.\n"
+                        "  Red (\"Mean\"): mean.\n"
                         "  Red dashed: mean +- 1 standard deviation.\n"
                         "  Black dash-dot: slice boundaries.\n"
                         "What to look for:\n"
-                        "  Good: uniformly low RMS, well below one pixel's dispersion.\n"
+                        "  Good: uniformly low RMS, well below the dispersion, so the px value\n"
+                        "  in the title is well below 1.\n"
                         "  Bad: isolated bars or whole slices with high RMS: check them with\n"
                         "  the bar review (plot_level 2) before trusting those slices.\n"
                         "Your options:\n"

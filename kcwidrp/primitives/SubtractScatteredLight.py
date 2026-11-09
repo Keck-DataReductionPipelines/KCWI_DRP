@@ -107,8 +107,11 @@ class SubtractScatteredLight(BasePrimitive):
                     what="Scattered-light profile along CCD y and the smooth model subtracted from every column.",
                     help=(
                         "What you see:\n"
-                        "  Title \"SCATTERED LIGHT FIT\": median of the central CCD columns\n"
-                        "  (+- 180 unbinned px about the centre) for every row, in e-.\n"
+                        "  Title \"SCATTERED LIGHT FIT\": for every CCD row, the median of a band\n"
+                        "  of columns at the centre of the CCD (+- 180 unbinned px), which runs\n"
+                        "  along the spectral (y) direction.\n"
+                        "  y axis in e-: CorrectGain has already converted counts to electrons\n"
+                        "  (it runs just before this step).\n"
                         "  Black circles (\"Scat\"): the medians.\n"
                         "  Red thick line (\"Smooth\"): Savitzky-Golay smoothing (window 151, 303\n"
                         "    or 501 rows, wider for noisier data); this curve is subtracted\n"

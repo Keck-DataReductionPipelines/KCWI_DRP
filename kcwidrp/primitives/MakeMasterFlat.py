@@ -258,7 +258,7 @@ class MakeMasterFlat(BaseImg):
             # plot slope fit
             if self.config.instrument.plot_level >= 1:
                 p = figure(title=plab + ' WAVE SLOPE FIT',
-                           x_axis_label='wave px',
+                           x_axis_label='Wavelength (A)',
                            y_axis_label='counts',
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height)
@@ -267,11 +267,14 @@ class MakeMasterFlat(BaseImg):
                        legend_label="Fit")
                 bokeh_plot(p, self.context.bokeh_session)
                 pause(self.config.instrument, self.logger,
-                      what="Internal flat: lamp spectrum slope near the middle wavelength, reference slice.",
+                      what="Internal flat: lamp spectrum slope at the centre of the wavelength range, reference slice.",
                       help=("What you see:\n"
                             "  Title \"WAVE SLOPE FIT\": the un-vignetted part of the reference slice\n"
-                            "  (slice 9) in a narrow window (1/15 of the range) around the middle\n"
-                            "  wavelength; x is wavelength in A (the axis label says \"wave px\").\n"
+                            "  in a narrow wavelength window around the centre of the flat's\n"
+                            "  wavelength range (cut at 5620 A on blue, 5580 A on red); the window\n"
+                            "  is 1/15 of that range wide. x: wavelength (A).\n"
+                            "  The reference slice is slice 9 in all the flat plots; it is not the\n"
+                            "  reference bar of the arc plots.\n"
                             "  Black circles: counts.\n"
                             "  Red: quadratic fit, divided out before the vignetting is measured.\n"
                             "What to look for:\n"
@@ -330,19 +333,27 @@ class MakeMasterFlat(BaseImg):
                 p.line(allidx, resfit[1] + resfit[0]*allidx,
                        line_color='red', line_dash='dashed',
                        legend_label='Vign.')
-                p.line(allidx, resflat[1] + resflat[0]*allidx, line_color='red',
+                # un-vignetted fit: its window, extended to the vignetted side
+                if self.action.args.camera == 0:    # Blue: vignetted at left
+                    uvidx = allidx[allidx <= flatr]
+                else:                               # Red: vignetted at right
+                    uvidx = allidx[allidx >= flatl]
+                p.line(uvidx, resflat[1] + resflat[0]*uvidx, line_color='red',
                        legend_label='UnVign.')
                 p.line([fitl, fitl], [ycmin, ycmax], line_color='purple',
-                       line_dash='dashed')
+                       line_dash='dashed', legend_label='Vign. window')
                 p.line([fitr, fitr], [ycmin, ycmax], line_color='purple',
                        line_dash='dashed')
-                p.line([flatl, flatl], [ycmin, ycmax], line_color='purple')
+                p.line([flatl, flatl], [ycmin, ycmax], line_color='purple',
+                       legend_label='UnVign. window')
                 p.line([flatr, flatr], [ycmin, ycmax], line_color='purple')
                 p.line([xinter-buffer, xinter-buffer], [ycmin, ycmax],
-                       line_color='purple', line_dash='dotted')
+                       line_color='purple', line_dash='dotted',
+                       legend_label='Buffer')
                 p.line([xinter + buffer, xinter + buffer], [ycmin, ycmax],
                        line_color='purple', line_dash='dotted')
-                p.line([xinter, xinter], [ycmin, ycmax], line_color='magenta')
+                p.line([xinter, xinter], [ycmin, ycmax], line_color='magenta',
+                       legend_label='Crossing')
                 p.y_range = Range1d(ycmin, ycmax)
                 bokeh_plot(p, self.context.bokeh_session)
                 pause(self.config.instrument, self.logger,
@@ -350,13 +361,18 @@ class MakeMasterFlat(BaseImg):
                       help=("What you see:\n"
                             "  Title \"Vignetting\": slope-corrected flat ratio against position along\n"
                             "  the reference slice (px); y range fixed at 0.5 - 1.25.\n"
-                            "  Black circles: data.\n"
-                            "  Red dashed: linear fit to the vignetted part.\n"
-                            "  Purple dashed verticals: the window of that fit.\n"
-                            "  Red line: linear fit to the un-vignetted part.\n"
-                            "  Purple verticals: the window of that fit.\n"
-                            "  Magenta vertical: where the two fits cross.\n"
-                            "  Purple dotted verticals: buffer zone either side of the crossing.\n"
+                            "  Internal flats only: their lamp light falls off near one edge of\n"
+                            "  every slice (left on blue, right on red). The DRP fits a line to the\n"
+                            "  fall-off and one to the flat part; where they cross is the knee.\n"
+                            "  Black circles (\"Data\"): data.\n"
+                            "  Red dashed (\"Vign.\"): linear fit to the vignetted part.\n"
+                            "  Purple dashed verticals (\"Vign. window\"): the window of that fit.\n"
+                            "  Red line (\"UnVign.\"): linear fit to the un-vignetted part, drawn\n"
+                            "    over its window and out to the vignetted edge.\n"
+                            "  Purple verticals (\"UnVign. window\"): the window of that fit.\n"
+                            "  Magenta vertical (\"Crossing\"): where the two fits cross (the knee).\n"
+                            "  Purple dotted verticals (\"Buffer\"): buffer zone either side of the\n"
+                            "    crossing (next plot).\n"
                             "What to look for:\n"
                             "  Good: each fit follows the data in its own region and they cross at\n"
                             "  the knee where the fall-off begins.\n"
@@ -405,17 +421,23 @@ class MakeMasterFlat(BaseImg):
                            y_axis_label='Ratio',
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height)
-                p.circle(xbuff, ybuff, color='black')
-                p.line(xbuff, np.polyval(buffit, xbuff), line_color='red')
+                p.circle(xbuff, ybuff, color='black', legend_label='Data')
+                p.line(xbuff, np.polyval(buffit, xbuff), line_color='red',
+                       legend_label='Fit')
                 bokeh_plot(p, self.context.bokeh_session)
                 pause(self.config.instrument, self.logger,
                       what="Internal flat: smooth fit across the buffer zone between corrected and uncorrected parts.",
                       help=("What you see:\n"
-                            "  Title \"Buffer Region\": ratio data within the buffer zone around the\n"
-                            "  vignetting knee, against slice position.\n"
-                            "  Black circles: data.\n"
-                            "  Red: cubic fit used to join the corrected and uncorrected parts\n"
-                            "    smoothly.\n"
+                            "  Title \"Buffer Region\": the reference-slice ratio data within the\n"
+                            "  buffer zone (+- 6 unbinned px) around the knee of P22, against\n"
+                            "  slice position.\n"
+                            "  Why: on the vignetted side of the buffer, the flat is scaled up to\n"
+                            "  the red un-vignetted line of P22, which removes the lamp's fall-off.\n"
+                            "  A sharp switch at the knee would leave a step, so inside the buffer\n"
+                            "  the flat is instead scaled by that line divided by this cubic fit.\n"
+                            "  Black circles (\"Data\"): data.\n"
+                            "  Red (\"Fit\"): cubic fit used to join the corrected and uncorrected\n"
+                            "    parts smoothly.\n"
                             "What to look for:\n"
                             "  Good: a smooth red curve through the points.\n"
                             "  Bad: a curve that swings away from the data at either end, which\n"

@@ -88,6 +88,7 @@ describe the plots in this scheme; the per-site list is in
 | Reference or comparison data (atlas, REFBAR arc, the star's reference spectrum, blue-end slice) | blue |
 | Fit, model, smoothing | red solid |
 | Mean / ±σ, ±RMS of a fit or of the data | red solid / red dashed |
+| Mean of a subset (per-slice mean, P46) | blue, thick, over the subset only |
 | CWAVE | orange, dash-dot-dot (used for nothing else) |
 | WAVGOOD | green solid verticals |
 | WAVALL | grey solid verticals |
@@ -100,7 +101,7 @@ describe the plots in this scheme; the per-site list is in
 | Lines rejected as outliers in residual clipping | gold |
 | GetAtlasLines rejection classes (P11) | cyan WinRej, pink FitRej, olive ParRej, brown DupRej, grey FntRej |
 | Slice boundaries | black dash-dot |
-| Images (P12) | Spectral11 with a colour bar; NaN grey |
+| Images (P12) | Spectral11 with a colour bar; NaN grey; pixel boundaries as black ticks at the top and bottom |
 
 Rules:
 
@@ -111,8 +112,10 @@ Rules:
 - Every plot whose x axis covers the whole wavelength range shows
   WAVGOOD in green, also in pixel space where a wavelength solution
   exists when the plot is drawn. WAVGOOD is first computed in SolveGeom,
-  so plots made before it (P01, P03, P04, P11, P39, P40, P44) have none.
-  P50 (CCD rows) has none: a row is a different wavelength in each slice.
+  so plots made before it (P01, P03, P04, P11, P39, P40, P43, P44) have
+  none. P50 (CCD rows) has none: a row is a different wavelength in each
+  slice. P12 shows WAVGOOD as green horizontals (y is wavelength).
+- Every line or marker a help text names has a legend entry.
 - Markers have an outline of their fill colour.
 - In the help text each colour item is on its own line; continuation
   lines are indented by two more spaces.
@@ -1134,18 +1137,24 @@ Wavelength-fit residuals of this bar, with kept and rejected lines.
 **help**
 ```text
 What you see:
-  Title "RESIDUALS for Bar <n>, Slice <s>, RMS = <r>, N = <k>": fit
-  minus atlas wavelength (A) for each line.
+  Title "RESIDUALS for Bar <n>, Slice <s>, RMS = <r> A (<p> px),
+  N = <k>": for each line, the wavelength the fit gives at the arc
+  line's pixel minus the atlas wavelength (A). RMS is that of the kept
+  lines; the px value divides it by this bar's dispersion.
   Black diamonds: lines kept.
   Gold diamonds: lines rejected as outliers in the iterative clipping.
   Grey x (at 0): lines rejected before the fit (no clean window,
     failed Gaussian, centroid off).
   Grey dotted: zero.
   Red dashed: +- RMS.
+  Purple verticals ("WavLim"): the wavelength limits of the atlas line
+    list (as in P11); lines are only used between them.
   Orange dash-dot-dot: CWAVE.
+  No WAVGOOD lines: WAVGOOD is only known after SolveGeom.
 What to look for:
-  Good: black points scatter randomly about zero over the whole range,
-  RMS well below the dispersion of one pixel.
+  Good: black points scatter randomly about zero over the whole range;
+  RMS (A) well below this bar's dispersion, so the px value in the
+  title is well below 1.
   Bad: a trend or curve with wavelength (misidentified lines or too
   low a polynomial order), large gaps, many gold or grey lines (often
   a wrong atlas offset).
@@ -1188,7 +1197,8 @@ Your options:
   <cr>      show the next bar.
   <number>  jump to that bar (after the current one, up to 119); at
             plot_level 3 the line plots follow the jump.
-  q / quit  stop the bar review (line plots stop too).
+  q / quit  stop the bar review (line plots stop too). The summary
+            plots (coefficients, lines per bar, RMS) still follow.
   Display only: no answer changes the reduction.
 Default:
   <cr> shows the next bar. Below plot_level 2 these are not shown.
@@ -1212,10 +1222,11 @@ One coefficient of the wavelength solution for every bar.
 **help**
 ```text
 What you see:
-  Title "COEF <k> VALUES <Ck> = <mean> +- <std>": coefficient k of each
-  bar's wavelength polynomial in CCD pixel, against bar number. C0 is
-  the wavelength (A) at the first pixel, C1 the dispersion (A/px),
-  higher terms the curvature. One plot per coefficient.
+  Title "COEF <k> OF C0-C<n> VALUES <Ck> = <mean> +- <std>": coefficient
+  k of each bar's wavelength polynomial in CCD pixel, against bar
+  number. The polynomial has n + 1 coefficients, C0 to Cn: C0 is the
+  wavelength (A) at the first pixel, C1 the dispersion (A/px), higher
+  terms the curvature. One plot per coefficient.
   Black diamonds: values.
   Black dash-dot lines: slice boundaries.
 What to look for:
@@ -1248,14 +1259,18 @@ Number of arc lines used in the wavelength fit of every bar.
 What you see:
   Title "FIT STATS <Nlns> = <mean> +- <std>": number of lines in each
   bar's final fit, against bar number.
-  Black diamonds: values.
-  Red: mean.
+  Black diamonds ("Bars"): values.
+  Red ("Mean"): mean of all bars.
   Red dashed: mean +- 1 standard deviation.
+  Blue thick, one per slice ("Slice mean"): mean of the slice's 5 bars.
   Black dash-dot: slice boundaries.
 What to look for:
-  Good: similar numbers for all bars.
-  Bad: bars with far fewer lines than the rest; their solutions are
-  less constrained, especially at the ends of the range.
+  Good: similar numbers for all bars and slices.
+  Bad: bars or slices with far fewer lines than the rest; their
+  solutions are less constrained, especially at the ends of the range.
+  A red mean far below what this grating usually gives means the line
+  identification failed: check the atlas offset (P39, P40) and the
+  line list (P11).
 Your options:
   <cr>  continue. Display only.
 Default:
@@ -1281,14 +1296,18 @@ RMS of the wavelength fit of every bar (Angstrom).
 **help**
 ```text
 What you see:
-  Title "FIT STATS <RMS> = <mean> +- <std>": RMS residual (A) of each
-  bar's final fit, against bar number.
-  Black diamonds: values.
-  Red: mean.
+  Title "FIT STATS <RMS> = <mean> +- <std> A (<p> px)": RMS residual
+  (A) of each bar's final fit, against bar number. A bar's RMS is that
+  of its kept lines' residuals: the wavelength the fit gives at the arc
+  line's pixel minus the atlas wavelength (as in P43). The px value
+  divides the mean by the mean dispersion.
+  Black diamonds ("Bars"): values.
+  Red ("Mean"): mean.
   Red dashed: mean +- 1 standard deviation.
   Black dash-dot: slice boundaries.
 What to look for:
-  Good: uniformly low RMS, well below one pixel's dispersion.
+  Good: uniformly low RMS, well below the dispersion, so the px value
+  in the title is well below 1.
   Bad: isolated bars or whole slices with high RMS: check them with
   the bar review (plot_level 2) before trusting those slices.
 Your options:
@@ -1354,12 +1373,16 @@ One slice of the cube after the geometric and wavelength transformation.
 ```text
 What you see:
   Title "WARPED Slice <n>": slice n resampled onto the cube grid.
-  x: position along the slice (px); y: wavelength pixel (blue at the
-  bottom).
-  Colour: Spectral11, linear from the slice's minimum (purple/blue) to
-    its maximum (dark red); the colour bar on the right gives the
-    values.
-  Grey: NaN.
+  x: position along the slice (cube px); y: wavelength (A), shorter
+  wavelengths at the bottom.
+  Colour: signal (e-) in each cube pixel; the colour bar on the right
+    gives the e- for each colour, from the slice's lowest value
+    (purple) to its highest (dark red).
+  Black ticks at the top and bottom ("Pixel"): one at each boundary
+    between pixels along the slice.
+  Green horizontals ("WavGood"): WAVGOOD, the wavelength range with
+    good data in every slice.
+  Grey blocks: no data (NaN).
 What to look for:
   Good: sky and arc lines run straight across the slice (constant
   wavelength); a point source is a straight vertical streak; the slice
@@ -1396,8 +1419,11 @@ Scattered-light profile along CCD y and the smooth model subtracted from every c
 **help**
 ```text
 What you see:
-  Title "SCATTERED LIGHT FIT": median of the central CCD columns
-  (+- 180 unbinned px about the centre) for every row, in e-.
+  Title "SCATTERED LIGHT FIT": for every CCD row, the median of a band
+  of columns at the centre of the CCD (+- 180 unbinned px), which runs
+  along the spectral (y) direction.
+  y axis in e-: CorrectGain has already converted counts to electrons
+  (it runs just before this step).
   Black circles ("Scat"): the medians.
   Red thick line ("Smooth"): Savitzky-Golay smoothing (window 151, 303
     or 501 rows, wider for noisier data); this curve is subtracted
@@ -1427,15 +1453,18 @@ Default:
 
 **what**
 ```text
-Internal flat: lamp spectrum slope near the middle wavelength, reference slice.
+Internal flat: lamp spectrum slope at the centre of the wavelength range, reference slice.
 ```
 
 **help**
 ```text
 What you see:
   Title "WAVE SLOPE FIT": the un-vignetted part of the reference slice
-  (slice 9) in a narrow window (1/15 of the range) around the middle
-  wavelength; x is wavelength in A (the axis label says "wave px").
+  in a narrow wavelength window around the centre of the flat's
+  wavelength range (cut at 5620 A on blue, 5580 A on red); the window
+  is 1/15 of that range wide. x: wavelength (A).
+  The reference slice is slice 9 in all the flat plots; it is not the
+  reference bar of the arc plots.
   Black circles: counts.
   Red: quadratic fit, divided out before the vignetting is measured.
 What to look for:
@@ -1467,13 +1496,18 @@ Internal flat: vignetting along the slice edge and its linear correction.
 What you see:
   Title "Vignetting": slope-corrected flat ratio against position along
   the reference slice (px); y range fixed at 0.5 - 1.25.
-  Black circles: data.
-  Red dashed: linear fit to the vignetted part.
-  Purple dashed verticals: the window of that fit.
-  Red line: linear fit to the un-vignetted part.
-  Purple verticals: the window of that fit.
-  Magenta vertical: where the two fits cross.
-  Purple dotted verticals: buffer zone either side of the crossing.
+  Internal flats only: their lamp light falls off near one edge of
+  every slice (left on blue, right on red). The DRP fits a line to the
+  fall-off and one to the flat part; where they cross is the knee.
+  Black circles ("Data"): data.
+  Red dashed ("Vign."): linear fit to the vignetted part.
+  Purple dashed verticals ("Vign. window"): the window of that fit.
+  Red line ("UnVign."): linear fit to the un-vignetted part, drawn
+    over its window and out to the vignetted edge.
+  Purple verticals ("UnVign. window"): the window of that fit.
+  Magenta vertical ("Crossing"): where the two fits cross (the knee).
+  Purple dotted verticals ("Buffer"): buffer zone either side of the
+    crossing (next plot).
 What to look for:
   Good: each fit follows the data in its own region and they cross at
   the knee where the fall-off begins.
@@ -1502,11 +1536,16 @@ Internal flat: smooth fit across the buffer zone between corrected and uncorrect
 **help**
 ```text
 What you see:
-  Title "Buffer Region": ratio data within the buffer zone around the
-  vignetting knee, against slice position.
-  Black circles: data.
-  Red: cubic fit used to join the corrected and uncorrected parts
-    smoothly.
+  Title "Buffer Region": the reference-slice ratio data within the
+  buffer zone (+- 6 unbinned px) around the knee of P22, against
+  slice position.
+  Why: on the vignetted side of the buffer, the flat is scaled up to
+  the red un-vignetted line of P22, which removes the lamp's fall-off.
+  A sharp switch at the knee would leave a step, so inside the buffer
+  the flat is instead scaled by that line divided by this cubic fit.
+  Black circles ("Data"): data.
+  Red ("Fit"): cubic fit used to join the corrected and uncorrected
+    parts smoothly.
 What to look for:
   Good: a smooth red curve through the points.
   Bad: a curve that swings away from the data at either end, which

@@ -555,7 +555,7 @@ class GetAtlasLines(BasePrimitive):
                        color='purple')
                 p.line([maxwav, maxwav], [-0.1, 1.1], color='purple')
                 p.x_range = Range1d(min([min(subwvals), minwav-10.]),
-                                    max(subwvals))
+                                    max([max(subwvals), maxwav+10.]))
                 p.y_range = Range1d(-0.04, 1.04)
                 bokeh_plot(p, self.context.bokeh_session)
                 pause(self.config.instrument, self.logger,
