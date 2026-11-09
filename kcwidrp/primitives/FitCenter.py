@@ -328,13 +328,14 @@ class FitCenter(BasePrimitive):
                            plot_height=self.config.instrument.plot_height,
                            x_axis_label="Central dispersion (Ang/px)",
                            y_axis_label="X-Corr Peak Value")
-                p.scatter(disps, maxima, color='red', legend_label="Data")
-                p.line(disps, maxima, color='blue', legend_label="Data")
+                p.scatter(disps, maxima, color='black', legend_label="Data")
+                p.line(disps, maxima, color='black', legend_label="Data")
                 ylim = [min(maxima), max(maxima)]
-                p.line([_centdisp, _centdisp], ylim, color='green',
+                p.line([_centdisp, _centdisp], ylim, color='magenta',
                        legend_label="Fit Disp")
                 p.line([self.context.prelim_disp, self.context.prelim_disp],
-                       ylim, color='red', legend_label="Calc Disp")
+                       ylim, color='blue', line_dash='dashed',
+                       legend_label="Calc Disp")
                 bokeh_plot(p, self.context.bokeh_session)
                 q = ask_next(
                     self.logger,
@@ -378,9 +379,11 @@ class FitCenter(BasePrimitive):
                        plot_width=self.config.instrument.plot_width,
                        plot_height=self.config.instrument.plot_height)
             x = range(len(centwave))
-            p.scatter(x, centwave, marker='x', legend_label='bar wave')
+            p.scatter(x, centwave, marker='x', color='black',
+                      legend_label='bar wave')
             p.line([0, nbars], [self.action.args.cwave, self.action.args.cwave],
-                   color='red', legend_label='CWAVE')
+                   color='orange', line_dash='dashdotdot',
+                   legend_label='CWAVE')
             xlim = [-1, nbars]
             ylim = get_plot_lims(centwave)
             p.xgrid.grid_line_color = None
@@ -420,10 +423,11 @@ class FitCenter(BasePrimitive):
                        plot_width=self.config.instrument.plot_width,
                        plot_height=self.config.instrument.plot_height)
             x = range(len(centdisp))
-            p.scatter(x, centdisp, marker='x', legend_label='bar disp')
+            p.scatter(x, centdisp, marker='x', color='black',
+                      legend_label='bar disp')
             p.line([0, nbars], [self.context.prelim_disp,
-                                self.context.prelim_disp], color='red',
-                   legend_label='Calc Disp')
+                                self.context.prelim_disp], color='blue',
+                   line_dash='dashed', legend_label='Calc Disp')
             xlim = [-2, nbars+1]
             ylim = get_plot_lims(centdisp)
             p.xgrid.grid_line_color = None

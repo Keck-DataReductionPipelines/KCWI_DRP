@@ -164,7 +164,7 @@ Session and document calls (StartBokeh and `core/bokeh_plotting.py`, outside the
 | Keyword | Literal values used |
 |---|---|
 | `marker=` | `'x'` only (FindBars.py:93, :131, FitCenter.py:359, :386, MakeInvsens.py:193, :574, :599, :640, TraceBars.py:139) |
-| `line_dash=` | `'dashed'`, `'dashdot'`, `'dotted'` (`'dotted'` only at SolveArcs.py:404; `'dashdot'` also inside `oplot_slices`) |
+| `line_dash=` | `'dashed'`, `'dashdot'`, `'dotted'` (`'dotted'` only at SolveArcs.py:404; `'dashdot'` also inside `oplot_slices`); `'dashdotdot'` for CWAVE, added after this snapshot (plot colour scheme, docs/interactive_prompts.md, 2026-11-09) |
 | `palette=` | `"Spectral11"` (MakeCube.py:277) |
 | `level=` (on `image`) | `"image"` (MakeCube.py:277) |
 | `y_axis_type=` | `'log'` (MakeInvsens.py:594) |

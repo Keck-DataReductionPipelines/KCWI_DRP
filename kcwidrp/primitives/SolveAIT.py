@@ -158,14 +158,14 @@ class SolveAIT(BasePrimitive):
                            y_axis_label="Flux",
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height)
-                p.line(yout, arcout, legend_label='Arc', color='blue')
-                p.line(yout, barout, legend_label='Bar', color='red')
+                p.line(yout, arcout, legend_label='Arc', color='black')
+                p.line(yout, barout, legend_label='Bar', color='cyan')
                 p.line([wgoo0, wgoo0], yran, legend_label='Good WLs',
                        color='green')
                 p.line([wgoo1, wgoo1], yran, color='green')
                 p.line([wall0, wall0], yran, legend_label='All WLs',
-                       color='orange')
-                p.line([wall1, wall1], yran, color='orange')
+                       color='grey')
+                p.line([wall1, wall1], yran, color='grey')
                 set_plot_lims(p, xlim=[wall0, wall1], ylim=yran)
                 bokeh_plot(p, self.context.bokeh_session)
                 save_plot(p, filename=pfname + '_bar%d.png' % ib)

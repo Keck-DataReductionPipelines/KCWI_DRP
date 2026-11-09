@@ -143,9 +143,9 @@ class ExtractArcs(BasePrimitive):
                                y_axis_label="Flux",
                                plot_width=self.config.instrument.plot_width,
                                plot_height=self.config.instrument.plot_height)
-                    p.line(xp, arc, legend_label='Arc', color='blue')
-                    p.line(xp, bkg, legend_label='Bkg', color='red')
-                    p.line(xp, bkgf, legend_label='BkgFit', color='green')
+                    p.line(xp, arc, legend_label='Arc', color='black')
+                    p.line(xp, bkg, legend_label='Bkg', color='cyan')
+                    p.line(xp, bkgf, legend_label='BkgFit', color='red')
                     bokeh_plot(p, self.context.bokeh_session)
                     q = ask_next(self.logger,
                         what="Arc spectrum extracted along this bar's trace, with its background estimate.",
@@ -230,7 +230,7 @@ class ExtractArcs(BasePrimitive):
                             x_axis_label="Y CCD Pixel", y_axis_label="Flux",
                             plot_width=self.config.instrument.plot_width,
                             plot_height=self.config.instrument.plot_height)
-                        p.line(xp, arc, legend_label='Arc', color='blue')
+                        p.line(xp, arc, legend_label='Arc', color='black')
                         p.line(xp, bkg, legend_label='Bkg', color='red')
                         bokeh_plot(p, self.context.bokeh_session)
                         q = ask_next(self.logger,

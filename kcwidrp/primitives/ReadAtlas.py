@@ -180,14 +180,16 @@ class ReadAtlas(BasePrimitive):
                        plot_width=self.config.instrument.plot_width,
                        plot_height=self.config.instrument.plot_height)
 
-            p.line(offar_central, xcorr_central, legend_label='Data')
+            p.line(offar_central, xcorr_central, color='black',
+                   legend_label='Data')
             ylim_min = min(xcorr_central)
             ylim_max = max(xcorr_central)
             p.line([calc_offset_pix, calc_offset_pix], [ylim_min, ylim_max],
-                   color='red', legend_label='Peak')
+                   color='magenta', legend_label='Peak')
             if atoff != 0:
                 p.line([req_offset_pix, req_offset_pix], [ylim_min, ylim_max],
-                       color='green', legend_label='Reqested')
+                       color='blue', line_dash='dashed',
+                       legend_label='Reqested')
             bokeh_plot(p, self.context.bokeh_session)
             pause(self.config.instrument, self.logger,
                   what="Cross-correlation of the reference-bar arc with the lamp atlas: offset found.",
@@ -222,18 +224,18 @@ class ReadAtlas(BasePrimitive):
                            plot_height=self.config.instrument.plot_height)
                 p.line(obswav[minow:maxow] - offset_wav,
                        obsarc[minow:maxow]/np.nanmax(obsarc[minow:maxow]),
-                       legend_label="ref bar (%d)" %
+                       color="black", legend_label="ref bar (%d)" %
                        self.config.instrument.REFBAR)
                 p.line(refwav[minrw:maxrw],
                        reflux[minrw:maxrw]/np.nanmax(reflux[minrw:maxrw]),
-                       color="red", legend_label="Atlas")
+                       color="blue", legend_label="Atlas")
                 p.x_range = Range1d(minwav, maxwav)
                 ylim_min = min(
                     obsarc[minow:maxow]/np.nanmax(obsarc[minow:maxow]))
                 ylim_max = max(
                     obsarc[minow:maxow]/np.nanmax(obsarc[minow:maxow]))
-                p.line([cwave, cwave], [ylim_min, ylim_max], color="magenta",
-                       legend_label="CWAVE", line_dash="dashdot")
+                p.line([cwave, cwave], [ylim_min, ylim_max], color="orange",
+                       legend_label="CWAVE", line_dash="dashdotdot")
                 bokeh_plot(p, self.context.bokeh_session)
 
                 if self.config.instrument.plot_level >= 2:

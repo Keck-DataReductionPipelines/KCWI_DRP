@@ -525,7 +525,7 @@ class GetAtlasLines(BasePrimitive):
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height)
                 p.line(subwvals, subyvals / np.nanmax(subyvals),
-                       legend_label='RefArc', color='lightgray')
+                       legend_label='RefArc', color='black')
                 p.line(atwave, atspec / norm_fac, legend_label='Atlas',
                        color='blue')
                 # Rejected: window bad
@@ -535,11 +535,11 @@ class GetAtlasLines(BasePrimitive):
                 # Rejected: fit failure
                 if len(rej_fit_w) > 0:
                     p.diamond(rej_fit_w, rej_fit_a / norm_fac,
-                              legend_label='FitRej', color='red', size=8)
+                              legend_label='FitRej', color='pink', size=8)
                 # Rejected: line parameter outside range
                 if len(rej_par_w) > 0:
                     p.diamond(rej_par_w, rej_par_a / norm_fac,
-                              legend_label='ParRej', color='orange', size=8)
+                              legend_label='ParRej', color='olive', size=8)
                 # Rejected: duplicated line
                 if len(rej_dup_w) > 0:
                     p.diamond(rej_dup_w, rej_dup_a / norm_fac,
@@ -547,13 +547,13 @@ class GetAtlasLines(BasePrimitive):
                 # Rejected: faint
                 if len(rej_fnt_w) > 0:
                     p.diamond(rej_fnt_w, rej_fnt_a / norm_fac,
-                              legend_label='FntRej', color='magenta', size=8)
+                              legend_label='FntRej', color='grey', size=8)
                 # Kept
                 p.diamond(refws, refas / norm_fac, legend_label='Kept',
-                          color='green', size=16)
+                          color='magenta', size=16)
                 p.line([minwav, minwav], [-0.1, 1.1], legend_label='WavLim',
-                       color='brown')
-                p.line([maxwav, maxwav], [-0.1, 1.1], color='brown')
+                       color='purple')
+                p.line([maxwav, maxwav], [-0.1, 1.1], color='purple')
                 p.x_range = Range1d(min([min(subwvals), minwav-10.]),
                                     max(subwvals))
                 p.y_range = Range1d(-0.04, 1.04)
