@@ -18,6 +18,15 @@ call with no colour is drawn in the wrapper's default `#1f77b4` (blue,
 keeps a default-blue outline (`_plot_render.py:238`). `scatter` without a
 `marker` draws circles (`_plot_render.py:236`).
 
+Order: sections and tables follow the order in which a reduction reaches
+the prompts: the scripts first (before the framework starts), then the
+primitives in the order of the event table in
+`kcwidrp/pipelines/kcwi_pipeline.py` (bias, continuum bars, arcs, flats,
+objects, nod-and-shuffle). Within a primitive, prompts are in line order.
+SolveAIT is not in the event table (AIT data only); it sits after
+SolveArcs, its counterpart for standard data. The IDs keep the inventory's numbering
+(alphabetical by file) because tests and other documents refer to them.
+
 ## How to read a section
 
 Each section has:
@@ -82,26 +91,40 @@ its heading.
 
 | ID | Site | Helper | Changes reduction | Status |
 |---|---|---|---|---|
-| P01 | ArcOffsets.py:92 | ask_next (n_items) | No | |
-| ⚠ P02 | ArcOffsets.py:121 | pause | No | |
-| P03 | ExtractArcs.py:149 | ask_next | No | |
-| P04 | ExtractArcs.py:215 | ask_next | No | |
+| S01 | reduce_kcwi.py:422 | ask_yes_quit | **Yes** (frames ingested) | |
+| S02 | reduce_kcwi.py:428 | ask_yes_quit | **Yes** | |
+| S03 | reduce_kcwi.py:447 | ask_yes_quit | **Yes** | |
+| S04 | reduce_kcwi.py:453 | ask_yes_quit | **Yes** | |
+| S05 | kcwi_rti.py:400 | ask_yes_quit | No (see note, B11) | |
+| S06 | kcwi_rti.py:406 | ask_yes_quit | No (see note, B11) | |
+| S07 | kcwi_rti.py:422 | ask_yes_quit | **Yes** | |
+| S08 | kcwi_rti.py:428 | ask_yes_quit | **Yes** | |
+| P48 | SubtractOverscan.py:116 | pause | No | |
+| P49 | SubtractOverscan.py:140 | pause | No | |
+| ⚠ P20 | MakeMasterBias.py:154 | pause | No | |
 | P05 | FindBars.py:97 | pause | No | |
 | P06 | FindBars.py:136 | pause | No | |
 | P07 | FindBars.py:163 | ask_next | No | |
+| P51 | TraceBars.py:144 | pause | No | |
+| P03 | ExtractArcs.py:149 | ask_next | No | |
+| P04 | ExtractArcs.py:215 | ask_next | No | |
+| P01 | ArcOffsets.py:92 | ask_next (n_items) | No | |
+| ⚠ P02 | ArcOffsets.py:121 | pause | No | |
+| P39 | ReadAtlas.py:193 | pause | No | |
+| P40 | ReadAtlas.py:224 | ask_value | **Yes** | |
 | P08 | FitCenter.py:339 | ask_next (n_items) | No | |
 | ⚠ P09 | FitCenter.py:370 | pause | No | |
 | P10 | FitCenter.py:398 | pause | No | |
 | P11 | GetAtlasLines.py:562 | pause | No | |
+| P42 | SolveArcs.py:262 | ask_next | No | |
+| ⚠ P43 | SolveArcs.py:412 | pause | No | |
+| P44 | SolveArcs.py:438 | ask_next (n_items) | No | |
+| ⚠ P45 | SolveArcs.py:493 | pause | No | |
+| P46 | SolveArcs.py:533 | pause | No | |
+| ⚠ P47 | SolveArcs.py:573 | pause | No | |
+| P41 | SolveAIT.py:172 | pause | No | |
 | P12 | MakeCube.py:280 | ask_next | No | |
-| P13 | MakeInvsens.py:196 | ask_next | No | |
-| ⚠ P14 | MakeInvsens.py:364 | ask_value | **Yes** | |
-| ⚠ P15 | MakeInvsens.py:468 | ask_value | **Yes** | |
-| P16 | MakeInvsens.py:584 | pause | No | |
-| P17 | MakeInvsens.py:605 | pause | No | |
-| P18 | MakeInvsens.py:624 | pause | No | |
-| P19 | MakeInvsens.py:654 | ask_value | **Yes** | |
-| ⚠ P20 | MakeMasterBias.py:154 | pause | No | |
+| ⚠ P50 | SubtractScatteredLight.py:107 | pause | No | |
 | P21 | MakeMasterFlat.py:270 | pause | No | |
 | P22 | MakeMasterFlat.py:331 | pause | No | |
 | P23 | MakeMasterFlat.py:375 | pause | No | |
@@ -118,176 +141,372 @@ its heading.
 | P34 | MakeMasterSky.py:347 | pause | No | |
 | P35 | MakeMasterSky.py:435 | pause | No | |
 | P36 | MakeMasterSky.py:607 | pause | No | |
+| P13 | MakeInvsens.py:196 | ask_next | No | |
+| ⚠ P14 | MakeInvsens.py:364 | ask_value | **Yes** | |
+| ⚠ P15 | MakeInvsens.py:468 | ask_value | **Yes** | |
+| P16 | MakeInvsens.py:584 | pause | No | |
+| P17 | MakeInvsens.py:605 | pause | No | |
+| P18 | MakeInvsens.py:624 | pause | No | |
+| P19 | MakeInvsens.py:654 | ask_value | **Yes** | |
 | ⚠ P37 | NandshuffSubtractSky.py:185 | ask_value | **Yes** | |
 | ⚠ P38 | NandshuffSubtractSky.py:269 | ask_value | **Yes** (header only, see note) | |
-| P39 | ReadAtlas.py:193 | pause | No | |
-| P40 | ReadAtlas.py:224 | ask_value | **Yes** | |
-| P41 | SolveAIT.py:172 | pause | No | |
-| P42 | SolveArcs.py:262 | ask_next | No | |
-| ⚠ P43 | SolveArcs.py:412 | pause | No | |
-| P44 | SolveArcs.py:438 | ask_next (n_items) | No | |
-| ⚠ P45 | SolveArcs.py:493 | pause | No | |
-| P46 | SolveArcs.py:533 | pause | No | |
-| ⚠ P47 | SolveArcs.py:573 | pause | No | |
-| P48 | SubtractOverscan.py:116 | pause | No | |
-| P49 | SubtractOverscan.py:140 | pause | No | |
-| ⚠ P50 | SubtractScatteredLight.py:107 | pause | No | |
-| P51 | TraceBars.py:144 | pause | No | |
-| S01 | reduce_kcwi.py:422 | ask_yes_quit | **Yes** (frames ingested) | |
-| S02 | reduce_kcwi.py:428 | ask_yes_quit | **Yes** | |
-| S03 | reduce_kcwi.py:447 | ask_yes_quit | **Yes** | |
-| S04 | reduce_kcwi.py:453 | ask_yes_quit | **Yes** | |
-| S05 | kcwi_rti.py:400 | ask_yes_quit | No (see note, B11) | |
-| S06 | kcwi_rti.py:406 | ask_yes_quit | No (see note, B11) | |
-| S07 | kcwi_rti.py:422 | ask_yes_quit | **Yes** | |
-| S08 | kcwi_rti.py:428 | ask_yes_quit | **Yes** | |
 
 ---
 
-## ArcOffsets
+## Scripts
 
-### P01 — per-bar arc cross-correlation
+All eight prompts run before the framework starts, with no figure and no
+`plot_level` guard. The helper is `ask_yes_quit(logger, prompt, help,
+who=...)`: `<cr>` proceeds, `q`/`quit` quits, other text asks again. The
+line printed before the prompt today (`Blue channel requested, but red
+files in list` or the red variant) becomes `what`.
 
-- Site: `kcwidrp/primitives/ArcOffsets.py:92`
-- Helper: `ask_next(self.logger, what, help, n_items=nbars, current=arc_number, who="ArcOffsets")`; `QUIT` sets `do_plot = False`, an int sets `next_bar_to_plot`, `NEXT` sets it to `arc_number + 1`.
-- Figure: F01 (pl >= 2)
-- Changes reduction: No
+Common reviewer notes: B8 (PR3b): the channel test is a substring match on
+the whole path (`'kr' in frame.lower()`; in `kcwi_rti` `'kr'`/`'KR'`), so a
+directory name containing `kr`/`kb` triggers the prompt, and it repeats for
+every matching file. Today any answer without a `q` proceeds (e.g. `y`);
+after PR3a such text re-prompts (B5/§8.2 interface).
+
+### S01 — reduce_kcwi -f, red file in a blue reduction
+
+- Site: `kcwidrp/scripts/reduce_kcwi.py:422` (inventory :437)
+- Helper: `ask_yes_quit(logger, prompt="Proceed? <cr>=yes or q=quit", help, who="reduce_kcwi")`
+- Changes reduction: **Yes**: quit empties the frame list; `ingest_data` is called with no frames, so nothing is reduced.
+- Log on quit (suggested): `reduce_kcwi: user quit at the channel check; no frames ingested`
 - Status:
 
 **what**
 ```text
-Arc spectrum of this bar, shifted by its cross-correlation offset, over the reference bar.
+Blue channel requested (-b), but this file name looks like a red-channel (kr) file.
 ```
 
 **help**
 ```text
 What you see:
-  Title "BAR OFFSET for Arc: <bar> Slice: <slice> = <offset>".
-  Green: arc spectrum of the reference bar (REFBAR) along CCD y.
-  Red: arc spectrum of this bar, shifted by the offset (px) that
-  maximises its cross-correlation with the reference bar. Both are
-  tapered at the ends (Tukey window, TUKEYALPHA).
+  No plot. The reduction was started for the blue channel, and the
+  path of one of the frames given with -f contains "kr" (red files
+  are named kr<date>_<n>.fits).
 What to look for:
-  Good: red and green arc lines coincide line for line over the whole
-  range; different relative line strengths are normal.
-  Bad: red lines displaced from green everywhere, or aligned in one part
-  only. A bright line near an end can pull the correlation; a larger
-  TUKEYALPHA reduces its weight.
+  Check the file: a red frame in a blue reduction will not combine
+  with the blue calibrations. A directory name containing "kr" also
+  triggers this check (known issue); then it is safe to proceed.
 Your options:
-  <cr>      show the next bar.
-  <number>  jump to that bar (after the current one, up to 119);
-            bars in between are not shown. Other numbers are refused.
-  q / quit  stop showing bars; offsets are still found for all bars.
-  Display only: no answer changes the reduction.
+  <cr>      keep this frame and go on (the next file is checked too).
+  q / quit  stop: no frames are reduced.
 Default:
-  <cr> shows the next bar. Below plot_level 2 these plots are not shown.
+  <cr> proceeds with this frame.
 ```
 
-### P02 — bar offsets summary
+### S02 — reduce_kcwi -f, blue file in a red reduction
 
-> ⚠ **Check first:** The claim that a good result repeats smoothly from slice to slice.
-
-- Site: `ArcOffsets.py:121` (sleep at :123)
-- Helper: `pause(self.config.instrument, self.logger, what=..., help=..., who="ArcOffsets")`
-- Figure: F02 (pl >= 1; saved as `arc_<frame>_..._ta<alpha>_baroffs.png` after the prompt)
-- Changes reduction: No
+- Site: `reduce_kcwi.py:428` (inventory :443)
+- Helper: as S01
+- Changes reduction: **Yes** (as S01)
 - Status:
 
 **what**
 ```text
-Offset of every bar's arc spectrum from the reference bar (px), by bar number.
+Red channel requested (-r), but this file name looks like a blue-channel (kb) file.
 ```
 
 **help**
 ```text
 What you see:
-  Title "BAR OFFSETS". Blue diamonds: the offset (px along CCD y) of
-  each bar's arc spectrum from the reference bar, against bar number.
-  Black dash-dot lines: slice boundaries (every 5 bars).
+  No plot. The reduction was started for the red channel, and the path
+  of one of the frames given with -f contains "kb" (blue files are
+  named kb<date>_<n>.fits).
 What to look for:
-  Good: the reference bar is at 0; the five bars of a slice have similar
-  offsets and the pattern changes smoothly from slice to slice.
-  Bad: an isolated point far from its neighbours is a failed
-  cross-correlation for that bar (check that bar in the next steps).
-  These offsets are the starting points of the per-bar wavelength fits.
+  Check the file: a blue frame in a red reduction will not combine
+  with the red calibrations. A directory name containing "kb" also
+  triggers this check (known issue); then it is safe to proceed.
 Your options:
-  <cr>  continue. Display only: the reduction is not changed.
+  <cr>      keep this frame and go on (the next file is checked too).
+  q / quit  stop: no frames are reduced.
+Default:
+  <cr> proceeds with this frame.
+```
+
+### S03 — reduce_kcwi -l, red file in a blue reduction
+
+- Site: `reduce_kcwi.py:447` (inventory :462)
+- Helper: as S01
+- Changes reduction: **Yes**: quit empties the list read so far and stops reading the file; `ingest_data` gets no frames (the `<list>_ingest` stamp file is still written).
+- Status:
+
+**what**
+```text
+Blue channel requested (-b), but this file in the list looks like a red-channel (kr) file.
+```
+
+**help**
+```text
+What you see:
+  No plot. The reduction was started for the blue channel, and a line
+  of the file list given with -l contains "kr" (red files are named
+  kr<date>_<n>.fits).
+What to look for:
+  Check the list: a red frame in a blue reduction will not combine
+  with the blue calibrations. A directory name containing "kr" also
+  triggers this check (known issue); then it is safe to proceed.
+Your options:
+  <cr>      keep this frame and go on (the next line is checked too).
+  q / quit  stop: no frames from the list are reduced.
+Default:
+  <cr> proceeds with this frame.
+```
+
+### S04 — reduce_kcwi -l, blue file in a red reduction
+
+- Site: `reduce_kcwi.py:453` (inventory :468)
+- Helper: as S01
+- Changes reduction: **Yes** (as S03)
+- Status:
+
+**what**
+```text
+Red channel requested (-r), but this file in the list looks like a blue-channel (kb) file.
+```
+
+**help**
+```text
+What you see:
+  No plot. The reduction was started for the red channel, and a line
+  of the file list given with -l contains "kb" (blue files are named
+  kb<date>_<n>.fits).
+What to look for:
+  Check the list: a blue frame in a red reduction will not combine
+  with the red calibrations. A directory name containing "kb" also
+  triggers this check (known issue); then it is safe to proceed.
+Your options:
+  <cr>      keep this frame and go on (the next line is checked too).
+  q / quit  stop: no frames from the list are reduced.
+Default:
+  <cr> proceeds with this frame.
+```
+
+### S05 — kcwi_rti -f, red file in a blue reduction
+
+- Site: `kcwidrp/scripts/kcwi_rti.py:400` (inventory :412)
+- Helper: `ask_yes_quit(..., who="kcwi_rti")`
+- Changes reduction: **No, today**: B11 (PR3b): the `-f` branch ingests `args.frames`, not the emptied list, so `q` stops only the checking; all frames are still reduced.
+- Status:
+- Reviewer note: the help text states the B11 behaviour honestly; when B11 is fixed in PR3b, replace the `q / quit` line with the S01 wording.
+
+**what**
+```text
+Blue channel requested (-b), but this file name looks like a red-channel (kr) file.
+```
+
+**help**
+```text
+What you see:
+  No plot. The real-time reduction was started for the blue channel,
+  and the path of one of the frames given with -f contains "kr" or
+  "KR" (red files are named kr<date>_<n>.fits).
+What to look for:
+  Check the file: a red frame in a blue reduction will not combine
+  with the blue calibrations. A directory name containing "kr" also
+  triggers this check (known issue); then it is safe to proceed.
+Your options:
+  <cr>      keep this frame and go on (the next file is checked too).
+  q / quit  stop checking. Note: in this version all frames given
+            with -f are still reduced (known bug); press Ctrl-C to
+            stop the run.
+Default:
+  <cr> proceeds with this frame.
+```
+
+### S06 — kcwi_rti -f, blue file in a red reduction
+
+- Site: `kcwi_rti.py:406` (inventory :418)
+- Helper: as S05
+- Changes reduction: **No, today** (B11, as S05)
+- Status:
+
+**what**
+```text
+Red channel requested (-r), but this file name looks like a blue-channel (kb) file.
+```
+
+**help**
+```text
+What you see:
+  No plot. The real-time reduction was started for the red channel,
+  and the path of one of the frames given with -f contains "kb" or
+  "KB" (blue files are named kb<date>_<n>.fits).
+What to look for:
+  Check the file: a blue frame in a red reduction will not combine
+  with the red calibrations. A directory name containing "kb" also
+  triggers this check (known issue); then it is safe to proceed.
+Your options:
+  <cr>      keep this frame and go on (the next file is checked too).
+  q / quit  stop checking. Note: in this version all frames given
+            with -f are still reduced (known bug); press Ctrl-C to
+            stop the run.
+Default:
+  <cr> proceeds with this frame.
+```
+
+### S07 — kcwi_rti -l, red file in a blue reduction
+
+- Site: `kcwi_rti.py:422` (inventory :434)
+- Helper: as S05
+- Changes reduction: **Yes**: quit empties the list; `ingest_data` gets no frames (the `<list>_ingest` stamp file is still written).
+- Status:
+
+**what**
+```text
+Blue channel requested (-b), but this file in the list looks like a red-channel (kr) file.
+```
+
+**help**
+```text
+What you see:
+  No plot. The real-time reduction was started for the blue channel,
+  and a line of the file list given with -l contains "kr" or "KR"
+  (red files are named kr<date>_<n>.fits).
+What to look for:
+  Check the list: a red frame in a blue reduction will not combine
+  with the blue calibrations. A directory name containing "kr" also
+  triggers this check (known issue); then it is safe to proceed.
+Your options:
+  <cr>      keep this frame and go on (the next line is checked too).
+  q / quit  stop: no frames from the list are reduced.
+Default:
+  <cr> proceeds with this frame.
+```
+
+### S08 — kcwi_rti -l, blue file in a red reduction
+
+- Site: `kcwi_rti.py:428` (inventory :440)
+- Helper: as S05
+- Changes reduction: **Yes** (as S07)
+- Status:
+
+**what**
+```text
+Red channel requested (-r), but this file in the list looks like a blue-channel (kb) file.
+```
+
+**help**
+```text
+What you see:
+  No plot. The real-time reduction was started for the red channel,
+  and a line of the file list given with -l contains "kb" or "KB"
+  (blue files are named kb<date>_<n>.fits).
+What to look for:
+  Check the list: a blue frame in a red reduction will not combine
+  with the red calibrations. A directory name containing "kb" also
+  triggers this check (known issue); then it is safe to proceed.
+Your options:
+  <cr>      keep this frame and go on (the next line is checked too).
+  q / quit  stop: no frames from the list are reduced.
+Default:
+  <cr> proceeds with this frame.
+```
+
+---
+
+## SubtractOverscan
+
+### P48 — overscan, per amplifier
+
+- Site: `SubtractOverscan.py:116`; prompt at pl >= 3, sleep at pl 2 (:118)
+- Helper: `pause(...)` inside a kept `plot_level >= 3` test; the pl 2 sleep must stay (P.3: `pause` alone would prompt at pl 2).
+- Figure: F46 (pl >= 2; the amplifier just drawn)
+- Changes reduction: No
+- Status:
+
+**what**
+```text
+Overscan of one amplifier along the readout, with the fit used for the noise estimate.
+```
+
+**help**
+```text
+What you see:
+  Title "Img # <n> OSCAN [x0:x1, y0:y1] amp <a>, noise: <s> e-/px".
+  Blue circles: median of the overscan columns for each row (counts).
+  Red thick line: polynomial fit; the residuals give the read noise in
+  the title (OSCNRN<a>). The value subtracted from the amplifier is a
+  single number, the median of the overscan region (OSCNVAL<a>).
+What to look for:
+  Good: a flat, smooth level the fit follows; a ramp only in the first
+  or last 50 rows (excluded from the fit).
+  Bad: jumps, strong gradients or a noise value much higher than usual
+  for this amplifier: an electronics problem in this frame.
+Your options:
+  <cr>  continue (next amplifier). Display only.
+Default:
+  <cr> continues. At plot_level 2 each amplifier is shown for
+  plot_pause seconds; below plot_level 2 nothing is drawn.
+```
+
+### P49 — overscan, all amplifiers
+
+- Site: `SubtractOverscan.py:140` (sleep :142 is dead code)
+- Helper: `pause(...)` inside the existing `plot_level >= 3` block.
+- Figure: the grid of the F46 figures (saved as `oscan_<frame>.png` before the prompt)
+- Changes reduction: No
+- Status:
+- Reviewer note: `bokeh_clear` (:143) now returns when the session is `None` (B10 fixed in T.11, `bokeh_plotting.py:38`).
+
+**what**
+```text
+Overscan of all amplifiers of this frame side by side.
+```
+
+**help**
+```text
+What you see:
+  The overscan plots of all amplifiers of this frame in one grid (blue
+  circles: row medians; red: fit), each titled with its noise.
+What to look for:
+  Good: all amplifiers flat and smooth, with similar noise.
+  Bad: one amplifier with jumps, gradients or much higher noise than
+  the others.
+Your options:
+  <cr>  continue. Display only.
+Default:
+  <cr> continues. Below plot_level 3 this grid is not shown.
+```
+
+## MakeMasterBias
+
+### P20 — bias noise histogram
+
+> ⚠ **Check first:** No numbers for read noise or RMS, only "close to the amp's usual value".
+
+- Site: `MakeMasterBias.py:154` (sleep :156)
+- Helper: `pause(...)`
+- Figure: F20 (pl >= 1; one per amplifier; saved as `bias_..._amp<n>_rdnoise.png` after the prompt)
+- Changes reduction: No
+- Status:
+
+**what**
+```text
+Read-noise histogram of one amplifier, from the difference of two bias frames.
+```
+
+**help**
+```text
+What you see:
+  Title "BIAS NOISE amp <n> = <sigma>" (e-). Navy bars: histogram of
+  (bias 2 - bias 3) x gain / sqrt(2) over amplifier n, within the 3.5
+  sigma clipping range. Pink thick line: Gaussian of the measured sigma
+  (centred on 0, scaled to the histogram peak). Red verticals: +- sigma.
+  Sigma is stored as BIASRN<n> in the master bias header.
+What to look for:
+  Good: a symmetric, Gaussian histogram centred on zero that matches
+  the pink curve; sigma close to the usual read noise of this amp in
+  this readout mode (slow/fast, gain).
+  Bad: a broad, skewed or spiky histogram, or an offset from zero:
+  pattern noise, or a bad bias frame in the stack.
+Your options:
+  <cr>  continue (next amplifier). Display only.
 Default:
   <cr> continues. At plot_level 1 the plot is shown for plot_pause
-  seconds; at plot_level 0 it is not drawn. The PNG is saved either way
-  at plot_level >= 1.
-```
-
-## ExtractArcs
-
-### P03 — extracted arc, AIT branch
-
-- Site: `ExtractArcs.py:149`
-- Helper: `ask_next(self.logger, what, help, who="ExtractArcs")`; `QUIT` sets `do_plot = False`.
-- Figure: F03 (pl >= 3, `NBARS < 60`)
-- Changes reduction: No
-- Status:
-- Reviewer note: reached only with `NBARS < 60`, i.e. the KCRM AIT configuration ("This is strictly for AIT data!"). Normal KCWI reductions (NBARS = 120) see P04.
-
-**what**
-```text
-Arc spectrum extracted along this bar's trace, with its background estimate.
-```
-
-**help**
-```text
-What you see:
-  Title "ARC # <n>": the arc spectrum extracted along bar n's trace,
-  against CCD y pixel.
-  Blue: arc flux summed across the extraction window.
-  Red: background, the window's minimum times its width, row by row.
-  Green: smoothed background (Savitzky-Golay); this is subtracted.
-What to look for:
-  Good: sharp arc lines on a low background; the green curve runs
-  smoothly under the blue continuum between lines.
-  Bad: green curve following line peaks or lying well above the
-  inter-line level (the window is off the bar: check the trace).
-Your options:
-  <cr>      show the next bar.
-  q / quit  stop showing extracted arcs (all bars are still extracted).
-  Display only: no answer changes the reduction.
-Default:
-  <cr> shows the next bar. Below plot_level 3 these plots are not shown.
-```
-
-### P04 — extracted arc, standard branch
-
-- Site: `ExtractArcs.py:215`
-- Helper: `ask_next(self.logger, what, help, who="ExtractArcs")`; `QUIT` sets `do_plot = False`.
-- Figure: F04 (pl >= 3, `NBARS >= 60`)
-- Changes reduction: No
-- Status:
-
-**what**
-```text
-Arc spectrum extracted at this bar (warped arc image), with its fitted background.
-```
-
-**help**
-```text
-What you see:
-  Title "ARC # <n>": the arc spectrum of bar n, the median across the
-  bar in the geometrically warped arc image, against CCD y pixel.
-  Blue: arc spectrum.
-  Red: background model, a cubic fitted to the minima of 16 sections of
-  the spectrum; it is subtracted from the arc.
-What to look for:
-  Good: sharp arc lines; the red curve follows the low level between
-  lines and stays below the line-free continuum.
-  Bad: red curve cutting through the spectrum or bending up at the ends
-  (e.g. a section without a line-free minimum); a featureless or very
-  faint blue spectrum (bar missed by the trace).
-Your options:
-  <cr>      show the next bar.
-  q / quit  stop showing extracted arcs (all bars are still extracted).
-  Display only: no answer changes the reduction.
-Default:
-  <cr> shows the next bar. Below plot_level 3 these plots are not shown.
+  seconds; at plot_level 0 it is not drawn.
 ```
 
 ## FindBars
@@ -387,6 +606,263 @@ Your options:
   Display only: no answer changes the reduction.
 Default:
   <cr> shows the next bar. Below plot_level 3 these plots are not shown.
+```
+
+## TraceBars
+
+### P51 — bar traces
+
+- Site: `TraceBars.py:144` (sleep :146)
+- Helper: `pause(...)`
+- Figure: F48 (pl >= 1; saved as `bars_<frame>_....png` after the prompt)
+- Changes reduction: No
+- Status:
+
+**what**
+```text
+Continuum-bar traces: control points used for the geometric solution.
+```
+
+**help**
+```text
+What you see:
+  Title "SPATIAL CONTROL POINTS" on CCD x, y.
+  Blue x: centroids of each bar traced up and down the CCD from the
+  middle row. Red circles: the bar positions found on the middle row.
+What to look for:
+  Good: 120 continuous traces (24 groups of 5) running the length of
+  the image, each starting from a red circle, without gaps or jumps.
+  Bad: a trace that stops early, jumps to a neighbouring bar, or is
+  missing: the geometry of that slice will be wrong.
+Your options:
+  <cr>  continue. Display only.
+Default:
+  <cr> continues. At plot_level 1 the plot is shown for plot_pause
+  seconds; at plot_level 0 it is not drawn.
+```
+
+---
+
+## ExtractArcs
+
+### P03 — extracted arc, AIT branch
+
+- Site: `ExtractArcs.py:149`
+- Helper: `ask_next(self.logger, what, help, who="ExtractArcs")`; `QUIT` sets `do_plot = False`.
+- Figure: F03 (pl >= 3, `NBARS < 60`)
+- Changes reduction: No
+- Status:
+- Reviewer note: reached only with `NBARS < 60`, i.e. the KCRM AIT configuration ("This is strictly for AIT data!"). Normal KCWI reductions (NBARS = 120) see P04.
+
+**what**
+```text
+Arc spectrum extracted along this bar's trace, with its background estimate.
+```
+
+**help**
+```text
+What you see:
+  Title "ARC # <n>": the arc spectrum extracted along bar n's trace,
+  against CCD y pixel.
+  Blue: arc flux summed across the extraction window.
+  Red: background, the window's minimum times its width, row by row.
+  Green: smoothed background (Savitzky-Golay); this is subtracted.
+What to look for:
+  Good: sharp arc lines on a low background; the green curve runs
+  smoothly under the blue continuum between lines.
+  Bad: green curve following line peaks or lying well above the
+  inter-line level (the window is off the bar: check the trace).
+Your options:
+  <cr>      show the next bar.
+  q / quit  stop showing extracted arcs (all bars are still extracted).
+  Display only: no answer changes the reduction.
+Default:
+  <cr> shows the next bar. Below plot_level 3 these plots are not shown.
+```
+
+### P04 — extracted arc, standard branch
+
+- Site: `ExtractArcs.py:215`
+- Helper: `ask_next(self.logger, what, help, who="ExtractArcs")`; `QUIT` sets `do_plot = False`.
+- Figure: F04 (pl >= 3, `NBARS >= 60`)
+- Changes reduction: No
+- Status:
+
+**what**
+```text
+Arc spectrum extracted at this bar (warped arc image), with its fitted background.
+```
+
+**help**
+```text
+What you see:
+  Title "ARC # <n>": the arc spectrum of bar n, the median across the
+  bar in the geometrically warped arc image, against CCD y pixel.
+  Blue: arc spectrum.
+  Red: background model, a cubic fitted to the minima of 16 sections of
+  the spectrum; it is subtracted from the arc.
+What to look for:
+  Good: sharp arc lines; the red curve follows the low level between
+  lines and stays below the line-free continuum.
+  Bad: red curve cutting through the spectrum or bending up at the ends
+  (e.g. a section without a line-free minimum); a featureless or very
+  faint blue spectrum (bar missed by the trace).
+Your options:
+  <cr>      show the next bar.
+  q / quit  stop showing extracted arcs (all bars are still extracted).
+  Display only: no answer changes the reduction.
+Default:
+  <cr> shows the next bar. Below plot_level 3 these plots are not shown.
+```
+
+## ArcOffsets
+
+### P01 — per-bar arc cross-correlation
+
+- Site: `kcwidrp/primitives/ArcOffsets.py:92`
+- Helper: `ask_next(self.logger, what, help, n_items=nbars, current=arc_number, who="ArcOffsets")`; `QUIT` sets `do_plot = False`, an int sets `next_bar_to_plot`, `NEXT` sets it to `arc_number + 1`.
+- Figure: F01 (pl >= 2)
+- Changes reduction: No
+- Status:
+
+**what**
+```text
+Arc spectrum of this bar, shifted by its cross-correlation offset, over the reference bar.
+```
+
+**help**
+```text
+What you see:
+  Title "BAR OFFSET for Arc: <bar> Slice: <slice> = <offset>".
+  Green: arc spectrum of the reference bar (REFBAR) along CCD y.
+  Red: arc spectrum of this bar, shifted by the offset (px) that
+  maximises its cross-correlation with the reference bar. Both are
+  tapered at the ends (Tukey window, TUKEYALPHA).
+What to look for:
+  Good: red and green arc lines coincide line for line over the whole
+  range; different relative line strengths are normal.
+  Bad: red lines displaced from green everywhere, or aligned in one part
+  only. A bright line near an end can pull the correlation; a larger
+  TUKEYALPHA reduces its weight.
+Your options:
+  <cr>      show the next bar.
+  <number>  jump to that bar (after the current one, up to 119);
+            bars in between are not shown. Other numbers are refused.
+  q / quit  stop showing bars; offsets are still found for all bars.
+  Display only: no answer changes the reduction.
+Default:
+  <cr> shows the next bar. Below plot_level 2 these plots are not shown.
+```
+
+### P02 — bar offsets summary
+
+> ⚠ **Check first:** The claim that a good result repeats smoothly from slice to slice.
+
+- Site: `ArcOffsets.py:121` (sleep at :123)
+- Helper: `pause(self.config.instrument, self.logger, what=..., help=..., who="ArcOffsets")`
+- Figure: F02 (pl >= 1; saved as `arc_<frame>_..._ta<alpha>_baroffs.png` after the prompt)
+- Changes reduction: No
+- Status:
+
+**what**
+```text
+Offset of every bar's arc spectrum from the reference bar (px), by bar number.
+```
+
+**help**
+```text
+What you see:
+  Title "BAR OFFSETS". Blue diamonds: the offset (px along CCD y) of
+  each bar's arc spectrum from the reference bar, against bar number.
+  Black dash-dot lines: slice boundaries (every 5 bars).
+What to look for:
+  Good: the reference bar is at 0; the five bars of a slice have similar
+  offsets and the pattern changes smoothly from slice to slice.
+  Bad: an isolated point far from its neighbours is a failed
+  cross-correlation for that bar (check that bar in the next steps).
+  These offsets are the starting points of the per-bar wavelength fits.
+Your options:
+  <cr>  continue. Display only: the reduction is not changed.
+Default:
+  <cr> continues. At plot_level 1 the plot is shown for plot_pause
+  seconds; at plot_level 0 it is not drawn. The PNG is saved either way
+  at plot_level >= 1.
+```
+
+## ReadAtlas
+
+### P39 — arc–atlas cross-correlation
+
+- Site: `ReadAtlas.py:193` (sleep :195)
+- Helper: `pause(...)`
+- Figure: F37 (pl >= 1)
+- Changes reduction: No
+- Status:
+
+**what**
+```text
+Cross-correlation of the reference-bar arc with the lamp atlas: offset found.
+```
+
+**help**
+```text
+What you see:
+  Title "ATLAS OFFSET = <n> px": cross-correlation of the reference-bar
+  arc spectrum (on its calculated wavelengths) with the atlas spectrum,
+  against offset in atlas pixels (central third of the range).
+  Blue: cross-correlation. Red vertical ("Peak"): offset found.
+  Green vertical: offset requested with ATOFF (only if set).
+What to look for:
+  Good: one sharp peak clearly above the rest, with the red line on it.
+  Bad: several similar peaks or a broad hump: the offset is ambiguous.
+  Check the overlay in the next plot and set the offset there.
+Your options:
+  <cr>  continue to the overlay. Display only.
+Default:
+  <cr> continues. At plot_level 1 the plot is shown for plot_pause
+  seconds; at plot_level 0 it is not drawn.
+```
+
+### P40 — atlas offset entry
+
+- Site: `ReadAtlas.py:224` (pl 1: sleep and leave the loop, :233)
+- Helper: `ask_value(self.logger, prompt, help, parse=int, default=None, effect, who="ReadAtlas")` in the existing `while q:` loop; `None` leaves it; an int sets `offset_pix`, `offset_wav = offset_pix * refdisp` and redraws.
+- Figure: F38 (pl >= 1, redrawn each pass; the last pass is saved as `arc_..._atoff.png`)
+- Changes reduction: **Yes**: stored as `offset_pix`/`offset_wave`; FitCenter subtracts `offset_wave` from every bar's starting wavelength, so it changes the central fits, the atlas line list (`arc_..._atlines.txt`), the per-bar solutions, the geometry `*_geom.pkl` from SolveGeom, and the wavelength scale of every cube reduced with this arc. No header keyword records it; the INFO line "Final arc-atlas offset" does.
+- Prompt: `New offset <int px> (<cr> = accept)`
+- Accepted input (D12): anything `int()` reads (`12`, `-3`, `+4`); no range check. Decimals and text (including `q`): "Try again: integer pixel values accepted", asked again.
+- Effect: `atlas offset set by user to {value} px (calculated %d px)`
+- Status:
+
+**what**
+```text
+Reference-bar arc over the lamp atlas: accept the offset or enter a new one (atlas px).
+```
+
+**help**
+```text
+What you see:
+  Title "ATLAS OFFSET = <A> Ang (<n> px)".
+  Blue: reference-bar arc spectrum (bar REFBAR), normalised, on its
+  calculated wavelengths minus the current offset.
+  Red: atlas spectrum of the lamp, normalised.
+  Magenta dash-dot: CWAVE.
+What to look for:
+  Good: blue and red lines coincide line for line over the range
+  (relative strengths differ; small misalignments at the ends are
+  fixed later, since the dispersion is not yet refined).
+  Bad: a constant shift between the two patterns. Enter a new offset:
+  a larger offset moves the blue spectrum to shorter wavelengths; the
+  title gives the offset in A and px, i.e. the atlas A per px.
+Your options:
+  <cr>      accept the offset shown and continue.
+  <number>  try that offset (integer atlas px); the plot is redrawn and
+            you are asked again.
+  The offset sets the starting wavelengths of every bar's fit, so it
+  changes the whole wavelength solution and all cubes using this arc.
+Default:
+  <cr> keeps the offset shown: the calculated one (or ATOFF if set)
+  unless you changed it. Below plot_level 2 that offset is used.
 ```
 
 ## FitCenter
@@ -534,6 +1010,251 @@ Default:
   seconds; at plot_level 0 it is not drawn.
 ```
 
+## SolveArcs
+
+### P42 — individual arc line fits
+
+- Site: `SolveArcs.py:262`; today's prompt string is prefixed with `ptitle`
+- Helper: `ask_next(self.logger, what, help, who="SolveArcs")` with `what` built from `ptitle`; `QUIT` sets `do_inter = False`.
+- Figure: F40 (pl >= 3, bar `next_bar_to_plot` only)
+- Changes reduction: No
+- Status:
+
+**what** (filled in at the site with `ib, iw + 1, len(at_wave), peak, aw`)
+```text
+Line fit: bar %d, line %d/%d, arc peak at %.1f px, atlas %.2f A.
+```
+
+**help**
+```text
+What you see:
+  Title "ATLAS/ARC LINE FITS Bar# <n> - line <i>/<N> ...". Two x axes:
+  wavelength (bottom, atlas) and CCD y pixel (top, arc), matched over
+  this window by the central wavelength fit.
+  Atlas: blue line with green circles; red vertical = atlas line.
+  Arc: red circles = smoothed data in the fit window; black line =
+  interpolation; green dashed = centroid; magenta dash-dot = Gaussian
+  peak; black dash-dot = interpolated peak, the position used.
+What to look for:
+  Good: one clean arc line whose three verticals coincide, at the same
+  place as the red atlas line.
+  Bad: blended or distorted lines, or an arc line far from the atlas
+  line (misidentification); the residual clipping may then reject it.
+Your options:
+  <cr>      show the next line of this bar.
+  q / quit  stop the line plots for all bars (bar plots continue).
+  Display only: no answer changes the reduction.
+Default:
+  <cr> shows the next line. Below plot_level 3 these are not shown.
+```
+
+### P43 — residuals of one bar
+
+> ⚠ **Check first:** No numbers for read noise or RMS, only "close to the amp's usual value".
+
+- Site: `SolveArcs.py:412`; no sleep branch (inside `master_inter`)
+- Helper: `pause(...)` inside the existing `master_inter` block (pl >= 2, so it always prompts).
+- Figure: F41 (pl >= 2, bar `next_bar_to_plot` only)
+- Changes reduction: No
+- Status:
+
+**what**
+```text
+Wavelength-fit residuals of this bar, with kept and rejected lines.
+```
+
+**help**
+```text
+What you see:
+  Title "RESIDUALS for Bar <n>, Slice <s>, RMS = <r>, N = <k>": fit
+  minus atlas wavelength (A) for each line.
+  Green diamonds: lines kept. Orange: lines rejected as outliers in the
+  iterative clipping. Red (at 0): lines rejected before the fit (no
+  clean window, failed Gaussian, centroid off). Black dotted: zero.
+  Grey dash-dot: +- RMS. Magenta dash-dot: CWAVE.
+What to look for:
+  Good: green points scatter randomly about zero over the whole range,
+  RMS well below the dispersion of one pixel.
+  Bad: a trend or curve with wavelength (misidentified lines or too
+  low a polynomial order), large gaps, many orange/red lines (often a
+  wrong atlas offset).
+Your options:
+  <cr>  show the fit overlay for this bar. Display only.
+Default:
+  <cr> continues. Below plot_level 2 this plot is not shown.
+```
+
+### P44 — fit overlay of one bar, bar selection
+
+- Site: `SolveArcs.py:438`
+- Helper: `ask_next(self.logger, what, help, n_items=len(self.context.arcs), current=ib, who="SolveArcs")`; `QUIT` sets `master_inter = False`; an int sets `next_bar_to_plot`; `NEXT` sets it to `ib + 1`.
+- Figure: F42 (pl >= 2)
+- Changes reduction: No
+- Status:
+
+**what**
+```text
+Arc spectrum of this bar on its final wavelength solution, over the atlas.
+```
+
+**help**
+```text
+What you see:
+  Title "ATLAS/ARC FIT for Bar <n> ...".
+  Dark grey line: this bar's arc on its final wavelength solution; dark
+  grey diamonds: lines used in the fit, at their fitted wavelengths.
+  Blue: atlas spectrum (scaled). Green diamonds ("Kept"): every line of
+  the atlas line list. Orange: lines rejected as residual outliers.
+  Red: lines rejected before the fit. Magenta dash-dot: CWAVE.
+What to look for:
+  Good: grey arc lines fall on the blue atlas lines over the whole
+  range, with grey diamonds on most green ones.
+  Bad: grey lines shifted from blue in part of the range: the solution
+  for this bar is wrong there.
+Your options:
+  <cr>      show the next bar.
+  <number>  jump to that bar (after the current one, up to 119); at
+            plot_level 3 the line plots follow the jump.
+  q / quit  stop the bar review (line plots stop too).
+  Display only: no answer changes the reduction.
+Default:
+  <cr> shows the next bar. Below plot_level 2 these are not shown.
+```
+
+### P45 — wavelength coefficients
+
+> ⚠ **Check first:** The claim that a good result repeats smoothly from slice to slice.
+
+- Site: `SolveArcs.py:493` (sleep :495)
+- Helper: `pause(...)`
+- Figure: F43 (pl >= 1; one per coefficient, C0 first; saved as `arc_..._coef<k>.png` after the prompt)
+- Changes reduction: No
+- Status:
+
+**what**
+```text
+One coefficient of the wavelength solution for every bar.
+```
+
+**help**
+```text
+What you see:
+  Title "COEF <k> VALUES <Ck> = <mean> +- <std>": coefficient k of each
+  bar's wavelength polynomial in CCD pixel, against bar number. C0 is
+  the wavelength (A) at the first pixel, C1 the dispersion (A/px),
+  higher terms the curvature. Blue diamonds: values. Black dash-dot
+  lines: slice boundaries. One plot per coefficient.
+What to look for:
+  Good: a smooth pattern within and between slices, no isolated
+  points.
+  Bad: a bar far off its neighbours has a poor solution (compare its
+  N lines and RMS in the next plots).
+Your options:
+  <cr>  next coefficient (or the next plot). Display only.
+Default:
+  <cr> continues. At plot_level 1 the plot is shown for plot_pause
+  seconds; at plot_level 0 it is not drawn.
+```
+
+### P46 — number of lines per bar
+
+- Site: `SolveArcs.py:533` (sleep :535)
+- Helper: `pause(...)`
+- Figure: F44 (pushed at pl >= 1; saved as `arc_..._nlines.png` at every plot_level)
+- Changes reduction: No
+- Status:
+
+**what**
+```text
+Number of arc lines used in the wavelength fit of every bar.
+```
+
+**help**
+```text
+What you see:
+  Title "FIT STATS <Nlns> = <mean> +- <std>": number of lines in each
+  bar's final fit, against bar number. Blue diamonds: values. Red:
+  mean. Green dashed: mean +- 1 standard deviation. Black dash-dot:
+  slice boundaries.
+What to look for:
+  Good: similar numbers for all bars.
+  Bad: bars with far fewer lines than the rest; their solutions are
+  less constrained, especially at the ends of the range.
+Your options:
+  <cr>  continue. Display only.
+Default:
+  <cr> continues. At plot_level 1 the plot is shown for plot_pause
+  seconds; at plot_level 0 it is not drawn (the PNG is still saved).
+```
+
+### P47 — fit RMS per bar
+
+> ⚠ **Check first:** No numbers for read noise or RMS, only "close to the amp's usual value".
+
+- Site: `SolveArcs.py:573` (sleep :575)
+- Helper: `pause(...)`
+- Figure: F45 (pushed at pl >= 1; saved as `arc_..._resid.png` at every plot_level)
+- Changes reduction: No
+- Status:
+
+**what**
+```text
+RMS of the wavelength fit of every bar (Angstrom).
+```
+
+**help**
+```text
+What you see:
+  Title "FIT STATS <RMS> = <mean> +- <std>": RMS residual (A) of each
+  bar's final fit, against bar number. Blue diamonds: values. Red:
+  mean. Green dashed: mean +- 1 standard deviation. Black dash-dot:
+  slice boundaries.
+What to look for:
+  Good: uniformly low RMS, well below one pixel's dispersion.
+  Bad: isolated bars or whole slices with high RMS: check them with
+  the bar review (plot_level 2) before trusting those slices.
+Your options:
+  <cr>  continue. Display only.
+Default:
+  <cr> continues. At plot_level 1 the plot is shown for plot_pause
+  seconds; at plot_level 0 it is not drawn (the PNG is still saved).
+```
+
+## SolveAIT
+
+### P41 — AIT bar spectra
+
+- Site: `SolveAIT.py:172`; no sleep branch (at pl 1 the figure is pushed and saved with no pause)
+- Helper: `pause(...)` inside a kept `plot_level >= 2` guard, so that plot_level 1 does not gain a sleep.
+- Figure: F39 (pl >= 1; saved as `arc_..._bar<n>.png` **before** the prompt)
+- Changes reduction: No
+- Status:
+- Reviewer note: SolveAIT is used only for KCRM AIT data ("only in case there is a need to reprocess the AIT data"); normal reductions never reach this prompt.
+
+**what**
+```text
+AIT data: arc and bar spectrum of this trace on the output wavelength grid.
+```
+
+**help**
+```text
+What you see:
+  Title "ARC # <n>": arc (blue) and continuum-bar (red) spectra of AIT
+  trace n, resampled onto the output wavelength grid.
+  Green verticals: good wavelength range (WAVGOOD).
+  Orange verticals: full wavelength range (WAVALL).
+What to look for:
+  Good: sharp arc lines at the right wavelengths, smooth bar spectrum,
+  both covering the green range.
+  Bad: smeared or doubled lines (poor solution for this trace), or the
+  data not reaching the green limits.
+Your options:
+  <cr>  continue (next trace). Display only.
+Default:
+  <cr> continues. At plot_level 1 the plot is shown and saved with no
+  pause; at plot_level 0 it is not drawn.
+```
+
 ## MakeCube
 
 ### P12 — warped slice images
@@ -571,303 +1292,40 @@ Default:
   <cr> shows the next slice. Below plot_level 3 these are not shown.
 ```
 
-## MakeInvsens
+## SubtractScatteredLight
 
-### P13 — standard star per slice
+### P50 — scattered light
 
-- Site: `MakeInvsens.py:196`
-- Helper: `ask_next(self.logger, what, help, who="MakeInvsens")`; `QUIT` sets `do_plots = False`.
-- Figure: F13 (pl >= 3; one per slice; the line `sl, std: ...` is printed first)
-- Changes reduction: No
-- Status:
+> ⚠ **Check first:** What the ±180 px columns used for scattered light sample on the detector.
 
-**what**
-```text
-Standard-star cube: flux summed over wavelength along this slice.
-```
-
-**help**
-```text
-What you see:
-  Title "Std Slice <n> (DAR padded)". Blue x: flux summed over the
-  good wavelength range, against position along slice n. The line
-  printed above gives the slice and the standard deviation of this
-  profile; the slice with the largest value is taken as the star's.
-What to look for:
-  Good: the star is a clear peak in one slice (fainter in its
-  neighbours); other slices are flat sky.
-  Bad: no clear peak anywhere, or the largest spread in a slice without
-  the star (e.g. an edge artefact): the wrong slices would be summed.
-Your options:
-  <cr>      show the next slice.
-  q / quit  stop showing slices.
-  Display only: no answer changes the reduction.
-Default:
-  <cr> shows the next slice. Below plot_level 3 these are not shown.
-```
-
-### P14 — fit wavelength limits
-
-> ⚠ **Check first:** The features suggested for masking (Balmer lines, O2 B/A bands at 6870/7600 Å).
-
-- Site: `MakeInvsens.py:364` (inventory :365)
-- Helper: `ask_value(self.logger, prompt, help, parse, default=None, effect, validate, who="MakeInvsens")` in the existing `while not done` loop: `None` (empty answer) ends the loop; a pair sets `wlm0, wlm1` and the loop redraws.
-- Figure: F14 (pl >= 2)
-- Changes reduction: **Yes**: the wavelength range of the inverse-sensitivity and effective-area fits, so `*_invsens.fits` and `*_ea.fits` (header `INVFW0`, `INVFW1`), and every object later flux-calibrated with them.
-- Prompt: `New fit limits? <float> <float> (<cr> = accept)`
-- Accepted input (D12): two numbers separated by spaces, each read by Python `float()` (e.g. `3700 5500`, `3.7e3 5500.5`); words after the second number are ignored. Valid if both are finite, `lo <= hi`, `lo >= WAVALL0` and `hi <= WAVALL1` (`nan` is refused from PR3a: today it passes the check, leaves no wavelength in the fit range and MakeInvsens fails; maintainer decision 2026-10-28). One number, a non-number, or failing the check: the reason is printed and the previous limits are kept (B6, fixed in PR3a; today both limits are reset to WAVGOOD).
-- Effect: `fit wavelength limits set by user to {value[0]:.1f} - {value[1]:.1f} A (WAVGOOD %.1f - %.1f A)`
-- Status:
-- Reviewer notes: (1) `nan` passed today's check (every comparison with `nan` is false), emptied the fit range and made MakeInvsens fail; the maintainer classed it as invalid input (2026-10-28), so PR3a refuses it and asks again. (2) The `print` lines before the loop (L337-342) say "Hover the cursor over spectrum to find wavelengths"; after PR1 tooltips are ignored, but the viewer's toolbar shows the cursor position (to confirm in P.6). P.4 should replace those prints with `what`/`help`.
-
-**what**
-```text
-Check the wavelength limits of the sensitivity fit; enter new limits to avoid bad edges.
-```
-
-**help**
-```text
-What you see:
-  Title "<std> Obs Spec": the standard star's observed spectrum
-  (black; e-/s, summed over the star's slices, extinction corrected).
-  Green verticals: WAVGOOD, the range covered by all slices.
-  Blue verticals: the current fit limits ("LIMITS").
-  Red vertical: CWAVE. The x range is WAVALL0 - WAVALL1.
-  The viewer shows the cursor position, to read off wavelengths.
-What to look for:
-  Good: between the blue lines the spectrum is smooth and well exposed.
-  Bad: the range includes a steep edge, noisy ends, or an artefact
-  (e.g. near the dichroic or the end of the detector); a polynomial
-  fitted over it will be distorted everywhere. Move the limits inward.
-Your options:
-  <cr>     accept the limits shown and continue.
-  lo hi    new limits in Angstrom, e.g. "3700 5500"; must satisfy
-           lo <= hi within WAVALL0 - WAVALL1. The plot is redrawn and
-           you are asked again.
-  The limits set the fit range of the inverse sensitivity and
-  effective area (*_invsens.fits, *_ea.fits, INVFW0/INVFW1).
-Default:
-  <cr> keeps the current limits: WAVGOOD0 - WAVGOOD1 (WAVGOOD0 raised
-  to 3650 A if lower) unless you changed them. Below plot_level 2 the
-  WAVGOOD limits are used.
-```
-
-### P15 — line masks
-
-> ⚠ **Check first:** The features suggested for masking (Balmer lines, O2 B/A bands at 6870/7600 Å).
-
-- Site: `MakeInvsens.py:468` (inventory :469)
-- Helper: `ask_value(self.logger, prompt, help, parse, default=None, effect, validate, who="MakeInvsens")` in the existing loop; `None` ends it; a value `(w0, w1, comment)` is appended to `lmasks`.
-- Figure: F15 (pl >= 2)
-- Changes reduction: **Yes**: masked ranges get (near) zero weight in the fits, changing `*_invsens.fits` and `*_ea.fits`; all masks are written to `<star>.lmsk` in the current working directory, which later runs read back.
-- Prompt: `Mask line: <start> <stop> [comment] in A (<cr> = done)`
-- Accepted input (D12): two numbers read by `float()`, then optional comment words. Valid if both lie strictly inside the current fit limits (`wlm0 < w < wlm1`); otherwise "line mask outside wl range" and nothing is added. `start > stop` is accepted (and masks nothing). One number only: re-prompts (B2, fixed in PR3a; today it crashes MakeInvsens).
-- Effect: `line mask added by user: {value[0]:.2f} - {value[1]:.2f} A, saved to %s`
-- Status:
-- Reviewer notes: (1) the existing `print` at L438 says masks are "vertical dashed yellow lines"; the code draws them orange (L462, L464). The help says orange; P.4 should fix or drop that print. (2) B13 (PR3b): header lines of an existing `.lmsk` are written back without a newline, so on the next run the first mask is lost. (3) B32 (PR3b): the shipped `.lmsk` files in `data/stds/` are never found; only a `.lmsk` in the working directory is read. The help therefore says "from a local .lmsk file".
-
-**what**
-```text
-Mask narrow features (absorption lines, telluric bands, cosmic rays) out of the fit.
-```
-
-**help**
-```text
-What you see:
-  Title "<std> Obs Spec": the observed standard spectrum (black), with
-  WAVGOOD (green), the fit limits (blue) and CWAVE (red), as before.
-  Orange dashed pairs: line masks already defined (from a local .lmsk
-  file or entered here).
-What to look for:
-  Narrow features that the reference spectrum does not reproduce at
-  KCWI's resolution: stellar absorption lines (e.g. Balmer lines in hot
-  standards), telluric bands (e.g. O2 B and A at 6870 and 7600 A),
-  residual cosmic rays. Unmasked, they bend the smooth fit. Mask only
-  the feature itself, not broad stretches of continuum.
-Your options:
-  <cr>               done; use the masks shown.
-  start stop [text]  add a mask from start to stop (Angstrom, start <
-                     stop), optional comment; both ends must be inside
-                     the blue limits. The plot is redrawn with it.
-  Masks cannot be removed here: edit or delete <star>.lmsk (in the
-  directory you started the DRP from) and rerun. Masked points are left
-  out of the fits for *_invsens.fits and *_ea.fits.
-Default:
-  <cr> keeps the masks shown. Below plot_level 2 only masks from the
-  local .lmsk file are used (none if there is no file).
-```
-
-### P16 — efficiency
-
-- Site: `MakeInvsens.py:584` (inventory :585; sleep :586 is `2. * plot_pause`)
+- Site: `SubtractScatteredLight.py:107` (sleep :109)
 - Helper: `pause(...)`
-- Figure: F16 (pl >= 1; saved as `std_..._eff.png` after the fit loop)
+- Figure: F47 (pl >= 1, not for nod-and-shuffle frames or with `skipscat`; saved as `scat_<frame>_....png` after the prompt)
 - Changes reduction: No
 - Status:
-- Reviewer note: the sleep here and at P17, P18, P19 is `2 * plot_pause`; `pause` sleeps `config.plot_pause`. P.3 must keep the doubled pause (e.g. keep the existing branch until P.1 gives `pause` a factor), or the timing changes at plot_level 1.
+- Reviewer note: I describe the measured region only as "the central columns"; please add the physical reason (which part of the detector these columns sample) if wanted.
 
 **what**
 ```text
-Effective efficiency of telescope + KCWI (+ atmosphere) from the standard, with fit.
+Scattered-light profile along CCD y and the smooth model subtracted from every column.
 ```
 
 **help**
 ```text
 What you see:
-  Title "<std> Efficiency": observed photons / expected photons on the
-  Keck aperture, in per cent (not extinction corrected).
-  Black: data. Red: polynomial fit. Blue x: masked points ("Rej").
-  Green verticals: fit limits. Black dashed / dash-dot horizontal: peak
-  and mean of the fit.
+  Title "SCATTERED LIGHT FIT": median of the central CCD columns
+  (+- 180 unbinned px about the centre) for every row, in e-.
+  Blue circles ("Scat"): the medians. Red thick line ("Smooth"):
+  Savitzky-Golay smoothing (window 151, 303 or 501 rows, wider for
+  noisier data); this curve is subtracted from every column.
 What to look for:
-  Good: a smooth throughput curve; the red fit follows it without
-  wiggles, also near the green limits.
-  Bad: the fit oscillating at the ends (order too high, or limits too
-  wide), or bumps at absorption lines that were not masked.
+  Good: the red curve follows the slow trend of the points without
+  following individual bumps.
+  Bad: the curve chasing features, or a level that looks like real
+  signal rather than a smooth background: it would be subtracted from
+  the science data.
 Your options:
-  <cr>  continue to the next plot. The fit order is chosen after the
-        residuals plot. Display only.
-Default:
-  <cr> continues. At plot_level 1 the plot is shown for twice
-  plot_pause seconds; at plot_level 0 it is not drawn.
-```
-
-### P17 — inverse sensitivity
-
-- Site: `MakeInvsens.py:605` (inventory :606; sleep `2. * plot_pause`)
-- Helper: `pause(...)` (see P16 note)
-- Figure: F17 (pl >= 1; log y; saved as `std_..._invsens.png`)
-- Changes reduction: No
-- Status:
-
-**what**
-```text
-Inverse sensitivity (flux per e-/s) from the standard star, with its polynomial fit.
-```
-
-**help**
-```text
-What you see:
-  Title "<std> Inverse sensitivity", logarithmic y axis: reference flux
-  divided by observed e-/s, the curve that flux-calibrates later data.
-  Black: data. Red: polynomial fit (also drawn outside the limits,
-  where it is extrapolated). Blue x: masked points. Green verticals:
-  fit limits.
-What to look for:
-  Good: the red fit follows the black data closely between the limits.
-  Bad: systematic departures, or the fit turning sharply up or down
-  just outside the limits where you still need calibrated data.
-Your options:
-  <cr>  continue to the next plot. Display only.
-Default:
-  <cr> continues. At plot_level 1 the plot is shown for twice
-  plot_pause seconds; at plot_level 0 it is not drawn.
-```
-
-### P18 — calibrated standard
-
-- Site: `MakeInvsens.py:624` (inventory :625; sleep `2. * plot_pause`)
-- Helper: `pause(...)` (see P16 note)
-- Figure: F18 (pl >= 1; saved as `std_..._cal.png`)
-- Changes reduction: No
-- Status:
-
-**what**
-```text
-Standard star calibrated with the fitted inverse sensitivity, over its reference spectrum.
-```
-
-**help**
-```text
-What you see:
-  Title "<std> Calibrated", flux in erg/s/cm^2/A.
-  Black: observed spectrum times the fitted inverse sensitivity.
-  Red: the star's reference spectrum. Green verticals: fit limits.
-What to look for:
-  Good: black lies on red between the limits, apart from narrow
-  features (absorption lines, telluric bands) that differ in resolution.
-  Bad: broad differences (fit order or limits) or a mismatch at a
-  feature you meant to mask.
-Your options:
-  <cr>  continue to the residuals. Display only.
-Default:
-  <cr> continues. At plot_level 1 the plot is shown for twice
-  plot_pause seconds; at plot_level 0 it is not drawn.
-```
-
-### P19 — residuals and fit order
-
-- Site: `MakeInvsens.py:654` (inventory :655); at pl 1 the `else` sets `done = True` and sleeps `2. * plot_pause` (:685)
-- Helper: `ask_value(self.logger, prompt, help, parse=int, default=None, effect, who="MakeInvsens")` inside the existing `plot_level >= 2` branch; `None` ends the loop; an int refits as today.
-- Figure: F19 (pl >= 1; F16–F18 were shown just before; saved as `std_..._resid.png`)
-- Changes reduction: **Yes**: the polynomial order of the inverse-sensitivity and effective-area fits: `*_invsens.fits`, `*_ea.fits`, header `INVFORD`.
-- Prompt: `Current fit order = %d. New fit order? <int> (<cr> = accept)`
-- Accepted input (D12): anything Python `int()` reads (e.g. `5`, `+5`, ` 5 `). Text or decimals: "Bad fit order, try again". No bounds: a negative order makes the fit fail with "Bad fit order"; very large orders are accepted.
-- Effect: `inverse sensitivity refitted by user with polynomial order {value} (default %d)`
-- Status:
-- Reviewer note: B3 (PR3b): `ford` is set before the fit, so after a failed fit (e.g. order -1) the recorded order (`INVFORD`, and this log line if logged on acceptance) is the bad value while the fit is the previous one. P.4 should log the effect only after the refit succeeds, or accept that the log line repeats today's mismatch until PR3b.
-
-**what**
-```text
-Calibration residuals; accept the fit or enter a new polynomial order to refit.
-```
-
-**help**
-```text
-What you see:
-  Title "<std> Residuals = <mean> +- <std> (%)": (calibrated -
-  reference) / reference in per cent, over the fit range.
-  Black: residuals. Blue x: masked points (if any). Green verticals:
-  fit limits. Red: mean. Black dashed: mean +- 1 standard deviation.
-What to look for:
-  Good: residuals scatter around zero with no large-scale wave.
-  Bad: a slow wave across the range (order too low), or oscillations
-  growing towards the limits (order too high, or limits too wide).
-Your options:
-  <cr>      accept the current fit order and finish.
-  <number>  refit with that polynomial order; the efficiency, inverse
-            sensitivity, calibrated and residual plots are shown again
-            and you are asked again.
-  The order goes into *_invsens.fits and *_ea.fits (keyword INVFORD).
-Default:
-  <cr> keeps the current order: 9 (7 for BL) times the dichroic
-  fraction, at least 3, unless you changed it. Below plot_level 2 the
-  default order is used without review.
-```
-
-## MakeMasterBias
-
-### P20 — bias noise histogram
-
-> ⚠ **Check first:** No numbers for read noise or RMS, only "close to the amp's usual value".
-
-- Site: `MakeMasterBias.py:154` (sleep :156)
-- Helper: `pause(...)`
-- Figure: F20 (pl >= 1; one per amplifier; saved as `bias_..._amp<n>_rdnoise.png` after the prompt)
-- Changes reduction: No
-- Status:
-
-**what**
-```text
-Read-noise histogram of one amplifier, from the difference of two bias frames.
-```
-
-**help**
-```text
-What you see:
-  Title "BIAS NOISE amp <n> = <sigma>" (e-). Navy bars: histogram of
-  (bias 2 - bias 3) x gain / sqrt(2) over amplifier n, within the 3.5
-  sigma clipping range. Pink thick line: Gaussian of the measured sigma
-  (centred on 0, scaled to the histogram peak). Red verticals: +- sigma.
-  Sigma is stored as BIASRN<n> in the master bias header.
-What to look for:
-  Good: a symmetric, Gaussian histogram centred on zero that matches
-  the pink curve; sigma close to the usual read noise of this amp in
-  this readout mode (slow/fast, gain).
-  Bad: a broad, skewed or spiky histogram, or an offset from zero:
-  pattern noise, or a bad bias frame in the stack.
-Your options:
-  <cr>  continue (next amplifier). Display only.
+  <cr>  continue. Display only.
 Default:
   <cr> continues. At plot_level 1 the plot is shown for plot_pause
   seconds; at plot_level 0 it is not drawn.
@@ -1411,6 +1869,270 @@ Default:
   seconds; at plot_level 0 it is not drawn.
 ```
 
+## MakeInvsens
+
+### P13 — standard star per slice
+
+- Site: `MakeInvsens.py:196`
+- Helper: `ask_next(self.logger, what, help, who="MakeInvsens")`; `QUIT` sets `do_plots = False`.
+- Figure: F13 (pl >= 3; one per slice; the line `sl, std: ...` is printed first)
+- Changes reduction: No
+- Status:
+
+**what**
+```text
+Standard-star cube: flux summed over wavelength along this slice.
+```
+
+**help**
+```text
+What you see:
+  Title "Std Slice <n> (DAR padded)". Blue x: flux summed over the
+  good wavelength range, against position along slice n. The line
+  printed above gives the slice and the standard deviation of this
+  profile; the slice with the largest value is taken as the star's.
+What to look for:
+  Good: the star is a clear peak in one slice (fainter in its
+  neighbours); other slices are flat sky.
+  Bad: no clear peak anywhere, or the largest spread in a slice without
+  the star (e.g. an edge artefact): the wrong slices would be summed.
+Your options:
+  <cr>      show the next slice.
+  q / quit  stop showing slices.
+  Display only: no answer changes the reduction.
+Default:
+  <cr> shows the next slice. Below plot_level 3 these are not shown.
+```
+
+### P14 — fit wavelength limits
+
+> ⚠ **Check first:** The features suggested for masking (Balmer lines, O2 B/A bands at 6870/7600 Å).
+
+- Site: `MakeInvsens.py:364` (inventory :365)
+- Helper: `ask_value(self.logger, prompt, help, parse, default=None, effect, validate, who="MakeInvsens")` in the existing `while not done` loop: `None` (empty answer) ends the loop; a pair sets `wlm0, wlm1` and the loop redraws.
+- Figure: F14 (pl >= 2)
+- Changes reduction: **Yes**: the wavelength range of the inverse-sensitivity and effective-area fits, so `*_invsens.fits` and `*_ea.fits` (header `INVFW0`, `INVFW1`), and every object later flux-calibrated with them.
+- Prompt: `New fit limits? <float> <float> (<cr> = accept)`
+- Accepted input (D12): two numbers separated by spaces, each read by Python `float()` (e.g. `3700 5500`, `3.7e3 5500.5`); words after the second number are ignored. Valid if both are finite, `lo <= hi`, `lo >= WAVALL0` and `hi <= WAVALL1` (`nan` is refused from PR3a: today it passes the check, leaves no wavelength in the fit range and MakeInvsens fails; maintainer decision 2026-10-28). One number, a non-number, or failing the check: the reason is printed and the previous limits are kept (B6, fixed in PR3a; today both limits are reset to WAVGOOD).
+- Effect: `fit wavelength limits set by user to {value[0]:.1f} - {value[1]:.1f} A (WAVGOOD %.1f - %.1f A)`
+- Status:
+- Reviewer notes: (1) `nan` passed today's check (every comparison with `nan` is false), emptied the fit range and made MakeInvsens fail; the maintainer classed it as invalid input (2026-10-28), so PR3a refuses it and asks again. (2) The `print` lines before the loop (L337-342) say "Hover the cursor over spectrum to find wavelengths"; after PR1 tooltips are ignored, but the viewer's toolbar shows the cursor position (to confirm in P.6). P.4 should replace those prints with `what`/`help`.
+
+**what**
+```text
+Check the wavelength limits of the sensitivity fit; enter new limits to avoid bad edges.
+```
+
+**help**
+```text
+What you see:
+  Title "<std> Obs Spec": the standard star's observed spectrum
+  (black; e-/s, summed over the star's slices, extinction corrected).
+  Green verticals: WAVGOOD, the range covered by all slices.
+  Blue verticals: the current fit limits ("LIMITS").
+  Red vertical: CWAVE. The x range is WAVALL0 - WAVALL1.
+  The viewer shows the cursor position, to read off wavelengths.
+What to look for:
+  Good: between the blue lines the spectrum is smooth and well exposed.
+  Bad: the range includes a steep edge, noisy ends, or an artefact
+  (e.g. near the dichroic or the end of the detector); a polynomial
+  fitted over it will be distorted everywhere. Move the limits inward.
+Your options:
+  <cr>     accept the limits shown and continue.
+  lo hi    new limits in Angstrom, e.g. "3700 5500"; must satisfy
+           lo <= hi within WAVALL0 - WAVALL1. The plot is redrawn and
+           you are asked again.
+  The limits set the fit range of the inverse sensitivity and
+  effective area (*_invsens.fits, *_ea.fits, INVFW0/INVFW1).
+Default:
+  <cr> keeps the current limits: WAVGOOD0 - WAVGOOD1 (WAVGOOD0 raised
+  to 3650 A if lower) unless you changed them. Below plot_level 2 the
+  WAVGOOD limits are used.
+```
+
+### P15 — line masks
+
+> ⚠ **Check first:** The features suggested for masking (Balmer lines, O2 B/A bands at 6870/7600 Å).
+
+- Site: `MakeInvsens.py:468` (inventory :469)
+- Helper: `ask_value(self.logger, prompt, help, parse, default=None, effect, validate, who="MakeInvsens")` in the existing loop; `None` ends it; a value `(w0, w1, comment)` is appended to `lmasks`.
+- Figure: F15 (pl >= 2)
+- Changes reduction: **Yes**: masked ranges get (near) zero weight in the fits, changing `*_invsens.fits` and `*_ea.fits`; all masks are written to `<star>.lmsk` in the current working directory, which later runs read back.
+- Prompt: `Mask line: <start> <stop> [comment] in A (<cr> = done)`
+- Accepted input (D12): two numbers read by `float()`, then optional comment words. Valid if both lie strictly inside the current fit limits (`wlm0 < w < wlm1`); otherwise "line mask outside wl range" and nothing is added. `start > stop` is accepted (and masks nothing). One number only: re-prompts (B2, fixed in PR3a; today it crashes MakeInvsens).
+- Effect: `line mask added by user: {value[0]:.2f} - {value[1]:.2f} A, saved to %s`
+- Status:
+- Reviewer notes: (1) the existing `print` at L438 says masks are "vertical dashed yellow lines"; the code draws them orange (L462, L464). The help says orange; P.4 should fix or drop that print. (2) B13 (PR3b): header lines of an existing `.lmsk` are written back without a newline, so on the next run the first mask is lost. (3) B32 (PR3b): the shipped `.lmsk` files in `data/stds/` are never found; only a `.lmsk` in the working directory is read. The help therefore says "from a local .lmsk file".
+
+**what**
+```text
+Mask narrow features (absorption lines, telluric bands, cosmic rays) out of the fit.
+```
+
+**help**
+```text
+What you see:
+  Title "<std> Obs Spec": the observed standard spectrum (black), with
+  WAVGOOD (green), the fit limits (blue) and CWAVE (red), as before.
+  Orange dashed pairs: line masks already defined (from a local .lmsk
+  file or entered here).
+What to look for:
+  Narrow features that the reference spectrum does not reproduce at
+  KCWI's resolution: stellar absorption lines (e.g. Balmer lines in hot
+  standards), telluric bands (e.g. O2 B and A at 6870 and 7600 A),
+  residual cosmic rays. Unmasked, they bend the smooth fit. Mask only
+  the feature itself, not broad stretches of continuum.
+Your options:
+  <cr>               done; use the masks shown.
+  start stop [text]  add a mask from start to stop (Angstrom, start <
+                     stop), optional comment; both ends must be inside
+                     the blue limits. The plot is redrawn with it.
+  Masks cannot be removed here: edit or delete <star>.lmsk (in the
+  directory you started the DRP from) and rerun. Masked points are left
+  out of the fits for *_invsens.fits and *_ea.fits.
+Default:
+  <cr> keeps the masks shown. Below plot_level 2 only masks from the
+  local .lmsk file are used (none if there is no file).
+```
+
+### P16 — efficiency
+
+- Site: `MakeInvsens.py:584` (inventory :585; sleep :586 is `2. * plot_pause`)
+- Helper: `pause(...)`
+- Figure: F16 (pl >= 1; saved as `std_..._eff.png` after the fit loop)
+- Changes reduction: No
+- Status:
+- Reviewer note: the sleep here and at P17, P18, P19 is `2 * plot_pause`; `pause` sleeps `config.plot_pause`. P.3 must keep the doubled pause (e.g. keep the existing branch until P.1 gives `pause` a factor), or the timing changes at plot_level 1.
+
+**what**
+```text
+Effective efficiency of telescope + KCWI (+ atmosphere) from the standard, with fit.
+```
+
+**help**
+```text
+What you see:
+  Title "<std> Efficiency": observed photons / expected photons on the
+  Keck aperture, in per cent (not extinction corrected).
+  Black: data. Red: polynomial fit. Blue x: masked points ("Rej").
+  Green verticals: fit limits. Black dashed / dash-dot horizontal: peak
+  and mean of the fit.
+What to look for:
+  Good: a smooth throughput curve; the red fit follows it without
+  wiggles, also near the green limits.
+  Bad: the fit oscillating at the ends (order too high, or limits too
+  wide), or bumps at absorption lines that were not masked.
+Your options:
+  <cr>  continue to the next plot. The fit order is chosen after the
+        residuals plot. Display only.
+Default:
+  <cr> continues. At plot_level 1 the plot is shown for twice
+  plot_pause seconds; at plot_level 0 it is not drawn.
+```
+
+### P17 — inverse sensitivity
+
+- Site: `MakeInvsens.py:605` (inventory :606; sleep `2. * plot_pause`)
+- Helper: `pause(...)` (see P16 note)
+- Figure: F17 (pl >= 1; log y; saved as `std_..._invsens.png`)
+- Changes reduction: No
+- Status:
+
+**what**
+```text
+Inverse sensitivity (flux per e-/s) from the standard star, with its polynomial fit.
+```
+
+**help**
+```text
+What you see:
+  Title "<std> Inverse sensitivity", logarithmic y axis: reference flux
+  divided by observed e-/s, the curve that flux-calibrates later data.
+  Black: data. Red: polynomial fit (also drawn outside the limits,
+  where it is extrapolated). Blue x: masked points. Green verticals:
+  fit limits.
+What to look for:
+  Good: the red fit follows the black data closely between the limits.
+  Bad: systematic departures, or the fit turning sharply up or down
+  just outside the limits where you still need calibrated data.
+Your options:
+  <cr>  continue to the next plot. Display only.
+Default:
+  <cr> continues. At plot_level 1 the plot is shown for twice
+  plot_pause seconds; at plot_level 0 it is not drawn.
+```
+
+### P18 — calibrated standard
+
+- Site: `MakeInvsens.py:624` (inventory :625; sleep `2. * plot_pause`)
+- Helper: `pause(...)` (see P16 note)
+- Figure: F18 (pl >= 1; saved as `std_..._cal.png`)
+- Changes reduction: No
+- Status:
+
+**what**
+```text
+Standard star calibrated with the fitted inverse sensitivity, over its reference spectrum.
+```
+
+**help**
+```text
+What you see:
+  Title "<std> Calibrated", flux in erg/s/cm^2/A.
+  Black: observed spectrum times the fitted inverse sensitivity.
+  Red: the star's reference spectrum. Green verticals: fit limits.
+What to look for:
+  Good: black lies on red between the limits, apart from narrow
+  features (absorption lines, telluric bands) that differ in resolution.
+  Bad: broad differences (fit order or limits) or a mismatch at a
+  feature you meant to mask.
+Your options:
+  <cr>  continue to the residuals. Display only.
+Default:
+  <cr> continues. At plot_level 1 the plot is shown for twice
+  plot_pause seconds; at plot_level 0 it is not drawn.
+```
+
+### P19 — residuals and fit order
+
+- Site: `MakeInvsens.py:654` (inventory :655); at pl 1 the `else` sets `done = True` and sleeps `2. * plot_pause` (:685)
+- Helper: `ask_value(self.logger, prompt, help, parse=int, default=None, effect, who="MakeInvsens")` inside the existing `plot_level >= 2` branch; `None` ends the loop; an int refits as today.
+- Figure: F19 (pl >= 1; F16–F18 were shown just before; saved as `std_..._resid.png`)
+- Changes reduction: **Yes**: the polynomial order of the inverse-sensitivity and effective-area fits: `*_invsens.fits`, `*_ea.fits`, header `INVFORD`.
+- Prompt: `Current fit order = %d. New fit order? <int> (<cr> = accept)`
+- Accepted input (D12): anything Python `int()` reads (e.g. `5`, `+5`, ` 5 `). Text or decimals: "Bad fit order, try again". No bounds: a negative order makes the fit fail with "Bad fit order"; very large orders are accepted.
+- Effect: `inverse sensitivity refitted by user with polynomial order {value} (default %d)`
+- Status:
+- Reviewer note: B3 (PR3b): `ford` is set before the fit, so after a failed fit (e.g. order -1) the recorded order (`INVFORD`, and this log line if logged on acceptance) is the bad value while the fit is the previous one. P.4 should log the effect only after the refit succeeds, or accept that the log line repeats today's mismatch until PR3b.
+
+**what**
+```text
+Calibration residuals; accept the fit or enter a new polynomial order to refit.
+```
+
+**help**
+```text
+What you see:
+  Title "<std> Residuals = <mean> +- <std> (%)": (calibrated -
+  reference) / reference in per cent, over the fit range.
+  Black: residuals. Blue x: masked points (if any). Green verticals:
+  fit limits. Red: mean. Black dashed: mean +- 1 standard deviation.
+What to look for:
+  Good: residuals scatter around zero with no large-scale wave.
+  Bad: a slow wave across the range (order too low), or oscillations
+  growing towards the limits (order too high, or limits too wide).
+Your options:
+  <cr>      accept the current fit order and finish.
+  <number>  refit with that polynomial order; the efficiency, inverse
+            sensitivity, calibrated and residual plots are shown again
+            and you are asked again.
+  The order goes into *_invsens.fits and *_ea.fits (keyword INVFORD).
+Default:
+  <cr> keeps the current order: 9 (7 for BL) times the dichroic
+  fraction, at least 3, unless you changed it. Below plot_level 2 the
+  default order is used without review.
+```
+
 ## NandshuffSubtractSky
 
 ### P37 — sky scale, blue camera
@@ -1490,744 +2212,31 @@ Default:
   <cr> uses 1.0, as the reduction does below plot_level 2.
 ```
 
-## ReadAtlas
-
-### P39 — arc–atlas cross-correlation
-
-- Site: `ReadAtlas.py:193` (sleep :195)
-- Helper: `pause(...)`
-- Figure: F37 (pl >= 1)
-- Changes reduction: No
-- Status:
-
-**what**
-```text
-Cross-correlation of the reference-bar arc with the lamp atlas: offset found.
-```
-
-**help**
-```text
-What you see:
-  Title "ATLAS OFFSET = <n> px": cross-correlation of the reference-bar
-  arc spectrum (on its calculated wavelengths) with the atlas spectrum,
-  against offset in atlas pixels (central third of the range).
-  Blue: cross-correlation. Red vertical ("Peak"): offset found.
-  Green vertical: offset requested with ATOFF (only if set).
-What to look for:
-  Good: one sharp peak clearly above the rest, with the red line on it.
-  Bad: several similar peaks or a broad hump: the offset is ambiguous.
-  Check the overlay in the next plot and set the offset there.
-Your options:
-  <cr>  continue to the overlay. Display only.
-Default:
-  <cr> continues. At plot_level 1 the plot is shown for plot_pause
-  seconds; at plot_level 0 it is not drawn.
-```
-
-### P40 — atlas offset entry
-
-- Site: `ReadAtlas.py:224` (pl 1: sleep and leave the loop, :233)
-- Helper: `ask_value(self.logger, prompt, help, parse=int, default=None, effect, who="ReadAtlas")` in the existing `while q:` loop; `None` leaves it; an int sets `offset_pix`, `offset_wav = offset_pix * refdisp` and redraws.
-- Figure: F38 (pl >= 1, redrawn each pass; the last pass is saved as `arc_..._atoff.png`)
-- Changes reduction: **Yes**: stored as `offset_pix`/`offset_wave`; FitCenter subtracts `offset_wave` from every bar's starting wavelength, so it changes the central fits, the atlas line list (`arc_..._atlines.txt`), the per-bar solutions, the geometry `*_geom.pkl` from SolveGeom, and the wavelength scale of every cube reduced with this arc. No header keyword records it; the INFO line "Final arc-atlas offset" does.
-- Prompt: `New offset <int px> (<cr> = accept)`
-- Accepted input (D12): anything `int()` reads (`12`, `-3`, `+4`); no range check. Decimals and text (including `q`): "Try again: integer pixel values accepted", asked again.
-- Effect: `atlas offset set by user to {value} px (calculated %d px)`
-- Status:
-
-**what**
-```text
-Reference-bar arc over the lamp atlas: accept the offset or enter a new one (atlas px).
-```
-
-**help**
-```text
-What you see:
-  Title "ATLAS OFFSET = <A> Ang (<n> px)".
-  Blue: reference-bar arc spectrum (bar REFBAR), normalised, on its
-  calculated wavelengths minus the current offset.
-  Red: atlas spectrum of the lamp, normalised.
-  Magenta dash-dot: CWAVE.
-What to look for:
-  Good: blue and red lines coincide line for line over the range
-  (relative strengths differ; small misalignments at the ends are
-  fixed later, since the dispersion is not yet refined).
-  Bad: a constant shift between the two patterns. Enter a new offset:
-  a larger offset moves the blue spectrum to shorter wavelengths; the
-  title gives the offset in A and px, i.e. the atlas A per px.
-Your options:
-  <cr>      accept the offset shown and continue.
-  <number>  try that offset (integer atlas px); the plot is redrawn and
-            you are asked again.
-  The offset sets the starting wavelengths of every bar's fit, so it
-  changes the whole wavelength solution and all cubes using this arc.
-Default:
-  <cr> keeps the offset shown: the calculated one (or ATOFF if set)
-  unless you changed it. Below plot_level 2 that offset is used.
-```
-
-## SolveAIT
-
-### P41 — AIT bar spectra
-
-- Site: `SolveAIT.py:172`; no sleep branch (at pl 1 the figure is pushed and saved with no pause)
-- Helper: `pause(...)` inside a kept `plot_level >= 2` guard, so that plot_level 1 does not gain a sleep.
-- Figure: F39 (pl >= 1; saved as `arc_..._bar<n>.png` **before** the prompt)
-- Changes reduction: No
-- Status:
-- Reviewer note: SolveAIT is used only for KCRM AIT data ("only in case there is a need to reprocess the AIT data"); normal reductions never reach this prompt.
-
-**what**
-```text
-AIT data: arc and bar spectrum of this trace on the output wavelength grid.
-```
-
-**help**
-```text
-What you see:
-  Title "ARC # <n>": arc (blue) and continuum-bar (red) spectra of AIT
-  trace n, resampled onto the output wavelength grid.
-  Green verticals: good wavelength range (WAVGOOD).
-  Orange verticals: full wavelength range (WAVALL).
-What to look for:
-  Good: sharp arc lines at the right wavelengths, smooth bar spectrum,
-  both covering the green range.
-  Bad: smeared or doubled lines (poor solution for this trace), or the
-  data not reaching the green limits.
-Your options:
-  <cr>  continue (next trace). Display only.
-Default:
-  <cr> continues. At plot_level 1 the plot is shown and saved with no
-  pause; at plot_level 0 it is not drawn.
-```
-
-## SolveArcs
-
-### P42 — individual arc line fits
-
-- Site: `SolveArcs.py:262`; today's prompt string is prefixed with `ptitle`
-- Helper: `ask_next(self.logger, what, help, who="SolveArcs")` with `what` built from `ptitle`; `QUIT` sets `do_inter = False`.
-- Figure: F40 (pl >= 3, bar `next_bar_to_plot` only)
-- Changes reduction: No
-- Status:
-
-**what** (filled in at the site with `ib, iw + 1, len(at_wave), peak, aw`)
-```text
-Line fit: bar %d, line %d/%d, arc peak at %.1f px, atlas %.2f A.
-```
-
-**help**
-```text
-What you see:
-  Title "ATLAS/ARC LINE FITS Bar# <n> - line <i>/<N> ...". Two x axes:
-  wavelength (bottom, atlas) and CCD y pixel (top, arc), matched over
-  this window by the central wavelength fit.
-  Atlas: blue line with green circles; red vertical = atlas line.
-  Arc: red circles = smoothed data in the fit window; black line =
-  interpolation; green dashed = centroid; magenta dash-dot = Gaussian
-  peak; black dash-dot = interpolated peak, the position used.
-What to look for:
-  Good: one clean arc line whose three verticals coincide, at the same
-  place as the red atlas line.
-  Bad: blended or distorted lines, or an arc line far from the atlas
-  line (misidentification); the residual clipping may then reject it.
-Your options:
-  <cr>      show the next line of this bar.
-  q / quit  stop the line plots for all bars (bar plots continue).
-  Display only: no answer changes the reduction.
-Default:
-  <cr> shows the next line. Below plot_level 3 these are not shown.
-```
-
-### P43 — residuals of one bar
-
-> ⚠ **Check first:** No numbers for read noise or RMS, only "close to the amp's usual value".
-
-- Site: `SolveArcs.py:412`; no sleep branch (inside `master_inter`)
-- Helper: `pause(...)` inside the existing `master_inter` block (pl >= 2, so it always prompts).
-- Figure: F41 (pl >= 2, bar `next_bar_to_plot` only)
-- Changes reduction: No
-- Status:
-
-**what**
-```text
-Wavelength-fit residuals of this bar, with kept and rejected lines.
-```
-
-**help**
-```text
-What you see:
-  Title "RESIDUALS for Bar <n>, Slice <s>, RMS = <r>, N = <k>": fit
-  minus atlas wavelength (A) for each line.
-  Green diamonds: lines kept. Orange: lines rejected as outliers in the
-  iterative clipping. Red (at 0): lines rejected before the fit (no
-  clean window, failed Gaussian, centroid off). Black dotted: zero.
-  Grey dash-dot: +- RMS. Magenta dash-dot: CWAVE.
-What to look for:
-  Good: green points scatter randomly about zero over the whole range,
-  RMS well below the dispersion of one pixel.
-  Bad: a trend or curve with wavelength (misidentified lines or too
-  low a polynomial order), large gaps, many orange/red lines (often a
-  wrong atlas offset).
-Your options:
-  <cr>  show the fit overlay for this bar. Display only.
-Default:
-  <cr> continues. Below plot_level 2 this plot is not shown.
-```
-
-### P44 — fit overlay of one bar, bar selection
-
-- Site: `SolveArcs.py:438`
-- Helper: `ask_next(self.logger, what, help, n_items=len(self.context.arcs), current=ib, who="SolveArcs")`; `QUIT` sets `master_inter = False`; an int sets `next_bar_to_plot`; `NEXT` sets it to `ib + 1`.
-- Figure: F42 (pl >= 2)
-- Changes reduction: No
-- Status:
-
-**what**
-```text
-Arc spectrum of this bar on its final wavelength solution, over the atlas.
-```
-
-**help**
-```text
-What you see:
-  Title "ATLAS/ARC FIT for Bar <n> ...".
-  Dark grey line: this bar's arc on its final wavelength solution; dark
-  grey diamonds: lines used in the fit, at their fitted wavelengths.
-  Blue: atlas spectrum (scaled). Green diamonds ("Kept"): every line of
-  the atlas line list. Orange: lines rejected as residual outliers.
-  Red: lines rejected before the fit. Magenta dash-dot: CWAVE.
-What to look for:
-  Good: grey arc lines fall on the blue atlas lines over the whole
-  range, with grey diamonds on most green ones.
-  Bad: grey lines shifted from blue in part of the range: the solution
-  for this bar is wrong there.
-Your options:
-  <cr>      show the next bar.
-  <number>  jump to that bar (after the current one, up to 119); at
-            plot_level 3 the line plots follow the jump.
-  q / quit  stop the bar review (line plots stop too).
-  Display only: no answer changes the reduction.
-Default:
-  <cr> shows the next bar. Below plot_level 2 these are not shown.
-```
-
-### P45 — wavelength coefficients
-
-> ⚠ **Check first:** The claim that a good result repeats smoothly from slice to slice.
-
-- Site: `SolveArcs.py:493` (sleep :495)
-- Helper: `pause(...)`
-- Figure: F43 (pl >= 1; one per coefficient, C0 first; saved as `arc_..._coef<k>.png` after the prompt)
-- Changes reduction: No
-- Status:
-
-**what**
-```text
-One coefficient of the wavelength solution for every bar.
-```
-
-**help**
-```text
-What you see:
-  Title "COEF <k> VALUES <Ck> = <mean> +- <std>": coefficient k of each
-  bar's wavelength polynomial in CCD pixel, against bar number. C0 is
-  the wavelength (A) at the first pixel, C1 the dispersion (A/px),
-  higher terms the curvature. Blue diamonds: values. Black dash-dot
-  lines: slice boundaries. One plot per coefficient.
-What to look for:
-  Good: a smooth pattern within and between slices, no isolated
-  points.
-  Bad: a bar far off its neighbours has a poor solution (compare its
-  N lines and RMS in the next plots).
-Your options:
-  <cr>  next coefficient (or the next plot). Display only.
-Default:
-  <cr> continues. At plot_level 1 the plot is shown for plot_pause
-  seconds; at plot_level 0 it is not drawn.
-```
-
-### P46 — number of lines per bar
-
-- Site: `SolveArcs.py:533` (sleep :535)
-- Helper: `pause(...)`
-- Figure: F44 (pushed at pl >= 1; saved as `arc_..._nlines.png` at every plot_level)
-- Changes reduction: No
-- Status:
-
-**what**
-```text
-Number of arc lines used in the wavelength fit of every bar.
-```
-
-**help**
-```text
-What you see:
-  Title "FIT STATS <Nlns> = <mean> +- <std>": number of lines in each
-  bar's final fit, against bar number. Blue diamonds: values. Red:
-  mean. Green dashed: mean +- 1 standard deviation. Black dash-dot:
-  slice boundaries.
-What to look for:
-  Good: similar numbers for all bars.
-  Bad: bars with far fewer lines than the rest; their solutions are
-  less constrained, especially at the ends of the range.
-Your options:
-  <cr>  continue. Display only.
-Default:
-  <cr> continues. At plot_level 1 the plot is shown for plot_pause
-  seconds; at plot_level 0 it is not drawn (the PNG is still saved).
-```
-
-### P47 — fit RMS per bar
-
-> ⚠ **Check first:** No numbers for read noise or RMS, only "close to the amp's usual value".
-
-- Site: `SolveArcs.py:573` (sleep :575)
-- Helper: `pause(...)`
-- Figure: F45 (pushed at pl >= 1; saved as `arc_..._resid.png` at every plot_level)
-- Changes reduction: No
-- Status:
-
-**what**
-```text
-RMS of the wavelength fit of every bar (Angstrom).
-```
-
-**help**
-```text
-What you see:
-  Title "FIT STATS <RMS> = <mean> +- <std>": RMS residual (A) of each
-  bar's final fit, against bar number. Blue diamonds: values. Red:
-  mean. Green dashed: mean +- 1 standard deviation. Black dash-dot:
-  slice boundaries.
-What to look for:
-  Good: uniformly low RMS, well below one pixel's dispersion.
-  Bad: isolated bars or whole slices with high RMS: check them with
-  the bar review (plot_level 2) before trusting those slices.
-Your options:
-  <cr>  continue. Display only.
-Default:
-  <cr> continues. At plot_level 1 the plot is shown for plot_pause
-  seconds; at plot_level 0 it is not drawn (the PNG is still saved).
-```
-
-## SubtractOverscan
-
-### P48 — overscan, per amplifier
-
-- Site: `SubtractOverscan.py:116`; prompt at pl >= 3, sleep at pl 2 (:118)
-- Helper: `pause(...)` inside a kept `plot_level >= 3` test; the pl 2 sleep must stay (P.3: `pause` alone would prompt at pl 2).
-- Figure: F46 (pl >= 2; the amplifier just drawn)
-- Changes reduction: No
-- Status:
-
-**what**
-```text
-Overscan of one amplifier along the readout, with the fit used for the noise estimate.
-```
-
-**help**
-```text
-What you see:
-  Title "Img # <n> OSCAN [x0:x1, y0:y1] amp <a>, noise: <s> e-/px".
-  Blue circles: median of the overscan columns for each row (counts).
-  Red thick line: polynomial fit; the residuals give the read noise in
-  the title (OSCNRN<a>). The value subtracted from the amplifier is a
-  single number, the median of the overscan region (OSCNVAL<a>).
-What to look for:
-  Good: a flat, smooth level the fit follows; a ramp only in the first
-  or last 50 rows (excluded from the fit).
-  Bad: jumps, strong gradients or a noise value much higher than usual
-  for this amplifier: an electronics problem in this frame.
-Your options:
-  <cr>  continue (next amplifier). Display only.
-Default:
-  <cr> continues. At plot_level 2 each amplifier is shown for
-  plot_pause seconds; below plot_level 2 nothing is drawn.
-```
-
-### P49 — overscan, all amplifiers
-
-- Site: `SubtractOverscan.py:140` (sleep :142 is dead code)
-- Helper: `pause(...)` inside the existing `plot_level >= 3` block.
-- Figure: the grid of the F46 figures (saved as `oscan_<frame>.png` before the prompt)
-- Changes reduction: No
-- Status:
-- Reviewer note: `bokeh_clear` (:143) now returns when the session is `None` (B10 fixed in T.11, `bokeh_plotting.py:38`).
-
-**what**
-```text
-Overscan of all amplifiers of this frame side by side.
-```
-
-**help**
-```text
-What you see:
-  The overscan plots of all amplifiers of this frame in one grid (blue
-  circles: row medians; red: fit), each titled with its noise.
-What to look for:
-  Good: all amplifiers flat and smooth, with similar noise.
-  Bad: one amplifier with jumps, gradients or much higher noise than
-  the others.
-Your options:
-  <cr>  continue. Display only.
-Default:
-  <cr> continues. Below plot_level 3 this grid is not shown.
-```
-
-## SubtractScatteredLight
-
-### P50 — scattered light
-
-> ⚠ **Check first:** What the ±180 px columns used for scattered light sample on the detector.
-
-- Site: `SubtractScatteredLight.py:107` (sleep :109)
-- Helper: `pause(...)`
-- Figure: F47 (pl >= 1, not for nod-and-shuffle frames or with `skipscat`; saved as `scat_<frame>_....png` after the prompt)
-- Changes reduction: No
-- Status:
-- Reviewer note: I describe the measured region only as "the central columns"; please add the physical reason (which part of the detector these columns sample) if wanted.
-
-**what**
-```text
-Scattered-light profile along CCD y and the smooth model subtracted from every column.
-```
-
-**help**
-```text
-What you see:
-  Title "SCATTERED LIGHT FIT": median of the central CCD columns
-  (+- 180 unbinned px about the centre) for every row, in e-.
-  Blue circles ("Scat"): the medians. Red thick line ("Smooth"):
-  Savitzky-Golay smoothing (window 151, 303 or 501 rows, wider for
-  noisier data); this curve is subtracted from every column.
-What to look for:
-  Good: the red curve follows the slow trend of the points without
-  following individual bumps.
-  Bad: the curve chasing features, or a level that looks like real
-  signal rather than a smooth background: it would be subtracted from
-  the science data.
-Your options:
-  <cr>  continue. Display only.
-Default:
-  <cr> continues. At plot_level 1 the plot is shown for plot_pause
-  seconds; at plot_level 0 it is not drawn.
-```
-
-## TraceBars
-
-### P51 — bar traces
-
-- Site: `TraceBars.py:144` (sleep :146)
-- Helper: `pause(...)`
-- Figure: F48 (pl >= 1; saved as `bars_<frame>_....png` after the prompt)
-- Changes reduction: No
-- Status:
-
-**what**
-```text
-Continuum-bar traces: control points used for the geometric solution.
-```
-
-**help**
-```text
-What you see:
-  Title "SPATIAL CONTROL POINTS" on CCD x, y.
-  Blue x: centroids of each bar traced up and down the CCD from the
-  middle row. Red circles: the bar positions found on the middle row.
-What to look for:
-  Good: 120 continuous traces (24 groups of 5) running the length of
-  the image, each starting from a red circle, without gaps or jumps.
-  Bad: a trace that stops early, jumps to a neighbouring bar, or is
-  missing: the geometry of that slice will be wrong.
-Your options:
-  <cr>  continue. Display only.
-Default:
-  <cr> continues. At plot_level 1 the plot is shown for plot_pause
-  seconds; at plot_level 0 it is not drawn.
-```
-
----
-
-## Scripts
-
-All eight prompts run before the framework starts, with no figure and no
-`plot_level` guard. The helper is `ask_yes_quit(logger, prompt, help,
-who=...)`: `<cr>` proceeds, `q`/`quit` quits, other text asks again. The
-line printed before the prompt today (`Blue channel requested, but red
-files in list` or the red variant) becomes `what`.
-
-Common reviewer notes: B8 (PR3b): the channel test is a substring match on
-the whole path (`'kr' in frame.lower()`; in `kcwi_rti` `'kr'`/`'KR'`), so a
-directory name containing `kr`/`kb` triggers the prompt, and it repeats for
-every matching file. Today any answer without a `q` proceeds (e.g. `y`);
-after PR3a such text re-prompts (B5/§8.2 interface).
-
-### S01 — reduce_kcwi -f, red file in a blue reduction
-
-- Site: `kcwidrp/scripts/reduce_kcwi.py:422` (inventory :437)
-- Helper: `ask_yes_quit(logger, prompt="Proceed? <cr>=yes or q=quit", help, who="reduce_kcwi")`
-- Changes reduction: **Yes**: quit empties the frame list; `ingest_data` is called with no frames, so nothing is reduced.
-- Log on quit (suggested): `reduce_kcwi: user quit at the channel check; no frames ingested`
-- Status:
-
-**what**
-```text
-Blue channel requested (-b), but this file name looks like a red-channel (kr) file.
-```
-
-**help**
-```text
-What you see:
-  No plot. The reduction was started for the blue channel, and the
-  path of one of the frames given with -f contains "kr" (red files
-  are named kr<date>_<n>.fits).
-What to look for:
-  Check the file: a red frame in a blue reduction will not combine
-  with the blue calibrations. A directory name containing "kr" also
-  triggers this check (known issue); then it is safe to proceed.
-Your options:
-  <cr>      keep this frame and go on (the next file is checked too).
-  q / quit  stop: no frames are reduced.
-Default:
-  <cr> proceeds with this frame.
-```
-
-### S02 — reduce_kcwi -f, blue file in a red reduction
-
-- Site: `reduce_kcwi.py:428` (inventory :443)
-- Helper: as S01
-- Changes reduction: **Yes** (as S01)
-- Status:
-
-**what**
-```text
-Red channel requested (-r), but this file name looks like a blue-channel (kb) file.
-```
-
-**help**
-```text
-What you see:
-  No plot. The reduction was started for the red channel, and the path
-  of one of the frames given with -f contains "kb" (blue files are
-  named kb<date>_<n>.fits).
-What to look for:
-  Check the file: a blue frame in a red reduction will not combine
-  with the red calibrations. A directory name containing "kb" also
-  triggers this check (known issue); then it is safe to proceed.
-Your options:
-  <cr>      keep this frame and go on (the next file is checked too).
-  q / quit  stop: no frames are reduced.
-Default:
-  <cr> proceeds with this frame.
-```
-
-### S03 — reduce_kcwi -l, red file in a blue reduction
-
-- Site: `reduce_kcwi.py:447` (inventory :462)
-- Helper: as S01
-- Changes reduction: **Yes**: quit empties the list read so far and stops reading the file; `ingest_data` gets no frames (the `<list>_ingest` stamp file is still written).
-- Status:
-
-**what**
-```text
-Blue channel requested (-b), but this file in the list looks like a red-channel (kr) file.
-```
-
-**help**
-```text
-What you see:
-  No plot. The reduction was started for the blue channel, and a line
-  of the file list given with -l contains "kr" (red files are named
-  kr<date>_<n>.fits).
-What to look for:
-  Check the list: a red frame in a blue reduction will not combine
-  with the blue calibrations. A directory name containing "kr" also
-  triggers this check (known issue); then it is safe to proceed.
-Your options:
-  <cr>      keep this frame and go on (the next line is checked too).
-  q / quit  stop: no frames from the list are reduced.
-Default:
-  <cr> proceeds with this frame.
-```
-
-### S04 — reduce_kcwi -l, blue file in a red reduction
-
-- Site: `reduce_kcwi.py:453` (inventory :468)
-- Helper: as S01
-- Changes reduction: **Yes** (as S03)
-- Status:
-
-**what**
-```text
-Red channel requested (-r), but this file in the list looks like a blue-channel (kb) file.
-```
-
-**help**
-```text
-What you see:
-  No plot. The reduction was started for the red channel, and a line
-  of the file list given with -l contains "kb" (blue files are named
-  kb<date>_<n>.fits).
-What to look for:
-  Check the list: a blue frame in a red reduction will not combine
-  with the red calibrations. A directory name containing "kb" also
-  triggers this check (known issue); then it is safe to proceed.
-Your options:
-  <cr>      keep this frame and go on (the next line is checked too).
-  q / quit  stop: no frames from the list are reduced.
-Default:
-  <cr> proceeds with this frame.
-```
-
-### S05 — kcwi_rti -f, red file in a blue reduction
-
-- Site: `kcwidrp/scripts/kcwi_rti.py:400` (inventory :412)
-- Helper: `ask_yes_quit(..., who="kcwi_rti")`
-- Changes reduction: **No, today**: B11 (PR3b): the `-f` branch ingests `args.frames`, not the emptied list, so `q` stops only the checking; all frames are still reduced.
-- Status:
-- Reviewer note: the help text states the B11 behaviour honestly; when B11 is fixed in PR3b, replace the `q / quit` line with the S01 wording.
-
-**what**
-```text
-Blue channel requested (-b), but this file name looks like a red-channel (kr) file.
-```
-
-**help**
-```text
-What you see:
-  No plot. The real-time reduction was started for the blue channel,
-  and the path of one of the frames given with -f contains "kr" or
-  "KR" (red files are named kr<date>_<n>.fits).
-What to look for:
-  Check the file: a red frame in a blue reduction will not combine
-  with the blue calibrations. A directory name containing "kr" also
-  triggers this check (known issue); then it is safe to proceed.
-Your options:
-  <cr>      keep this frame and go on (the next file is checked too).
-  q / quit  stop checking. Note: in this version all frames given
-            with -f are still reduced (known bug); press Ctrl-C to
-            stop the run.
-Default:
-  <cr> proceeds with this frame.
-```
-
-### S06 — kcwi_rti -f, blue file in a red reduction
-
-- Site: `kcwi_rti.py:406` (inventory :418)
-- Helper: as S05
-- Changes reduction: **No, today** (B11, as S05)
-- Status:
-
-**what**
-```text
-Red channel requested (-r), but this file name looks like a blue-channel (kb) file.
-```
-
-**help**
-```text
-What you see:
-  No plot. The real-time reduction was started for the red channel,
-  and the path of one of the frames given with -f contains "kb" or
-  "KB" (blue files are named kb<date>_<n>.fits).
-What to look for:
-  Check the file: a blue frame in a red reduction will not combine
-  with the red calibrations. A directory name containing "kb" also
-  triggers this check (known issue); then it is safe to proceed.
-Your options:
-  <cr>      keep this frame and go on (the next file is checked too).
-  q / quit  stop checking. Note: in this version all frames given
-            with -f are still reduced (known bug); press Ctrl-C to
-            stop the run.
-Default:
-  <cr> proceeds with this frame.
-```
-
-### S07 — kcwi_rti -l, red file in a blue reduction
-
-- Site: `kcwi_rti.py:422` (inventory :434)
-- Helper: as S05
-- Changes reduction: **Yes**: quit empties the list; `ingest_data` gets no frames (the `<list>_ingest` stamp file is still written).
-- Status:
-
-**what**
-```text
-Blue channel requested (-b), but this file in the list looks like a red-channel (kr) file.
-```
-
-**help**
-```text
-What you see:
-  No plot. The real-time reduction was started for the blue channel,
-  and a line of the file list given with -l contains "kr" or "KR"
-  (red files are named kr<date>_<n>.fits).
-What to look for:
-  Check the list: a red frame in a blue reduction will not combine
-  with the blue calibrations. A directory name containing "kr" also
-  triggers this check (known issue); then it is safe to proceed.
-Your options:
-  <cr>      keep this frame and go on (the next line is checked too).
-  q / quit  stop: no frames from the list are reduced.
-Default:
-  <cr> proceeds with this frame.
-```
-
-### S08 — kcwi_rti -l, blue file in a red reduction
-
-- Site: `kcwi_rti.py:428` (inventory :440)
-- Helper: as S05
-- Changes reduction: **Yes** (as S07)
-- Status:
-
-**what**
-```text
-Red channel requested (-r), but this file in the list looks like a blue-channel (kb) file.
-```
-
-**help**
-```text
-What you see:
-  No plot. The real-time reduction was started for the red channel,
-  and a line of the file list given with -l contains "kb" or "KB"
-  (blue files are named kb<date>_<n>.fits).
-What to look for:
-  Check the list: a blue frame in a red reduction will not combine
-  with the red calibrations. A directory name containing "kb" also
-  triggers this check (known issue); then it is safe to proceed.
-Your options:
-  <cr>      keep this frame and go on (the next line is checked too).
-  q / quit  stop: no frames from the list are reduced.
-Default:
-  <cr> proceeds with this frame.
-```
-
----
-
 ## Counts
 
 | File | Prompts | IDs |
 |---|---|---|
-| ArcOffsets.py | 2 | P01–P02 |
-| ExtractArcs.py | 2 | P03–P04 |
-| FindBars.py | 3 | P05–P07 |
-| FitCenter.py | 3 | P08–P10 |
-| GetAtlasLines.py | 1 | P11 |
-| MakeCube.py | 1 | P12 |
-| MakeInvsens.py | 7 | P13–P19 |
-| MakeMasterBias.py | 1 | P20 |
-| MakeMasterFlat.py | 13 | P21–P33 (P25 = 2 `input(` lines) |
-| MakeMasterSky.py | 3 | P34–P36 |
-| NandshuffSubtractSky.py | 2 | P37–P38 |
-| ReadAtlas.py | 2 | P39–P40 |
-| SolveAIT.py | 1 | P41 |
-| SolveArcs.py | 6 | P42–P47 |
-| SubtractOverscan.py | 2 | P48–P49 |
-| SubtractScatteredLight.py | 1 | P50 |
-| TraceBars.py | 1 | P51 |
-| **Primitives (17 files)** | **51** | from 52 `input(` lines |
 | scripts/reduce_kcwi.py | 4 | S01–S04 |
 | scripts/kcwi_rti.py | 4 | S05–S08 |
 | **Scripts** | **8** | |
+| SubtractOverscan.py | 2 | P48–P49 |
+| MakeMasterBias.py | 1 | P20 |
+| FindBars.py | 3 | P05–P07 |
+| TraceBars.py | 1 | P51 |
+| ExtractArcs.py | 2 | P03–P04 |
+| ArcOffsets.py | 2 | P01–P02 |
+| ReadAtlas.py | 2 | P39–P40 |
+| FitCenter.py | 3 | P08–P10 |
+| GetAtlasLines.py | 1 | P11 |
+| SolveArcs.py | 6 | P42–P47 |
+| SolveAIT.py | 1 | P41 |
+| MakeCube.py | 1 | P12 |
+| SubtractScatteredLight.py | 1 | P50 |
+| MakeMasterFlat.py | 13 | P21–P33 (P25 = 2 `input(` lines) |
+| MakeMasterSky.py | 3 | P34–P36 |
+| MakeInvsens.py | 7 | P13–P19 |
+| NandshuffSubtractSky.py | 2 | P37–P38 |
+| **Primitives (17 files)** | **51** | from 52 `input(` lines |
 | **Total** | **59** | matches inventory §5 |
 
 By helper: `pause` 35 (P02, P05, P06, P09–P11, P16–P18, P20–P24,
@@ -2250,15 +2259,23 @@ Slice boundaries (black dash-dot) come from `kcwi_plotting.py:807`.
 
 | ID | Colour in help | Code |
 |---|---|---|
+| S01–S08 | none (no figure) | — |
+| P48, P49 | blue circles / red thick | SubtractOverscan.py:110 default / :111 |
+| P20 | navy bars | MakeMasterBias.py:144-145 `fill_color="navy"` (white edges, alpha 0.5) |
+| P20 | pink thick line | MakeMasterBias.py:146 `line_color="#ff8888"` |
+| P20 | red verticals | MakeMasterBias.py:148, :150 |
+| P05 | blue / red x / grey dashed | FindBars.py:89 / :90-92 / :93-94 |
+| P06 | blue / red x / grey dashed | FindBars.py:127 / :128-130 / :131-132 |
+| P07 | blue line / red circles / green | FindBars.py:157 / :158 / :159-160 |
+| P51 | blue x / red circles | TraceBars.py:139 / :140-141 (`scatter`, no marker → circle) |
+| P03 | blue / red / green | ExtractArcs.py:145 / :146 / :147 |
+| P04 | blue / red | ExtractArcs.py:212 / :213 |
 | P01 | green (reference bar) | ArcOffsets.py:86 `color='green'` |
 | P01 | red (this bar) | ArcOffsets.py:89 `color='red'` |
 | P02 | blue diamonds | ArcOffsets.py:113 default |
 | P02 | black dash-dot | ArcOffsets.py:117 `oplot_slices` → kcwi_plotting.py:807 |
-| P03 | blue / red / green | ExtractArcs.py:145 / :146 / :147 |
-| P04 | blue / red | ExtractArcs.py:212 / :213 |
-| P05 | blue / red x / grey dashed | FindBars.py:89 / :90-92 / :93-94 |
-| P06 | blue / red x / grey dashed | FindBars.py:127 / :128-130 / :131-132 |
-| P07 | blue line / red circles / green | FindBars.py:157 / :158 / :159-160 |
+| P39 | blue / red / green | ReadAtlas.py:183 default / :186-187 / :189-190 |
+| P40 | blue / red / magenta dash-dot | ReadAtlas.py:207 default / :211-213 / :219 |
 | P08 | red circles / blue line | FitCenter.py:331 (`scatter`, no marker → circle) / :332 |
 | P08 | green vertical / red vertical | FitCenter.py:334 / :336-337 |
 | P09 | blue x / red line | FitCenter.py:359 default / :360-361; slices :365 |
@@ -2266,20 +2283,19 @@ Slice boundaries (black dash-dot) come from `kcwi_plotting.py:807`.
 | P11 | light grey / blue | GetAtlasLines.py:527-528 `'lightgray'` / :529-530 |
 | P11 | cyan, red, orange, brown, magenta diamonds | GetAtlasLines.py:534, :538, :542, :546, :550 |
 | P11 | green diamonds / brown verticals | GetAtlasLines.py:552-553 / :554-556 |
+| P42 | blue line / green circles / red vertical | SolveArcs.py:233-234 / :235-236 / :237 |
+| P42 | black line / red circles | SolveArcs.py:245 / :247 |
+| P42 | green dashed / magenta dash-dot / black dash-dot | SolveArcs.py:250 / :253 / :256 |
+| P43 | green / orange / red diamonds | SolveArcs.py:394 / :397 / :400-401 |
+| P43 | black dotted / grey dash-dot / magenta | SolveArcs.py:404 / :405-406 `'gray'` / :407-408 |
+| P44 | dark grey line and diamonds | SolveArcs.py:421 / :422 `'darkgrey'` |
+| P44 | blue / magenta / green / orange / red | SolveArcs.py:425 / :427-428 / :430-431 / :433-434 / :435-436 |
+| P45 | blue diamonds / black dash-dot | SolveArcs.py:485 default / :489 `oplot_slices` |
+| P46 | blue / red / green dashed / black dash-dot | SolveArcs.py:509 default / :515-516 / :517-525 / :528 |
+| P47 | blue / red / green dashed / black dash-dot | SolveArcs.py:552 default / :555-556 / :557-565 / :568 |
+| P41 | blue / red / green / orange | SolveAIT.py:160 / :161 / :162-164 / :165-167 |
 | P12 | Spectral11 (purple/blue low → dark red high), grey NaN | MakeCube.py:276-277 `palette="Spectral11"`; `_plot_render.py:38-44` |
-| P13 | blue x | MakeInvsens.py:193 default |
-| P14 | black / green / blue / red | MakeInvsens.py:354 / :355, :357 / :358, :360 / :361 |
-| P15 | black / green / blue / red | MakeInvsens.py:452 / :453, :455 / :456, :458 / :459 |
-| P15 | orange dashed | MakeInvsens.py:462, :464 |
-| P16 | black / red / blue x / green | MakeInvsens.py:569 / :571 / :573 default / :574, :576 |
-| P16 | black dashed / dash-dot | MakeInvsens.py:577-578 / :579-580 |
-| P17 | black / red / blue x / green | MakeInvsens.py:596 / :597 / :598 default / :599, :601 |
-| P18 | black / red / green | MakeInvsens.py:616 / :617 / :618, :620 |
-| P19 | black / blue x / green | MakeInvsens.py:636 / :639 default / :640, :642 |
-| P19 | red / black dashed | MakeInvsens.py:643-644 / :645-650 |
-| P20 | navy bars | MakeMasterBias.py:144-145 `fill_color="navy"` (white edges, alpha 0.5) |
-| P20 | pink thick line | MakeMasterBias.py:146 `line_color="#ff8888"` |
-| P20 | red verticals | MakeMasterBias.py:148, :150 |
+| P50 | blue circles / red thick | SubtractScatteredLight.py:101 default / :102 |
 | P21 | blue circles / red | MakeMasterFlat.py:265 default / :266 |
 | P22 | blue circles | MakeMasterFlat.py:314 default |
 | P22 | purple / red line | MakeMasterFlat.py:315-316 / :317 |
@@ -2302,21 +2318,14 @@ Slice boundaries (black dash-dot) come from `kcwi_plotting.py:807`.
 | P34 | purple / green / blue / red | MakeMasterSky.py:338-339 / :341 / :342-343 / :344 |
 | P35 | purple / green / blue / red | MakeMasterSky.py:420-421 / :423 / :424-431 / :432 |
 | P36 | purple / red / green | MakeMasterSky.py:598 / :600 / :601-602 |
+| P13 | blue x | MakeInvsens.py:193 default |
+| P14 | black / green / blue / red | MakeInvsens.py:354 / :355, :357 / :358, :360 / :361 |
+| P15 | black / green / blue / red | MakeInvsens.py:452 / :453, :455 / :456, :458 / :459 |
+| P15 | orange dashed | MakeInvsens.py:462, :464 |
+| P16 | black / red / blue x / green | MakeInvsens.py:569 / :571 / :573 default / :574, :576 |
+| P16 | black dashed / dash-dot | MakeInvsens.py:577-578 / :579-580 |
+| P17 | black / red / blue x / green | MakeInvsens.py:596 / :597 / :598 default / :599, :601 |
+| P18 | black / red / green | MakeInvsens.py:616 / :617 / :618, :620 |
+| P19 | black / blue x / green | MakeInvsens.py:636 / :639 default / :640, :642 |
+| P19 | red / black dashed | MakeInvsens.py:643-644 / :645-650 |
 | P37, P38 | none (no figure) | — |
-| P39 | blue / red / green | ReadAtlas.py:183 default / :186-187 / :189-190 |
-| P40 | blue / red / magenta dash-dot | ReadAtlas.py:207 default / :211-213 / :219 |
-| P41 | blue / red / green / orange | SolveAIT.py:160 / :161 / :162-164 / :165-167 |
-| P42 | blue line / green circles / red vertical | SolveArcs.py:233-234 / :235-236 / :237 |
-| P42 | black line / red circles | SolveArcs.py:245 / :247 |
-| P42 | green dashed / magenta dash-dot / black dash-dot | SolveArcs.py:250 / :253 / :256 |
-| P43 | green / orange / red diamonds | SolveArcs.py:394 / :397 / :400-401 |
-| P43 | black dotted / grey dash-dot / magenta | SolveArcs.py:404 / :405-406 `'gray'` / :407-408 |
-| P44 | dark grey line and diamonds | SolveArcs.py:421 / :422 `'darkgrey'` |
-| P44 | blue / magenta / green / orange / red | SolveArcs.py:425 / :427-428 / :430-431 / :433-434 / :435-436 |
-| P45 | blue diamonds / black dash-dot | SolveArcs.py:485 default / :489 `oplot_slices` |
-| P46 | blue / red / green dashed / black dash-dot | SolveArcs.py:509 default / :515-516 / :517-525 / :528 |
-| P47 | blue / red / green dashed / black dash-dot | SolveArcs.py:552 default / :555-556 / :557-565 / :568 |
-| P48, P49 | blue circles / red thick | SubtractOverscan.py:110 default / :111 |
-| P50 | blue circles / red thick | SubtractScatteredLight.py:101 default / :102 |
-| P51 | blue x / red circles | TraceBars.py:139 / :140-141 (`scatter`, no marker → circle) |
-| S01–S08 | none (no figure) | — |
