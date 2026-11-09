@@ -174,10 +174,12 @@ class SolveAIT(BasePrimitive):
                         what="AIT data: arc and bar spectrum of this trace on the output wavelength grid.",
                         help=(
                             "What you see:\n"
-                            "  Title \"ARC # <n>\": arc (blue) and continuum-bar (red) spectra of AIT\n"
-                            "  trace n, resampled onto the output wavelength grid.\n"
+                            "  Title \"ARC # <n>\": spectra of AIT trace n, resampled onto the output\n"
+                            "  wavelength grid.\n"
+                            "  Black: arc spectrum.\n"
+                            "  Cyan: continuum-bar spectrum.\n"
                             "  Green verticals: good wavelength range (WAVGOOD).\n"
-                            "  Orange verticals: full wavelength range (WAVALL).\n"
+                            "  Grey verticals: full wavelength range (WAVALL).\n"
                             "What to look for:\n"
                             "  Good: sharp arc lines at the right wavelengths, smooth bar spectrum,\n"
                             "  both covering the green range.\n"

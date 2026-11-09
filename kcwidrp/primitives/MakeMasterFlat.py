@@ -269,11 +269,11 @@ class MakeMasterFlat(BaseImg):
                 pause(self.config.instrument, self.logger,
                       what="Internal flat: lamp spectrum slope near the middle wavelength, reference slice.",
                       help=("What you see:\n"
-                            '  Title "WAVE SLOPE FIT". Blue circles: counts of the un-vignetted part\n'
-                            "  of the reference slice (slice 9) in a narrow window (1/15 of the\n"
-                            "  range) around the middle wavelength; x is wavelength in A (the axis\n"
-                            '  label says "wave px"). Red: quadratic fit, divided out before the\n'
-                            "  vignetting is measured.\n"
+                            "  Title \"WAVE SLOPE FIT\": the un-vignetted part of the reference slice\n"
+                            "  (slice 9) in a narrow window (1/15 of the range) around the middle\n"
+                            "  wavelength; x is wavelength in A (the axis label says \"wave px\").\n"
+                            "  Black circles: counts.\n"
+                            "  Red: quadratic fit, divided out before the vignetting is measured.\n"
                             "What to look for:\n"
                             "  Good: the red line follows the trend of the points.\n"
                             "  Bad: a fit pulled away by outliers, which then tilts the vignetting\n"
@@ -344,12 +344,15 @@ class MakeMasterFlat(BaseImg):
                 pause(self.config.instrument, self.logger,
                       what="Internal flat: vignetting along the slice edge and its linear correction.",
                       help=("What you see:\n"
-                            '  Title "Vignetting": slope-corrected flat ratio against position along\n'
+                            "  Title \"Vignetting\": slope-corrected flat ratio against position along\n"
                             "  the reference slice (px); y range fixed at 0.5 - 1.25.\n"
-                            "  Blue circles: data. Purple: linear fit to the vignetted part (between\n"
-                            "  the blue verticals). Red line: linear fit to the un-vignetted part\n"
-                            "  (between the green verticals). Red vertical: where the two fits cross.\n"
-                            "  Black verticals: buffer zone either side of the crossing.\n"
+                            "  Black circles: data.\n"
+                            "  Red dashed: linear fit to the vignetted part.\n"
+                            "  Purple dashed verticals: the window of that fit.\n"
+                            "  Red line: linear fit to the un-vignetted part.\n"
+                            "  Purple verticals: the window of that fit.\n"
+                            "  Magenta vertical: where the two fits cross.\n"
+                            "  Purple dotted verticals: buffer zone either side of the crossing.\n"
                             "What to look for:\n"
                             "  Good: each fit follows the data in its own region and they cross at\n"
                             "  the knee where the fall-off begins.\n"
@@ -404,9 +407,11 @@ class MakeMasterFlat(BaseImg):
                 pause(self.config.instrument, self.logger,
                       what="Internal flat: smooth fit across the buffer zone between corrected and uncorrected parts.",
                       help=("What you see:\n"
-                            '  Title "Buffer Region": ratio data within the buffer zone around the\n'
-                            "  vignetting knee, against slice position. Blue circles: data. Red:\n"
-                            "  cubic fit used to join the corrected and uncorrected parts smoothly.\n"
+                            "  Title \"Buffer Region\": ratio data within the buffer zone around the\n"
+                            "  vignetting knee, against slice position.\n"
+                            "  Black circles: data.\n"
+                            "  Red: cubic fit used to join the corrected and uncorrected parts\n"
+                            "    smoothly.\n"
                             "What to look for:\n"
                             "  Good: a smooth red curve through the points.\n"
                             "  Bad: a curve that swings away from the data at either end, which\n"
@@ -493,12 +498,14 @@ class MakeMasterFlat(BaseImg):
                 pause(self.config.instrument, self.logger,
                       what="BM grating flat: the 'ledge' step near its predicted wavelength, reference slice.",
                       help=("What you see:\n"
-                            '  Title "Ledge": reference-slice flat within +- 25 A of the wavelength\n'
+                            "  Title \"Ledge\": reference-slice flat within +- 25 A of the wavelength\n"
                             "  where the BM grating's ledge (a step in the flat-field spectrum) is\n"
-                            "  predicted from CWAVE. Green circles (blue outline): smoothed data.\n"
-                            "  Blue line: spline fit. Red vertical: predicted ledge wavelength.\n"
+                            "  predicted from CWAVE.\n"
+                            "  Black circles: smoothed data.\n"
+                            "  Red line: spline fit.\n"
+                            "  Blue dashed vertical: predicted ledge wavelength.\n"
                             "What to look for:\n"
-                            "  Good: a clear step near the red line. Its position is found from the\n"
+                            "  Good: a clear step near the blue line. Its position is found from the\n"
                             "  derivative in the next plot.\n"
                             "  Bad: no step, or several similar steps; then the peak choice in the\n"
                             "  next step needs care.\n"
@@ -547,14 +554,16 @@ class MakeMasterFlat(BaseImg):
                             "Peak? <int> (<cr> = highest peak, index %d)" %
                             auto_ipk,
                             help=("What you see:\n"
-                                  '  Title "Deriv": derivative of the ledge fit, in 0.5 A steps, against\n'
-                                  '  index 0-59 (axis "px (Wavelength)"; index i is at predicted ledge\n'
-                                  "  wavelength - 15 A + 0.5 i A). Blue circles: derivative.\n"
-                                  "  Green vertical (index 30): the predicted ledge wavelength.\n"
-                                  "  Red verticals: peaks found (height >= 20); there is more than one.\n"
+                                  "  Title \"Deriv\": derivative of the ledge fit, in 0.5 A steps, against\n"
+                                  "  index 0-59 (axis \"px (Wavelength)\"; index i is at predicted ledge\n"
+                                  "  wavelength - 15 A + 0.5 i A).\n"
+                                  "  Black circles: derivative.\n"
+                                  "  Blue dashed vertical (index 30): the predicted ledge wavelength.\n"
+                                  "  Magenta verticals: peaks found (height >= 20); there is more than\n"
+                                  "    one.\n"
                                   "What to look for:\n"
                                   "  The ledge is a single sharp peak, usually the strongest one close to\n"
-                                  "  the green line. Smaller or broader peaks come from noise or spectral\n"
+                                  "  the blue line. Smaller or broader peaks come from noise or spectral\n"
                                   "  structure in the flat.\n"
                                   "Your options:\n"
                                   "  <index>  put the ledge at that index (read it off the x axis). The\n"
@@ -595,11 +604,12 @@ class MakeMasterFlat(BaseImg):
                         pause(self.config.instrument, self.logger,
                               what="BM ledge: derivative against wavelength with the chosen ledge position.",
                               help=("What you see:\n"
-                                    '  Title "Peak of ledge": the derivative of the ledge fit against\n'
-                                    '  wavelength (A). Blue circles: data. Red vertical ("Pk"): the ledge\n'
-                                    "  position used.\n"
+                                    "  Title \"Peak of ledge\": the derivative of the ledge fit against\n"
+                                    "  wavelength (A).\n"
+                                    "  Black circles: data.\n"
+                                    "  Magenta vertical (\"Pk\"): the ledge position used.\n"
                                     "What to look for:\n"
-                                    "  Good: the red line sits on the sharp peak you intended.\n"
+                                    "  Good: the magenta line sits on the sharp peak you intended.\n"
                                     "  Bad: it sits on a noise peak; the correction will put a step into\n"
                                     "  the flat instead of removing one.\n"
                                     "Your options:\n"
@@ -663,15 +673,18 @@ class MakeMasterFlat(BaseImg):
                         pause(self.config.instrument, self.logger,
                               what="BM ledge: flat data before and after the step correction.",
                               help=("What you see:\n"
-                                    '  Title "BM Ledge Region", within +- 25 A of the predicted ledge.\n'
-                                    "  Blue-filled circles: reference-slice flat data. Orange-filled\n"
-                                    "  circles: the same data redward of the ledge after dividing by the\n"
-                                    '  step ratio ("Corrected"). Red: spline fit to the smoothed data.\n'
-                                    "  Blue verticals: window of the blueward linear fit (purple line);\n"
-                                    "  black verticals: window of the redward linear fit (green line).\n"
-                                    '  Green vertical ("Pk"): ledge position.\n'
+                                    "  Title \"BM Ledge Region\", within +- 25 A of the predicted ledge.\n"
+                                    "  Black circles: reference-slice flat data.\n"
+                                    "  Cyan circles: the same data redward of the ledge after dividing by\n"
+                                    "    the step ratio (\"Corrected\").\n"
+                                    "  Red: spline fit to the smoothed data.\n"
+                                    "  Red dashed: blueward linear fit.\n"
+                                    "  Purple dashed verticals: the window of the blueward fit.\n"
+                                    "  Red dotted: redward linear fit.\n"
+                                    "  Purple dotted verticals: the window of the redward fit.\n"
+                                    "  Magenta vertical (\"Pk\"): ledge position.\n"
                                     "What to look for:\n"
-                                    "  Good: the orange points continue the level of the blue points below\n"
+                                    "  Good: the cyan points continue the level of the black points below\n"
                                     "  the ledge, with no step left.\n"
                                     "  Bad: a step remains or is overcorrected: the wrong peak was taken.\n"
                                     "Your options:\n"
@@ -786,12 +799,16 @@ class MakeMasterFlat(BaseImg):
             pause(self.config.instrument, self.logger,
                   what="Flat spectra of the reference slice and of the slices reaching furthest blue and red.",
                   help=("What you see:\n"
-                        '  Title "Blue/Red fits", flux (e-) against wavelength.\n'
-                        "  Black: reference slice (9), data (dots) and spline fit (line).\n"
+                        "  Title \"Blue/Red fits\", flux (e-) against wavelength. Each slice is\n"
+                        "  drawn as data (dots) and spline fit (line) in one colour.\n"
+                        "  Black: reference slice (9).\n"
                         "  Blue: the slice reaching furthest to the blue (12 for the blue\n"
-                        "  camera, 11 for red). Red: the slice reaching furthest to the red\n"
-                        "  (23 for the blue camera, 0 for red). These extend the illumination\n"
-                        "  spectrum beyond the reference slice's wavelength range.\n"
+                        "    camera, 11 for red).\n"
+                        "  Cyan: the slice reaching furthest to the red (23 for the blue\n"
+                        "    camera, 0 for red).\n"
+                        "  Green verticals: WAVGOOD.\n"
+                        "  The end slices extend the illumination spectrum beyond the\n"
+                        "  reference slice's wavelength range.\n"
                         "What to look for:\n"
                         "  Good: each line follows its dots; the curves have the same shape\n"
                         "  where they overlap.\n"
@@ -871,10 +888,10 @@ class MakeMasterFlat(BaseImg):
                 pause(self.config.instrument, self.logger,
                       what="Blue overlap: reference-slice and blue-slice flat fits.",
                       help=("What you see:\n"
-                            '  Title "Blue fits": the spline fits in the overlap near the blue end\n'
+                            "  Title \"Blue fits\": the spline fits in the overlap near the blue end\n"
                             "  of the reference slice (5-10 % into its range).\n"
-                            "  Black line and filled circles: reference slice. Blue line and filled\n"
-                            "  circles: the blue-end slice. (Circles have a blue outline.)\n"
+                            "  Black line and circles: reference slice.\n"
+                            "  Blue line and circles: the blue-end slice.\n"
                             "What to look for:\n"
                             "  Good: both curves smooth, with similar shapes; their ratio (next\n"
                             "  plot) scales the blue slice to join the reference.\n"
@@ -905,12 +922,14 @@ class MakeMasterFlat(BaseImg):
                 pause(self.config.instrument, self.logger,
                       what="Blue overlap: ratio of reference to blue-slice fit, and its linear fit.",
                       help=("What you see:\n"
-                            '  Title "Blue ratios". Black line and filled circles: reference-slice\n'
-                            "  fit divided by blue-slice fit. Blue line and filled circles: linear\n"
-                            "  fit to that ratio, used to scale the blue-slice data blueward of the\n"
-                            "  reference slice. (Circles have a blue outline.)\n"
+                            "  Title \"Blue ratios\".\n"
+                            "  Black line and circles: reference-slice fit divided by blue-slice\n"
+                            "    fit.\n"
+                            "  Red line and circles: linear fit to that ratio, used to scale the\n"
+                            "    blue-slice data blueward of the reference slice.\n"
                             "What to look for:\n"
-                            "  Good: a smooth, nearly constant ratio, well followed by the line.\n"
+                            "  Good: a smooth, nearly constant ratio, well followed by the red\n"
+                            "  line.\n"
                             "  Bad: a strongly curved or noisy ratio; the linear scaling will not\n"
                             "  match it. (If either fit crosses zero only an offset is applied.)\n"
                             "Your options:\n"
@@ -937,10 +956,10 @@ class MakeMasterFlat(BaseImg):
                 pause(self.config.instrument, self.logger,
                       what="Red overlap: reference-slice and red-slice flat fits.",
                       help=("What you see:\n"
-                            '  Title "Red fits": the spline fits in the overlap near the red end of\n'
+                            "  Title \"Red fits\": the spline fits in the overlap near the red end of\n"
                             "  the reference slice (90-95 % into its range).\n"
-                            "  Black line and filled circles: reference slice. Red line and filled\n"
-                            "  circles: the red-end slice. (Circles have a blue outline.)\n"
+                            "  Black line and circles: reference slice.\n"
+                            "  Cyan line and circles: the red-end slice.\n"
                             "What to look for:\n"
                             "  Good: both curves smooth, with similar shapes; their ratio (next\n"
                             "  plot) scales the red slice to join the reference.\n"
@@ -969,12 +988,14 @@ class MakeMasterFlat(BaseImg):
                 pause(self.config.instrument, self.logger,
                       what="Red overlap: ratio of reference to red-slice fit, and its linear fit.",
                       help=("What you see:\n"
-                            '  Title "Red ratios". Black line and filled circles: reference-slice\n'
-                            "  fit divided by red-slice fit. Red line and filled circles: linear fit\n"
-                            "  to that ratio, used to scale the red-slice data redward of the\n"
-                            "  reference slice. (Circles have a blue outline.)\n"
+                            "  Title \"Red ratios\".\n"
+                            "  Black line and circles: reference-slice fit divided by red-slice\n"
+                            "    fit.\n"
+                            "  Red line and circles: linear fit to that ratio, used to scale the\n"
+                            "    red-slice data redward of the reference slice.\n"
                             "What to look for:\n"
-                            "  Good: a smooth, nearly constant ratio, well followed by the line.\n"
+                            "  Good: a smooth, nearly constant ratio, well followed by the red\n"
+                            "  line.\n"
                             "  Bad: a strongly curved or noisy ratio; the linear scaling will not\n"
                             "  match it. (If either fit crosses zero only an offset is applied.)\n"
                             "Your options:\n"
@@ -1086,15 +1107,18 @@ class MakeMasterFlat(BaseImg):
             pause(self.config.instrument, self.logger,
                   what="Master illumination spectrum: combined flat data over the full range, with fit.",
                   help=("What you see:\n"
-                        '  Title "Master Illumination", flux (e-) against wavelength.\n'
+                        "  Title \"Master Illumination\", flux (e-) against wavelength.\n"
                         "  Black dots: reference-slice data plus the scaled blue- and red-end\n"
-                        "  slice data. Red thick line: the spline fit, the illumination\n"
-                        '  spectrum the flat is divided by. Orange verticals ("Cor lim"): the\n'
-                        "  reference slice's range; outside it the end slices are used.\n"
+                        "    slice data.\n"
+                        "  Red thick line: the spline fit, the illumination spectrum the flat\n"
+                        "    is divided by.\n"
+                        "  Purple verticals (\"Cor lim\"): the reference slice's range; outside\n"
+                        "    it the end slices are used.\n"
+                        "  Green verticals: WAVGOOD.\n"
                         "What to look for:\n"
                         "  Good: the red curve follows the data over the whole range, with no\n"
-                        "  jump at the orange lines and no ringing at the ends.\n"
-                        "  Bad: a jump or kink at an orange line (end-slice scaling), or wiggles\n"
+                        "  jump at the purple lines and no ringing at the ends.\n"
+                        "  Bad: a jump or kink at a purple line (end-slice scaling), or wiggles\n"
                         "  where the data are smooth: these go straight into the master flat.\n"
                         "Your options:\n"
                         "  <cr>  continue. Display only.\n"

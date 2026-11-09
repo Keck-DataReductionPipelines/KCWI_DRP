@@ -340,16 +340,17 @@ class FitCenter(BasePrimitive):
                     self.logger,
                     what="Atlas cross-correlation peak against trial central dispersion for this bar.",
                     help=("What you see:\n"
-                          '  Title "CENTRAL DISPERSION FIT for Bar: <n> Slice: <s>".\n'
+                          "  Title \"CENTRAL DISPERSION FIT for Bar: <n> Slice: <s>\".\n"
                           "  x: trial central dispersion (A/px), within 5 % of the calculated one.\n"
                           "  y: peak of the cross-correlation of this bar's central arc spectrum\n"
                           "  with the atlas at that dispersion.\n"
-                          '  Red circles joined by a blue line: the scan ("Data").\n'
-                          "  Green vertical: dispersion adopted (maximum of the interpolated scan,\n"
-                          "  searched in the middle third of the range).\n"
-                          "  Red vertical: dispersion calculated from the grating equation.\n"
+                          "  Black circles and line: the scan (\"Data\").\n"
+                          "  Magenta vertical: dispersion adopted (maximum of the interpolated\n"
+                          "    scan, searched in the middle third of the range).\n"
+                          "  Blue dashed vertical: dispersion calculated from the grating\n"
+                          "    equation.\n"
                           "What to look for:\n"
-                          "  Good: one clear maximum, green line on it, close to the red line.\n"
+                          "  Good: one clear maximum, magenta line on it, close to the blue line.\n"
                           "  Bad: flat, noisy or multi-peaked scan, or the maximum at the edge of\n"
                           "  the middle third: the atlas offset (ReadAtlas) or the arc is suspect.\n"
                           "Your options:\n"
@@ -390,9 +391,10 @@ class FitCenter(BasePrimitive):
             pause(self.config.instrument, self.logger,
                   what="Central wavelength found for every bar, against bar number.",
                   help=("What you see:\n"
-                        '  Title "CENTRAL VALUES", y "Central Wavelength (A)".\n'
-                        "  Blue x: the central wavelength fitted for each bar.\n"
-                        "  Red line: CWAVE, the grating central wavelength from the header.\n"
+                        "  Title \"CENTRAL VALUES\", y \"Central Wavelength (A)\".\n"
+                        "  Black x: the central wavelength fitted for each bar.\n"
+                        "  Orange dash-dot-dot: CWAVE, the grating central wavelength from the\n"
+                        "    header.\n"
                         "  Black dash-dot lines: slice boundaries.\n"
                         "What to look for:\n"
                         "  Good: values close to CWAVE, a smooth repeating pattern from slice to\n"
@@ -432,15 +434,15 @@ class FitCenter(BasePrimitive):
             pause(self.config.instrument, self.logger,
                   what="Central dispersion found for every bar, against bar number.",
                   help=("What you see:\n"
-                        '  Title "CENTRAL VALUES", y "Central Dispersion (A)".\n'
-                        "  Blue x: the central dispersion (A/px) fitted for each bar.\n"
-                        "  Red line: dispersion calculated from the grating equation.\n"
+                        "  Title \"CENTRAL VALUES\", y \"Central Dispersion (A)\".\n"
+                        "  Black x: the central dispersion (A/px) fitted for each bar.\n"
+                        "  Blue dashed line: dispersion calculated from the grating equation.\n"
                         "  Black dash-dot lines: slice boundaries.\n"
                         "What to look for:\n"
-                        "  Good: all bars close to each other and to the red line, varying\n"
+                        "  Good: all bars close to each other and to the blue line, varying\n"
                         "  smoothly across the field.\n"
                         "  Bad: isolated bars far off, or values at the edge of the scanned range\n"
-                        "  (5 % either side of the red line): a failed central fit.\n"
+                        "  (5 % either side of the blue line): a failed central fit.\n"
                         "Your options:\n"
                         "  <cr>  continue. Display only: the reduction is not changed.\n"
                         "Default:\n"

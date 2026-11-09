@@ -198,10 +198,12 @@ class MakeInvsens(BasePrimitive):
                     self.logger,
                     what="Standard-star cube: flux summed over wavelength along this slice.",
                     help=("What you see:\n"
-                          '  Title "Std Slice <n> (DAR padded)". Blue x: flux summed over the\n'
-                          "  good wavelength range, against position along slice n. The line\n"
-                          "  printed above gives the slice and the standard deviation of this\n"
-                          "  profile; the slice with the largest value is taken as the star's.\n"
+                          "  Title \"Std Slice <n> (DAR padded)\".\n"
+                          "  Black x: flux summed over the good wavelength range, against\n"
+                          "    position along slice n.\n"
+                          "  The line printed above gives the slice and the standard deviation of\n"
+                          "  this profile; the slice with the largest value is taken as the\n"
+                          "  star's.\n"
                           "What to look for:\n"
                           "  Good: the star is a clear peak in one slice (fainter in its\n"
                           "  neighbours); other slices are flat sky.\n"
@@ -400,20 +402,22 @@ class MakeInvsens(BasePrimitive):
                     self.logger,
                     "New fit limits? <float> <float> (<cr> = accept)",
                     help=("What you see:\n"
-                          "  Title \"<std> Obs Spec\": the standard star's observed spectrum\n"
-                          "  (black; e-/s, summed over the star's slices, extinction corrected).\n"
+                          "  Title \"<std> Obs Spec\". The x range is WAVALL0 - WAVALL1.\n"
+                          "  Black: the standard star's observed spectrum (e-/s, summed over the\n"
+                          "    star's slices, extinction corrected).\n"
                           "  Green verticals: WAVGOOD, the range covered by all slices.\n"
-                          '  Blue verticals: the current fit limits ("LIMITS").\n'
-                          "  Red vertical: CWAVE. The x range is WAVALL0 - WAVALL1.\n"
+                          "  Purple verticals: the current fit limits (\"LIMITS\").\n"
+                          "  Orange dash-dot-dot: CWAVE.\n"
                           "  The viewer shows the cursor position, to read off wavelengths.\n"
                           "What to look for:\n"
-                          "  Good: between the blue lines the spectrum is smooth and well exposed.\n"
+                          "  Good: between the purple lines the spectrum is smooth and well\n"
+                          "  exposed.\n"
                           "  Bad: the range includes a steep edge, noisy ends, or an artefact\n"
                           "  (e.g. near the dichroic or the end of the detector); a polynomial\n"
                           "  fitted over it will be distorted everywhere. Move the limits inward.\n"
                           "Your options:\n"
                           "  <cr>     accept the limits shown and continue.\n"
-                          '  lo hi    new limits in Angstrom, e.g. "3700 5500"; must satisfy\n'
+                          "  lo hi    new limits in Angstrom, e.g. \"3700 5500\"; must satisfy\n"
                           "           lo <= hi within WAVALL0 - WAVALL1. The plot is redrawn and\n"
                           "           you are asked again.\n"
                           "  The limits set the fit range of the inverse sensitivity and\n"
@@ -537,10 +541,13 @@ class MakeInvsens(BasePrimitive):
                     self.logger,
                     "Mask line: <start> <stop> [comment] in A (<cr> = done)",
                     help=("What you see:\n"
-                          '  Title "<std> Obs Spec": the observed standard spectrum (black), with\n'
-                          "  WAVGOOD (green), the fit limits (blue) and CWAVE (red), as before.\n"
-                          "  Orange dashed pairs: line masks already defined (from a local .lmsk\n"
-                          "  file or entered here).\n"
+                          "  Title \"<std> Obs Spec\", as before.\n"
+                          "  Black: the observed standard spectrum.\n"
+                          "  Green verticals: WAVGOOD.\n"
+                          "  Purple verticals: the fit limits.\n"
+                          "  Orange dash-dot-dot: CWAVE.\n"
+                          "  Purple dashed pairs: line masks already defined (from a local .lmsk\n"
+                          "    file or entered here).\n"
                           "What to look for:\n"
                           "  Narrow features that the reference spectrum does not reproduce at\n"
                           "  KCWI's resolution: stellar absorption lines (e.g. Balmer lines in hot\n"
@@ -673,14 +680,18 @@ class MakeInvsens(BasePrimitive):
                     pause(self.config.instrument, self.logger,
                           what="Effective efficiency of telescope + KCWI (+ atmosphere) from the standard, with fit.",
                           help=("What you see:\n"
-                                '  Title "<std> Efficiency": observed photons / expected photons on the\n'
+                                "  Title \"<std> Efficiency\": observed photons / expected photons on the\n"
                                 "  Keck aperture, in per cent (not extinction corrected).\n"
-                                '  Black: data. Red: polynomial fit. Blue x: masked points ("Rej").\n'
-                                "  Green verticals: fit limits. Black dashed / dash-dot horizontal: peak\n"
-                                "  and mean of the fit.\n"
+                                "  Black: data.\n"
+                                "  Red: polynomial fit.\n"
+                                "  Grey x: masked points (\"Rej\").\n"
+                                "  Purple verticals: fit limits.\n"
+                                "  Green verticals: WAVGOOD.\n"
+                                "  Red dashed horizontal: peak of the fit.\n"
+                                "  Red dash-dot horizontal: mean of the fit.\n"
                                 "What to look for:\n"
                                 "  Good: a smooth throughput curve; the red fit follows it without\n"
-                                "  wiggles, also near the green limits.\n"
+                                "  wiggles, also near the purple limits.\n"
                                 "  Bad: the fit oscillating at the ends (order too high, or limits too\n"
                                 "  wide), or bumps at absorption lines that were not masked.\n"
                                 "Your options:\n"
@@ -713,11 +724,14 @@ class MakeInvsens(BasePrimitive):
                     pause(self.config.instrument, self.logger,
                           what="Inverse sensitivity (flux per e-/s) from the standard star, with its polynomial fit.",
                           help=("What you see:\n"
-                                '  Title "<std> Inverse sensitivity", logarithmic y axis: reference flux\n'
+                                "  Title \"<std> Inverse sensitivity\", logarithmic y axis: reference flux\n"
                                 "  divided by observed e-/s, the curve that flux-calibrates later data.\n"
-                                "  Black: data. Red: polynomial fit (also drawn outside the limits,\n"
-                                "  where it is extrapolated). Blue x: masked points. Green verticals:\n"
-                                "  fit limits.\n"
+                                "  Black: data.\n"
+                                "  Red: polynomial fit (also drawn outside the limits, where it is\n"
+                                "    extrapolated).\n"
+                                "  Grey x: masked points.\n"
+                                "  Purple verticals: fit limits.\n"
+                                "  Green verticals: WAVGOOD.\n"
                                 "What to look for:\n"
                                 "  Good: the red fit follows the black data closely between the limits.\n"
                                 "  Bad: systematic departures, or the fit turning sharply up or down\n"
@@ -749,11 +763,13 @@ class MakeInvsens(BasePrimitive):
                     pause(self.config.instrument, self.logger,
                           what="Standard star calibrated with the fitted inverse sensitivity, over its reference spectrum.",
                           help=("What you see:\n"
-                                '  Title "<std> Calibrated", flux in erg/s/cm^2/A.\n'
+                                "  Title \"<std> Calibrated\", flux in erg/s/cm^2/A.\n"
                                 "  Black: observed spectrum times the fitted inverse sensitivity.\n"
-                                "  Red: the star's reference spectrum. Green verticals: fit limits.\n"
+                                "  Blue: the star's reference spectrum.\n"
+                                "  Purple verticals: fit limits.\n"
+                                "  Green verticals: WAVGOOD.\n"
                                 "What to look for:\n"
-                                "  Good: black lies on red between the limits, apart from narrow\n"
+                                "  Good: black lies on blue between the limits, apart from narrow\n"
                                 "  features (absorption lines, telluric bands) that differ in resolution.\n"
                                 "  Bad: broad differences (fit order or limits) or a mismatch at a\n"
                                 "  feature you meant to mask.\n"
@@ -799,10 +815,14 @@ class MakeInvsens(BasePrimitive):
                         "Current fit order = %d. New fit order? <int> "
                         "(<cr> = accept)" % ford,
                         help=("What you see:\n"
-                              '  Title "<std> Residuals = <mean> +- <std> (%)": (calibrated -\n'
+                              "  Title \"<std> Residuals = <mean> +- <std> (%)\": (calibrated -\n"
                               "  reference) / reference in per cent, over the fit range.\n"
-                              "  Black: residuals. Blue x: masked points (if any). Green verticals:\n"
-                              "  fit limits. Red: mean. Black dashed: mean +- 1 standard deviation.\n"
+                              "  Black: residuals.\n"
+                              "  Grey x: masked points (if any).\n"
+                              "  Purple verticals: fit limits.\n"
+                              "  Green verticals: WAVGOOD.\n"
+                              "  Red: mean.\n"
+                              "  Red dashed: mean +- 1 standard deviation.\n"
                               "What to look for:\n"
                               "  Good: residuals scatter around zero with no large-scale wave.\n"
                               "  Bad: a slow wave across the range (order too low), or oscillations\n"

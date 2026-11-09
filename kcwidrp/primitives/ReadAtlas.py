@@ -192,13 +192,15 @@ class ReadAtlas(BasePrimitive):
             pause(self.config.instrument, self.logger,
                   what="Cross-correlation of the reference-bar arc with the lamp atlas: offset found.",
                   help=("What you see:\n"
-                        '  Title "ATLAS OFFSET = <n> px": cross-correlation of the reference-bar\n'
+                        "  Title \"ATLAS OFFSET = <n> px\": cross-correlation of the reference-bar\n"
                         "  arc spectrum (on its calculated wavelengths) with the atlas spectrum,\n"
                         "  against offset in atlas pixels (central third of the range).\n"
-                        '  Blue: cross-correlation. Red vertical ("Peak"): offset found.\n'
-                        "  Green vertical: offset requested with ATOFF (only if set).\n"
+                        "  Black: cross-correlation.\n"
+                        "  Magenta vertical (\"Peak\"): offset found.\n"
+                        "  Blue dashed vertical: offset requested with ATOFF (only if set).\n"
                         "What to look for:\n"
-                        "  Good: one sharp peak clearly above the rest, with the red line on it.\n"
+                        "  Good: one sharp peak clearly above the rest, with the magenta line on\n"
+                        "  it.\n"
                         "  Bad: several similar peaks or a broad hump: the offset is ambiguous.\n"
                         "  Check the overlay in the next plot and set the offset there.\n"
                         "Your options:\n"
@@ -238,17 +240,17 @@ class ReadAtlas(BasePrimitive):
                     q = ask_value(
                         self.logger, "New offset <int px> (<cr> = accept)",
                         help=("What you see:\n"
-                              '  Title "ATLAS OFFSET = <A> Ang (<n> px)".\n'
-                              "  Blue: reference-bar arc spectrum (bar REFBAR), normalised, on its\n"
-                              "  calculated wavelengths minus the current offset.\n"
-                              "  Red: atlas spectrum of the lamp, normalised.\n"
-                              "  Magenta dash-dot: CWAVE.\n"
+                              "  Title \"ATLAS OFFSET = <A> Ang (<n> px)\".\n"
+                              "  Black: reference-bar arc spectrum (bar REFBAR), normalised, on its\n"
+                              "    calculated wavelengths minus the current offset.\n"
+                              "  Blue: atlas spectrum of the lamp, normalised.\n"
+                              "  Orange dash-dot-dot: CWAVE.\n"
                               "What to look for:\n"
-                              "  Good: blue and red lines coincide line for line over the range\n"
+                              "  Good: black and blue lines coincide line for line over the range\n"
                               "  (relative strengths differ; small misalignments at the ends are\n"
                               "  fixed later, since the dispersion is not yet refined).\n"
                               "  Bad: a constant shift between the two patterns. Enter a new offset:\n"
-                              "  a larger offset moves the blue spectrum to shorter wavelengths; the\n"
+                              "  a larger offset moves the black spectrum to shorter wavelengths; the\n"
                               "  title gives the offset in A and px, i.e. the atlas A per px.\n"
                               "Your options:\n"
                               "  <cr>      accept the offset shown and continue.\n"

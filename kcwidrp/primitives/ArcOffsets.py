@@ -92,17 +92,17 @@ class ArcOffsets(BasePrimitive):
                         self.logger,
                         what="Arc spectrum of this bar, shifted by its cross-correlation offset, over the reference bar.",
                         help=("What you see:\n"
-                              '  Title "BAR OFFSET for Arc: <bar> Slice: <slice> = <offset>".\n'
-                              "  Green: arc spectrum of the reference bar (REFBAR) along CCD y.\n"
-                              "  Red: arc spectrum of this bar, shifted by the offset (px) that\n"
-                              "  maximises its cross-correlation with the reference bar. Both are\n"
-                              "  tapered at the ends (Tukey window, TUKEYALPHA).\n"
+                              "  Title \"BAR OFFSET for Arc: <bar> Slice: <slice> = <offset>\".\n"
+                              "  Blue: arc spectrum of the reference bar (REFBAR) along CCD y.\n"
+                              "  Black: arc spectrum of this bar, shifted by the offset (px) that\n"
+                              "    maximises its cross-correlation with the reference bar.\n"
+                              "  Both are tapered at the ends (Tukey window, TUKEYALPHA).\n"
                               "What to look for:\n"
-                              "  Good: red and green arc lines coincide line for line over the whole\n"
+                              "  Good: black and blue arc lines coincide line for line over the whole\n"
                               "  range; different relative line strengths are normal.\n"
-                              "  Bad: red lines displaced from green everywhere, or aligned in one part\n"
-                              "  only. A bright line near an end can pull the correlation; a larger\n"
-                              "  TUKEYALPHA reduces its weight.\n"
+                              "  Bad: black lines displaced from blue everywhere, or aligned in one\n"
+                              "  part only. A bright line near an end can pull the correlation; a\n"
+                              "  larger TUKEYALPHA reduces its weight.\n"
                               "Your options:\n"
                               "  <cr>      show the next bar.\n"
                               "  <number>  jump to that bar (after the current one, up to 119);\n"
@@ -141,8 +141,9 @@ class ArcOffsets(BasePrimitive):
                 pause(self.config.instrument, self.logger,
                       what="Offset of every bar's arc spectrum from the reference bar (px), by bar number.",
                       help=("What you see:\n"
-                            '  Title "BAR OFFSETS". Blue diamonds: the offset (px along CCD y) of\n'
-                            "  each bar's arc spectrum from the reference bar, against bar number.\n"
+                            "  Title \"BAR OFFSETS\": the offset (px along CCD y) of each bar's arc\n"
+                            "  spectrum from the reference bar, against bar number.\n"
+                            "  Black diamonds: the offsets.\n"
                             "  Black dash-dot lines: slice boundaries (every 5 bars).\n"
                             "What to look for:\n"
                             "  Good: the reference bar is at 0; the five bars of a slice have similar\n"

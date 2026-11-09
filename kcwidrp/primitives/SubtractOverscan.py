@@ -119,10 +119,11 @@ class SubtractOverscan(BasePrimitive):
                             help=(
                                 "What you see:\n"
                                 "  Title \"Img # <n> OSCAN [x0:x1, y0:y1] amp <a>, noise: <s> e-/px\".\n"
-                                "  Blue circles: median of the overscan columns for each row (counts).\n"
-                                "  Red thick line: polynomial fit; the residuals give the read noise in\n"
-                                "  the title (OSCNRN<a>). The value subtracted from the amplifier is a\n"
-                                "  single number, the median of the overscan region (OSCNVAL<a>).\n"
+                                "  Black circles: median of the overscan columns for each row (counts).\n"
+                                "  Red thick line: polynomial fit; the residuals give the read noise\n"
+                                "    in the title (OSCNRN<a>).\n"
+                                "  The value subtracted from the amplifier is a single number, the\n"
+                                "  median of the overscan region (OSCNVAL<a>).\n"
                                 "What to look for:\n"
                                 "  Good: a flat, smooth level the fit follows; a ramp only in the first\n"
                                 "  or last 50 rows (excluded from the fit).\n"
@@ -160,8 +161,10 @@ class SubtractOverscan(BasePrimitive):
                 what="Overscan of all amplifiers of this frame side by side.",
                 help=(
                     "What you see:\n"
-                    "  The overscan plots of all amplifiers of this frame in one grid (blue\n"
-                    "  circles: row medians; red: fit), each titled with its noise.\n"
+                    "  The overscan plots of all amplifiers of this frame in one grid, each\n"
+                    "  titled with its noise.\n"
+                    "  Black circles: row medians.\n"
+                    "  Red line: fit.\n"
                     "What to look for:\n"
                     "  Good: all amplifiers flat and smooth, with similar noise.\n"
                     "  Bad: one amplifier with jumps, gradients or much higher noise than\n"
