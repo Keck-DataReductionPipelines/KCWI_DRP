@@ -142,6 +142,37 @@ def test_help_is_set_off_by_blank_lines(ki, script, capsys, log):
     assert capsys.readouterr().out == "\nLONG HELP TEXT\n\n"
 
 
+def _terminal(monkeypatch, **env):
+    monkeypatch.setattr(sys.stdout, "isatty", lambda: True)
+    monkeypatch.delenv("NO_COLOR", raising=False)
+    monkeypatch.setenv("TERM", "xterm-256color")
+    for k, v in env.items():
+        monkeypatch.setenv(k, v)
+
+
+def test_terminal_bolds_what_and_help_headers(ki, script, capsys, log,
+                                               monkeypatch):
+    _terminal(monkeypatch)
+    s = script("?", "")
+    ki.pause(Config(plot_level=2), log, what="W",
+             help="What you see:\n  Blue: data.\nDefault:\n  <cr>.")
+    out = capsys.readouterr().out
+    assert "\033[1mW\033[0m\n" in out
+    assert "\033[1mWhat you see:\033[0m\n  Blue: data.\n" in out
+    assert "\033[1mDefault:\033[0m\n  <cr>." in out
+    # the question passed to input() stays plain (readline width)
+    assert all("\033" not in p for p in s.prompts)
+
+
+@pytest.mark.parametrize("env", [{"NO_COLOR": "1"}, {"TERM": "dumb"}])
+def test_no_bold_with_no_color_or_dumb_terminal(ki, script, capsys, log,
+                                                monkeypatch, env):
+    _terminal(monkeypatch, **env)
+    script("?", "")
+    ki.pause(Config(plot_level=2), log, what="W", help="What you see:")
+    assert "\033" not in capsys.readouterr().out
+
+
 def test_pause_does_not_log_info(ki, script, caplog, log):
     script("")
     ki.pause(Config(plot_level=2), log, what="W", who="Prim")

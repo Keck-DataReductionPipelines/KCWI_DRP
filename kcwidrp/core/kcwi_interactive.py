@@ -33,7 +33,11 @@ End of input (Ctrl-D, closed or exhausted standard input):
   the ``EOFError`` is re-raised, as before Track P.  Replay checks use this.
 
 Explanations (``what``, ``help``, the reason an answer was refused) are
-printed to standard output and not logged.  Answers that change something
+printed to standard output and not logged.  On a terminal the ``what`` line
+and the help's section headers ("What you see:" ...) are bold; output that
+is not a terminal, ``NO_COLOR`` set, ``TERM=dumb`` or Windows stay plain.
+The question passed to ``input`` is never styled (readline would miscount
+its width).  Answers that change something
 are logged at INFO as ``"<who>: <effect>"``; plain "next" answers at DEBUG.
 
 Input is read with ``builtins.input`` looked up at every call, so a wrapper
@@ -44,6 +48,7 @@ module imports neither Matplotlib nor Bokeh nor any kcwidrp plotting module.
 import builtins
 import logging
 import os
+import sys
 import time
 
 NEXT = "next"
@@ -75,9 +80,20 @@ def _prefix(who):
     return "%s: " % who if who else ""
 
 
+def _bold(text):
+    """``text`` in bold on a terminal, else unchanged (see module doc)."""
+    if (os.name == "nt" or os.environ.get("NO_COLOR")
+            or os.environ.get("TERM") == "dumb" or not sys.stdout.isatty()):
+        return text
+    return "\033[1m" + text + "\033[0m"
+
+
 def _show_help(help):
-    # blank line before and after, to set the help off from the prompts
+    # blank line before and after, to set the help off from the prompts;
+    # section headers ("What you see:" ...) start in column 0
     text = help if help else "No further help for this prompt."
+    text = "\n".join(_bold(l) if l[:1].strip() and l.endswith(":") else l
+                      for l in text.split("\n"))
     print("\n" + text + "\n")
 
 
@@ -125,7 +141,7 @@ def pause(config, logger, what=None, help=None, who=None):
         time.sleep(float(config.plot_pause))
         return None
     if what:
-        print(what)
+        print(_bold(what))
     while True:
         answer = _read("Next? <cr>" + _HELP_HINT, logger, who, "next")
         if answer is not None and answer.lower() in _HELP_WORDS:
@@ -160,7 +176,7 @@ def ask_next(logger, what, help, n_items=None, current=None, who=None):
         prompt = "Next? <cr>, <int> to jump, q to quit" + _HELP_HINT
     first = (current if current is not None else -1) + 1
     if what:
-        print(what)
+        print(_bold(what))
     while True:
         answer = _read(prompt, logger, who, "next")
         if answer is None or answer == "":
@@ -216,7 +232,7 @@ def ask_value(logger, prompt, help, parse, default, effect, validate=None,
     log = _log(logger)
     shown = _with_hint(prompt)
     if what:
-        print(what)
+        print(_bold(what))
     while True:
         answer = _read(shown, logger, who, "%r" % (default,))
         if answer is None or answer == "":
@@ -254,7 +270,7 @@ def ask_yes_quit(logger, prompt, help, who=None, what=None):
     log = _log(logger)
     shown = _with_hint(prompt)
     if what:
-        print(what)
+        print(_bold(what))
     while True:
         answer = _read(shown, logger, who, "proceed")
         if answer is None or answer == "":
