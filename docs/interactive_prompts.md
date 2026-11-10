@@ -551,12 +551,12 @@ What you see:
   Title "BIAS NOISE amp <n> = <sigma>" (e-).
   Blue bars: histogram of (bias 2 - bias 3) x gain / sqrt(2) over
     amplifier n, within the 3.5 sigma clipping range.
-  Red thick line: Gaussian of the measured sigma (centred on 0, scaled
+  Red thick line: Gaussian of the measured sigma (centered on 0, scaled
     to the histogram peak).
   Red dashed verticals: +- sigma.
   Sigma is stored as BIASRN<n> in the master bias header.
 What to look for:
-  Good: a symmetric, Gaussian histogram centred on zero that matches
+  Good: a symmetric, Gaussian histogram centered on zero that matches
   the red curve; sigma close to the usual read noise of this amp in
   this readout mode (slow/fast, gain).
   Bad: a broad, skewed or spiky histogram, or an offset from zero:
@@ -590,7 +590,7 @@ What you see:
   across CCD x, median of a few rows around <row>.
   Blue line: the profile.
   Magenta x: peaks found above the threshold.
-  Grey dashed: threshold (mean + 0.5 x standard deviation).
+  Gray dashed: threshold (mean + 0.5 x standard deviation).
 What to look for:
   Good: exactly one magenta x on each of the 120 bars (24 groups of 5),
   none on noise or between bars.
@@ -623,7 +623,7 @@ What you see:
   across CCD x at the row where all bars were found.
   Blue line: profile.
   Magenta x: the bar peaks.
-  Grey dashed: peak threshold.
+  Gray dashed: peak threshold.
 What to look for:
   Good: one magenta x on top of every bar, 24 groups of 5, regular
   spacing.
@@ -660,7 +660,7 @@ What you see:
     not touch the blue curve).
 What to look for:
   Good: one clean, roughly symmetric peak with the magenta line at its
-  centre.
+  center.
   Bad: a double or truncated peak, or a flat profile: the centroid, and
   the trace that starts from it, will be off.
 Your options:
@@ -697,7 +697,7 @@ What to look for:
   Good: 120 continuous traces (24 groups of 5) running the length of
   the image, each starting from a magenta circle, without gaps or
   jumps.
-  Bad: a trace that stops early, jumps to a neighbouring bar, or is
+  Bad: a trace that stops early, jumps to a neighboring bar, or is
   missing: the geometry of that slice will be wrong.
 Your options:
   <cr>  continue. Display only.
@@ -801,7 +801,7 @@ What you see:
   Title "BAR OFFSET for Arc: <bar> Slice: <slice> = <offset>".
   Black: arc spectrum of the reference bar (REFBAR) along CCD y.
   Blue: arc spectrum of this bar, shifted by the offset (px) that
-    maximises its cross-correlation with the reference bar.
+    maximizes its cross-correlation with the reference bar.
   Both are tapered at the ends (Tukey window, TUKEYALPHA).
 What to look for:
   Good: blue and black arc lines coincide line for line over the whole
@@ -844,7 +844,7 @@ What you see:
 What to look for:
   Good: the reference bar is at 0; the five bars of a slice have similar
   offsets and the pattern changes smoothly from slice to slice.
-  Bad: an isolated point far from its neighbours is a failed
+  Bad: an isolated point far from its neighbors is a failed
   cross-correlation for that bar (check that bar in the next steps).
   These offsets are the starting points of the per-bar wavelength fits.
 Your options:
@@ -911,9 +911,9 @@ Reference-bar arc over the lamp atlas: accept the offset or enter a new one (atl
 ```text
 What you see:
   Title "ATLAS OFFSET = <A> Ang (<n> px)".
-  Blue: reference-bar arc spectrum (bar REFBAR), normalised, on its
+  Blue: reference-bar arc spectrum (bar REFBAR), normalized, on its
     calculated wavelengths minus the current offset.
-  Black: atlas spectrum of the lamp, normalised.
+  Black: atlas spectrum of the lamp, normalized.
   Orange dash-dot-dot: CWAVE.
 What to look for:
   Good: blue and black lines coincide line for line over the range
@@ -998,7 +998,7 @@ What you see:
 What to look for:
   Good: values close to CWAVE, a smooth repeating pattern from slice to
   slice, no isolated points.
-  Bad: a bar far from its neighbours has a wrong central fit; its final
+  Bad: a bar far from its neighbors has a wrong central fit; its final
   wavelength solution starts from a wrong guess.
 Your options:
   <cr>  continue. Display only: the reduction is not changed.
@@ -1058,7 +1058,7 @@ Atlas lines selected for the wavelength fit, and those rejected, over the arc.
 **help**
 ```text
 What you see:
-  Title "ATLAS LINES Ngood = <n>, Nrej = <m>", normalised flux.
+  Title "ATLAS LINES Ngood = <n>, Nrej = <m>", normalized flux.
   Blue: reference-bar arc spectrum on its central-fit wavelengths.
   Black: atlas spectrum of the arc lamp.
   Large green diamonds: atlas lines kept for the fit ("Kept").
@@ -1067,7 +1067,7 @@ What you see:
     pink: FitRej (Gaussian fit failed).
     olive: ParRej (position/width out of bounds).
     brown: DupRej (duplicate).
-    grey: FntRej (faintest dropped when > 400 lines).
+    gray: FntRej (faintest dropped when > 400 lines).
   Purple verticals: wavelength limits used ("WavLim").
   x range: the WavLim range plus 3 % on each side.
 What to look for:
@@ -1150,9 +1150,9 @@ What you see:
   lines; the px value divides it by this bar's dispersion.
   Blue diamonds: lines kept.
   Gold diamonds: lines rejected as outliers in the iterative clipping.
-  Grey x (at 0): lines rejected before the fit (no clean window,
+  Gray x (at 0): lines rejected before the fit (no clean window,
     failed Gaussian, centroid off).
-  Grey dotted: zero.
+  Gray dotted: zero.
   Red dashed: +- RMS.
   Purple verticals ("WavLim"): the wavelength limits of the atlas line
     list (as in P11); lines are only used between them.
@@ -1163,7 +1163,7 @@ What to look for:
   RMS (A) well below this bar's dispersion, so the px value in the
   title is well below 1.
   Bad: a trend or curve with wavelength (misidentified lines or too
-  low a polynomial order), large gaps, many gold or grey lines (often
+  low a polynomial order), large gaps, many gold or gray lines (often
   a wrong atlas offset).
 Your options:
   <cr>  show the fit overlay for this bar. Display only.
@@ -1193,7 +1193,7 @@ What you see:
   Black: atlas spectrum (scaled).
   Magenta diamonds ("Kept"): every line of the atlas line list.
   Gold: lines rejected as residual outliers.
-  Grey x: lines rejected before the fit.
+  Gray x: lines rejected before the fit.
   Orange dash-dot-dot: CWAVE.
 What to look for:
   Good: blue arc lines fall on the black atlas lines over the whole
@@ -1239,7 +1239,7 @@ What you see:
 What to look for:
   Good: a smooth pattern within and between slices, no isolated
   points.
-  Bad: a bar far off its neighbours has a poor solution (compare its
+  Bad: a bar far off its neighbors has a poor solution (compare its
   N lines and RMS in the next plots).
 Your options:
   <cr>  next coefficient (or the next plot). Display only.
@@ -1348,7 +1348,7 @@ What you see:
   Blue: arc spectrum.
   Cyan: continuum-bar spectrum.
   Green verticals: good wavelength range (WAVGOOD).
-  Grey verticals: full wavelength range (WAVALL).
+  Gray verticals: full wavelength range (WAVALL).
 What to look for:
   Good: sharp arc lines at the right wavelengths, smooth bar spectrum,
   both covering the green range.
@@ -1382,14 +1382,14 @@ What you see:
   Title "WARPED Slice <n>": slice n resampled onto the cube grid.
   x: position along the slice (cube px); y: wavelength (A), shorter
   wavelengths at the bottom.
-  Colour: signal (e-) in each cube pixel; the colour bar on the right
-    gives the e- for each colour, from the slice's lowest value
+  Color: signal (e-) in each cube pixel; the color bar on the right
+    gives the e- for each color, from the slice's lowest value
     (purple) to its highest (dark red).
   Black ticks at the top and bottom ("Pixel"): one at each boundary
     between pixels along the slice.
   Green horizontals ("WavGood"): WAVGOOD, the wavelength range with
     good data in every slice.
-  Grey blocks: no data (NaN).
+  Gray blocks: no data (NaN).
 What to look for:
   Good: sky and arc lines run straight across the slice (constant
   wavelength); a point source is a straight vertical streak; the slice
@@ -1427,7 +1427,7 @@ Scattered-light profile along CCD y and the smooth model subtracted from every c
 ```text
 What you see:
   Title "SCATTERED LIGHT FIT": for every CCD row, the median of a band
-  of columns at the centre of the CCD (+- 180 unbinned px), which runs
+  of columns at the center of the CCD (+- 180 unbinned px), which runs
   along the spectral (y) direction.
   y axis in e-: CorrectGain has already converted counts to electrons
   (it runs just before this step).
@@ -1460,14 +1460,14 @@ Default:
 
 **what**
 ```text
-Internal flat: lamp spectrum slope at the centre of the wavelength range, reference slice.
+Internal flat: lamp spectrum slope at the center of the wavelength range, reference slice.
 ```
 
 **help**
 ```text
 What you see:
   Title "WAVE SLOPE FIT": the un-vignetted part of the reference slice
-  in a narrow wavelength window around the centre of the flat's
+  in a narrow wavelength window around the center of the flat's
   wavelength range (cut at 5620 A on blue, 5580 A on red); the window
   is 1/15 of that range wide. x: wavelength (A).
   The reference slice is slice 9 in all the flat plots; it is not the
@@ -1732,7 +1732,7 @@ Flat spectra of the reference slice and of the slices reaching furthest blue and
 ```text
 What you see:
   Title "Blue/Red fits", flux (e-) against wavelength. Each slice is
-  drawn as data (dots) and spline fit (line) in one colour.
+  drawn as data (dots) and spline fit (line) in one color.
   Black: reference slice (9).
   Blue: the slice reaching furthest to the blue (12 for the blue
     camera, 11 for red).
@@ -2054,9 +2054,9 @@ What you see:
   star's.
 What to look for:
   Good: the star is a clear peak in one slice (fainter in its
-  neighbours); other slices are flat sky.
+  neighbors); other slices are flat sky.
   Bad: no clear peak anywhere, or the largest spread in a slice without
-  the star (e.g. an edge artefact): the wrong slices would be summed.
+  the star (e.g. an edge artifact): the wrong slices would be summed.
 Your options:
   <cr>      show the next slice.
   q / quit  stop showing slices.
@@ -2097,7 +2097,7 @@ What you see:
 What to look for:
   Good: between the purple lines the spectrum is smooth and well
   exposed.
-  Bad: the range includes a steep edge, noisy ends, or an artefact
+  Bad: the range includes a steep edge, noisy ends, or an artifact
   (e.g. near the dichroic or the end of the detector); a polynomial
   fitted over it will be distorted everywhere. Move the limits inward.
 Your options:
@@ -2182,7 +2182,7 @@ What you see:
   Keck aperture, in per cent (not extinction corrected).
   Blue: data.
   Red: polynomial fit.
-  Grey x: masked points ("Rej").
+  Gray x: masked points ("Rej").
   Purple verticals: fit limits.
   Green verticals: WAVGOOD.
   Red dashed horizontal: peak of the fit.
@@ -2221,7 +2221,7 @@ What you see:
   Blue: data.
   Red: polynomial fit (also drawn outside the limits, where it is
     extrapolated).
-  Grey x: masked points.
+  Gray x: masked points.
   Purple verticals: fit limits.
   Green verticals: WAVGOOD.
 What to look for:
@@ -2291,7 +2291,7 @@ What you see:
   Title "<std> Residuals = <mean> +- <std> (%)": (calibrated -
   reference) / reference in per cent, over the fit range.
   Blue: residuals.
-  Grey x: masked points (if any).
+  Gray x: masked points (if any).
   Purple verticals: fit limits.
   Green verticals: WAVGOOD.
   Red: mean.
@@ -2299,7 +2299,7 @@ What you see:
 What to look for:
   Good: residuals scatter around zero with no large-scale wave.
   Bad: a slow wave across the range (order too low), or oscillations
-  growing towards the limits (order too high, or limits too wide).
+  growing toward the limits (order too high, or limits too wide).
 Your options:
   <cr>      accept the current fit order and finish.
   <number>  refit with that polynomial order; the efficiency, inverse

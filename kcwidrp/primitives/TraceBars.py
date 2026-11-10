@@ -153,7 +153,7 @@ class TraceBars(BasePrimitive):
                         "  Good: 120 continuous traces (24 groups of 5) running the length of\n"
                         "  the image, each starting from a magenta circle, without gaps or\n"
                         "  jumps.\n"
-                        "  Bad: a trace that stops early, jumps to a neighbouring bar, or is\n"
+                        "  Bad: a trace that stops early, jumps to a neighboring bar, or is\n"
                         "  missing: the geometry of that slice will be wrong.\n"
                         "Your options:\n"
                         "  <cr>  continue. Display only.\n"

@@ -402,7 +402,7 @@ class FitCenter(BasePrimitive):
                         "What to look for:\n"
                         "  Good: values close to CWAVE, a smooth repeating pattern from slice to\n"
                         "  slice, no isolated points.\n"
-                        "  Bad: a bar far from its neighbours has a wrong central fit; its final\n"
+                        "  Bad: a bar far from its neighbors has a wrong central fit; its final\n"
                         "  wavelength solution starts from a wrong guess.\n"
                         "Your options:\n"
                         "  <cr>  continue. Display only: the reduction is not changed.\n"

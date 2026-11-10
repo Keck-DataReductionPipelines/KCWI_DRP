@@ -245,9 +245,9 @@ class ReadAtlas(BasePrimitive):
                         self.logger, "New offset <int px> (<cr> = accept)",
                         help=("What you see:\n"
                               "  Title \"ATLAS OFFSET = <A> Ang (<n> px)\".\n"
-                              "  Blue: reference-bar arc spectrum (bar REFBAR), normalised, on its\n"
+                              "  Blue: reference-bar arc spectrum (bar REFBAR), normalized, on its\n"
                               "    calculated wavelengths minus the current offset.\n"
-                              "  Black: atlas spectrum of the lamp, normalised.\n"
+                              "  Black: atlas spectrum of the lamp, normalized.\n"
                               "  Orange dash-dot-dot: CWAVE.\n"
                               "What to look for:\n"
                               "  Good: blue and black lines coincide line for line over the range\n"

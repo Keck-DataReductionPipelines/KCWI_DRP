@@ -109,7 +109,7 @@ class SubtractScatteredLight(BasePrimitive):
                     help=(
                         "What you see:\n"
                         "  Title \"SCATTERED LIGHT FIT\": for every CCD row, the median of a band\n"
-                        "  of columns at the centre of the CCD (+- 180 unbinned px), which runs\n"
+                        "  of columns at the center of the CCD (+- 180 unbinned px), which runs\n"
                         "  along the spectral (y) direction.\n"
                         "  y axis in e-: CorrectGain has already converted counts to electrons\n"
                         "  (it runs just before this step).\n"

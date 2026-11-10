@@ -179,7 +179,7 @@ class SolveAIT(BasePrimitive):
                             "  Blue: arc spectrum.\n"
                             "  Cyan: continuum-bar spectrum.\n"
                             "  Green verticals: good wavelength range (WAVGOOD).\n"
-                            "  Grey verticals: full wavelength range (WAVALL).\n"
+                            "  Gray verticals: full wavelength range (WAVALL).\n"
                             "What to look for:\n"
                             "  Good: sharp arc lines at the right wavelengths, smooth bar spectrum,\n"
                             "  both covering the green range.\n"

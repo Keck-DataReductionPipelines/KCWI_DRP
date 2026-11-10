@@ -565,7 +565,7 @@ class GetAtlasLines(BasePrimitive):
                     what="Atlas lines selected for the wavelength fit, and those rejected, over the arc.",
                     help=(
                         "What you see:\n"
-                        "  Title \"ATLAS LINES Ngood = <n>, Nrej = <m>\", normalised flux.\n"
+                        "  Title \"ATLAS LINES Ngood = <n>, Nrej = <m>\", normalized flux.\n"
                         "  Blue: reference-bar arc spectrum on its central-fit wavelengths.\n"
                         "  Black: atlas spectrum of the arc lamp.\n"
                         "  Large green diamonds: atlas lines kept for the fit (\"Kept\").\n"
@@ -574,7 +574,7 @@ class GetAtlasLines(BasePrimitive):
                         "    pink: FitRej (Gaussian fit failed).\n"
                         "    olive: ParRej (position/width out of bounds).\n"
                         "    brown: DupRej (duplicate).\n"
-                        "    grey: FntRej (faintest dropped when > 400 lines).\n"
+                        "    gray: FntRej (faintest dropped when > 400 lines).\n"
                         "  Purple verticals: wavelength limits used (\"WavLim\").\n"
                         "  x range: the WavLim range plus 3 % on each side.\n"
                         "What to look for:\n"

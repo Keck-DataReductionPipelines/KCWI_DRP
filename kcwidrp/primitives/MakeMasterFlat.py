@@ -269,10 +269,10 @@ class MakeMasterFlat(BaseImg):
                        legend_label="Fit")
                 bokeh_plot(p, self.context.bokeh_session)
                 pause(self.config.instrument, self.logger,
-                      what="Internal flat: lamp spectrum slope at the centre of the wavelength range, reference slice.",
+                      what="Internal flat: lamp spectrum slope at the center of the wavelength range, reference slice.",
                       help=("What you see:\n"
                             "  Title \"WAVE SLOPE FIT\": the un-vignetted part of the reference slice\n"
-                            "  in a narrow wavelength window around the centre of the flat's\n"
+                            "  in a narrow wavelength window around the center of the flat's\n"
                             "  wavelength range (cut at 5620 A on blue, 5580 A on red); the window\n"
                             "  is 1/15 of that range wide. x: wavelength (A).\n"
                             "  The reference slice is slice 9 in all the flat plots; it is not the\n"
@@ -840,7 +840,7 @@ class MakeMasterFlat(BaseImg):
                   what="Flat spectra of the reference slice and of the slices reaching furthest blue and red.",
                   help=("What you see:\n"
                         "  Title \"Blue/Red fits\", flux (e-) against wavelength. Each slice is\n"
-                        "  drawn as data (dots) and spline fit (line) in one colour.\n"
+                        "  drawn as data (dots) and spline fit (line) in one color.\n"
                         "  Black: reference slice (9).\n"
                         "  Blue: the slice reaching furthest to the blue (12 for the blue\n"
                         "    camera, 11 for red).\n"
