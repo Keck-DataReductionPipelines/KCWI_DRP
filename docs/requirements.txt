@@ -1,0 +1,7 @@
+# Packages needed to build the documentation.
+#
+# kcwidrp is installed from its master branch (the released code) so that
+# autodoc can import it; its own dependencies come from its pyproject.toml.
+sphinx~=7.3
+sphinx_rtd_theme~=3.0
+kcwidrp @ git+https://github.com/Keck-DataReductionPipelines/KCWI_DRP.git@master
