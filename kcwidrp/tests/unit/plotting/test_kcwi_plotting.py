@@ -1,9 +1,9 @@
 """Tests for the Matplotlib plotting wrapper ``kcwidrp.core.kcwi_plotting``
 (bokeh plan task 1.2; upgrade plan s7 amendments 5, 8 and 10).
 
-Written from the specification only -- docs/bokeh_port_plan.md ("Core design
+Written from the specification only -- docs/dev/bokeh_port_plan.md ("Core design
 decision", "1.1 Wrapper", "1.2 Wrapper tests", "Interfaces fixed for parallel
-implementation") and docs/plot_inventory.md section 2 -- never from the
+implementation") and docs/dev/plot_inventory.md section 2 -- never from the
 wrapper's source.  The AST coverage scan (the other half of task 1.2) is in
 ``test_plot_coverage_scan.py``.
 
@@ -25,7 +25,7 @@ Units and sources of expected values
 * Bokeh defaults (color ``#1f77b4``, line width 1 px, circle size 4 px,
   10 % ``DataRange1d`` padding) are the values the plan's "Appearance
   defaults" paragraph names.
-  # source: published - docs/bokeh_port_plan.md section 1.1, Bokeh 2.4 docs
+  # source: published - docs/dev/bokeh_port_plan.md section 1.1, Bokeh 2.4 docs
 * Every expected value below carries its own ``# source:`` comment.
 
 All tests run with ``STRICT`` true unless they are in the tolerant group.
@@ -517,7 +517,7 @@ def test_dashdotdot_is_a_dash_dot_dot_pattern():
     p.line(X, Y, line_dash='dashdotdot')
     l = glyph_lines(rendered(p).axes[0])[0]
     offset, seq = l._unscaled_dash_pattern
-    # source: published - docs/interactive_prompts.md "Plot color scheme":
+    # source: published - docs/dev/interactive_prompts.md "Plot color scheme":
     # CWAVE is drawn dash-dot-dot, a style used for nothing else
     assert len(seq) == 6
     assert seq[0] > seq[2] and seq[2] == seq[4]
@@ -773,7 +773,7 @@ def test_spectral11_is_not_matplotlibs_continuous_spectral():
 def test_image_has_a_color_bar_on_the_data_range():
     a = np.linspace(-3., 7., 40).reshape(5, 8)
     fig = rendered(_image_fig(a))
-    # source: published - docs/interactive_prompts.md "Plot color scheme":
+    # source: published - docs/dev/interactive_prompts.md "Plot color scheme":
     # images (P12) have a color bar; it is a second axes, after the plot
     assert len(fig.axes) == 2
     im = fig.axes[0].images[0]

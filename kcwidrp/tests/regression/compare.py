@@ -3,7 +3,7 @@
 Tier 0 checksums are in ``manifest.verify_checksums``; tier 1 completion,
 tier 5 science metrics and tier 7 timings are here with tiers 2-4 and 6.
 
-Rules (docs/testing.md sections 6 and 10):
+Rules (docs/dev/testing.md sections 6 and 10):
 
 * header cards whose keyword starts with HISTORY, COMMENT, CHECKSUM or
   DATASUM are ignored;
@@ -43,7 +43,7 @@ TIER_NAMES = {
     4: "header_values", 5: "metrics", 6: "plots", 7: "timings",
 }
 
-# Benign ERROR lines (docs/baseline/README.md), each allowed only for the
+# Benign ERROR lines (docs/dev/baseline/README.md), each allowed only for the
 # channel that produces it: the red channel has no defect list for L2U2L1U1
 # at 2x2 (B35), and its arcs before the last of a group reach MakeCube before
 # the master arc exists (B34). Elsewhere these lines are failures. Tier 1 also

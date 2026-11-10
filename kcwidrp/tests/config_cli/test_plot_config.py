@@ -1,6 +1,6 @@
 """plot_config.viewer_requested: the enable switch of bokeh plan 5.1.
 
-Specification (docs/bokeh_port_plan.md, "The enable switch" and the
+Specification (docs/dev/bokeh_port_plan.md, "The enable switch" and the
 "Interfaces fixed for parallel implementation" subsection):
 
 * ``enable_plot_viewer`` present: it decides; ``enable_bokeh`` is then ignored.

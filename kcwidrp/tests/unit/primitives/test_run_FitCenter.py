@@ -3,7 +3,7 @@
 (The T.3 file ``test_FitCenter.py`` covers the module function
 pascal_shift.)
 
-Prompt sites (docs/plot_inventory.md, section 3.1):
+Prompt sites (docs/dev/plot_inventory.md, section 3.1):
 
 * P08 (plot_level >= 2), after the central-dispersion figure of bar
   ``next_bar_to_plot``: ``Next? <cr>, <int> to jump, q to quit (? for

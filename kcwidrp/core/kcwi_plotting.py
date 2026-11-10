@@ -8,7 +8,7 @@ by the live viewer.  Every array is copied when it is recorded, so a primitive
 may go on changing its arrays, and a recorded plot can be rendered any number
 of times, on any thread.
 
-Exactly the Bokeh features listed in ``docs/plot_inventory.md`` section 2 are
+Exactly the Bokeh features listed in ``docs/dev/plot_inventory.md`` section 2 are
 supported.  Anything else is *unsupported*:
 
 * ``STRICT`` true (the test suite, or ``KCWI_PLOT_STRICT=1`` in the
@@ -136,7 +136,7 @@ LEGEND_LOCATIONS = {
     'top_right': 'upper right', 'bottom_center': 'lower center',
 }
 # 'dashdotdot' is not a Bokeh name; it is kept for CWAVE (color scheme,
-# docs/interactive_prompts.md)
+# docs/dev/interactive_prompts.md)
 LINE_DASHES = ('solid', 'dashed', 'dashdot', 'dotted', 'dashdotdot')
 MARKERS = ('circle', 'x')
 PALETTES = ('Spectral11',)

@@ -39,7 +39,7 @@ browser on the machine running the pipeline, or set ``plot_viewer_open_browser
 Tests
 -----
 
-The tests are run locally; see ``docs/testing.md`` for how to run them.
+The tests are run locally; see ``docs/dev/testing.md`` for how to run them.
 
 
 Dependencies

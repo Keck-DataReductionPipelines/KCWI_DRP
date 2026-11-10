@@ -1,6 +1,6 @@
 """MakeInvsens prompt sites run through ``run_primitive`` (task T.4).
 
-Prompt sites (docs/plot_inventory.md, section 3.1):
+Prompt sites (docs/dev/plot_inventory.md, section 3.1):
 
 * P13 (plot_level >= 3): per slice, ``Next? <cr>, q to quit (? for
   help): ``.
@@ -54,7 +54,7 @@ WGOOD = (4050.0, 4550.0)       # WAVGOOD0/1 -> default fit limits
 WALL = (4000.0, 4599.0)        # WAVALL0/1 -> allowed range for new limits
 OUT = "kb260101_00001_invsens.fits"
 
-# Exact prompt strings (docs/plot_inventory.md P13-P19)
+# Exact prompt strings (docs/dev/plot_inventory.md P13-P19)
 P13 = "Next? <cr>, q to quit (? for help): "
 P14 = "New fit limits? <float> <float> (<cr> = accept) (? for help): "
 P15 = "Mask line: <start> <stop> [comment] in A (<cr> = done) (? for help): "

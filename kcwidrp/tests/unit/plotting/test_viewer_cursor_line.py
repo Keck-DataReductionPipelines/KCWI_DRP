@@ -16,7 +16,7 @@ import urllib.request
 import numpy as np
 import pytest
 
-# These tests drive a live viewer; kept out of the default run (docs/testing.md
+# These tests drive a live viewer; kept out of the default run (docs/dev/testing.md
 # section 1).  Run with `pytest -m viewer`.
 pytestmark = pytest.mark.viewer
 

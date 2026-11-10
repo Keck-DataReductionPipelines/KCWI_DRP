@@ -1,7 +1,7 @@
 # Interactive prompt catalog (task P.0)
 
 Purpose: the text that every interactive prompt of the DRP prints in PR3a
-(upgrade plan §8). For each logical prompt of `docs/plot_inventory.md` §3
+(upgrade plan §8). For each logical prompt of `docs/dev/plot_inventory.md` §3
 (P01–P51 in the primitives, S01–S08 in the scripts) this file gives the
 one-line `what` printed before the prompt and the long `help` printed when
 the user types `?` or `help`. P.3 and P.4 paste them into the call sites as

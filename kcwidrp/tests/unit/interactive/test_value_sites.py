@@ -3,7 +3,7 @@
 Plan 8 (D3, D12): for input that is valid today, Track P's conversion of the
 value prompts (P.4) must give identical results.  These tests run each
 primitive at the plot level that reaches the prompt, type the answers of a
-table of VALID inputs (docs/interactive_prompts.md, "Accepted input (D12)"
+table of VALID inputs (docs/dev/interactive_prompts.md, "Accepted input (D12)"
 of each prompt) and check the value the reduction ends up using: the
 primitive's action argument, an output header keyword, or the output data.
 They pass on the code before P.4 and must keep passing after it.

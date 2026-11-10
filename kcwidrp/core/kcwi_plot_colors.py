@@ -1,4 +1,4 @@
-"""Plot colors by role (docs/interactive_prompts.md, "Plot color scheme").
+"""Plot colors by role (docs/dev/interactive_prompts.md, "Plot color scheme").
 
 The primitives name a role here instead of a color, so a scheme change is
 one edit::

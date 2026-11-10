@@ -1,6 +1,6 @@
 """ArcOffsets prompt sites run through ``run_primitive`` (task T.4).
 
-Prompt sites (docs/plot_inventory.md, section 3.1):
+Prompt sites (docs/dev/plot_inventory.md, section 3.1):
 
 * P01 (plot_level >= 2), after the figure of bar ``next_bar_to_plot``:
   ``Next? <cr>, <int> to jump, q to quit (? for help): `` (P.4: was

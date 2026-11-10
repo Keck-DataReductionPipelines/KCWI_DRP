@@ -6,10 +6,10 @@ keyword, attribute chain and literal value that the code uses on a figure
 object, and fails the test for anything the wrapper is specified not to
 support, or that the scan cannot classify.  Its result is also compared, in
 both directions, with the feature summary (section 2) of
-``docs/plot_inventory.md``.
+``docs/dev/plot_inventory.md``.
 
 The supported set below is hard-coded from the table in section 1.1 of
-``docs/bokeh_port_plan.md``.  It is deliberately NOT read from the wrapper,
+``docs/dev/bokeh_port_plan.md``.  It is deliberately NOT read from the wrapper,
 so that the scan and the wrapper are two independent statements of the same
 specification (the structural tests in ``test_kcwi_plotting.py`` check that
 the wrapper really supports every item listed here).
@@ -43,11 +43,11 @@ import pytest
 REPO = Path(__file__).resolve().parents[4]
 PRIMITIVES = REPO / "kcwidrp" / "primitives"
 WRAPPER = REPO / "kcwidrp" / "core" / "kcwi_plotting.py"
-INVENTORY = REPO / "docs" / "plot_inventory.md"
+INVENTORY = REPO / "docs" / "dev" / "plot_inventory.md"
 
 # ---------------------------------------------------------------------------
 # The supported set.
-# source: published - docs/bokeh_port_plan.md section 1.1 (table "Bokeh usage"
+# source: published - docs/dev/bokeh_port_plan.md section 1.1 (table "Bokeh usage"
 # and the list of known mapping traps).
 # ---------------------------------------------------------------------------
 FIGURE_KW = {
@@ -684,7 +684,7 @@ def scan_paths(primitive_dir=PRIMITIVES, wrapper=WRAPPER):
 
 
 # ---------------------------------------------------------------------------
-# The inventory's feature summary (docs/plot_inventory.md section 2), parsed
+# The inventory's feature summary (docs/dev/plot_inventory.md section 2), parsed
 # into the same feature names the scan produces.
 # ---------------------------------------------------------------------------
 def _section(text, start, end):
@@ -783,7 +783,7 @@ def test_primitives_use_only_supported_plot_features(real_scan):
 
 def test_scan_finds_the_known_figures(real_scan):
     """Guards the scan itself: a scan that sees nothing must not pass."""
-    # source: published - docs/plot_inventory.md section 1 (48 figures in 16
+    # source: published - docs/dev/plot_inventory.md section 1 (48 figures in 16
     # primitives); the scan must have seen all six glyph methods, the
     # twin-axis idiom and the grid.
     for feat in ("glyph:line", "glyph:circle", "glyph:scatter",
@@ -794,8 +794,8 @@ def test_scan_finds_the_known_figures(real_scan):
 
 
 def test_scan_matches_inventory_feature_summary(real_scan):
-    """Both directions: scan result == docs/plot_inventory.md section 2."""
-    # source: published - docs/plot_inventory.md section 2 (parsed, not copied)
+    """Both directions: scan result == docs/dev/plot_inventory.md section 2."""
+    # source: published - docs/dev/plot_inventory.md section 2 (parsed, not copied)
     inventory = inventory_features()
     # the scan sees the wrapper's calls in the code; ignore feature kinds the
     # inventory does not list (reads of attributes, unlisted calls)
@@ -1066,7 +1066,7 @@ def test_scan_non_literal_where_a_literal_is_required_is_unclassifiable():
 
 
 def test_scan_inventory_parser_reads_the_expected_sections():
-    # source: published - docs/plot_inventory.md section 2 (spot checks of
+    # source: published - docs/dev/plot_inventory.md section 2 (spot checks of
     # the parser, so a parser that returns nothing cannot make the
     # comparison pass)
     feats = inventory_features()

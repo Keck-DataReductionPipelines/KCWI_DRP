@@ -1,6 +1,6 @@
 """SolveArcs prompt sites run through ``run_primitive`` (task T.4).
 
-Prompt sites (docs/plot_inventory.md, section 3.1), at plot_level 2:
+Prompt sites (docs/dev/plot_inventory.md, section 3.1), at plot_level 2:
 
 * P43 ``Next? <cr> (? for help): `` after the residuals figure of bar
   ``next_bar_to_plot``, then

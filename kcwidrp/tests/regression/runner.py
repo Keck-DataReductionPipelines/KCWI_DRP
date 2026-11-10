@@ -57,7 +57,7 @@ def latest_session_dir(out_root=None):
 
 
 def default_command(entry, run_dir):
-    """The reduction exactly as S.3 ran it (docs/baseline/README.md)."""
+    """The reduction exactly as S.3 ran it (docs/dev/baseline/README.md)."""
     flag = mf.CHANNELS[entry["channel"]][0]
     return [sys.executable, "-c",
             "from kcwidrp.scripts.reduce_kcwi import main; main()",

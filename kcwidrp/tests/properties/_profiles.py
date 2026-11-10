@@ -1,6 +1,6 @@
 """Hypothesis settings profiles for the property tests (task T.5).
 
-Rules: docs/testing.md section 9.  Registered here and loaded by
+Rules: docs/dev/testing.md section 9.  Registered here and loaded by
 ``kcwidrp/tests/properties/conftest.py``.
 
 Profiles

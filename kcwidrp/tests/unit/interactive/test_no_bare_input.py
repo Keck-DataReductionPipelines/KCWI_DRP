@@ -1,7 +1,7 @@
 """AST scan: no bare ``input(...)`` and no ``time.sleep(...plot_pause...)``
 in the primitives and launch scripts (plan P.3 / P.4 validation).
 
-Specification (docs/drp_upgrade_plan.md section 8, P.3 and P.4 validation):
+Specification (docs/dev/drp_upgrade_plan.md section 8, P.3 and P.4 validation):
 every prompt goes through ``kcwidrp/core/kcwi_interactive.py``.  The scan
 covers ``kcwidrp/primitives/*.py``, ``kcwidrp/scripts/reduce_kcwi.py`` and
 ``kcwidrp/scripts/kcwi_rti.py``; the helper module itself is not scanned.

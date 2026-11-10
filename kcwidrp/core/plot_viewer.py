@@ -3,7 +3,7 @@
 A small web server, built on Matplotlib's ``backend_webagg_core`` with our own
 Tornado application, that shows the most recent plot submitted by the
 pipeline.  Decisions behind the design are recorded in
-``docs/bokeh_port_plan.md`` ("0.3 decision"):
+``docs/dev/bokeh_port_plan.md`` ("0.3 decision"):
 
 - One daemon thread runs a Tornado ``IOLoop``.  Every Matplotlib object of the
   viewer (one long-lived ``Figure``, its canvas and its manager) is created,
