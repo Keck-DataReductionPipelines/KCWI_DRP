@@ -343,7 +343,7 @@ Start with the first failing tier: tier 1 says the reduction itself broke (read 
 
 A bless makes a run the new reference. Rules (section 10): it is never automatic, **only the maintainer runs it** (a model may prepare the command), and it needs a reason from this list, written as `"<reason>: <text>"`:
 
-`initial` (an entry with no reference yet), `environment`, `T.11 viewer-off`, `bokeh port 4.3`, `prompt text PR3a`, `P.5 <bug ID>` (for example `P.5 B2`), `M.2c header`, `M.2e initial`, `M.3`, `M.4`, `M.5`, `matrix default`, `release version`.
+`initial` (an entry with no reference yet), `environment`, `T.11 viewer-off`, `bokeh port 4.3`, `prompt text PR3a`, `plot scheme PR3a`, `P.5 <bug ID>` (for example `P.5 B2`), `M.2c header`, `M.2e initial`, `M.3`, `M.4`, `M.5`, `matrix default` (the `M.*` and `matrix` reasons are unused while Track M is deferred, plan D31), `release version`.
 
 The upgrade plan's T.7 bless table says when each applies and to which datasets. Anything else is refused.
 

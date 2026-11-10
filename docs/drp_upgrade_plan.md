@@ -1,16 +1,18 @@
 # KCWI DRP upgrade: master implementation plan
 
-Date: 2026-10-22, revised the same day after review (decisions D10–D19). Status: **approved by the maintainer 2026-10-22 (D22); in progress.** Done so far: S.1, S.2, S.4 (except Q10b), S.5, T.0–T.6, T.10, T.11, and the hotfixes for B26/B27 (D21) and B1/B1b (D23). S.3 is done (ds01 and ds03). T.0–T.11 are done; PR0 is ready to open (gate G0T).
+Date: 2026-10-22, revised the same day after review (decisions D10–D19). **Scope changed 2026-11-09 (D31–D33): Track M is deferred to a later release, and the user documentation moves into this repository (Track D).** Status: **approved by the maintainer 2026-10-22 (D22); in progress.** Done: S.1–S.5 (S.4 except Q10b, deferred with Track M), Track T (PR0, #224, merged 2026-10-28) and Track A (PR1, #225, merged 2026-10-28, plus the viewer download fix #227). In progress: Track P (PR3a). Next: Track D. The current state of every step is in §4, "Where things stand".
 Plan documents live on branch `drp_upgrade_plan`. Code facts in this plan (counts, line numbers, bug locations) were verified at `dfbcf9d` (`master` `12fd4aa` plus planning documents only). Upstream has since released `v1.3.2` (`9be28f5`, PR #218), which differs from `12fd4aa` only in `kcwidrp/core/kcwi_plotting.py`, so primitive line numbers and counts still hold at `v1.3.2`. The work starts from `v1.3.2` (D10).
 
-This document coordinates three upgrades, and the test overhaul that protects them, into one sequence of tasks, pull requests and human checkpoints:
+This document coordinates the upgrades, and the test overhaul that protects them, into one sequence of tasks, pull requests and human checkpoints. Since D31 (2026-11-09) the release contains T, A, P, D and the small changes X; Track M is deferred.
 
-| Area | Detailed design lives in | This document adds |
-|---|---|---|
-| **T.** Test overhaul: unit, invariant, config/CLI and manual regression tests | This document (§6) | Full plan. Lands first, as the safety net for A, P and M |
-| **A.** Bokeh → Matplotlib plotting | [bokeh_port_plan.md](bokeh_port_plan.md) (tasks 0.1–5.4), rationale in [bokeh_replacement_proposal.md](bokeh_replacement_proposal.md) | Amendments, model remapping, shared baseline, PR gates |
-| **P.** Descriptive, robust interactive prompts | This document (§8) | Full plan |
-| **M.** Sparse-matrix cube construction | [matrix_cube_plan.md](matrix_cube_plan.md) (Stages 0–5), copied verbatim from `~/drp/kcwi/KCWI_matrix_cube_plan.md` | Task breakdown, concrete acceptance thresholds, default flip, PR gates |
+| Area | Detailed design lives in | This document adds | In this release (D31) |
+|---|---|---|---|
+| **T.** Test overhaul: unit, invariant, config/CLI and manual regression tests | This document (§6) | Full plan. Lands first, as the safety net for the other tracks | Yes: merged (PR0) |
+| **A.** Bokeh → Matplotlib plotting | [bokeh_port_plan.md](bokeh_port_plan.md) (tasks 0.1–5.4), rationale in [bokeh_replacement_proposal.md](bokeh_replacement_proposal.md) | Amendments, model remapping, shared baseline, PR gates | Yes: merged (PR1) |
+| **P.** Descriptive, robust interactive prompts, and the plot changes from their review (D33) | This document (§8), prompt text in [interactive_prompts.md](interactive_prompts.md) | Full plan | Yes: PR3a, PR3b |
+| **D.** User documentation merged into this repository | `~/drp/kcwi/KCWI_docs_plan.md` (audit, phases 0–4); copied into this repository by D.1 | §8a | Yes: next (PRD) |
+| **X.** Small changes: plot viewer fixes, `develop` hotfixes | – | §8b | Yes |
+| **M.** Sparse-matrix cube construction | [matrix_cube_plan.md](matrix_cube_plan.md) (Stages 0–5), copied verbatim from `~/drp/kcwi/KCWI_matrix_cube_plan.md` | Task breakdown, concrete acceptance thresholds, default flip, PR gates | **No: deferred** (§9 kept for later) |
 
 Where this document and a detailed design disagree, **this document wins** and the difference is listed in that track's "Amendments" section.
 
@@ -40,11 +42,11 @@ Questions asked while writing this plan, and the answers given. Later changes go
 
 | # | Question | Answer (2026-10-22) | Consequence in this plan |
 |---|---|---|---|
-| Q1 | How should the three areas be sequenced and delivered? | **Sequential PRs.** Bokeh port first, then prompts, then matrix stages 2+. Matrix stages 0–1 run in parallel from the start. One PR per area or stage. | §4 ordering. PR1 (A), PR2 (M0–M1, parallel), PR3a/3b (P), PR4–PR7 (M) |
+| Q1 | How should the three areas be sequenced and delivered? | **Sequential PRs.** Bokeh port first, then prompts, then matrix stages 2+. Matrix stages 0–1 run in parallel from the start. One PR per area or stage. | §4 ordering. PR1 (A), PR2 (M0–M1, parallel), PR3a/3b (P), PR4–PR7 (M). *Amended by D31: M deferred; PRD (docs) added.* |
 | Q2 | What should "more descriptive messages" cover? | **Explanatory text + input robustness + fix logic bugs found.** On-plot guidance in the viewer was *not* selected. | §8. Viewer is unchanged by Track P. Bug fixes are a separate PR (3b) because they change outputs |
-| Q3 | Which matrix stages are in scope? | **Stages 0–5.** Stage 6 (joint inversion of dithers) is out of scope. | §9 covers M0–M5. Stage 6 stays in matrix_cube_plan.md as future work |
+| Q3 | Which matrix stages are in scope? | **Stages 0–5.** Stage 6 (joint inversion of dithers) is out of scope. | §9 covers M0–M5. Stage 6 stays in matrix_cube_plan.md as future work. *Amended by D31: all of Track M deferred.* |
 | Q4 | What reference data is on hand? | **Blue + red with standard stars, no nod-and-shuffle.** | S.3 uses BL/BM + KCRM sets. N&S paths are validated on synthetic data only; this is a known gap (§12) |
-| Q5 | After validation, what is the shipped default for `cube_method`? | **Flip to `matrix`** in this update. | M.6 makes the flip, gated by Keck maintainer sign-off (G6). Invsens/FluxCalibrate method guard (M.2d) becomes mandatory |
+| Q5 | After validation, what is the shipped default for `cube_method`? | **Flip to `matrix`** in this update. | M.6 makes the flip, gated by Keck maintainer sign-off (G6). Invsens/FluxCalibrate method guard (M.2d) becomes mandatory. *Amended by D31: not in this release.* |
 | Q6 | Which covariance products should Stage 5 produce? | **A** (neighbor correlations), **B** (store `W`, opt-in) and **C** (noise-scaling curve in header). | M.5 implements all three. A and C on by default, B behind a config key |
 | Q7 | Who makes maintainer-level decisions? | **You plus Keck maintainers.** You decide day-to-day; upstream merges and user-facing defaults need Keck sign-off. | Gates G1–G7 in §4 name what needs Keck sign-off |
 | Q8 | Should prompt answers be recorded in the pipeline log? | **Yes, at INFO.** Explanations go to the terminal only. | P.1 helper logs every answer and its effect |
@@ -65,7 +67,7 @@ Decisions taken by the plan author rather than asked, because they have a conven
 | D2 | The reference reductions for Track A (bokeh 0.1) and Track M (Stage 0) are one human session (S.3), not two. | Same data, same runs; halves the human effort |
 | D3 | In Track P, the number and order of prompts **for valid answers** does not change. Re-prompting on *invalid* input is allowed. | Keeps the S.3 answer files usable as a regression harness for every later PR |
 | D4 | End-of-input (Ctrl-D / closed stdin) at a prompt: by default, log a warning and take the default answer for that and all later prompts. With `KCWI_STRICT_INPUT=1`, raise `EOFError` as today. | Robustness for users; the strict mode keeps the bokeh-plan replay check ("ends with `EOFError` → prompts changed") working |
-| D5 | The `warp` path is kept after the default flip, selectable with `cube_method = "warp"`, for at least one release. | Rollback without a code revert; side-by-side comparison for users |
+| D5 | The `warp` path is kept after the default flip, selectable with `cube_method = "warp"`, for at least one release. *Deferred with Track M (D31).* | Rollback without a code revert; side-by-side comparison for users |
 | D6 | New pull requests target `develop` (upstream merges `develop` → `master`, as in PR #207). *Amended by D28.* | Matches existing upstream practice |
 | D7 | Tests stay inside the package at `kcwidrp/tests/`, split into `unit/`, `properties/`, `config_cli/` and `regression/`. pytest configuration moves to `pyproject.toml`. | Keeps today's location; one config file |
 | D8 | Existing bugs are pinned by tests marked `xfail(strict=True, reason="<bug ID>")`, not by asserting the buggy output. The fix PR removes the marker. | A characterization test must not make a bug look intended; `strict` makes the test fail loudly once the bug is fixed and the marker is forgotten |
@@ -82,9 +84,9 @@ Decisions added after review (2026-10-22). Where one changes an earlier row, the
 | D14 | Two environments, both Python 3.12: the **baseline env** (repaired `kcwidrp` conda env plus the test extra) runs `upgrade-start` code and all of PR0; the **development env** for PR1 onward has the same numeric pins (`numpy`, `scipy`, `astropy`, `scikit-image`, `astroscrappy`) as the baseline, minus Bokeh. The environment check in T.7 is done in the baseline env, before any code change. | `upgrade-start` cannot import without Bokeh, so it cannot be run in a post-PR1 env; `numpy==1.26.4` has no Python 3.13 wheels |
 | D15 | The regression runner does not trust the exit code or stdin position. Failures are found by scanning the log; prompts are recorded by a `sitecustomize.py` that the runner places on `PYTHONPATH` and that wraps `builtins.input` to append each prompt and answer to a sidecar file. | The framework catches primitive exceptions, carries on, and always leaves through `os._exit(0)`; Python reads a redirected stdin file in 8 KB blocks, so file position shows nothing about how many answers were used |
 | D16 | Two regression profiles. **Quick** (default for `-m regression`): `plot_level = 1`, both channels. **Full** (`--regression-profile=full`): levels 0, 1 and 3. Full is required for PRs that touch plotting or prompt code (PR1, PR3a, PR3b), and for release. | Levels 0 and 1 give the same reduction outputs, since both are below `plot_level` 2; six full reductions for every PR is unnecessary |
-| D17 | From M.2c, the regression manifest has explicit `*_warp` datasets pinned with `cube_method = "warp"`. They keep their references through the M.6 default flip. | Without them, blessing the default datasets at M.6 leaves the `warp` rollback path (D5) untested |
+| D17 | From M.2c, the regression manifest has explicit `*_warp` datasets pinned with `cube_method = "warp"`. They keep their references through the M.6 default flip. *Deferred with Track M (D31).* | Without them, blessing the default datasets at M.6 leaves the `warp` rollback path (D5) untested |
 | D18 | Tests and the regression runner set `astropy.utils.iers.conf.auto_download = False`; the IERS table versions in use are recorded in the regression provenance. | `radial_velocity_correction` may otherwise download IERS-A, which breaks the "no network" rule and can change `icubew` with no code change |
-| D19 | PR6 (covariance) gets its own gate, G5b. S.4 Q10 is split: Q10a (`CUBEMETH`, `WAVCORR`, `DARCOR`) before M.2c; Q10b (noise-curve keywords, named in M.5a) before M.5b. | PR6 adds user-facing keys, extensions and header keywords (Q7), and the M.5 names do not exist when M.2c starts |
+| D19 | *(Deferred with Track M, D31.)* PR6 (covariance) gets its own gate, G5b. S.4 Q10 is split: Q10a (`CUBEMETH`, `WAVCORR`, `DARCOR`) before M.2c; Q10b (noise-curve keywords, named in M.5a) before M.5b. | PR6 adds user-facing keys, extensions and header keywords (Q7), and the M.5 names do not exist when M.2c starts |
 | D20 | (Maintainer decision, 2026-10-22.) Upstream `develop` was fast-forwarded to `master` (`9be28f5`, `v1.3.2`), so `upgrade-start` is on `develop` and PRs target `develop` (D6) with no extra commits. `stash@{0}` (an earlier draft of PR #218 plus mode flips) was dropped. S.1 is complete. | `develop` had stayed at `6058c37` while `master` received PR #207's merge and PR #218 |
 | D21 | (Maintainer decision, 2026-10-22.) Bug B26 (with B27) was fixed as a hotfix before S.3 rather than in PR3b: PR #219 merged into `develop` as `6270cba`, version 1.3.3; PR #220 (`develop` → `master`) opened, not merged. `upgrade-start` moves from `9be28f5` to `6270cba`, and S.3's references are made with 1.3.3. | Every stacked flat since 1.2.0 used only the first flat; references made with that bug would have had to be re-blessed in PR3b, and users get the fix without waiting for the upgrade |
 | D22 | (Maintainer decision, 2026-10-22.) The plan and the testing rules in `docs/testing.md` are approved. T.0 is done. | T.0's 👤 check |
@@ -96,8 +98,11 @@ Decisions added after review (2026-10-22). Where one changes an earlier row, the
 | D28 | (Maintainer decision, 2026-10-28.) All upgrade PRs (PR0 onward) target a long-lived integration branch, `v3-upgrade`, created from `develop` at `af46243`, still through pull requests. `v3-upgrade` is merged into `develop` at a later date (R.5). Hotfixes for the live version keep going to `develop` (and `develop` → `master`) as before; `v3-upgrade` takes them by merging `develop` into it. PR #224 (PR0) was retargeted from `develop` to `v3-upgrade`. Amends D6. | Testers can be given the upgraded version from one branch while the live version still gets hotfixes |
 | D29 | (Maintainer decision, 2026-10-28.) The regression-tool tests (`unit/regression_tools/`, ~25 s of fake reductions in subprocesses) get a `regression_tools` marker and leave the default `pytest` run, which had reached 60.3 s with PR3a; `pytest -m regression_tools` is required before PRs that touch `kcwidrp/tests/regression/` (`docs/testing.md`). | Same approach as the `viewer` marker (D27); leaves headroom for Track M |
 | D30 | (Maintainer decision, 2026-10-28.) The S.3 level-3 answer files are not replayed on PR3a. They contain answers that today's code takes as a silent end of review (bug B4: e.g. `-42` at a bar-jump prompt in ds01 blue), which PR3a re-asks (D12), so every later answer shifts. Instead the maintainer records new answer files in P.6 (`answers_*_3_v2.txt`), which become the level-3 baseline: the L3 references are re-made from them and blessed after G3. Until then PR3a's replay checks cover the L0 and L1 entries (no prompts); the L3 entries are expected to fail tier 1. Amends D3 and the P.3/P.4 replay checks for the S.3 files. | Editing the S.3 files would be thrown away once the v2 files redefine the baseline |
+| D31 | (Maintainer decision, 2026-11-09.) **Scope of this release:** Track T (PR0), Track A (PR1), Track P (PR3a and PR3b) with the plot changes of D33, small changes (Track X: plot viewer fixes such as #227, and `develop` hotfixes merged into `v3-upgrade`, such as #232 and, once merged, #228), and the documentation merge (Track D, D32). **Track M is deferred** to a later release: M.0–M.7, PR2 and PR4–PR7, gates G2, G5, G5b and G6, and S4-Q10b. §9 is kept unchanged for then. Amends Q1, Q3, Q5, S4-Q8, S4-Q14, D5, D17 and D19. | The test, plotting, prompt and docs work is ready long before the matrix track, and none of it depends on M |
+| D32 | (Maintainer decision, 2026-11-09.) **The documentation is merged into this repository next**, as its own PR (PRD, Track D, §8a) on a branch from `v3-upgrade`, before PR3a opens: the docs plan's Phase 4 runs before its Phase 3. Each later PR then updates `docs/source/` itself, so the docs plan's separate `v3` docs branch and the R.4 hand-off list are dropped (R.4 becomes a docs check). The Read the Docs switch and archiving `KCWI_DRP-Docs` happen at release (R.5); until then the docs repository keeps serving the released 1.3.x. Amends S4-Q5. | PR3a and PR3b can carry their own user docs, and nothing is written out of tree |
+| D33 | (Maintainer decisions, 2026-11-09.) **Plot changes from the P.0 review go into PR3a:** one color per role across all plots ("Plot color scheme" in `docs/interactive_prompts.md`: data inspected blue, reference black, fits red, CWAVE orange dash-dot-dot, WAVGOOD green, ...), held as constants in `kcwidrp/core/kcwi_plot_colors.py` with `oplot_cwave` and `oplot_wavgood` helpers (a convention, not enforced); a color bar on images; WAVGOOD on full-range plots; the reviewer's fixes to P11, P12, P21–P23 and P43–P47; help texts with one color per line, a blank line around `?` help, and bold headings on a terminal; American spelling throughout the code and docs. Amends §8.1 ("No plotting changes") and P.3's pixel-identical PNG check: plot appearance changes in PR3a, but cubes and the `.proc` table must not (tier 1–5 unchanged), and the plots are blessed with the new reason `plot scheme PR3a` after G3. | The review showed the prompts can't be explained well without consistent plots; plot appearance is free to change (S4-Q1) |
 
-Maintainer answers to the S.4 questions (gate G0), given 2026-10-22 by the maintainer. Numbered after the S.4 list (S4-Q*n*) so they do not clash with Q1–Q16 above. S4-Q10b is still open (asked after M.5a).
+Maintainer answers to the S.4 questions (gate G0), given 2026-10-22 by the maintainer. Numbered after the S.4 list (S4-Q*n*) so they do not clash with Q1–Q16 above. S4-Q10b is still open (asked after M.5a), and is deferred with Track M (D31).
 
 | # | Question (S.4) | Answer | Consequence in this plan |
 |---|---|---|---|
@@ -105,16 +110,16 @@ Maintainer answers to the S.4 questions (gate G0), given 2026-10-22 by the maint
 | S4-Q2 | How are plots viewed when the pipeline runs remotely? | **VNC / remote desktop.** The browser runs on the pipeline host. | The `localhost`-only viewer binding works as designed. R.3's remote session is done over VNC. SSH port-forwarding stays documented but is not tested |
 | S4-Q3 | Several processes watched at once; one tab per process acceptable? | **Yes, one tab per process.** | The default topology from bokeh plan 0.3 is confirmed; the shared-port alternative is dropped |
 | S4-Q4 | Auto-open the browser tab on summit and RTI hosts? | **Off everywhere.** | `plot_viewer_open_browser = False` in both `kcwi.cfg` and `kcwi_koarti.cfg` (§7 amendment 13). This changes today's behavior (`session.show` opens a tab); the changelog says so and the printed URL is the way in |
-| S4-Q5 | Who merges the `documentation` branch; how is ReadTheDocs rebuilt? | **User documentation lives in a separate repository, [KCWI_DRP-Docs](https://github.com/Keck-DataReductionPipelines/KCWI_DRP-Docs) (`main`), maintained by the maintainer, and is updated under a separate plan.** | All `documentation`-branch and `docs/source/` work leaves this plan: T.10's second half, bokeh 5.1b and R.4 become a hand-off list for the docs plan (§10 R.4) |
+| S4-Q5 | Who merges the `documentation` branch; how is ReadTheDocs rebuilt? | **User documentation lives in a separate repository, [KCWI_DRP-Docs](https://github.com/Keck-DataReductionPipelines/KCWI_DRP-Docs) (`main`), maintained by the maintainer, and is updated under a separate plan.** | All `documentation`-branch and `docs/source/` work leaves this plan: T.10's second half, bokeh 5.1b and R.4 become a hand-off list for the docs plan (§10 R.4). *Amended by D32: the docs move into this repository (Track D) and each PR updates them.* |
 | S4-Q6 | Are prompts driven by scripts at Keck? | **No, humans only.** | Prompt wording can change freely in Track P; P.0 needs no maintainer wording approval |
 | S4-Q7 | Log user answers at INFO? | **Yes.** | As planned (Q8) |
-| S4-Q8 | Flip the default `cube_method` to `matrix` in this release? | **Yes, if every M.0 threshold passes on both channels and the M.2e, M.4 and M.5c human checks are signed off; otherwise the release ships with `matrix` opt-in.** | M.6's go/no-go is mechanical; G6 checks the evidence against this rule |
+| S4-Q8 | Flip the default `cube_method` to `matrix` in this release? | **Yes, if every M.0 threshold passes on both channels and the M.2e, M.4 and M.5c human checks are signed off; otherwise the release ships with `matrix` opt-in.** | M.6's go/no-go is mechanical; G6 checks the evidence against this rule. *Deferred with Track M (D31).* |
 | S4-Q9 | New extensions in `icube*` files, or separate files? | **Separate files.** | The coverage cube (M.2c) and covariance products (M.5b) go in new files next to the cube, e.g. `<frame>_icube_coverage.fits`, `<frame>_icube_corr.fits`; the HDU layout of every existing output is unchanged. Exact names are proposed in M.2c/M.5b and listed in the changelog |
 | S4-Q10a | Header keywords `CUBEMETH`, `WAVCORR`, `DARCOR`? | **Yes, as proposed.** `CUBEMETH` is written in both modes. | M.2c, M.3, M.4 as written |
 | S4-Q11 | Opt-in `W` file: acceptable, and where? | **Yes. Write a routine that saves `W` in COO form as a FITS file with a single binary-table extension, next to the cube.** | M.5b writes `<frame>_icube_W.fits` (option B) with `cube_matrix.write_matrix_fits` / `read_matrix_fits`; no `.npz` (§9 amendment 10) |
 | S4-Q12 | Are old invsens files reused across reductions? | **Rarely.** | M.2d's proposed default stands: on a method mismatch, log an ERROR naming both files and the fix, and skip flux calibration for that frame |
 | S4-Q13 | Move `pytest` into a `test` extra? | **Yes.** | T.1 as written (D13) |
-| S4-Q14 | Flip the RTI config to `matrix` too? | **Yes, same as `kcwi.cfg`.** | M.6 changes both configs, under the same S4-Q8 rule |
+| S4-Q14 | Flip the RTI config to `matrix` too? | **Yes, same as `kcwi.cfg`.** | M.6 changes both configs, under the same S4-Q8 rule. *Deferred with Track M (D31).* |
 
 ---
 
@@ -144,6 +149,39 @@ Remapping of bokeh-plan tasks:
 ---
 
 ## 4. Sequencing, pull requests and gates
+
+### Where things stand (2026-11-09)
+
+| Step | PR / branch | State |
+|---|---|---|
+| Phase S | – | Done (S.4 Q10b deferred with Track M) |
+| Track T, PR0 | #224, `upgrade/pr0-tests` | Merged into `v3-upgrade` 2026-10-28 |
+| Track A, PR1 | #225, `upgrade/pr1-bokeh` | Merged 2026-10-28. Still open: 👤 0.3 prototype on Ubuntu 24.04; 👤 the `bokeh port 4.3` plot bless |
+| X: viewer download fix | #227, `upgrade/download-fix` | Merged 2026-10-29 |
+| X.1: `develop` into `v3-upgrade` | – | To do: brings #232 (MakeMasterSky Cholesky fallback, merged into `develop` 2026-11-07); again for #228 (CorrectDar edges) once it merges |
+| Track D, PRD | not started | Next (D32). Docs phases 0–2 are done on three local, unpushed branches of `KCWI_DRP-Docs` |
+| Track P, PR3a | `upgrade/pr3a-prompts` (pushed) | P.0–P.4 done; P.0 👤 review in progress (first round of feedback applied, with the plot changes of D33); P.6, P.7 and the full-profile regression run not done; branch is 4 commits behind `v3-upgrade` |
+| Track P, PR3b | not started | After PR3a merges |
+| Release | #226, `v3-upgrade` → `develop` | Open; completed at R.5 |
+| Track M | – | Deferred (D31) |
+
+```
+Done:  Phase S ─► Track T ─► PR0 (#224) ─► Track A ─► PR1 (#225) ─► viewer fix (#227)
+                                                         │
+X (any time): merge develop into v3-upgrade after each hotfix (#232, #228, ...)
+                                                         │
+Track D: docs merge, D.1–D.5 ───────────────────────► PRD ─► (GD)
+                                                         │
+Track P: P.0 review, P.6, P.7, plots (D33) ─────────► PR3a ─► (G3)
+         P.5 bug fixes, P.6, P.7 ───────────────────► PR3b ─► (G4)
+                                                         │
+Release: R.1 sweep, R.2 review, R.3 clean machine,
+         R.4 docs check, R.5 release (RTD switch) ─► (G7)
+
+Deferred (D31): Track M (M.0–M.7; PR2, PR4–PR7; gates G2, G5, G5b, G6)
+```
+
+The original sequence, kept for reference (Track M's place in it is deferred):
 
 ```
 Phase S (shared setup, mostly human)
@@ -182,6 +220,8 @@ Why this order:
 - **A before M.2.** `MakeCube` is touched by A (image plot, possibly the `Pool` start method) and rewritten by M.2. Bokeh-plan task 4.2 also requires cubes to be numerically identical to the reference, which only holds while the warp path is the only path.
 - **P before M.2** (per Q1). The file overlap is small (one prompt in `MakeCube`), so if Track P stalls, M.2 may start after PR1 instead; record that as a new decision row if it happens.
 - **M.0–M.1 in parallel.** They touch `GenerateMaps`, a new `core/cube_matrix.py` and new tests, none of which Track A changes. M.0 needs T.7's regression tooling, so it starts once T.7 is committed on the PR0 branch.
+- **Track M deferred (D31).** The bullets above about M record why it came last. When it resumes, it starts from the released code: M.0 is rebuilt on the then-current regression references, and the line references in §9 are re-checked.
+- **D before P (D32).** PRD lands before PR3a opens, so PR3a and PR3b can update `docs/source/` in the same PR. PRD touches only `docs/`, packaging (`pyproject.toml` `docs` extra), `.readthedocs.yaml` and a config-key test, so it does not conflict with PR3a's code; PR3a merges `v3-upgrade` after PRD to pick up the `docs/dev/` move.
 
 Branches. Each PR has its own branch, named `upgrade/pr<N>-<topic>` (for example `upgrade/pr0-tests`, `upgrade/pr1-bokeh`). PR0's branch starts at `upgrade-start` (D10). Each later branch starts from `v3-upgrade` (D28) after the PR it depends on has merged there. If that PR has not merged yet, the branch starts from that PR's branch and is rebased onto `v3-upgrade` once it merges. Hotfixes go to `develop` as before and reach `v3-upgrade` by a merge of `develop` into it (a merge, not a rebase: `v3-upgrade` is shared). PR2 starts from the PR0 branch. Planning documents stay on `drp_upgrade_plan` and are merged with PR0. The task table below is the authority on dependencies; the diagram above is a summary.
 
@@ -192,13 +232,14 @@ Gates. Each needs the named sign-off before the next step starts.
 | G0 | End of S.4 | You + Keck maintainers | Answers to the maintainer questions in S.4 |
 | G0T | PR0 review | Keck maintainers | New test layout, pytest moved to a `test` extra (D13), all Travis configuration and references removed (T.10), the viewer-off fixes B9 and B10 (T.11), the local pre-PR testing rule replacing "a pass from the automatic TravisCI tests" as a PR requirement |
 | G1 | PR1 review | Keck maintainers | Bokeh removal, new viewer, config key changes, one viewer tab per process |
-| G2 | PR2 review | You (Keck review as normal) | Vectorized GenerateMaps; no behavior change |
-| G3 | PR3a review | Keck maintainers | New prompt wording and behavior, answers in log, EOF handling, the invalid-input fixes listed in D12 |
+| GD | PRD review | Keck maintainers | User docs in this repository (`docs/source/`), planning docs moved to `docs/dev/`, the `docs` extra, docs built against the same commit, and the RTD switch plan for R.5 (D32) |
+| G2 | PR2 review (deferred, D31) | You (Keck review as normal) | Vectorized GenerateMaps; no behavior change |
+| G3 | PR3a review | Keck maintainers | New prompt wording and behavior, answers in log, EOF handling, the invalid-input fixes listed in D12, and the plot changes of D33 |
 | G4 | PR3b review | Keck maintainers | Each bug fix and its measured effect on outputs |
-| G5 | PR4 review | Keck maintainers | New `cube_method` key, new header keywords and extensions (opt-in) |
-| G5b | PR6 review | Keck maintainers | Covariance config keys (`cube_covariance`, `cube_save_matrix`), the option A extension and option C header keywords, the opt-in `W` file (D19) |
-| G6 | PR7 review | Keck maintainers | Flipping the default to `matrix`; users must re-derive invsens |
-| G7 | Release | You + Keck maintainers | Version number, release notes |
+| G5 | PR4 review (deferred, D31) | Keck maintainers | New `cube_method` key, new header keywords and extensions (opt-in) |
+| G5b | PR6 review (deferred, D31) | Keck maintainers | Covariance config keys (`cube_covariance`, `cube_save_matrix`), the option A extension and option C header keywords, the opt-in `W` file (D19) |
+| G6 | PR7 review (deferred, D31) | Keck maintainers | Flipping the default to `matrix`; users must re-derive invsens |
+| G7 | Release | You + Keck maintainers | Version number, release notes, the RTD switch (D32) |
 
 ### Task overview
 
@@ -222,10 +263,10 @@ Gates. Each needs the named sign-off before the next step starts.
 | T.10 | Remove Travis CI | Sonnet (low) | – | – |
 | T.11 | Fix viewer-off crashes B9, B10 | Sonnet (low); tests in a fresh session | T.1 | – |
 | A.* | Bokeh port tasks 0.3, 1.1–5.1 (not 5.1b) | per bokeh plan | S.3, S.5, T.1–T.3 committed (PR1 merges after PR0) | ✔ |
-| M.0 | Matrix fixture, metrics thresholds and regions | Sonnet (medium) | T.7 | ✔ |
-| M.1a | Vectorize GenerateMaps | Sonnet (medium) | M.0 | – |
-| M.1b | Pixel-edge coordinate helper | Opus (medium) | M.0 | – |
-| M.1t | Tests for M.1a/M.1b | Sonnet (medium), fresh session | M.1a, M.1b | – |
+| M.0 | Matrix fixture, metrics thresholds and regions *(deferred, D31)* | Sonnet (medium) | T.7 | ✔ |
+| M.1a | Vectorize GenerateMaps *(deferred, D31)* | Sonnet (medium) | M.0 | – |
+| M.1b | Pixel-edge coordinate helper *(deferred, D31)* | Opus (medium) | M.0 | – |
+| M.1t | Tests for M.1a/M.1b *(deferred, D31)* | Sonnet (medium), fresh session | M.1a, M.1b | – |
 | P.0 | Prompt catalog and explanation text | Opus (medium) | S.5 | ✔ |
 | P.1 | Interactive helper module | Opus (medium) | P.0 | – |
 | P.2 | Helper tests | Sonnet (medium) | P.1 | – |
@@ -233,23 +274,29 @@ Gates. Each needs the named sign-off before the next step starts.
 | P.4 | Convert value-entry and bar-jump sites | Opus (medium) | P.3 | – |
 | P.5 | Output-changing bug fixes (one commit each) | Opus (medium) + Sonnet tests | P.4, PR3a merged | ✔ |
 | P.6 | Interactive acceptance session | Human | P.4 (and P.5 for PR3b) | ✔ |
-| P.7 | Changelog and user docs for prompts (PR3a part, then PR3b part) | Sonnet (low) | P.6 | – |
-| M.2a | Build `W` | Opus (high) | M.1b, PR3a merged | – |
-| M.2b | Tests for `W` | Sonnet (medium) | M.2a | – |
-| M.2c | `cube_method` in MakeCube | Opus (medium) | M.2a, M.2b, S.4 Q8, Q9, Q10a | – |
-| M.2d | Cube-method guard on invsens / FluxCalibrate | Sonnet (medium); tests in a fresh session | M.2c, S.4 Q12 | – |
-| M.2e | Real-data validation of M.2 | Opus (high), then Human | M.2c, M.2d | ✔ |
-| M.3 | Fold wavelength corrections into `W` | Opus (medium) | M.2e | ✔ |
-| M.4 | Fold DAR into `W` | Opus (high) | M.3 | ✔ |
-| M.5a | Covariance mathematics | Opus (high) | M.4 | – |
-| M.5b | Covariance I/O and config; tests in a fresh session | Sonnet (medium) | M.5a, S.4 Q10b | – |
-| M.5c | Covariance validation | Opus (high), then Human | M.5b | ✔ |
-| M.6 | Default flip to `matrix` | Sonnet (low); tests in a fresh session | M.5c, S.4 Q8 and Q14 | ✔ |
-| M.7 | Performance and memory report | Sonnet (low) | M.6 | – |
+| P.7 | Changelog and user docs for prompts (PR3a part, then PR3b part), in `docs/source/` (D32) | Sonnet (low) | P.6, PRD merged | – |
+| D.1 | Merge the docs repository with history; copy the docs plan | Sonnet (medium) | 👤 docs phases 0–2 merged in `KCWI_DRP-Docs` | ✔ |
+| D.2 | Move planning docs to `docs/dev/`; fix links | Sonnet (low) | D.1 | – |
+| D.3 | Docs packaging: `docs` extra, `.readthedocs.yaml`, docs build check | Sonnet (medium) | D.1 | – |
+| D.4 | One-repository developer docs; config-key docs test | Sonnet (medium); test in a fresh session | D.2, D.3 | – |
+| D.5 | v3 user docs for merged work (PR0, PR1, X) | Sonnet (medium) | D.3 | ✔ |
+| X.1 | Merge `develop` into `v3-upgrade` after each hotfix | Human | – | ✔ |
+| M.2a | Build `W` *(deferred, D31)* | Opus (high) | M.1b, PR3a merged | – |
+| M.2b | Tests for `W` *(deferred, D31)* | Sonnet (medium) | M.2a | – |
+| M.2c | `cube_method` in MakeCube *(deferred, D31)* | Opus (medium) | M.2a, M.2b, S.4 Q8, Q9, Q10a | – |
+| M.2d | Cube-method guard on invsens / FluxCalibrate *(deferred, D31)* | Sonnet (medium); tests in a fresh session | M.2c, S.4 Q12 | – |
+| M.2e | Real-data validation of M.2 *(deferred, D31)* | Opus (high), then Human | M.2c, M.2d | ✔ |
+| M.3 | Fold wavelength corrections into `W` *(deferred, D31)* | Opus (medium) | M.2e | ✔ |
+| M.4 | Fold DAR into `W` *(deferred, D31)* | Opus (high) | M.3 | ✔ |
+| M.5a | Covariance mathematics *(deferred, D31)* | Opus (high) | M.4 | – |
+| M.5b | Covariance I/O and config; tests in a fresh session *(deferred, D31)* | Sonnet (medium) | M.5a, S.4 Q10b | – |
+| M.5c | Covariance validation *(deferred, D31)* | Opus (high), then Human | M.5b | ✔ |
+| M.6 | Default flip to `matrix` *(deferred, D31)* | Sonnet (low); tests in a fresh session | M.5c, S.4 Q8 and Q14 | ✔ |
+| M.7 | Performance and memory report *(deferred, D31)* | Sonnet (low) | M.6 | – |
 | R.1 | Leftover sweep (code and tests) | Sonnet (low) | all | – |
 | R.2 | Independent review | Opus (high), fresh session | R.1 | – |
 | R.3 | Clean-machine acceptance | Human | R.2 | ✔ |
-| R.4 | Documentation hand-off list (docs repo is out of scope, S4-Q5) | Sonnet (medium) | R.3 | ✔ |
+| R.4 | Documentation check (D32; was the hand-off list) | Sonnet (medium) | R.3 | ✔ |
 | R.5 | Release | Human + Keck | R.4 | ✔ |
 
 ---
@@ -583,6 +630,7 @@ This absorbs the regression script from matrix plan Stage 0 (tier 5) and the rep
 | `T.11 viewer-off` | PR0, if references were captured with the viewer on and differ only in what the viewer affects | All |
 | `bokeh port 4.3` | After 4.3 sign-off | Plots (tier 6) |
 | `prompt text PR3a` | After G3 | Level-3 prompt records only; outputs must not change |
+| `plot scheme PR3a` | After G3 (D33) | Plots (tier 6) only; cubes and `.proc` must not change |
 | `P.5 <bug ID>` | After G4 | Datasets changed by that fix |
 | `M.2c header` | After G5: `CUBEMETH` (and any agreed coverage extension) added to warp cubes | All warp datasets; pixel data must not change |
 | `M.2e initial`, `M.3`, `M.4`, `M.5` | After the stage's 👤 sign-off | `*_matrix` only |
@@ -678,7 +726,7 @@ No workflow is added now (Q15). The suite is built so that adding one later is a
 |---|---|---|
 | A | Fast suite on every commit; regression tiers 1–4 confirm reductions unchanged; tier 6 for plots | Bokeh-plan 1.2 tests in `unit/plotting/` (replacing `test_bokeh_plotting.py`); the coverage scan; bless of the plots after bokeh 4.3 |
 | P | `run_primitive(answers=…)` for every prompt site; tier 1 replay and prompt record | P.2 tests in `unit/interactive/`; the bare-`input(` AST test in `unit/interactive/`; PR3a and PR3b remove the B-bug `xfail`s as in §13; `answers_*_v2.txt` added to the manifest; prompt-text bless after G3, output bless after G4 |
-| M | Tier 5 metrics; T.4's `CorrectDar` and `WavelengthCorrections` tests as the warp-path reference | M.1t and M.2b in `unit/cube_matrix/`; `W` invariants in `properties/`: each column of the unnormalized overlap matrix sums to 1 for a pixel fully inside the grid (flux conservation), each row of the row-normalized `W` sums to 1 where coverage > 0 (weighted mean), variance non-negative, bilinear equivalence; `*_matrix` and `*_warp` dataset variants; blesses as in the T.7 table |
+| M (deferred, D31) | Tier 5 metrics; T.4's `CorrectDar` and `WavelengthCorrections` tests as the warp-path reference | M.1t and M.2b in `unit/cube_matrix/`; `W` invariants in `properties/`: each column of the unnormalized overlap matrix sums to 1 for a pixel fully inside the grid (flux conservation), each row of the row-normalized `W` sums to 1 where coverage > 0 (weighted mean), variance non-negative, bilinear equivalence; `*_matrix` and `*_warp` dataset variants; blesses as in the T.7 table |
 | R | R.1 checks the suite's hygiene | – |
 
 ---
@@ -742,7 +790,7 @@ Constraints:
 - **D3:** for valid answers, the number and order of prompts is unchanged, so `answers_<channel>_3.txt` from S.3 replays on every commit of PR3a and produces identical outputs.
 - **D12: no change for input that is valid today in PR3a.** Prompts, logged results and outputs for input accepted today are unchanged. Input that is invalid today (it crashes, silently resets, silently ends a review or quits by accident) may re-prompt instead; this fixes B1c, B2, B4, B5 and B6 in PR3a. Everything that changes a reduction result for valid input or for an unattended run, or removes a prompt that valid runs see, is in PR3b (B1, B1b, B3, B7, B8, B11, B12, B13).
 - **EOF is a deliberate behavior change in PR3a** (D4): today an `EOFError` fails the primitive and the reduction carries on without its output; after PR3a the default is used. It is listed in the changelog and covered by G3.
-- **No plotting changes.** On-plot guidance was not selected (Q2). The helper must not import the plotting modules.
+- **No plotting changes.** On-plot guidance was not selected (Q2). The helper must not import the plotting modules. *Amended by D33: PR3a changes plot appearance (color scheme, the reviewer's plot fixes); reductions must not change.*
 
 ### 8.2 Design (to be fixed in P.1)
 
@@ -820,7 +868,7 @@ Depends on: P.1, P.2, PR1 merged. Convert every `pause` and `ask_next` site **ex
 Validation:
 - New test `kcwidrp/tests/unit/interactive/test_no_bare_input.py`: an AST scan that fails if `input(` or `time.sleep(...plot_pause...)` appears in `kcwidrp/primitives` outside the helper. (It starts with the P.4 sites on an allow-list, which P.4 empties.)
 - `pytest kcwidrp/tests` passes, including the bokeh coverage scan.
-- **Replay:** with `KCWI_STRICT_INPUT=1`, the full regression profile on both channels: tier 1 passes on the prompt record (same count; prompt strings differ only by the new `(? for help)` suffix and wording from P.0, which are reviewed and blessed as `prompt text PR3a` after G3), and every cube and the `.proc` table are `array_equal` to the PR1 output. PNGs are pixel-identical to PR1's.
+- **Replay:** with `KCWI_STRICT_INPUT=1`, the full regression profile on both channels: tier 1 passes on the prompt record (same count; prompt strings differ only by the new `(? for help)` suffix and wording from P.0, which are reviewed and blessed as `prompt text PR3a` after G3), and every cube and the `.proc` table are `array_equal` to the PR1 output. PNGs are pixel-identical to PR1's. *Amended by D33: PNGs change in PR3a; the tier 6 comparison is reviewed and blessed as `plot scheme PR3a` after G3.*
 - `git diff` per file touches only prompt blocks and imports.
 
 ### P.4 Convert value-entry and bar-jump sites — Opus 5.5 (medium)
@@ -860,13 +908,64 @@ Depends on: P.4 (and again after P.5 for PR3b). Run one `plot_level = 3` reducti
 
 ### P.7 Changelog and docs — Sonnet 5.5 (low)
 
-Changelog entries for PR3a (new prompt behavior, logging, EOF handling, `KCWI_STRICT_INPUT`, the invalid-input fixes B1c, B2, B4, B5 and B6), committed in PR3a, and for PR3b (each fix and its effect), committed in PR3b. A short "Interactive mode" section for the documentation branch, held for R.4.
+Changelog entries for PR3a (new prompt behavior, logging, EOF handling, `KCWI_STRICT_INPUT`, the invalid-input fixes B1c, B2, B4, B5 and B6), committed in PR3a, and for PR3b (each fix and its effect), committed in PR3b. A short "Interactive mode" page in `docs/source/`, written in PR3a (D32; was held for R.4).
 
 Validation: every behavior change listed in §8.2 rules and every §13 fix appears in the changelog.
 
 ---
 
+## 8a. Track D: documentation merged into this repository
+
+Added by D32. Executes Phase 4 of the docs plan (`~/drp/kcwi/KCWI_docs_plan.md`) now, before its Phase 3: the user documentation in [KCWI_DRP-Docs](https://github.com/Keck-DataReductionPipelines/KCWI_DRP-Docs) moves into this repository with its history, in one PR (PRD) against `v3-upgrade`. The docs plan's audit (its §2) and its open decisions (its §4) still apply.
+
+👤 Before D.1: merge the docs plan's phases 0–2 (local branches `docs/phase0-build`, `docs/phase1-fixes`, `docs/phase2-content` in `~/drp/kcwi/KCWI_DRP-Docs`) into the docs repository's `main`, so released 1.3.x users get the fixes and the import carries them. Answer the docs plan's §4 decisions 1–3 (old RTD versions, `docs/dev/`, `myst-parser`).
+
+### D.1 Import with history — Sonnet 5.5 (medium)
+
+On a clone of the docs repository, `git filter-repo --path docs/ --path .readthedocs.yml` (dropping its `README.rst`, `LICENSE.rst`, `CODEOWNERS` and `changelog.txt`). On a branch `upgrade/prd-docs` from `v3-upgrade`, `git merge --allow-unrelated-histories`. Copy the docs plan into `docs/dev/docs_plan.md` (as D1 did for the matrix plan).
+
+Validation: `git log --follow` on a page shows its docs-repository history; no file from either side is overwritten.
+
+👤 Human check: the import is the one step that is hard to undo after the PR merges; look at the merge commit's file list before pushing.
+
+### D.2 Planning docs to `docs/dev/` — Sonnet 5.5 (low)
+
+Move this plan, the bokeh and matrix plans, `testing.md`, `interactive_prompts.md`, `plot_inventory.md` and `baseline/` to `docs/dev/` (docs plan §4, decision 2). Update every link: README "Tests", the PR template, cross-links between plans, and paths in tests that read these files (the inventory and prompt-catalog tests).
+
+Validation: a link check over `docs/` and `README.rst` finds no broken relative link; `pytest` passes.
+
+### D.3 Packaging and build — Sonnet 5.5 (medium)
+
+A `docs` extra in `pyproject.toml` (Sphinx, theme and extensions); delete `docs/requirements.txt`. `.readthedocs.yaml` at the repository root installs `.[docs]`, so the docs always build against the code in the same commit. Add "docs build with `sphinx-build -W --keep-going -n`" to the pre-PR checklist in `docs/dev/testing.md` §1 for PRs that touch `docs/source/`, user-visible behavior or config keys.
+
+Validation: `pip install -e ".[docs]"` and the `-W` build pass in the development environment; `api.html` lists every primitive (including `kcwi_interactive` and `kcwi_plot_colors`).
+
+### D.4 One-repository developer docs — Sonnet 5.5 (medium)
+
+`development.rst` and `updating_docs.rst` describe one repository and the `v3-upgrade` branch model (D28); `development.rst` links to `testing.md` (or includes it with `myst-parser`, decision 3). Move the docs build's config-key check into a test in `kcwidrp/tests/config_cli/` (written in a fresh session): every `kcwi.cfg` key is documented and every documented key exists.
+
+Validation: the new test passes and fails when a key is added to `kcwi.cfg` without docs.
+
+### D.5 v3 docs for work already merged — Sonnet 5.5 (medium)
+
+The docs plan's D1–D4 and D8 for PR0, PR1 and X: no Firefox/geckodriver/selenium/phantomjs; `enable_plot_viewer`, `plot_viewer_port`, `plot_viewer_open_browser = False` and the `enable_bokeh` deprecation; viewing over VNC; port troubleshooting; `StartBokeh` → `StartPlotViewer`; install with `pip install -e ".[test]"`; dependencies in `pyproject.toml` only; the testing rule. Later PRs (PR3a, PR3b) carry their own docs.
+
+Validation: every user-visible `Unreleased` changelog entry from PR0, PR1 and X has a docs change, listed in the PR description.
+
+👤 Human check: read the changed pages. Ask an RTD admin to add a hidden version building `v3-upgrade`, so testers can read the v3 docs before the release switch (R.5).
+
+## 8b. Small changes (X)
+
+Added by D31. Small fixes that ship with this release without a track of their own:
+
+- **Plot viewer fixes**, each as a small PR against `v3-upgrade` (#227, the download button, merged 2026-10-29).
+- **X.1, `develop` hotfixes — Human.** After each hotfix merges into `develop`, merge `develop` into `v3-upgrade` (D28; a merge, not a rebase), then merge `v3-upgrade` into open track branches. Pending: #232 (MakeMasterSky Cholesky fallback, merged into `develop` 2026-11-07), #228 (CorrectDar edges, open). Run the fast suite and the quick regression profile after each merge; a hotfix that changes outputs gets a bless with its own reason (add it to the T.7 table).
+
+Each item gets a changelog entry and, after PRD, its docs change.
+
 ## 9. Track M: sparse-matrix cube construction
+
+> **Deferred (D31, 2026-11-09).** Track M is not part of this release. This section is kept unchanged for the release that picks it up. Before resuming: rebuild M.0 on the then-current regression references, re-check the code references (Track P and D33 have changed the primitives), and re-ask S4-Q8, S4-Q14 and S4-Q10b.
 
 Executes [matrix_cube_plan.md](matrix_cube_plan.md) Stages 0–5.
 
@@ -1082,13 +1181,15 @@ Validation: numbers come from logged timings of real runs on the S.3 machine, no
 
 Bokeh-plan 5.2 search list, plus: bare `input(` or `plot_pause` sleeps in primitives (should be none outside the helper); `TODO`/`FIXME` added by this work; config keys mentioned in docs but not in `kcwi.cfg` or vice versa. Test hygiene: no `xfail` without a bug or task ID, and none whose bug is marked fixed; no `skip` without a reason; no test outside the §6.2 layout; fast suite still under 60 s. Classify every hit as intentional or leftover.
 
-Validation: the intentional list matches bokeh-plan 5.2's expected list plus the `warp` code path (D5).
+Validation: the intentional list matches bokeh-plan 5.2's expected list. (The `warp` code path entry, D5, is deferred with Track M.)
 
 ### R.2 Independent review — Opus 5.5 (high), fresh session
 
 Replaces bokeh-plan 5.3. Over the diff from `upgrade-start` to the release candidate, with no access to implementation conversations. Bokeh-plan 5.3 focus list, plus:
 - Track P: any path where a prompt can change a reduction differently from the logged answer; EOF and strict-mode behavior; any prompt whose order changed.
-- Track M: half-pixel conventions; `ncand` adequacy; masking before normalization; flag semantics; WCS/CRPIX with padding; variance and covariance formulas; mixing methods; memory at full-frame unbinned size.
+- Plots (D33): every help text's colors match the figure code; `kcwi_plot_colors` roles are used consistently.
+- Track D: the docs describe the release candidate (no Bokeh/Firefox), and config keys, scripts and products match the code.
+- (Track M's focus list, half-pixel conventions to memory, is deferred with it, D31.)
 - No mode changes in the diff (S.1).
 
 Validation: every finding is fixed with a test or closed with a written reason.
@@ -1098,21 +1199,21 @@ Validation: every finding is fixed with a test or closed with a written reason.
 Bokeh-plan 5.4 in full (Ubuntu 24.04, no browser installed), plus, in the same session:
 
 👤 Human check:
-- Default-config reductions of both S.3 channels produce matrix cubes and pass the M.0 thresholds against S.3.
+- Default-config reductions of both S.3 channels match the regression references (the quick profile passes on the clean machine).
+- The docs build (`sphinx-build -W`) passes on the clean machine from a fresh `pip install -e ".[docs]"`.
 - One `plot_level = 3` interactive session over VNC (S4-Q2), opening the printed viewer URL by hand (S4-Q4), replaying `answers_<channel>_3_v2.txt` with `KCWI_STRICT_INPUT=1`, then one live session answering by hand.
-- `cube_method = "warp"` still runs end to end.
 
-### R.4 Documentation hand-off list — Sonnet 5.5 (medium)
+### R.4 Documentation check — Sonnet 5.5 (medium)
 
-The user documentation lives in the separate `KCWI_DRP-Docs` repository and is updated under its own plan (S4-Q5). This task writes `docs/docs_handoff.md` in this repository: a checklist of every user-visible change that the docs plan must cover, each with the PR that introduced it and the source of truth (config comment, changelog entry, docstring). At least: bokeh-plan 5.1b's table (installation without Firefox/geckodriver/selenium/phantomjs; `enable_plot_viewer`, `plot_viewer_port`, `plot_viewer_open_browser = False`, `enable_bokeh` deprecation; the viewer URL and VNC viewing; viewer-port troubleshooting; `StartBokeh` → `StartPlotViewer`); the interactive-mode page (P.7: `?` help, quitting, EOF behavior, `KCWI_STRICT_INPUT`, answers in the log); `cube_method`, `cube_covariance`, `cube_save_matrix` and the new output files (coverage, correlation, `W`); a short "cube construction" explanation and the invsens re-derivation note; API entries for `cube_matrix` and `kcwi_interactive`; the testing rule from T.10.
+Replaces the hand-off list (D32): since PRD, each PR updates `docs/source/` itself, so this task only checks the result. For every `Unreleased` changelog entry that changes user-visible behavior, a config key or an output file, find the docs change that covers it; write the table into the release PR. Write the v3 entry in `versions.rst` and the `index.rst` headline (docs plan D7).
 
-Validation: every changelog entry from PR0–PR7 that changes user-visible behavior, a config key or an output file appears in the list.
+Validation: every such changelog entry from PR0, PR1, PRD, PR3a, PR3b and X has a docs change; the `-W` build passes.
 
-👤 Human check: read the list and hand it to the documentation plan.
+👤 Human check: read the release notes page and the table.
 
 ### R.5 Release — Human, with Keck maintainers
 
-Run the full regression profile on the release candidate first. The release merges `v3-upgrade` into `develop` (D28), then `develop` into `master` as usual. Version bump: `pyproject.toml` still says `1.3.1` although `v1.3.2` is tagged, so set the version from the tag history, not the file; because the default cube method changes science results, agree with Keck whether this is a minor or major version. Consolidated changelog, release notes listing: Bokeh removal and new viewer; new prompt behavior; each bug fix with its effect; matrix default and the invsens re-derivation requirement; new keys and products. Gate G7.
+Run the full regression profile on the release candidate first. The release merges `v3-upgrade` into `develop` (D28), then `develop` into `master` as usual. Version bump: `pyproject.toml` still says `1.3.1` although `v1.3.2` is tagged, so set the version from the tag history, not the file; agree with Keck whether this is a minor or major version (the bug fixes of PR3b change science outputs; the matrix default no longer does, D31). Consolidated changelog, release notes listing: Bokeh removal and new viewer; new prompt behavior and plot changes; each bug fix with its effect; new keys and products; the docs now in this repository. Then switch Read the Docs (docs plan Phase 4 steps 6–7): point the `kcwi-drp` project at this repository (`latest` = `develop`, `stable` = newest tag), keep the old versions reachable (docs plan §4 decision 1), turn on PR previews, and archive `KCWI_DRP-Docs` with a README pointing here. Gate G7.
 
 ---
 
@@ -1132,18 +1233,21 @@ Run the full regression profile on the release candidate first. The release merg
 | Track A | A.0.3 | Run prototype criteria in a browser on macOS and Ubuntu | Decision written in bokeh plan |
 | Track A | A.3.1 | Interactive MakeInvsens session with new cursor readout | Noted in PR1 |
 | Track A | A.4.3 | Review comparison page; interactive level-3 session; sign-off | Sign-off with accepted differences |
-| Before P.1 | P.0 | Review every prompt explanation for scientific accuracy | Each section marked approved |
+| Before P.1 | P.0 | Review every prompt explanation for scientific accuracy | Each section marked approved. In progress: first round of feedback applied 2026-11-09 (with D33) |
+| Before D.1 | Track D | Merge docs phases 0–2 in `KCWI_DRP-Docs`; answer docs plan §4 decisions 1–3 | Phases on docs `main`; decisions recorded |
+| Track D | D.1, D.5 | Check the import's file list; read the v3 pages; ask for a hidden RTD version of `v3-upgrade` | Noted in PRD |
+| Any time | X.1 | Merge `develop` into `v3-upgrade` after each hotfix (#232 now, #228 later) | Fast and quick-regression summaries recorded |
 | Track P | P.5 | Approve or reject each bug fix; inspect B1 plots | Decision per fix in PR3b |
 | Track P | P.6 | Interactive session with invalid input, `?`, Ctrl-D; read the log; record `answers_*_v2.txt`; replay it again after PR3b | Notes in PR3a; v2 file replays on PR3a and PR3b |
-| Before M.2e | M.0 | Choose sky regions, std aperture and target masks; confirm thresholds | `regions_*.json` and thresholds committed |
-| Track M | M.2e | Blink warp vs. matrix cubes; check coverage; sign off report; `M.2e initial` bless | Sign-off in PR4 |
-| Track M | M.3 | Compare one sky-line profile | Noted in PR5 |
-| Track M | M.4 | Check std star does not drift; check outer slices do not brighten or fade with λ; compare invsens | Noted in PR5 |
-| Track M | M.5c | Check noise curves; downstream tool smoke test | Noted in PR6 |
-| Track M | PR6 | Ask S.4 Q10b; present covariance keys and products for G5b | Decision in §2 |
-| Track M | M.6 | Present evidence to Keck for G6 | Decision in §2 |
-| Release | R.3 | Clean-machine run, remote interactive session, warp fallback | Checklist complete |
-| Release | R.4–R.5 | Hand the docs list to the docs plan; release notes, version | Released |
+| *(deferred)* Before M.2e | M.0 | Choose sky regions, std aperture and target masks; confirm thresholds | `regions_*.json` and thresholds committed |
+| Track M | *(deferred)* M.2e | Blink warp vs. matrix cubes; check coverage; sign off report; `M.2e initial` bless | Sign-off in PR4 |
+| Track M | *(deferred)* M.3 | Compare one sky-line profile | Noted in PR5 |
+| Track M | *(deferred)* M.4 | Check std star does not drift; check outer slices do not brighten or fade with λ; compare invsens | Noted in PR5 |
+| Track M | *(deferred)* M.5c | Check noise curves; downstream tool smoke test | Noted in PR6 |
+| Track M | *(deferred)* PR6 | Ask S.4 Q10b; present covariance keys and products for G5b | Decision in §2 |
+| Track M | *(deferred)* M.6 | Present evidence to Keck for G6 | Decision in §2 |
+| Release | R.3 | Clean-machine run, remote interactive session, docs build | Checklist complete |
+| Release | R.4–R.5 | Read the docs check; release notes, version; RTD switch and archive the docs repository | Released |
 
 ---
 
@@ -1152,7 +1256,10 @@ Run the full regression profile on the release candidate first. The release merg
 | Risk / gap | Mitigation |
 |---|---|
 | No nod-and-shuffle real data (Q4) | N&S validated on synthetic frames in P.4 and M.2c. 👤 Optional: fetch one N&S dataset from KOA before M.6 and run it; if not done, the release notes say N&S under `matrix` is validated on synthetic data only |
-| Matrix default changes science results for all users (Q5) | Gate G6, method guard M.2d, `warp` kept (D5), thresholds fixed before results are seen (M.0) |
+| Matrix default changes science results for all users (Q5) | Deferred with Track M (D31): no cube-method change ships in this release |
+| Deferred matrix plan drifts from the code | §9 banner: rebuild M.0 and re-check code references before resuming |
+| RTD switch loses the old 1.0.1–1.3.x docs (their tags have no Sphinx sources) | Docs plan §4 decision 1 (a legacy RTD project on the archived docs repository), decided before D.1, carried out at R.5 |
+| Docs merged early go stale as PR3a/PR3b land | Each PR updates `docs/source/` (D32); the `-W` build in the pre-PR checklist (D.3); R.4 checks every changelog entry |
 | Prompt wording may be a de-facto interface at Keck | S.4 Q6 before P.0 |
 | Bug fixes change outputs at default `plot_level` (B1) | Separate PR3b, measured effect per fix, maintainer gate G4 |
 | Long-running sequence; hotfixes land on `develop` | Merge `develop` into `v3-upgrade` after each hotfix (D28) and rebase open track branches onto `v3-upgrade` before their PRs; rerun the fast and regression suites after each merge or rebase |
@@ -1167,7 +1274,7 @@ Run the full regression profile on the release candidate first. The release merg
 | Regression runs too slow to do for every PR, so they get skipped | Quick profile per PR, full profile only where required (D16) |
 | Baseline env breaks again (it was already broken by a mixed psutil install) | `env_baseline.txt` recorded in S.2; rebuild instructions in `docs/baseline/README.md` |
 
-Rollback: each PR is independently revertable. Until M.6, the matrix code is opt-in. After M.6, `cube_method = "warp"` restores old cubes without a code change. Track A rollback is as in the bokeh plan.
+Rollback: each PR is independently revertable. No matrix code ships in this release (D31). Track A rollback is as in the bokeh plan. PRD is reverted by reverting its merge; the docs repository stays live until R.5.
 
 ---
 
