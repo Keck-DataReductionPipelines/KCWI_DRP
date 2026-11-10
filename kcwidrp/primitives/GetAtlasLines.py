@@ -524,10 +524,11 @@ class GetAtlasLines(BasePrimitive):
                            y_axis_label="Normalized Flux",
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height)
-                p.line(subwvals, subyvals / np.nanmax(subyvals),
-                       legend_label='RefArc', color='blue')
+                # atlas first, so the arc being inspected is drawn on top
                 p.line(atwave, atspec / norm_fac, legend_label='Atlas',
                        color='black')
+                p.line(subwvals, subyvals / np.nanmax(subyvals),
+                       legend_label='RefArc', color='blue')
                 # Rejected: window bad
                 if len(rej_win_w) > 0:
                     p.diamond(rej_win_w, rej_win_a / norm_fac,

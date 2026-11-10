@@ -762,8 +762,9 @@ class MakeInvsens(BasePrimitive):
                     y_axis_label='Flux (ergs/s/cm^2/A)',
                     plot_width=self.config.instrument.plot_width,
                     plot_height=self.config.instrument.plot_height)
-                pcal.line(w, calspec, line_color='blue', legend_label='Obs')
+                # reference first, so the calibrated data is drawn on top
                 pcal.line(w, rsflx, line_color='black', legend_label='Ref')
+                pcal.line(w, calspec, line_color='blue', legend_label='Obs')
                 pcal.line([wlm0, wlm0], yran, line_color='purple',
                           legend_label='WL lims')
                 pcal.line([wlm1, wlm1], yran, line_color='purple')

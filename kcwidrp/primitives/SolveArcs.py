@@ -484,12 +484,13 @@ class SolveArcs(BasePrimitive):
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height)
                 bwav = pwfit(self.action.args.xsvals)
-                p.line(bwav, b, color='blue', legend_label='Arc')
-                p.diamond(arc_wave_fit, arc_int_dat, color='blue', size=8)
                 ylim = [np.nanmin(b), np.nanmax(b)]
                 atnorm = np.nanmax(b) / np.nanmax(atspec)
+                # atlas first, so the arc being inspected is drawn on top
                 p.line(atwave, atspec * atnorm, color='black',
                        legend_label='Atlas')
+                p.line(bwav, b, color='blue', legend_label='Arc')
+                p.diamond(arc_wave_fit, arc_int_dat, color='blue', size=8)
                 p.line([self.action.args.cwave, self.action.args.cwave],
                        ylim, color='orange', line_dash='dashdotdot',
                        legend_label='CWAV')

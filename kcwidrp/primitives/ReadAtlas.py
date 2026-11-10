@@ -222,13 +222,14 @@ class ReadAtlas(BasePrimitive):
                            x_axis_label="Wave(A)", y_axis_label="Rel. Flux",
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height)
+                # atlas first, so the arc being inspected is drawn on top
+                p.line(refwav[minrw:maxrw],
+                       reflux[minrw:maxrw]/np.nanmax(reflux[minrw:maxrw]),
+                       color="black", legend_label="Atlas")
                 p.line(obswav[minow:maxow] - offset_wav,
                        obsarc[minow:maxow]/np.nanmax(obsarc[minow:maxow]),
                        color="blue", legend_label="ref bar (%d)" %
                        self.config.instrument.REFBAR)
-                p.line(refwav[minrw:maxrw],
-                       reflux[minrw:maxrw]/np.nanmax(reflux[minrw:maxrw]),
-                       color="black", legend_label="Atlas")
                 p.x_range = Range1d(minwav, maxwav)
                 ylim_min = min(
                     obsarc[minow:maxow]/np.nanmax(obsarc[minow:maxow]))
