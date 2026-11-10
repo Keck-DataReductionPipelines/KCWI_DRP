@@ -15,7 +15,12 @@ the pipeline.
 
         git clone git@github.com:Keck-DataReductionPipelines/KCWI_DRP.git
         cd KCWI_DRP
-        pip install -e .
+        pip install -e ".[test,docs]"
+
+The ``test`` extra installs the test tools (``pytest``, ``hypothesis``,
+``pytest-cov``) and the ``docs`` extra the documentation tools (Sphinx and its
+extensions). All dependencies are listed in ``pyproject.toml``; there is no
+``requirements.txt`` or ``environment.yml``.
 
 .. note::
 
@@ -38,10 +43,16 @@ not need to re-install the pipeline after each change.
 Managing Git
 ------------
 
-There are two persistent branches in the KCWI_DRP repo:
+There are three persistent branches in the KCWI_DRP repo:
 
 - ``master`` (default): This branch contains the current release version of the code, and provides the source used to build the package for ``conda`` and  ``pip``. 
 - ``develop``: This branch contains new features and non-essential fixes. It should be stable at all times. A new release is triggered by this branch being merged into ``master``. Any new code should be added to this branch.
+- ``v3-upgrade``: While version 3 is being developed, its work collects on this
+  long-lived integration branch. Pull requests for version 3 target
+  ``v3-upgrade``; fixes for the released version still target ``develop``, and
+  reach ``v3-upgrade`` when ``develop`` is merged into it (a merge, not a
+  rebase, because the branch is shared). At the version 3 release,
+  ``v3-upgrade`` is merged into ``develop``.
 
 When adding new code, please do your development in a branch off of ``develop``:
 
@@ -63,24 +74,22 @@ While developing, it is important to stay up-to-date with any changes in the
 
 Alternatively, you can do your own development in your own fork of the repo.
 
-.. note::
-
-    A larger upgrade of the pipeline (version 3) is being developed on a
-    long-lived integration branch, ``v3-upgrade``. Pull requests for that work
-    target ``v3-upgrade``; fixes for the released version still target
-    ``develop``.
-
 Pull Requests
 -------------
 
 Once your new feature is ready for merging into the develop branch, you need to
-issue a pull request. The pull request must contain the following:
+issue a pull request. The pull request template
+(``.github/pull_request_template.md``) has a heading for each item below. The
+pull request must contain the following:
 
 1. A short but thorough explanation of the feature and its purpose 
 2. A summary of the tests you ran and their results. There is currently no
    automatic CI; the tests are run locally, as described in the
-   `testing guide <https://github.com/Keck-DataReductionPipelines/KCWI_DRP/blob/v3-upgrade/docs/dev/testing.md>`_
+   :doc:`testing guide <testing>` ("Before opening a pull request")
 3. Evidence of successfully processing a night of KCWI data
+4. The documentation changes for any user-visible change (behavior, a
+   configuration key, a script or an output file), in ``docs/source/`` in the
+   same pull request, built without warnings (see :doc:`updating_docs`)
 
 Additionally, the code must meet the following:
 
@@ -89,8 +98,9 @@ Additionally, the code must meet the following:
 - Remove all print statements. If you need to output information to terminal, use the logging interface
 - At least two developers must approve of the request for it to be accepted
 
-If your pull request meets all of the above, it will be merged into ``develop``
-during the next developer meeting.
+If your pull request meets all of the above, it is merged into its target
+branch (``develop``, or ``v3-upgrade`` for version 3 work) once two developers
+have approved it.
 
 Merging ``develop`` into ``master``
 -----------------------------------

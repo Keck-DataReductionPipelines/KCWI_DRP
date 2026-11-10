@@ -42,6 +42,9 @@ extensions = ['sphinx.ext.autodoc',
 # User pages are reStructuredText; Markdown (myst-parser) is for the
 # developer pages that live in docs/dev/ (docs plan, decision 3)
 source_suffix = {'.rst': 'restructuredtext', '.md': 'markdown'}
+# Anchors for Markdown headings, so links such as
+# testing.md#before-opening-a-pull-request resolve
+myst_heading_anchors = 3
 napoleon_numpy_docstring = True
 autosectionlabel_prefix_document = True
 

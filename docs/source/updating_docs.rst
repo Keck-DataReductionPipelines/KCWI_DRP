@@ -2,56 +2,60 @@
 Updating documentation
 ======================
 
-The documentation is generated automatically by ReadTheDocs, and triggered by
-pushing commits to the ``main`` branch of the
-`KCWI_DRP-Docs <https://github.com/Keck-DataReductionPipelines/KCWI_DRP-Docs/tree/main>`_ repository.
+The documentation lives in the KCWI_DRP repository, next to the code it
+describes:
 
-To update the documentation, first clone the documentation repo:
+- ``docs/source/``: the user documentation, in reStructuredText (``.rst``),
+  built by Sphinx and published on Read the Docs.
+- ``docs/dev/``: developer and planning documents, in Markdown (``.md``). Some
+  of them, such as the :doc:`testing guide <testing>`, are included in the
+  site.
+
+Until version 3 is released, Read the Docs still builds the released 1.3.x
+documentation from the former
+`KCWI_DRP-Docs <https://github.com/Keck-DataReductionPipelines/KCWI_DRP-Docs>`_
+repository. From the version 3 release on, it builds from KCWI_DRP: ``latest``
+from ``develop`` and ``stable`` from the newest release tag.
+
+Changing the documentation
+==========================
+
+Documentation changes go in the same pull request as the code they describe,
+on the same branch (see :doc:`development`). A pull request that changes
+user-visible behavior, a configuration key, a console script or an output file
+updates ``docs/source/`` too.
+
+New pages are added to ``docs/source/`` and linked from a table of contents
+(usually in ``index.rst``). Non-``.rst`` files go in a sub-directory: for
+example, the ``.csv`` tables that describe the data outputs are in
+``outputs/``, and screenshots or plots go in ``_static/``.
+
+Building the documentation
+==========================
+
+Build the documentation locally before opening the pull request, the same way
+Read the Docs does:
 
 .. code-block:: bash
 
-    git clone https://github.com/Keck-DataReductionPipelines/KCWI_DRP-Docs.git
-    
-If you already have a local copy of the repo, instead make sure you have the latest version:
+   pip install -e ".[docs]"
+   sphinx-build -W --keep-going docs/source docs/_build
 
-.. code-block:: bash
+Open ``docs/_build/index.html`` to read the result. The build fails on any
+warning. Besides Sphinx's own warnings, this catches documentation that has
+drifted from the code:
 
-   cd KCWI_DRP-Docs
-   git checkout main
-   git pull
+- a module that the API pages cannot import;
+- a key in ``kcwidrp/configs/kcwi.cfg`` that ``configuration.rst`` does not
+  mention;
+- a console script with no section in ``scripts.rst``.
 
+Paste the last line of the build into the pull request description.
 
-
-Updating text
-=============
-
-The documentation is contained in ``.rst`` files in the ``main``
-branch. New documents can be added to the source directory, and linked to the
-correct section (usually in ``index.rst``).
-
-Any non-``.rst`` files should be placed in a sub-directory. For example, ``.csv``
-files that describe the data outputs are inside a ``outputs`` directory. Screenshots
-or plots should be placed inside the ``_static`` directory.
-
-Once the new document (or a modified document) is ready, follow this procedure:
-
-
-.. code-block:: bash
-
-   git checkout main
-   git pull
-   git add new_document.rst
-   git commit -m "Description of the new document or change"
-   git push
-
-Legacy Documentation
+Legacy documentation
 ====================
 
-It may be the case that specific versions of the documentation should be kept 
-around after the codebase has changed. For example, a copy of the blue-side-only
-documentation is permanently available.
-
-To preserve a locked version of the documentation, the documentation source code
-should be put into a separate branch and tagged on GitHub. Then, the `DSI Team <dsi-team@keck.hawaii.edu>`_
-can configure ReadTheDocs to display that branch as a version option.
-
+The documentation of older versions (1.0.1 to 1.3.x) will stay readable after
+the switch to this repository: at the version 3 release it moves to a separate
+Read the Docs project built from the archived KCWI_DRP-Docs repository, linked
+from :doc:`versions`.
