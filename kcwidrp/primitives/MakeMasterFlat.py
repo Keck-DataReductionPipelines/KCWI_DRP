@@ -5,8 +5,8 @@ from kcwidrp.core.kcwi_plotting import get_plot_lims
 from kcwidrp.core.bokeh_plotting import bokeh_plot
 from kcwidrp.core.kcwi_plotting import save_plot
 from kcwidrp.core.bspline import Bspline
-from bokeh.plotting import figure
-from bokeh.models import Range1d
+from kcwidrp.core.kcwi_plotting import figure
+from kcwidrp.core.kcwi_plotting import Range1d
 
 import os
 import time

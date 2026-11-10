@@ -3,7 +3,7 @@ from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer
 from kcwidrp.core.bokeh_plotting import bokeh_plot
 from kcwidrp.core.kcwi_plotting import save_plot
 
-from bokeh.plotting import figure
+from kcwidrp.core.kcwi_plotting import figure
 import numpy as np
 from scipy.signal import savgol_filter
 import time

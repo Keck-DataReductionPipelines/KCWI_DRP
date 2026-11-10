@@ -5,8 +5,8 @@ from kcwidrp.core.kcwi_pkg_resources import get_resource_path
 from kcwidrp.primitives.kcwi_file_primitives import plotlabel
 
 
-from bokeh.plotting import figure
-from bokeh.models import Range1d
+from kcwidrp.core.kcwi_plotting import figure
+from kcwidrp.core.kcwi_plotting import Range1d
 import os
 from astropy.io import fits as pf
 import numpy as np

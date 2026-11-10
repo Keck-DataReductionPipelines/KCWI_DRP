@@ -1,0 +1,132 @@
+# Coverage after T.8 (suite quality check): commit 35e41e7 + working tree (T.8 tests), 2026-10-24
+# command: PYTHONDONTWRITEBYTECODE=1 env -u DISPLAY python -m pytest -q --cov=kcwidrp --cov-report=term
+# baseline: docs/baseline/coverage_upgrade_start.txt (T.1, commit b685577 + T.1 working tree); columns are line coverage % (statements covered / statements)
+# only kcwidrp/ source modules are listed (test files are excluded from the per-module table and from the source totals)
+
+Module                                               Stmts   Base%    Now%  Change   (Stmts = statements now)
+kcwidrp/__init__.py                                       0  100.0   100.0    +0.0
+kcwidrp/configs/__init__.py                               0  100.0   100.0    +0.0
+kcwidrp/core/__init__.py                                  0  100.0   100.0    +0.0
+kcwidrp/core/bokeh_plotting.py                           40   54.3    65.0   +10.7
+kcwidrp/core/bspline/Bspline.py                         396    5.1    49.5   +44.4
+kcwidrp/core/bspline/__init__.py                          6  100.0   100.0    +0.0
+kcwidrp/core/bspline/math.py                            218   11.0    25.2   +14.2
+kcwidrp/core/bspline/median.py                           30    3.3     3.3    +0.0
+kcwidrp/core/bspline/misc.py                            111    5.4     5.4    +0.0
+kcwidrp/core/bspline/trace.py                           218   11.5    11.5    +0.0
+kcwidrp/core/bspline/uniq.py                             12    8.3    58.3   +50.0
+kcwidrp/core/geometric.py                                96   15.6    96.9   +81.2
+kcwidrp/core/kcwi_correct_extin.py                       36   16.7    91.7   +75.0
+kcwidrp/core/kcwi_get_std.py                             31   19.4   100.0   +80.6
+kcwidrp/core/kcwi_pkg_resources.py                        6  100.0   100.0    +0.0
+kcwidrp/core/kcwi_plotting.py                           109   18.3    32.1   +13.8
+kcwidrp/core/kcwi_proctab.py                            142   14.8    92.3   +77.5
+kcwidrp/data/__init__.py                                  0  100.0   100.0    +0.0
+kcwidrp/pipelines/__init__.py                             0  100.0   100.0    +0.0
+kcwidrp/pipelines/kcwi_pipeline.py                      110    9.1    10.9    +1.8
+kcwidrp/pipelines/keck_rti_pipeline.py                  112    9.8    11.6    +1.8
+kcwidrp/primitives/ArcOffsets.py                         77   15.6    96.1   +80.5
+kcwidrp/primitives/CalcPrelimDisp.py                     27   22.2   100.0   +77.8
+kcwidrp/primitives/CorrectDar.py                        161    8.7    69.6   +60.9
+kcwidrp/primitives/CorrectDefects.py                     54   16.7    98.1   +81.5
+kcwidrp/primitives/CorrectGain.py                        29   17.2    93.1   +75.9
+kcwidrp/primitives/CorrectIllumination.py                69   10.1    10.1    +0.0
+kcwidrp/primitives/CreateUncertaintyImage.py             38   18.4    97.4   +78.9
+kcwidrp/primitives/CubeImage.py                          89    9.0     9.0    +0.0
+kcwidrp/primitives/ExtractArcs.py                       153    9.2     9.2    +0.0
+kcwidrp/primitives/FindBars.py                          131    9.9     9.9    +0.0
+kcwidrp/primitives/FitCenter.py                         210    8.1    95.2   +87.1
+kcwidrp/primitives/FlagSaturation.py                     28   21.4    96.4   +75.0
+kcwidrp/primitives/FluxCalibrate.py                     108   12.0    76.9   +64.8
+kcwidrp/primitives/GenerateMaps.py                       81   13.6    13.6    +0.0
+kcwidrp/primitives/GetAtlasLines.py                     347    6.3    28.5   +22.2
+kcwidrp/primitives/MakeCube.py                          318    5.7    68.6   +62.9
+kcwidrp/primitives/MakeInvsens.py                       522    3.6    88.7   +85.1
+kcwidrp/primitives/MakeMasterArc.py                      52   19.2    19.2    +0.0
+kcwidrp/primitives/MakeMasterBias.py                     87   18.4    73.6   +55.2
+kcwidrp/primitives/MakeMasterContbars.py                 52   19.2    19.2    +0.0
+kcwidrp/primitives/MakeMasterDark.py                     45   22.2    22.2    +0.0
+kcwidrp/primitives/MakeMasterFlat.py                    580    3.3    34.1   +30.8
+kcwidrp/primitives/MakeMasterObject.py                   60   16.7    16.7    +0.0
+kcwidrp/primitives/MakeMasterSky.py                     337    5.0     5.0    +0.0
+kcwidrp/primitives/NandshuffSubtractSky.py              237    3.4    70.5   +67.1
+kcwidrp/primitives/ProcessArc.py                         15   33.3    33.3    +0.0
+kcwidrp/primitives/ProcessBias.py                         7   57.1    57.1    +0.0
+kcwidrp/primitives/ProcessContbars.py                     7   57.1    57.1    +0.0
+kcwidrp/primitives/ProcessDark.py                         7   57.1    57.1    +0.0
+kcwidrp/primitives/ProcessFlat.py                         7   57.1    57.1    +0.0
+kcwidrp/primitives/ProcessObject.py                       7   57.1    57.1    +0.0
+kcwidrp/primitives/ReadAtlas.py                         158   11.4    11.4    +0.0
+kcwidrp/primitives/RectifyImage.py                       81    7.4     7.4    +0.0
+kcwidrp/primitives/RemoveCosmicRays.py                   65   10.8    84.6   +73.8
+kcwidrp/primitives/SendHTTP.py                           47   21.3    21.3    +0.0
+kcwidrp/primitives/SolveAIT.py                          171    7.6     7.6    +0.0
+kcwidrp/primitives/SolveArcs.py                         344    5.2    73.5   +68.3
+kcwidrp/primitives/SolveGeom.py                         137    7.3     7.3    +0.0
+kcwidrp/primitives/StackFlats.py                         64   17.7   100.0   +82.3
+kcwidrp/primitives/StartBokeh.py                         31   25.8    25.8    +0.0
+kcwidrp/primitives/SubtractBias.py                       32   18.8    96.9   +78.1
+kcwidrp/primitives/SubtractDark.py                       33   18.2   100.0   +81.8
+kcwidrp/primitives/SubtractOverscan.py                   79   15.2    94.9   +79.7
+kcwidrp/primitives/SubtractScatteredLight.py             68   16.2    16.2    +0.0
+kcwidrp/primitives/SubtractSky.py                        93    7.5    87.1   +79.6
+kcwidrp/primitives/Template.py                           12   41.7    41.7    +0.0
+kcwidrp/primitives/TraceBars.py                         109   11.0    11.0    +0.0
+kcwidrp/primitives/TrimOverscan.py                       58   10.3    96.6   +86.2
+kcwidrp/primitives/WavelengthCorrections.py             163    9.8    91.4   +81.6
+kcwidrp/primitives/__init__.py                            0  100.0   100.0    +0.0
+kcwidrp/primitives/kcwi_file_primitives.py              685   13.6    75.2   +61.6
+kcwidrp/scripts/__init__.py                               0  100.0   100.0    +0.0
+kcwidrp/scripts/check_cals.py                           149   10.7    14.1    +3.4
+kcwidrp/scripts/kcwi_masksky_ds9.py                      46    4.3     4.3    +0.0
+kcwidrp/scripts/kcwi_rti.py                             271    8.6    19.6   +11.0
+kcwidrp/scripts/modhead.py                               24   29.2    29.2    +0.0
+kcwidrp/scripts/reduce_kcwi.py                          300    7.7    17.3    +9.6
+kcwidrp/scripts/reduce_server.py                         30   10.0    10.0    +0.0
+kcwidrp/scripts/smart_reduce_kcwi.py                     91    5.6     5.5    -0.1
+kcwidrp/scripts/wb.py                                   190    3.7     3.7    +0.0
+kcwidrp/scripts/wr.py                                   190    3.7     3.7    +0.0
+
+SOURCE TOTAL (kcwidrp/, excluding tests): baseline 9319 stmts 9.6%  ->  now 9336 stmts 45.2%
+  kcwidrp/core/*         baseline  1446 stmts  12.2%  ->  now  1451 stmts  44.9%
+  kcwidrp/primitives/*   baseline  6366 stmts   9.4%  ->  now  6372 stmts  53.2%
+  kcwidrp/scripts/*      baseline  1285 stmts   7.2%  ->  now  1291 stmts  12.2%
+  kcwidrp/pipelines/*    baseline   222 stmts   9.5%  ->  now   222 stmts  11.3%
+
+== Proposed 70 % minimum for kcwidrp/core/* and kcwidrp/primitives/kcwi_file_primitives.py ==
+  kcwidrp/core/bokeh_plotting.py                    65.0%  BELOW 70 (40 stmts, 14 missed)
+  kcwidrp/core/bspline/Bspline.py                   49.5%  BELOW 70 (396 stmts, 200 missed)
+  kcwidrp/core/bspline/__init__.py                 100.0%  meets 70
+  kcwidrp/core/bspline/math.py                      25.2%  BELOW 70 (218 stmts, 163 missed)
+  kcwidrp/core/bspline/median.py                     3.3%  BELOW 70 (30 stmts, 29 missed)
+  kcwidrp/core/bspline/misc.py                       5.4%  BELOW 70 (111 stmts, 105 missed)
+  kcwidrp/core/bspline/trace.py                     11.5%  BELOW 70 (218 stmts, 193 missed)
+  kcwidrp/core/bspline/uniq.py                      58.3%  BELOW 70 (12 stmts, 5 missed)
+  kcwidrp/core/geometric.py                         96.9%  meets 70
+  kcwidrp/core/kcwi_correct_extin.py                91.7%  meets 70
+  kcwidrp/core/kcwi_get_std.py                     100.0%  meets 70
+  kcwidrp/core/kcwi_pkg_resources.py               100.0%  meets 70
+  kcwidrp/core/kcwi_plotting.py                     32.1%  BELOW 70 (109 stmts, 74 missed)
+  kcwidrp/core/kcwi_proctab.py                      92.3%  meets 70
+  kcwidrp/primitives/kcwi_file_primitives.py        75.2%  meets 70
+
+== The 10 least-covered primitives (kcwidrp/primitives/*, >= 10 statements) ==
+  kcwidrp/primitives/MakeMasterSky.py                5.0%  (337 stmts; baseline 5.0%)
+  kcwidrp/primitives/SolveGeom.py                    7.3%  (137 stmts; baseline 7.3%)
+  kcwidrp/primitives/RectifyImage.py                 7.4%  (81 stmts; baseline 7.4%)
+  kcwidrp/primitives/SolveAIT.py                     7.6%  (171 stmts; baseline 7.6%)
+  kcwidrp/primitives/CubeImage.py                    9.0%  (89 stmts; baseline 9.0%)
+  kcwidrp/primitives/ExtractArcs.py                  9.2%  (153 stmts; baseline 9.2%)
+  kcwidrp/primitives/FindBars.py                     9.9%  (131 stmts; baseline 9.9%)
+  kcwidrp/primitives/CorrectIllumination.py         10.1%  (69 stmts; baseline 10.1%)
+  kcwidrp/primitives/TraceBars.py                   11.0%  (109 stmts; baseline 11.0%)
+  kcwidrp/primitives/ReadAtlas.py                   11.4%  (158 stmts; baseline 11.4%)
+
+Notes
+  - core/* modules at or above 70 %: geometric, kcwi_correct_extin, kcwi_get_std, kcwi_pkg_resources, kcwi_proctab (and the empty __init__ files).
+    Below: bokeh_plotting (65.0 %, replaced by Track A), kcwi_plotting (32.1 %, Track A), and the vendored bspline package (Bspline 49.5 %,
+    math 25.2 %, median 3.3 %, misc 5.4 %, trace 11.5 %, uniq 58.3 %; Track M, the sparse-matrix cube code, is the candidate to replace the users of bspline).
+  - kcwi_file_primitives.py: 75.2 % (meets 70).
+  - Primitives not run by any fast test (still at their T.1 baseline): MakeMasterSky, SolveGeom, RectifyImage, SolveAIT, CubeImage, ExtractArcs, FindBars,
+    CorrectIllumination, TraceBars, ReadAtlas, GenerateMaps, MakeMasterArc/Contbars/Dark/Object, SubtractScatteredLight, SendHTTP, StartBokeh.
+    Their only test is the regression suite (T.7).

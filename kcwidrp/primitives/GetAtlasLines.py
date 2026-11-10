@@ -3,8 +3,8 @@ from kcwidrp.core.bokeh_plotting import bokeh_plot
 from kcwidrp.core.kcwi_plotting import save_plot
 from kcwidrp.primitives.kcwi_file_primitives import plotlabel
 
-from bokeh.plotting import figure
-from bokeh.models import Range1d
+from kcwidrp.core.kcwi_plotting import figure
+from kcwidrp.core.kcwi_plotting import Range1d
 import numpy as np
 import scipy as sp
 from scipy.interpolate import interpolate

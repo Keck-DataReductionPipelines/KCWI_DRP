@@ -8,7 +8,7 @@ from numpy.polynomial import polynomial as poly
 from scipy.signal import savgol_filter
 import os
 from skimage import transform as tf
-from bokeh.plotting import figure
+from kcwidrp.core.kcwi_plotting import figure
 
 
 class ExtractArcs(BasePrimitive):

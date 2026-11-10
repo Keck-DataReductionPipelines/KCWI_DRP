@@ -4,7 +4,7 @@ from kcwidrp.core.kcwi_plotting import get_plot_lims, oplot_slices, \
     set_plot_lims, save_plot
 from kcwidrp.primitives.kcwi_file_primitives import plotlabel
 
-from bokeh.plotting import figure
+from kcwidrp.core.kcwi_plotting import figure
 import numpy as np
 import math
 from scipy.interpolate import interpolate
