@@ -104,7 +104,7 @@ def mixed_camera_specs(draw):
 @given(specs=mixed_camera_specs(), pick=st.integers(0, 7),
        nearest=st.booleans())
 # Every mixed table triggers B17, so shrinking would only spend time (about
-# 100 s) minimising a known failure: generate phase only.
+# 100 s) minimizing a known failure: generate phase only.
 @settings(phases=[Phase.generate], max_examples=5)
 def test_added_frame_is_found_mixed_cameras(synthetic_ccddata, specs, pick,
                                             nearest):

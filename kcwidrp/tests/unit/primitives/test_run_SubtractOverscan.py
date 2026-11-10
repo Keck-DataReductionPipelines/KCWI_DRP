@@ -119,7 +119,7 @@ def _sloped_case(run_primitive, synthetic_ccddata, camera, ampmode, binning,
     # (r, c = 0-based row / column offsets in the block).  The offset to
     # subtract is the median of the block with `oscanbuf` columns removed at
     # both ends, over all rows.  An arithmetic progression is symmetric about
-    # its centre, so the median over a symmetric set of rows and columns is
+    # its center, so the median over a symmetric set of rows and columns is
     # the mean: base + row_slope (nr-1)/2 + col_slope (nc-1)/2.
     bases = [900.0 + 40.0 * k for k in range(len(amps))]
 
@@ -169,7 +169,7 @@ def test_overscan_sloped_along_columns_uses_symmetric_margin(
         run_primitive, synthetic_ccddata, camera, ampmode, binning, amps):
     # source: analytic @ cf88fb8 - slope of 2 DN per column, none along rows:
     # with `oscanbuf` columns excluded at both ends the window is symmetric
-    # about the block centre and the median is base + 2 (nc-1)/2.  The code
+    # about the block center and the median is base + 2 (nc-1)/2.  The code
     # excludes one column more at the far end, centring the window half a
     # column low, so it subtracts 1 DN less than this value (slope 2 DN per
     # column).

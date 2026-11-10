@@ -7,14 +7,14 @@ own look, as agreed with the maintainer (same information, simpler code):
 
 * sizes are in screen pixels at 100 dpi; one pixel is 0.72 point, for marker
   ``size`` and ``line_width``;
-* default glyph colour ``#1f77b4``, no colour cycling; ``color`` sets both the
+* default glyph color ``#1f77b4``, no color cycling; ``color`` sets both the
   outline and the fill of a marker, ``line_color``/``fill_color`` override;
 * automatic ranges use Matplotlib's autoscaling with a 5 % margin at each
   end, which is Bokeh's default padding; ``range_padding = 0`` removes it;
   ``start``/``end`` override either end;
 * glyphs are drawn in call order; one legend, entries merged by label, on the
   top-most axes; a left-aligned bold title;
-* ``Spectral11`` is Bokeh's eleven discrete colours, mapped linearly from the
+* ``Spectral11`` is Bokeh's eleven discrete colors, mapped linearly from the
   array minimum to its maximum; images have row 0 at the bottom.
 
 No ``pyplot``: every call builds or reuses its own ``Figure``, so renders on

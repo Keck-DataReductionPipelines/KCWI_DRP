@@ -18,7 +18,7 @@ heliocentric/barycentric correction and DAR, with exact pixel/voxel footprint
 overlap weights. Then, optionally, use the same operators to fit dithered frames
 jointly.
 
-## 2. Why: current behaviour and its problems
+## 2. Why: current behavior and its problems
 
 Science path (`kcwidrp/pipelines/kcwi_pipeline.py`, ~L256-271):
 `SubtractSky → MakeCube → WavelengthCorrections → CorrectDar → MakeInvsens/FluxCalibrate`.
@@ -147,7 +147,7 @@ and keeps the old path for comparison.
 ### Stage 1: Vectorized coordinate maps (quick win, independent)
 
 - Rewrite the `GenerateMaps._perform` loops (L64-80) to call `itrf` once per slice
-  on all pixels. Output must match the current maps exactly (same pixel-centre
+  on all pixels. Output must match the current maps exactly (same pixel-center
   convention, same `0 <= x <= xsize` test).
 - Add a helper (e.g. `kcwidrp/core/cube_matrix.py`) that returns per-pixel
   **edge** coordinates (`u_lo/hi`, `lam_lo/hi`, slice id, flat pixel index)
@@ -213,7 +213,7 @@ and keeps the old path for comparison.
 
 ### Stage 5: Covariance products (optional output)
 
-- Option A (cheap): for each voxel, store the correlation with its ±1 neighbours
+- Option A (cheap): for each voxel, store the correlation with its ±1 neighbors
   along each axis (6 extra planes, or a compact summary). These come from
   `W diag(var) Wᵀ`, computed per slice.
 - Option B: store `W` itself (`.npz`, about 160 MB) with the cube, so users can

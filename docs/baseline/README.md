@@ -66,7 +66,7 @@ The level-3 answer files are in this directory (`<dataset>/answers_<dataset>_<ch
 ### Code used
 
 - ds01 (both channels, 09:38–12:06): kcwidrp **1.3.3** from a plain `pip install .` of the repository (identical to `6270cba`). The 1.3.4 change only touches the BM ledge code, which BL and RH1 never reach, so these outputs are what 1.3.4 gives.
-- ds03 (both channels, 14:15–15:26): kcwidrp **1.3.4**, editable install of `upgrade/pr0-tests` (HISTORY: `git version=upgrade-start-37-g14f7751`), whose reduction code equals `upgrade-start` (`af46243`) apart from the behaviour-neutral T.11 and B23 changes.
+- ds03 (both channels, 14:15–15:26): kcwidrp **1.3.4**, editable install of `upgrade/pr0-tests` (HISTORY: `git version=upgrade-start-37-g14f7751`), whose reduction code equals `upgrade-start` (`af46243`) apart from the behavior-neutral T.11 and B23 changes.
 
 ### Checks
 
@@ -74,7 +74,7 @@ The level-3 answer files are in this directory (`<dataset>/answers_<dataset>_<ch
 - **Replays identical.** For each of the four setups, `L3_replay` is identical to `L3`: every FITS file in `redux/` (65–70 per run), every HDU, every header card apart from dates, HISTORY and file paths; the same PNG names; the same proctab. The comparison does detect real differences (L1 vs. L3 of ds03 blue differ in invsens and `icubes`, as the non-default answers should make them).
 - **Levels 0 and 1 give identical cubes** (`icube*`, 15 files per setup, every HDU) on all four setups, as D16 assumes.
 - `plots/` at level 0 holds exactly the two SolveArcs PNGs in every setup.
-- **`Picking the highest peak` never appears.** The BM ledge code only runs for ds03 blue; there every pass found **0 peaks** and logged `No BM ledge peak found, skipping BM ledge correction` (the 1.3.4 behaviour, D23). The several-peaks case (B1) is therefore validated on synthetic data only.
+- **`Picking the highest peak` never appears.** The BM ledge code only runs for ds03 blue; there every pass found **0 peaks** and logged `No BM ledge peak found, skipping BM ledge correction` (the 1.3.4 behavior, D23). The several-peaks case (B1) is therefore validated on synthetic data only.
 - ERROR lines that do not stop the reduction, all in the red channel (5 per pass):
   - `CorrectDefects: Defect list not found for defect_L2U2L1U1_2x2.dat` (3 per pass): no defect list ships for red `L2U2L1U1` at 2×2 (the arc and contbar readout), so those frames are not defect-corrected. Known from T.4.
   - `MakeCube: No reference geometry, cannot make cube!` (2 per pass): red has three arcs; the geometry is solved from the first, and the second and third arcs find no geometry under their own names and skip their arc cubes, which nothing uses. Benign, but logged at ERROR.

@@ -173,7 +173,7 @@ class _Analyzer:
     def stmt(self, node):
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef,
                              ast.ClassDef)):
-            return  # analysed as their own scope
+            return  # analyzed as their own scope
         if isinstance(node, ast.Assign):
             if isinstance(node.value, (ast.List, ast.Tuple)) and \
                     node.value.elts and all(
@@ -348,7 +348,7 @@ class _Analyzer:
             return
         if isinstance(node, ast.Name):
             if node.id in self.figs:
-                self.bad(node, "figure %r used outside a recognised form"
+                self.bad(node, "figure %r used outside a recognized form"
                          % node.id)
             return
         if isinstance(node, ast.Call):
@@ -637,9 +637,9 @@ class _Analyzer:
 def scan_sources(sources, wrapper_files=()):
     """Scan ``{filename: source text}``.
 
-    Every function of every file is analysed on its own (module level code
+    Every function of every file is analyzed on its own (module level code
     too).  Functions defined in a file named in ``wrapper_files`` are not
-    analysed on their own (the wrapper's internals are its business); they
+    analyzed on their own (the wrapper's internals are its business); they
     are scanned only when a figure is passed to them.
     """
     scan = Scan()
@@ -1029,7 +1029,7 @@ def indirect(fig):
     assert len(sc.problems) == 1
 
 
-def test_scan_does_not_analyse_wrapper_functions_on_their_own():
+def test_scan_does_not_analyze_wrapper_functions_on_their_own():
     wrapper = '''
 def internals():
     f = figure(**kw)

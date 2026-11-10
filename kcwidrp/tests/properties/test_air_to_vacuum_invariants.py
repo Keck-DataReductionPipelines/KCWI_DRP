@@ -51,7 +51,7 @@ def _edlen_n_minus_1(lam_angstrom):
 def increasing_wavelengths(draw):
     """1-30 strictly increasing wavelengths in [LO, HI].
 
-    Neighbours are at least 1e-6 A apart: d(lambda_vac)/d(lambda_air) is
+    Neighbors are at least 1e-6 A apart: d(lambda_vac)/d(lambda_air) is
     about 1.0003, and the rounding error of the conversion is a few ulp of
     lambda (ulp(1e4) = 1.8e-12 A), so steps of 1e-6 A are resolved with a
     margin of ~1e5 while still probing very close pairs.

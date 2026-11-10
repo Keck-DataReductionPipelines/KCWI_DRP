@@ -19,7 +19,7 @@ the first-order grating equation with an out-of-plane angle gamma
 differentiated numerically (central difference) in beta, times the angle a
 binned pixel subtends at the camera, PIX * ybin / FCAM (rad).  PIX = 0.015
 mm, FCAM = 305 mm and GAMMA = 4 deg are the documented constants in
-kcwi.cfg; the groove densities rho (lines per micrometre) are the per-grating
+kcwi.cfg; the groove densities rho (lines per micrometer) are the per-grating
 table documented in ``ingest_file.rho``.  A second test checks the angle
 convention against the real instrument: for two real 2026-01-15 arc
 headers, the code's alpha and beta put the central wavelength CWAVE where
@@ -138,7 +138,7 @@ def test_angle_convention_matches_real_central_wavelength(
     alpha, beta = map(float, re.findall(r"(-?\d+\.\d+)", msg[0]))
     # source: analytic @ c0fed5c - grating equation with the code's angles
     # gives the central wavelength recorded by the instrument.  Tolerance 1 %:
-    # the detector centre is not exactly the optical axis and the angle
+    # the detector center is not exactly the optical axis and the angle
     # encoders' zero points are approximate (BL: 4585 vs 4600 A, RM1: 7182 vs
     # 7200 A, i.e. <= 0.3 %); dropping the 13 deg offset moves BL by 4.5 % and
     # flipping the sign of beta by > 60 %.

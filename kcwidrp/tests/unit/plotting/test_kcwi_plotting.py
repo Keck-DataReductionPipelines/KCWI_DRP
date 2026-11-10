@@ -13,7 +13,7 @@ How the tests look at a plot
 axes (lines, markers, rectangles, images, limits, labels, title, legend).
 They deliberately accept either of the usual ways to draw a Bokeh glyph
 (``Line2D`` or a collection for markers; ``Rectangle`` patches or a
-``PolyCollection`` for ``quad``) so that they pin the behaviour, not the
+``PolyCollection`` for ``quad``) so that they pin the behavior, not the
 implementation.  Where Matplotlib offers no public accessor the tests use
 one private attribute and say so (``Axes._left_title``, ``Legend._loc``).
 
@@ -22,7 +22,7 @@ Units and sources of expected values
 * ``PT_PER_PX`` -- Bokeh sizes are pixels, Matplotlib sizes are points; at
   100 dpi one pixel is 0.72 point.
   # source: analytic - 72 pt per inch / 100 px per inch
-* Bokeh defaults (colour ``#1f77b4``, line width 1 px, circle size 4 px,
+* Bokeh defaults (color ``#1f77b4``, line width 1 px, circle size 4 px,
   10 % ``DataRange1d`` padding) are the values the plan's "Appearance
   defaults" paragraph names.
   # source: published - docs/bokeh_port_plan.md section 1.1, Bokeh 2.4 docs
@@ -62,13 +62,13 @@ PT_PER_PX = 0.72
 
 # source: published - Bokeh palettes.Spectral11 (ColorBrewer Spectral, 11
 # classes, in Bokeh's order: first #5e4fa2, last #9e0142); plan 1.1 trap
-# "Spectral11 is eleven discrete colours"
+# "Spectral11 is eleven discrete colors"
 SPECTRAL11 = ['#5e4fa2', '#3288bd', '#66c2a5', '#abdda4', '#e6f598',
               '#ffffbf', '#fee08b', '#fdae61', '#f46d43', '#d53e4f',
               '#9e0142']
 
-# source: published - plan 1.1 "Appearance defaults": default colour
-DEFAULT_COLOUR = '#1f77b4'
+# source: published - plan 1.1 "Appearance defaults": default color
+DEFAULT_COLOR = '#1f77b4'
 
 X = np.arange(11.0)
 Y = 10.0 * X
@@ -144,9 +144,9 @@ def rgba(c, alpha=None):
     return r if alpha is None else r[:3] + (alpha,)
 
 
-def eff_alpha(artist, colour):
+def eff_alpha(artist, color):
     a = artist.get_alpha()
-    return colour[3] if a is None else a * colour[3]
+    return color[3] if a is None else a * color[3]
 
 
 def _no_marker(m):
@@ -161,7 +161,7 @@ def glyph_lines(ax):
 
 def line_info(l):
     c = rgba(l.get_color())
-    return dict(x=arr(l.get_xdata()), y=arr(l.get_ydata()), colour=c,
+    return dict(x=arr(l.get_xdata()), y=arr(l.get_ydata()), color=c,
                 alpha=eff_alpha(l, c), lw=l.get_linewidth(),
                 ls=l.get_linestyle())
 
@@ -222,7 +222,7 @@ def markers(ax):
 
 
 def rects(ax):
-    """Sorted (left, bottom, right, top) of every rectangle, with colours."""
+    """Sorted (left, bottom, right, top) of every rectangle, with colors."""
     out = []
     for p in ax.patches:
         if isinstance(p, Rectangle):
@@ -285,7 +285,7 @@ def describe(f):
         out.append(dict(
             lines=[(tuple(np.nan_to_num(line_info(l)['x'], nan=-9e9)),
                     tuple(np.nan_to_num(line_info(l)['y'], nan=-9e9)),
-                    line_info(l)['colour'], line_info(l)['ls'],
+                    line_info(l)['color'], line_info(l)['ls'],
                     line_info(l)['lw']) for l in glyph_lines(ax)],
             nmark=len(markers(ax)), nrect=len(rects(ax)),
             xlim=tuple(ax.get_xlim()), ylim=tuple(ax.get_ylim()),
@@ -393,18 +393,18 @@ def test_title_is_left_aligned_and_bold():
     assert w == 'bold' or (isinstance(w, (int, float)) and w >= 700)
 
 
-def test_grid_is_grey_by_default():
+def test_grid_is_gray_by_default():
     ax = rendered(fig_()).axes[0]
     ax.figure.canvas.draw()
     lines = [g for g in ax.xaxis.get_gridlines() + ax.yaxis.get_gridlines()
              if g.get_visible()]
-    # source: published - plan 1.1 appearance defaults: a grey grid, on both
+    # source: published - plan 1.1 appearance defaults: a gray grid, on both
     # axes.  Its shade is Matplotlib's default (maintainer, 2026-10-28: same
     # information, not Bokeh's exact look).
     assert grid_visible(ax, 'x') and grid_visible(ax, 'y')
     for g in lines:
         r, gr, b, _ = rgba(g.get_color())
-        assert abs(r - gr) < 0.02 and abs(gr - b) < 0.02   # grey
+        assert abs(r - gr) < 0.02 and abs(gr - b) < 0.02   # gray
         # Tolerance: excludes a black grid; Matplotlib's default is 0.69.
         assert r > 0.5
 
@@ -419,9 +419,9 @@ def test_tooltips_are_accepted_and_ignored():
 
 
 # ===========================================================================
-# 2. Glyphs, colours, units
+# 2. Glyphs, colors, units
 # ===========================================================================
-def test_line_data_and_default_colour():
+def test_line_data_and_default_color():
     p = fig_()
     p.line(X, Y)
     ax = rendered(p).axes[0]
@@ -430,10 +430,10 @@ def test_line_data_and_default_colour():
     assert len(ls) == 1
     assert np.array_equal(line_info(ls[0])['x'], X)
     assert np.array_equal(line_info(ls[0])['y'], Y)
-    assert mcolors.to_hex(line_info(ls[0])['colour']) == DEFAULT_COLOUR
+    assert mcolors.to_hex(line_info(ls[0])['color']) == DEFAULT_COLOR
 
 
-def test_no_colour_cycling():
+def test_no_color_cycling():
     p = fig_()
     p.line(X, Y)
     p.line(X, Y + 5)
@@ -441,20 +441,20 @@ def test_no_colour_cycling():
     p.circle(X, Y + 15)
     p.scatter(X, Y + 20)
     ax = rendered(p).axes[0]
-    cols = [mcolors.to_hex(line_info(l)['colour']) for l in glyph_lines(ax)]
+    cols = [mcolors.to_hex(line_info(l)['color']) for l in glyph_lines(ax)]
     cols += [mcolors.to_hex(m['face']) for m in markers(ax)]
     cols += [mcolors.to_hex(m['edge']) for m in markers(ax)]
-    # source: published - plan 1.1 appearance defaults: "default glyph colour
-    # #1f77b4 with no colour cycling"
-    assert cols == [DEFAULT_COLOUR] * 7
+    # source: published - plan 1.1 appearance defaults: "default glyph color
+    # #1f77b4 with no color cycling"
+    assert cols == [DEFAULT_COLOR] * 7
 
 
 @pytest.mark.parametrize("spec", ['red', '#00ff00', 'black', 'purple'])
-def test_line_colour_keyword(spec):
+def test_line_color_keyword(spec):
     p = fig_()
     p.line(X, Y, color=spec)
-    c = line_info(glyph_lines(rendered(p).axes[0])[0])['colour']
-    # source: published - plan 1.1 table, glyph keyword `color` (colour names
+    c = line_info(glyph_lines(rendered(p).axes[0])[0])['color']
+    # source: published - plan 1.1 table, glyph keyword `color` (color names
     # and hex strings mean what they mean in CSS / Matplotlib)
     assert c == mcolors.to_rgba(spec)
 
@@ -462,7 +462,7 @@ def test_line_colour_keyword(spec):
 def test_line_color_keyword_sets_the_line():
     p = fig_()
     p.line(X, Y, line_color='navy')
-    c = line_info(glyph_lines(rendered(p).axes[0])[0])['colour']
+    c = line_info(glyph_lines(rendered(p).axes[0])[0])['color']
     # source: published - plan 1.1 table, glyph keyword `line_color`
     assert c == mcolors.to_rgba('navy')
 
@@ -517,7 +517,7 @@ def test_dashdotdot_is_a_dash_dot_dot_pattern():
     p.line(X, Y, line_dash='dashdotdot')
     l = glyph_lines(rendered(p).axes[0])[0]
     offset, seq = l._unscaled_dash_pattern
-    # source: published - docs/interactive_prompts.md "Plot colour scheme":
+    # source: published - docs/interactive_prompts.md "Plot color scheme":
     # CWAVE is drawn dash-dot-dot, a style used for nothing else
     assert len(seq) == 6
     assert seq[0] > seq[2] and seq[2] == seq[4]
@@ -637,7 +637,7 @@ def test_circle_fill_color_only():
     assert mcolors.to_hex(m['face'][:3]) == mcolors.to_hex('orange')
 
 
-def test_marker_x_is_drawn_with_the_colour_given():
+def test_marker_x_is_drawn_with_the_color_given():
     p = fig_()
     p.scatter(X, Y, marker='x', color='red', legend_label='bad')
     m = markers(rendered(p).axes[0])[0]
@@ -745,18 +745,18 @@ def test_trap_spectral11_endpoints_and_discreteness():
     cmap = im.cmap
     vmin, vmax = im.get_clim()
     # source: published - plan 1.1 trap "Spectral11": eleven discrete
-    # colours, #5e4fa2 first and #9e0142 last, mapped linearly from the
+    # colors, #5e4fa2 first and #9e0142 last, mapped linearly from the
     # array minimum to its maximum
     assert (vmin, vmax) == (a.min(), a.max())
     assert mcolors.to_hex(cmap(im.norm(a.min()))) == SPECTRAL11[0]
     assert mcolors.to_hex(cmap(im.norm(a.max()))) == SPECTRAL11[-1]
     ramp = cmap(np.linspace(0., 1., 2000))
     assert len({tuple(c) for c in ramp}) == 11
-    # each of eleven equal-width bins of the data range has its own colour,
+    # each of eleven equal-width bins of the data range has its own color,
     # in Bokeh's order
     # source: published - Bokeh LinearColorMapper: 11 equal bins low..high
-    centres = vmin + (np.arange(11) + 0.5) / 11. * (vmax - vmin)
-    assert [mcolors.to_hex(cmap(im.norm(c))) for c in centres] == SPECTRAL11
+    centers = vmin + (np.arange(11) + 0.5) / 11. * (vmax - vmin)
+    assert [mcolors.to_hex(cmap(im.norm(c))) for c in centers] == SPECTRAL11
 
 
 def test_spectral11_is_not_matplotlibs_continuous_spectral():
@@ -770,11 +770,11 @@ def test_spectral11_is_not_matplotlibs_continuous_spectral():
     assert mcolors.to_hex(cmap(0.0)) == SPECTRAL11[0]
 
 
-def test_image_has_a_colour_bar_on_the_data_range():
+def test_image_has_a_color_bar_on_the_data_range():
     a = np.linspace(-3., 7., 40).reshape(5, 8)
     fig = rendered(_image_fig(a))
-    # source: published - docs/interactive_prompts.md "Plot colour scheme":
-    # images (P12) have a colour bar; it is a second axes, after the plot
+    # source: published - docs/interactive_prompts.md "Plot color scheme":
+    # images (P12) have a color bar; it is a second axes, after the plot
     assert len(fig.axes) == 2
     im = fig.axes[0].images[0]
     assert im.colorbar is not None
@@ -799,7 +799,7 @@ def test_default_limits_pad_ten_percent_like_bokeh(glyph):
     getattr(p, glyph)(X, Y)
     ax = rendered(p).axes[0]
     # source: published - Bokeh 2.4.3 DataRange1d (data_range1d.js):
-    # span = (max - min) * (1 + range_padding), range_padding = 0.1, centred,
+    # span = (max - min) * (1 + range_padding), range_padding = 0.1, centered,
     # so 5 % of the span is added at each end.
     # x span 10 -> (-0.5, 10.5); y span 100 -> (-5, 105)
     # Tolerance: float64 arithmetic on values ~1e2, relative 1e-12.
@@ -961,17 +961,17 @@ def test_oplot_slices_draws_23_black_dashdot_lines():
     assert [x[0] for x in xs] == [ix * 5 - 0.5 for ix in range(1, 24)]
     assert all(x[0] == x[1] for x in xs)
     assert all(np.array_equal(line_info(l)['y'], [0., 100.]) for l in ls)
-    assert all(mcolors.to_hex(line_info(l)['colour']) == '#000000'
+    assert all(mcolors.to_hex(line_info(l)['color']) == '#000000'
                for l in ls)
     assert all(line_info(l)['ls'] == '-.' for l in ls)
     assert ax.get_legend() is None
 
 
-def test_oplot_slices_takes_a_custom_colour():
+def test_oplot_slices_takes_a_custom_color():
     p = fig_()
     kp.oplot_slices(p, [0., 1.], color='red')
     ls = glyph_lines(rendered(p).axes[0])
-    assert all(mcolors.to_hex(line_info(l)['colour']) == '#ff0000'
+    assert all(mcolors.to_hex(line_info(l)['color']) == '#ff0000'
                for l in ls)
 
 
@@ -980,16 +980,16 @@ def test_oplot_cwave_vertical_orange_dashdotdot_in_legend():
     kp.oplot_cwave(p, 4500., [0., 2.])
     ax = rendered(p).axes[0]
     (l,) = glyph_lines(ax)
-    # source: analytic - plot colour scheme: CWAVE orange, dash-dot-dot
+    # source: analytic - plot color scheme: CWAVE orange, dash-dot-dot
     assert np.array_equal(line_info(l)['x'], [4500., 4500.])
     assert np.array_equal(line_info(l)['y'], [0., 2.])
-    assert mcolors.to_hex(line_info(l)['colour']) == \
+    assert mcolors.to_hex(line_info(l)['color']) == \
         mcolors.to_hex('orange')
     assert tuple(l._unscaled_dash_pattern[1]) == (6, 2, 1, 2, 1, 2)
     assert legend_labels(ax) == ['CWAVE']
 
 
-def test_oplot_cwave_horizontal_no_legend_custom_colour():
+def test_oplot_cwave_horizontal_no_legend_custom_color():
     p = fig_()
     kp.oplot_cwave(p, 7., [0., 10.], legend_label=None, horizontal=True,
                    color='black')
@@ -997,7 +997,7 @@ def test_oplot_cwave_horizontal_no_legend_custom_colour():
     (l,) = glyph_lines(ax)
     assert np.array_equal(line_info(l)['x'], [0., 10.])
     assert np.array_equal(line_info(l)['y'], [7., 7.])
-    assert mcolors.to_hex(line_info(l)['colour']) == '#000000'
+    assert mcolors.to_hex(line_info(l)['color']) == '#000000'
     assert ax.get_legend() is None
 
 
@@ -1008,19 +1008,19 @@ def test_oplot_wavgood_two_green_lines_one_legend_entry():
     ls = glyph_lines(ax)
     assert [line_info(l)['x'].tolist() for l in ls] == \
         [[4000., 4000.], [5000., 5000.]]
-    assert all(mcolors.to_hex(line_info(l)['colour']) ==
+    assert all(mcolors.to_hex(line_info(l)['color']) ==
                mcolors.to_hex('green') and line_info(l)['ls'] == '-'
                for l in ls)
     assert legend_labels(ax) == ['Good WLs']
 
 
-def test_oplot_wavgood_horizontal_custom_colour():
+def test_oplot_wavgood_horizontal_custom_color():
     p = fig_()
     kp.oplot_wavgood(p, 1., 2., [0., 5.], horizontal=True, color='cyan')
     ls = glyph_lines(rendered(p).axes[0])
     assert [line_info(l)['y'].tolist() for l in ls] == [[1., 1.], [2., 2.]]
     assert all(np.array_equal(line_info(l)['x'], [0., 5.]) for l in ls)
-    assert all(mcolors.to_hex(line_info(l)['colour']) == '#00ffff'
+    assert all(mcolors.to_hex(line_info(l)['color']) == '#00ffff'
                for l in ls)
 
 
@@ -1237,7 +1237,7 @@ def test_gridplot_layout_is_row_major():
     # figure coordinates have y increasing upwards: row 0 has the larger y
     assert cx[0] < cx[1] and cx[2] < cx[3]
     assert cy[0] > cy[2] and cy[1] > cy[3]
-    # Tolerance: row/column centres agree within a tenth of a cell width;
+    # Tolerance: row/column centers agree within a tenth of a cell width;
     # constrained layout shifts cells by label widths, not by cell sizes.
     assert abs(cy[0] - cy[1]) < 0.05 and abs(cx[0] - cx[2]) < 0.1
 
@@ -1750,7 +1750,7 @@ def _still_usable(p, in_tmp):
     f = rendered(p)
     kp.save_plot(p, filename='after.png')
     assert (in_tmp / 'plots' / 'after.png').is_file()
-    assert any(mcolors.to_hex(line_info(l)['colour']) == '#ff0000'
+    assert any(mcolors.to_hex(line_info(l)['color']) == '#ff0000'
                for l in glyph_lines(f.axes[0]))
 
 
@@ -1772,7 +1772,7 @@ def test_tolerant_unsupported_keyword(tolerant, kcwi_log, in_tmp):
     # the call itself is kept, without the keyword
     lines = glyph_lines(rendered(p).axes[0])
     assert len(lines) == 1
-    assert mcolors.to_hex(line_info(lines[0])['colour']) == '#008000'
+    assert mcolors.to_hex(line_info(lines[0])['color']) == '#008000'
     kcwi_log.clear()
     _still_usable(p, in_tmp)
 
@@ -1944,9 +1944,9 @@ def _thread_plot(i, j):
     x = np.linspace(0., 10., 120)
     p = kp.figure(title='thread %d plot %d' % (i, j), x_axis_label='x',
                   y_axis_label='y', plot_width=300, plot_height=200)
-    colour = ['red', 'green', 'blue', 'black'][i]
-    p.line(x, np.sin(x * (j + 1)) + i, color=colour, legend_label='s')
-    p.circle(x[::10], np.cos(x[::10]), size=3 + j % 3, fill_color=colour)
+    color = ['red', 'green', 'blue', 'black'][i]
+    p.line(x, np.sin(x * (j + 1)) + i, color=color, legend_label='s')
+    p.circle(x[::10], np.cos(x[::10]), size=3 + j % 3, fill_color=color)
     return p
 
 

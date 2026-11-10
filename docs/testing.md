@@ -87,7 +87,7 @@ A characterization value states what the code *did*, not what is *right*. It mus
 
 ## 7. Known bugs: strict xfail
 
-A bug that exists in the code is pinned by a test that asserts the **correct** behaviour and is marked:
+A bug that exists in the code is pinned by a test that asserts the **correct** behavior and is marked:
 
 ```python
 @pytest.mark.xfail(strict=True, reason="B2: one-number line mask raises IndexError")
@@ -101,7 +101,7 @@ A bug that exists in the code is pinned by a test that asserts the **correct** b
 
 ## 8. Independence of tests from the code they test
 
-1. Tests are written from the specification (the plan, the task description, docstrings, published behaviour), not from the implementation's source.
+1. Tests are written from the specification (the plan, the task description, docstrings, published behavior), not from the implementation's source.
 2. Tests are written by a different model, or in a fresh session with no access to the implementation conversation, from the code they test. The pull request says who wrote what.
 3. A test that only re-executes the implementation's own formula (for example, computing the expected value with the same expression the code uses) is not a test. It is rejected in review.
 4. Each new test file is checked once by deliberately breaking the code it tests; at least one test in the file must fail. The breakage used is noted in the pull request. Run these checks with `PYTHONDONTWRITEBYTECODE=1`, and delete `__pycache__` directories after reverting: a breakage of the same length as the original (for example `tan` → `sin`), reverted within the same second, leaves a stale `.pyc` that Python still loads, so later runs test the broken code.
@@ -205,11 +205,11 @@ This takes minutes, not seconds; use it when you add or change an invariant (sec
 
 ### What the strict xfails mean
 
-The summary line of a clean run looks like `710 passed, 8 deselected, 60 xfailed`. An `xfailed` test is a known bug (section 7): the test asserts the correct behaviour, fails today, and is marked `xfail(strict=True, reason="B<n>: ...")`. `pytest -rx` lists them with the reasons. They are expected and are not failures.
+The summary line of a clean run looks like `710 passed, 8 deselected, 60 xfailed`. An `xfailed` test is a known bug (section 7): the test asserts the correct behavior, fails today, and is marked `xfail(strict=True, reason="B<n>: ...")`. `pytest -rx` lists them with the reasons. They are expected and are not failures.
 
 When one of them **passes**, pytest reports it as `FAILED ... [XPASS(strict)]`. That means the bug no longer exists in the code you are running, usually because your change fixed it. Do the following:
 
-1. Confirm the fix is real and intended (read the test: it asserts the correct behaviour).
+1. Confirm the fix is real and intended (read the test: it asserts the correct behavior).
 2. Delete the `xfail` marker in the same commit as the fix (section 7).
 3. Mark the bug as fixed in the upgrade plan's bug list, as the plan's task requires.
 
@@ -333,7 +333,7 @@ The table cells are `pass` (equal to the reference), `**FAIL**`, `info` (reporte
 | 2 structure | The same output files, the same HDU names, shapes and dtypes, the same header keywords |
 | 3 pixels | Every pixel equal to the reference (integers, flags and masks always exactly; floats exactly unless the manifest says otherwise). The report gives the largest difference, the fraction of pixels that differ and where |
 | 4 header values | Numeric header values within tolerance, strings equal |
-| 5 metrics | Science metrics (arc line centres and widths, standard-star flux, and so on) against thresholds; none are registered yet, so it passes trivially until the matrix work (M.0) adds them |
+| 5 metrics | Science metrics (arc line centers and widths, standard-star flux, and so on) against thresholds; none are registered yet, so it passes trivially until the matrix work (M.0) adds them |
 | 6 plots | The same PNG file names and pixel sizes |
 | 7 timings | Wall time per primitive, for information only; never fails |
 
@@ -406,7 +406,7 @@ def test_writer_accepts_header_without_history(synthetic_ccddata, tmp_path):
     assert (tmp_path / "x.fits").exists()      # source: analytic - it should write
 ```
 
-Save it as, for example, `kcwidrp/tests/unit/primitives/test_run_CorrectGain_example.py` and run it with `pytest <that file> -rx`: one test passes and one is reported as xfailed. The xfail test asserts the **correct** behaviour; when the bug is fixed the test starts to pass, strict mode turns that into a failure, and the fix removes the marker (section 7).
+Save it as, for example, `kcwidrp/tests/unit/primitives/test_run_CorrectGain_example.py` and run it with `pytest <that file> -rx`: one test passes and one is reported as xfailed. The xfail test asserts the **correct** behavior; when the bug is fixed the test starts to pass, strict mode turns that into a failure, and the fix removes the marker (section 7).
 
 Notes for real tests:
 

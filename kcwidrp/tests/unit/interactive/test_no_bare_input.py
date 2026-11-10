@@ -94,7 +94,7 @@ def violations(source, rel, allowed=()):
     return sorted(found, key=lambda s: int(s.split(":")[1]))   # one file
 
 
-def test_scanner_flags_each_kind_and_honours_the_allow_list():
+def test_scanner_flags_each_kind_and_honors_the_allow_list():
     src = ("import time, builtins\n"
            "def f(self):\n"
            "    input('a')\n"

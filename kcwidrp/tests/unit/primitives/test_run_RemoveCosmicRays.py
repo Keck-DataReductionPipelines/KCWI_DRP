@@ -48,8 +48,8 @@ def test_injected_cosmic_rays_are_flagged_and_cleaned(run_primitive,
     mask = expected_flags == 0
     assert np.array_equal(out.ccddata.data[mask], clean_truth[mask])
     # source: analytic @ cf88fb8 - a hit is replaced by the mean of its
-    # unmasked neighbours ('meanmask'); on a plane the mean of a set of
-    # neighbours placed symmetrically about the pixel equals the pixel's
+    # unmasked neighbors ('meanmask'); on a plane the mean of a set of
+    # neighbors placed symmetrically about the pixel equals the pixel's
     # value, so the ramp is recovered.
     # Tolerance: float64 sums of ~25 values near 1000: ~1e-12 absolute.
     for r, c, _ in hits:

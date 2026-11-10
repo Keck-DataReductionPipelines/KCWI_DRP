@@ -521,7 +521,7 @@ def test_reset_end_of_input_clears_state(ki, script, caplog, log):
     ki.reset_end_of_input()
     caplog.clear()
     s = script("q")
-    # input is read again, so the scripted answer is honoured
+    # input is read again, so the scripted answer is honored
     assert ki.ask_next(log, "w", "h") == ki.QUIT
     assert len(s.prompts) == 1
     # and a new EOF warns again

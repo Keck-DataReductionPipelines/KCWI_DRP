@@ -12,8 +12,8 @@ sec z = airmass.  Hence, for any physical atmosphere:
 3. its size grows with airmass (tan z grows with sec z for z in [0, 90));
 4. its size grows with the wavelength separation, on either side of the
    reference: n(lambda) is strictly decreasing in lambda over 3000-11000 A
-   (normal dispersion of air and water vapour; no absorption bands are
-   modelled), so |n(w0) - n(w1)| grows with |w1 - w0|.
+   (normal dispersion of air and water vapor; no absorption bands are
+   modeled), so |n(w0) - n(w1)| grows with |w1 - w0|.
 
 Atmospheres are drawn over the range the DRP sees and the Ciddor (1996)
 model is valid for: -10..25 C, 55-105 kPa (Maunakea summit is ~61 kPa),
@@ -64,7 +64,7 @@ def test_displacement_grows_with_airmass(w0, w1, x1, dx, atm):
 
 @st.composite
 def three_wavelengths(draw):
-    """a < b < c in 3000-11000 A, neighbours at least 1 A apart.
+    """a < b < c in 3000-11000 A, neighbors at least 1 A apart.
 
     1 A: dn/dlambda ~ 1e-9 per A at 11000 A, ~1e7 times the float64
     resolution of n, so the comparisons below are far above rounding.

@@ -54,7 +54,7 @@ Options should be evaluated against these. "Must" items are pass/fail.
 
 ## Options considered
 
-Only Matplotlib was exercised in this repository's environment. The assessments of the other libraries come from their documented behaviour, not from tests here.
+Only Matplotlib was exercised in this repository's environment. The assessments of the other libraries come from their documented behavior, not from tests here.
 
 | Option | R1 no browser | R2 threads | R5 features | R7/R8 live view | R9 port effort | Verdict |
 |---|---|---|---|---|---|---|
@@ -95,16 +95,16 @@ Add a small `figure()` to `kcwidrp/core/kcwi_plotting.py` that accepts the argum
 
 Primitives then change their import line (`from kcwidrp.core.kcwi_plotting import figure`) and little else. `bokeh_plot(p, session)` and `save_plot(p, filename)` keep their signatures; the `session` argument becomes the viewer handle.
 
-Trade-off: the wrapper is a small private API to maintain, and it is deliberately not idiomatic Matplotlib. The alternative, rewriting roughly 200 glyph calls directly as Matplotlib, gives cleaner code but means every plot has to be visually re-checked individually. Given the requirement to minimise matching effort, the wrapper is the better first step; individual plots can be converted to plain Matplotlib later with no deadline.
+Trade-off: the wrapper is a small private API to maintain, and it is deliberately not idiomatic Matplotlib. The alternative, rewriting roughly 200 glyph calls directly as Matplotlib, gives cleaner code but means every plot has to be visually re-checked individually. Given the requirement to minimize matching effort, the wrapper is the better first step; individual plots can be converted to plain Matplotlib later with no deadline.
 
 ### 3. Matching the old plots
 
 Put Bokeh's look in the wrapper once:
 
-- **Default colour.** Bokeh draws every glyph without an explicit colour in the same blue, `#1f77b4`. Matplotlib would cycle through colours. The wrapper must default to that blue with no cycling, or multi-line plots will change colour.
+- **Default color.** Bokeh draws every glyph without an explicit color in the same blue, `#1f77b4`. Matplotlib would cycle through colors. The wrapper must default to that blue with no cycling, or multi-line plots will change color.
 - **Legend.** Default position top-right, entries merged by `legend_label` (several primitives reuse one label across glyphs, for example `'Arc'` in `SolveArcs`).
 - **Markers.** Bokeh's default marker size is 4 screen pixels; set the equivalent Matplotlib marker size.
-- **Title and grid.** Left-aligned bold title, light grey grid on by default.
+- **Title and grid.** Left-aligned bold title, light gray grid on by default.
 - **Dash names.** `'dashed'`, `'dashdot'`, `'dotted'` map by name.
 
 Expected, accepted differences: fonts and anti-aliasing will not be pixel-identical, and the Bokeh toolbar strip will no longer appear in saved PNGs.
@@ -112,7 +112,7 @@ Expected, accepted differences: fonts and anti-aliasing will not be pixel-identi
 Verification, in order of cost:
 
 1. **Reference set.** Before the port, run one blue and one red standard reduction at `plot_level = 3` on a machine that still has Firefox, and keep the `plots/` directory.
-2. **Side-by-side sheet.** After the port, run the same data and generate one HTML page pairing old and new PNGs by file name. Review once against a checklist: same file name, same data, same axis limits, same labels and title, same legend entries, same colours.
+2. **Side-by-side sheet.** After the port, run the same data and generate one HTML page pairing old and new PNGs by file name. Review once against a checklist: same file name, same data, same axis limits, same labels and title, same legend entries, same colors.
 3. **Structural tests.** Add pytest cases that drive the wrapper with synthetic data and assert on the resulting axes (number of lines, limits, labels, legend text, image size in pixels). These replace `test_bokeh_plotting.py` and run with no display or browser.
 
 Pixel-comparison tests are not recommended; they are brittle across Matplotlib and FreeType versions.

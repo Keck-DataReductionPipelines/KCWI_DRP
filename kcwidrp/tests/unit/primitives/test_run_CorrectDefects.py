@@ -137,9 +137,9 @@ def test_cleans_and_flags_listed_pixels(run_primitive, synthetic_ccddata,
     assert np.array_equal(out.ccddata.flags, expected_flags)
     # source: characterization @ cf88fb8 - a bad pixel is replaced by the
     # median of the two good pixels on each side in its row.  On the ramp
-    # 100 + 3 col + 1000 row the neighbours at cols 7,8,12,13 (0-based) have
+    # 100 + 3 col + 1000 row the neighbors at cols 7,8,12,13 (0-based) have
     # median 100 + 3 (8 + 12)/2 + 1000 row = 130 + 1000 row; for the single
-    # pixel at col 19 the neighbours are cols 17,18,20,21: median
+    # pixel at col 19 the neighbors are cols 17,18,20,21: median
     # 100 + 3 (18 + 20)/2 + 1000*29 = 157 + 29000.
     expected = original.copy()
     expected[4, 9:12] = 130.0 + 1000.0 * 4

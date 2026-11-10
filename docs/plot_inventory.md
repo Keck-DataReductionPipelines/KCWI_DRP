@@ -70,7 +70,7 @@ Per primitive: ArcOffsets 2, ExtractArcs 2, FindBars 3, FitCenter 3, GetAtlasLin
 
 Saved rows: there are 20 `save_plot(` calls (section 5). Nineteen save a figure directly: F02, F09, F10, F11, F16, F17, F18, F19, F20, F28, F33, F36, F38, F39, F43, F44, F45, F47, F48. The twentieth (SubtractOverscan.py:135) saves a `gridplot` that wraps the F46 figures. So 29 rows have no direct save; F46 is saved only through the gridplot, and the other 28 are never saved (live-only).
 
-Notes on figure/save behaviour that differ from what the guard suggests:
+Notes on figure/save behavior that differ from what the guard suggests:
 
 - `MakeMasterFlat.py:441` and `:455` (and their `bokeh_plot` calls at `:450` and `:466`) have no `plot_level` guard. With `enable_bokeh = False` and a BM-grating flat they raise at `plot_level` 0 as well (bug B9 is stated only for `plot_level >= 1`). With a live session they push and sleep at `plot_level` 0.
 - `SolveArcs.py:537` and `:578` call `save_plot` at any `plot_level`, so PNG export (and its browser dependency) runs at `plot_level` 0.
@@ -164,7 +164,7 @@ Session and document calls (StartBokeh and `core/bokeh_plotting.py`, outside the
 | Keyword | Literal values used |
 |---|---|
 | `marker=` | `'x'` only (FindBars.py:93, :131, FitCenter.py:359, :386, MakeInvsens.py:193, :574, :599, :640, TraceBars.py:139) |
-| `line_dash=` | `'dashed'`, `'dashdot'`, `'dotted'` (`'dotted'` only at SolveArcs.py:404; `'dashdot'` also inside `oplot_slices`); `'dashdotdot'` for CWAVE, added after this snapshot (plot colour scheme, docs/interactive_prompts.md, 2026-11-09) |
+| `line_dash=` | `'dashed'`, `'dashdot'`, `'dotted'` (`'dotted'` only at SolveArcs.py:404; `'dashdot'` also inside `oplot_slices`); `'dashdotdot'` for CWAVE, added after this snapshot (plot color scheme, docs/interactive_prompts.md, 2026-11-09) |
 | `palette=` | `"Spectral11"` (MakeCube.py:277) |
 | `level=` (on `image`) | `"image"` (MakeCube.py:277) |
 | `y_axis_type=` | `'log'` (MakeInvsens.py:594) |
@@ -182,7 +182,7 @@ Reading guide. "Guard" is the condition under which the prompt is reached, beyon
 
 ### 3.1 Primitives
 
-| ID | File:line | Guard | Exact prompt string | Figure on screen | Accepted answers | Default `<cr>` | Changes reduction? | Pause branch | Misbehaviour / bug |
+| ID | File:line | Guard | Exact prompt string | Figure on screen | Accepted answers | Default `<cr>` | Changes reduction? | Pause branch | Misbehavior / bug |
 |---|---|---|---|---|---|---|---|---|---|
 | P01 | ArcOffsets.py:92 | `do_plot` (pl>=2), `arc_number == next_bar_to_plot` | `Next? <int> or <cr>, q to quit: ` | F01 | `<cr>`: next bar; `<int> n`: jump to bar n; `q`: stop plotting (`do_plot = False`) | next bar (`int('')` raises ValueError, caught) | No (display only) | none | B4 (n <= current bar, negative, or >= NBARS never matches, review ends silently), B5; non-integer text such as `2.5` acts as `<cr>` |
 | P02 | ArcOffsets.py:121 | pl>=2 (else branch of pl>=1 block) | `Next? <cr>: ` | F02 | any text = next | next | No | ArcOffsets.py:123 (pl==1) | none |
@@ -240,9 +240,9 @@ Reading guide. "Guard" is the condition under which the prompt is reached, beyon
 
 None of these has a `plot_level` guard. No figure is on screen (they run before the framework starts). The test in each is a substring match on the file name or path, so a directory name containing `kr` or `kb` triggers it (**B8**).
 
-| ID | File:line | Guard | Exact prompt string | Accepted answers | Default `<cr>` | Changes reduction? | Misbehaviour / bug |
+| ID | File:line | Guard | Exact prompt string | Accepted answers | Default `<cr>` | Changes reduction? | Misbehavior / bug |
 |---|---|---|---|---|---|---|---|
-| S01 | scripts/reduce_kcwi.py:437 | `-f/--frames` branch: `args.blue and 'kr' in frame.lower()` | `Proceed? <cr>=yes or Q=quit: ` | `<cr>` or any text without q: keep this frame and go on; text containing q/Q: `frames = []`, `break` (frame list emptied, `ingest_data(None, [], False)` is still called) | proceed | Yes: decides which frames are ingested | B8 (prompt repeats for every offending file and consumes lines of a piped answers file), B5. Behaviour of `ingest_data` with an empty list was not checked (`keckdrpframework` is not installed here) |
+| S01 | scripts/reduce_kcwi.py:437 | `-f/--frames` branch: `args.blue and 'kr' in frame.lower()` | `Proceed? <cr>=yes or Q=quit: ` | `<cr>` or any text without q: keep this frame and go on; text containing q/Q: `frames = []`, `break` (frame list emptied, `ingest_data(None, [], False)` is still called) | proceed | Yes: decides which frames are ingested | B8 (prompt repeats for every offending file and consumes lines of a piped answers file), B5. Behavior of `ingest_data` with an empty list was not checked (`keckdrpframework` is not installed here) |
 | S02 | scripts/reduce_kcwi.py:443 | `-f` branch: `args.red and 'kb' in frame.lower()` | same | same | proceed | Yes | B8, B5 |
 | S03 | scripts/reduce_kcwi.py:462 | `-l/--list` branch: `"#" not in frame`, `args.blue and 'kr' in frame.lower()` | same | same (`break` leaves the file loop only) | proceed | Yes | B8, B5 |
 | S04 | scripts/reduce_kcwi.py:468 | `-l` branch: `args.red and 'kb' in frame.lower()` | same | same | proceed | Yes | B8, B5 |
@@ -251,7 +251,7 @@ None of these has a `plot_level` guard. No figure is on screen (they run before 
 | S07 | scripts/kcwi_rti.py:434 | `-l` branch, `args.blue and ('kr' ...)` | same | q/Q: `frames = []`, `break` | proceed | Yes (`ingest_data(None, frames, False)` at L445 receives the emptied list) | B8, B5 |
 | S08 | scripts/kcwi_rti.py:440 | `-l` branch, `args.red and ('kb' ...)` | same | same | proceed | Yes | B8, B5 |
 
-Other notes on input behaviour that apply to every row: the `isnumeric()` loop in P25 is the only place that re-asks on an empty reply by design; all "any = next" prompts accept text and ignore it; `EOFError` from a closed standard input is never caught, so a run started with piped input that runs out of lines ends the primitive with an exception (the framework logs it and continues, section 6.1 of the upgrade plan).
+Other notes on input behavior that apply to every row: the `isnumeric()` loop in P25 is the only place that re-asks on an empty reply by design; all "any = next" prompts accept text and ignore it; `EOFError` from a closed standard input is never caught, so a run started with piped input that runs out of lines ends the primitive with an exception (the framework logs it and continues, section 6.1 of the upgrade plan).
 
 ## 4. Sleep list (36 sites)
 

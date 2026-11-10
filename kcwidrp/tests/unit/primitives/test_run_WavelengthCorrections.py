@@ -49,7 +49,7 @@ def n_ciddor(lam_air):
     """Refractive index of standard air, Ciddor (1996) eq. 1.
 
     # source: published @ c0fed5c - Ciddor (1996) eq. 1 (15 C, 101325 Pa, dry,
-    # 450 ppm CO2); sigma in inverse micrometres.
+    # 450 ppm CO2); sigma in inverse micrometers.
     """
     s2 = (1.0e4 / np.asarray(lam_air, dtype=float)) ** 2
     return 1.0 + 1.0e-8 * (5792105.0 / (238.0185 - s2) +
@@ -113,7 +113,7 @@ def test_line_lands_at_vacuum_velocity_corrected_wavelength(
     spec = np.asarray(out.data[:, 0, 0], dtype=np.float64)
     wave = grid(out.header)
     win = np.abs(wave - O3_VAC) < 10 * sigma
-    centre = np.sum(wave[win] * spec[win]) / np.sum(spec[win])
+    center = np.sum(wave[win] * spec[win]) / np.sum(spec[win])
     v = velocity(kcwi_config)
     # source: published @ c0fed5c (O3_VAC) and independent (v, astropy)
     expected = O3_VAC * (1.0 + v / C_KMS)
@@ -123,7 +123,7 @@ def test_line_lands_at_vacuum_velocity_corrected_wavelength(
     # after two cubic resamplings is good to ~1e-4 A.  Insensitive to B19
     # on purpose: B19 moves the line by about CD3_3 * ((n - 1) +
     # lambda dn/dlambda + v/c) ~ 2e-4 A, see the strict xfail below.
-    assert centre == pytest.approx(expected, abs=0.01)
+    assert center == pytest.approx(expected, abs=0.01)
     # The correction is not negligible compared with the tolerance:
     # source: analytic @ c0fed5c - vacuum shift 1.4 A, velocity shift |v|/c *
     # 5008 A
@@ -205,10 +205,10 @@ def test_no_velocity_correction_only_air_to_vacuum(run_primitive,
     spec = np.asarray(out.data[:, 0, 0], dtype=np.float64)
     wave = grid(out.header)
     win = np.abs(wave - O3_VAC) < 10 * sigma
-    centre = np.sum(wave[win] * spec[win]) / np.sum(spec[win])
+    center = np.sum(wave[win] * spec[win]) / np.sum(spec[win])
     # source: published @ c0fed5c - [O III] vacuum wavelength; tolerance as
     # above
-    assert centre == pytest.approx(O3_VAC, abs=0.01)
+    assert center == pytest.approx(O3_VAC, abs=0.01)
     # source: analytic @ c0fed5c - docstring
     assert out.header["VCORR"] == 0.0
     assert out.header["VCORRTYP"] == "none"

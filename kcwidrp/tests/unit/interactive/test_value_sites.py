@@ -10,7 +10,7 @@ They pass on the code before P.4 and must keep passing after it.
 
 Only the *number* of prompts is compared (D3), never their text: P.3/P.4
 reword the prompts.  Input that is invalid today (B1c, B2, B4, B5, B6) and
-the prompts whose valid behaviour is a bug fixed in PR3b (B1, B3, B7, B12)
+the prompts whose valid behavior is a bug fixed in PR3b (B1, B3, B7, B12)
 are not exercised here, except where noted.
 
 Sites covered: ReadAtlas offset (P40), MakeInvsens limits (P14), line mask

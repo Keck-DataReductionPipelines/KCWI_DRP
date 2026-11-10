@@ -549,7 +549,7 @@ class GetAtlasLines(BasePrimitive):
                 # Rejected: faint
                 if len(rej_fnt_w) > 0:
                     p.diamond(rej_fnt_w, rej_fnt_a / norm_fac,
-                              legend_label='FntRej', color='grey', size=8)
+                              legend_label='FntRej', color='gray', size=8)
                 # Kept
                 p.diamond(refws, refas / norm_fac, legend_label='Kept',
                           color='green', size=12)

@@ -7,7 +7,7 @@ Rules (bokeh plan 5.1):
 
 * ``enable_plot_viewer`` present: it decides.  ``enable_bokeh`` is then
   ignored, but still gets the deprecation message.
-* only ``enable_bokeh`` present: honoured, with the deprecation message.
+* only ``enable_bokeh`` present: honored, with the deprecation message.
 * neither present: viewer off.
 
 Neither key has any effect on saving PNG files; that follows ``plot_level``.

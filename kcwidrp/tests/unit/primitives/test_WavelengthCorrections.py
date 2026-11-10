@@ -65,7 +65,7 @@ def test_output_is_quantity_in_angstrom_and_longer_than_input():
     assert np.all(vac.value > air.value)
 
 
-def test_nanometre_input_is_converted():
+def test_nanometer_input_is_converted():
     # source: published - [O III] 500.6843 nm air -> 5008.239 A vacuum (same
     # tolerance as above)
     vac = WC.a2v_conversion(_stub(), np.array([500.6843, 500.6843]) * u.nm)

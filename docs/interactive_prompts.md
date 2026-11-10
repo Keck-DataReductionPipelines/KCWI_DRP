@@ -1,4 +1,4 @@
-# Interactive prompt catalogue (task P.0)
+# Interactive prompt catalog (task P.0)
 
 Purpose: the text that every interactive prompt of the DRP prints in PR3a
 (upgrade plan §8). For each logical prompt of `docs/plot_inventory.md` §3
@@ -12,13 +12,13 @@ created: the strings live at the call site.
 Source read for this file: branch `upgrade/pr3a-prompts` at `cb7444c`
 (PR1, the Matplotlib port, is merged). Line numbers below are from that
 commit; where they differ from the inventory (taken at `a360685`) both are
-given. Colours were checked against the figure code at each site; a glyph
-call with no colour is drawn in the wrapper's default `#1f77b4` (blue,
+given. Colors were checked against the figure code at each site; a glyph
+call with no color is drawn in the wrapper's default `#1f77b4` (blue,
 `kcwidrp/core/_plot_render.py:35`), and a marker given only `fill_color`
 keeps a default-blue outline (`_plot_render.py:238`). `scatter` without a
 `marker` draws circles (`_plot_render.py:236`).
 Since 2026-11-09 the plots and their help texts follow the
-[plot colour scheme](#plot-colour-scheme).
+[plot color scheme](#plot-color-scheme).
 
 Order: sections and tables follow the order in which a reduction reaches
 the prompts: the scripts first (before the framework starts), then the
@@ -59,7 +59,7 @@ Each section has:
   `approved` (text correct as written) or `corrected` (text changed in
   review; the correction is made in this file before P.3/P.4 paste it).
 
-The help texts describe the behaviour **after PR3a**: `?`/`help` reprints
+The help texts describe the behavior **after PR3a**: `?`/`help` reprints
 the help, `q`/`quit` (exact, any case) quits a loop, a bar number outside
 the valid range is rejected with the range shown (B4), and invalid input to
 a value prompt re-prompts keeping the last accepted value (B1c, B2, B6). At
@@ -74,20 +74,20 @@ reference bar (config, default 57); *slice boundaries* = the black
 dash-dot vertical lines that `oplot_slices` draws every 5 bars
 (`kcwi_plotting.py:807`).
 
-## Plot colour scheme
+## Plot color scheme
 
-Every plot uses one colour (and line style) per role, so the same thing
+Every plot uses one color (and line style) per role, so the same thing
 looks the same from plot to plot (maintainer, 2026-11-09). The help texts
 describe the plots in this scheme; the per-site list is in
-[Colours named per site](#colours-named-per-site).
+[Colors named per site](#colors-named-per-site).
 
 In the code each role is a constant in `kcwidrp/core/kcwi_plot_colors.py`
 (`pc.DATA`, `pc.REFERENCE`, ...), and `oplot_cwave` / `oplot_wavgood` in
 `kcwi_plotting.py` draw CWAVE and WAVGOOD. Changing a constant changes every
-plot that uses it, but not the help texts, which name colours in words.
-Using the constants is a convention, not a rule: a plot may pass any colour.
+plot that uses it, but not the help texts, which name colors in words.
+Using the constants is a convention, not a rule: a plot may pass any color.
 
-| Role | Colour / style |
+| Role | Color / style |
 |---|---|
 | Data being inspected (points, spectra, profiles, histogram bars) | blue |
 | Second data series of the same kind (raw background, corrected data, continuum-bar spectrum, red-end slice) | cyan |
@@ -97,22 +97,22 @@ Using the constants is a convention, not a rule: a plot may pass any colour.
 | Mean of a subset (per-slice mean, P46) | black, thick, over the subset only |
 | CWAVE | orange, dash-dot-dot (used for nothing else) |
 | WAVGOOD | green solid verticals |
-| WAVALL | grey solid verticals |
+| WAVALL | gray solid verticals |
 | Found or adopted value (peak, centroid, adopted dispersion, kept lines) | magenta; P11 kept lines green (maintainer, 2026-11-09; P11 has no WAVGOOD) |
 | Predicted or calculated value (grating equation, predicted ledge, ATOFF) | black dashed |
 | Limits and windows (fit limits, fit windows, buffer zones, WavLim, Cor lim, source masks) | purple; a second set dashed or dotted |
 | Line masks | purple dashed pairs |
-| Thresholds / zero lines | grey dashed / grey dotted |
-| Masked points, lines rejected before a fit | grey x |
+| Thresholds / zero lines | gray dashed / gray dotted |
+| Masked points, lines rejected before a fit | gray x |
 | Lines rejected as outliers in residual clipping | gold |
-| GetAtlasLines rejection classes (P11) | cyan WinRej, pink FitRej, olive ParRej, brown DupRej, grey FntRej |
+| GetAtlasLines rejection classes (P11) | cyan WinRej, pink FitRej, olive ParRej, brown DupRej, gray FntRej |
 | Slice boundaries | black dash-dot |
-| Images (P12) | Spectral11 with a colour bar; NaN grey; pixel boundaries as black ticks at the top and bottom |
+| Images (P12) | Spectral11 with a color bar; NaN gray; pixel boundaries as black ticks at the top and bottom |
 
 Rules:
 
 - Where a plot shows several series of the same kind, each with its own
-  fit (P28–P32), each fit is drawn in its series' colour; there the
+  fit (P28–P32), each fit is drawn in its series' color; there the
   reference slice is black, the blue-end slice blue and the red-end slice
   cyan.
 - Every plot whose x axis covers the whole wavelength range shows
@@ -122,8 +122,8 @@ Rules:
   none. P50 (CCD rows) has none: a row is a different wavelength in each
   slice. P12 shows WAVGOOD as green horizontals (y is wavelength).
 - Every line or marker a help text names has a legend entry.
-- Markers have an outline of their fill colour.
-- In the help text each colour item is on its own line; continuation
+- Markers have an outline of their fill color.
+- In the help text each color item is on its own line; continuation
   lines are indented by two more spaces.
 
 ## Check these first
@@ -344,7 +344,7 @@ Default:
 - Helper: `ask_yes_quit(..., who="kcwi_rti")`
 - Changes reduction: **No, today**: B11 (PR3b): the `-f` branch ingests `args.frames`, not the emptied list, so `q` stops only the checking; all frames are still reduced.
 - Status:
-- Reviewer note: the help text states the B11 behaviour honestly; when B11 is fixed in PR3b, replace the `q / quit` line with the S01 wording.
+- Reviewer note: the help text states the B11 behavior honestly; when B11 is fixed in PR3b, replace the `q / quit` line with the S01 wording.
 
 **what**
 ```text
@@ -1048,7 +1048,7 @@ Default:
 - Figure: F11 (pl >= 1, only when no LINELIST is configured; saved as `arc_..._atlines.png`)
 - Changes reduction: No
 - Status:
-- Reviewer note (not a prompt bug, not in §13): when more than 400 lines survive, `rej_fnt_w = refws[:hlim]` (L508) is taken after `refws` was already trimmed (L506), so the magenta "FntRej" diamonds mark the wrong lines (a subset of the kept ones). The text below says only what the colour means.
+- Reviewer note (not a prompt bug, not in §13): when more than 400 lines survive, `rej_fnt_w = refws[:hlim]` (L508) is taken after `refws` was already trimmed (L506), so the magenta "FntRej" diamonds mark the wrong lines (a subset of the kept ones). The text below says only what the color means.
 
 **what**
 ```text
@@ -2428,22 +2428,22 @@ Changes the reduction: P14, P15, P19, P25, P37, P38 (header only, see its
 note), P40, and S01–S04, S07, S08 (S05, S06 not today, B11). Matches
 inventory §2.7 except P38 and S05/S06, which the notes explain.
 
-## Colours named per site
+## Colors named per site
 
-Every colour named in a help text, in the [scheme](#plot-colour-scheme)
+Every color named in a help text, in the [scheme](#plot-color-scheme)
 above (files in `kcwidrp/primitives/` unless stated). The plots draw the
-"Colour in help" column. The "Code" column gives the line that drew each
-element at `cb7444c` and the colour it had then, before the colour scheme;
-the WAVGOOD lines of P16-P19, P28 and P33 and the P12 colour bar (drawn by
+"Color in help" column. The "Code" column gives the line that drew each
+element at `cb7444c` and the color it had then, before the color scheme;
+the WAVGOOD lines of P16-P19, P28 and P33 and the P12 color bar (drawn by
 `_plot_render.py`, `_draw`) are new, as are the rows marked "new".
 
-| ID | Colour in help | Code (line, colour at `cb7444c`) |
+| ID | Color in help | Code (line, color at `cb7444c`) |
 |---|---|---|
 | S01–S08 | none (no figure) | — |
 | P48, P49 | blue circles / red thick | SubtractOverscan.py:110 default / :111 red |
 | P20 | blue bars / red thick / red dashed verticals | MakeMasterBias.py:144-145 navy / :146 `#ff8888` / :148, :150 red |
-| P05 | blue line / magenta x / grey dashed | FindBars.py:89 / :90-92 red / :93-94 grey |
-| P06 | blue line / magenta x / grey dashed | FindBars.py:127 / :128-130 red / :131-132 grey |
+| P05 | blue line / magenta x / gray dashed | FindBars.py:89 / :90-92 red / :93-94 gray |
+| P06 | blue line / magenta x / gray dashed | FindBars.py:127 / :128-130 red / :131-132 gray |
 | P07 | blue line and circles / magenta vertical | FindBars.py:157 blue, :158 red / :159-160 green |
 | P51 | blue x / magenta circles | TraceBars.py:139 blue / :140-141 red |
 | P03 | blue / cyan / red | ExtractArcs.py:145 blue / :146 red / :147 green |
@@ -2457,22 +2457,22 @@ the WAVGOOD lines of P16-P19, P28 and P33 and the P12 colour bar (drawn by
 | P10 | blue x / black dashed / black dash-dot | FitCenter.py:386 default / :387-388 red / :393 |
 | P11 | blue / black | GetAtlasLines.py:527-528 lightgray / :529-530 blue |
 | P11 | green diamonds (Kept) | GetAtlasLines.py:552-553 green |
-| P11 | cyan, pink, olive, brown, grey diamonds | GetAtlasLines.py:534 cyan, :538 red, :542 orange, :546 brown, :550 magenta |
+| P11 | cyan, pink, olive, brown, gray diamonds | GetAtlasLines.py:534 cyan, :538 red, :542 orange, :546 brown, :550 magenta |
 | P11 | purple verticals (WavLim) | GetAtlasLines.py:554-556 brown |
 | P42 | black line and circles / black dashed vertical | SolveArcs.py:233-234 blue / :235-236 green / :237 red |
 | P42 | blue circles / red line | SolveArcs.py:247 red / :245 black |
 | P42 | magenta solid / dashed / dotted verticals | SolveArcs.py:256 black dash-dot / :250 green dashed / :253 magenta dash-dot |
-| P43 | blue / gold diamonds / grey x | SolveArcs.py:394 green / :397 orange / :400-401 red |
-| P43 | grey dotted / red dashed / orange dash-dot-dot | SolveArcs.py:404 black dotted / :405-406 gray dash-dot / :407-408 magenta |
+| P43 | blue / gold diamonds / gray x | SolveArcs.py:394 green / :397 orange / :400-401 red |
+| P43 | gray dotted / red dashed / orange dash-dot-dot | SolveArcs.py:404 black dotted / :405-406 gray dash-dot / :407-408 magenta |
 | P43 | purple verticals (WavLim) | new |
 | P44 | blue line and diamonds | SolveArcs.py:421 / :422 darkgrey |
-| P44 | black / magenta diamonds / gold / grey x / orange dash-dot-dot | SolveArcs.py:425 blue / :430-431 green / :433-434 orange / :435-436 red / :427-428 magenta |
+| P44 | black / magenta diamonds / gold / gray x / orange dash-dot-dot | SolveArcs.py:425 blue / :430-431 green / :433-434 orange / :435-436 red / :427-428 magenta |
 | P45 | blue diamonds / black dash-dot | SolveArcs.py:485 default / :489 |
 | P46 | blue diamonds / red / red dashed / black dash-dot | SolveArcs.py:509 default / :515-516 red / :517-525 green dashed / :528 |
 | P46 | black thick (slice mean) | new |
 | P47 | blue diamonds / red / red dashed / black dash-dot | SolveArcs.py:552 default / :555-556 red / :557-565 green dashed / :568 |
-| P41 | blue / cyan / green / grey | SolveAIT.py:160 blue / :161 red / :162-164 green / :165-167 orange |
-| P12 | Spectral11, grey NaN, colour bar | MakeCube.py:276-277; `_plot_render.py:268` (`_image`, no colour bar) |
+| P41 | blue / cyan / green / gray | SolveAIT.py:160 blue / :161 red / :162-164 green / :165-167 orange |
+| P12 | Spectral11, gray NaN, color bar | MakeCube.py:276-277; `_plot_render.py:268` (`_image`, no color bar) |
 | P12 | black ticks (pixel boundaries) / green horizontals (WAVGOOD) | new |
 | P50 | blue circles / red thick | SubtractScatteredLight.py:101 default / :102 red |
 | P21 | blue circles / red | MakeMasterFlat.py:265 default / :266 red |
@@ -2498,10 +2498,10 @@ the WAVGOOD lines of P16-P19, P28 and P33 and the P12 colour bar (drawn by
 | P13 | blue x | MakeInvsens.py:193 default |
 | P14 | blue / green / purple / orange dash-dot-dot | MakeInvsens.py:354 black / :355, :357 green / :358, :360 blue / :361 red |
 | P15 | as P14, plus purple dashed pairs | MakeInvsens.py:452-459 as P14 / :462, :464 orange dashed |
-| P16 | blue / red / grey x / purple, green verticals | MakeInvsens.py:569 black / :571 red / :573 default / :574, :576 green |
+| P16 | blue / red / gray x / purple, green verticals | MakeInvsens.py:569 black / :571 red / :573 default / :574, :576 green |
 | P16 | red dashed / red dash-dot horizontals | MakeInvsens.py:577-578 / :579-580 black |
-| P17 | blue / red / grey x / purple, green verticals | MakeInvsens.py:596 black / :597 red / :598 default / :599, :601 green |
+| P17 | blue / red / gray x / purple, green verticals | MakeInvsens.py:596 black / :597 red / :598 default / :599, :601 green |
 | P18 | blue / black / purple, green verticals | MakeInvsens.py:616 black / :617 red / :618, :620 green |
-| P19 | blue / grey x / purple, green verticals | MakeInvsens.py:636 black / :639 default / :640, :642 green |
+| P19 | blue / gray x / purple, green verticals | MakeInvsens.py:636 black / :639 default / :640, :642 green |
 | P19 | red / red dashed | MakeInvsens.py:643-644 red / :645-650 black dashed |
 | P37, P38 | none (no figure) | — |

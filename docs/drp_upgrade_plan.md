@@ -24,7 +24,7 @@ Every task has the same parts:
 - **Depends on**: tasks that must be finished first.
 - **Do**: what the task produces.
 - **Validation**: automated or mechanical checks. The task is not done until each one passes and the result is pasted into the PR description.
-- **👤 Human check**: what *you* must do or look at. These cannot be delegated to a model: they need real data, an interactive session, a browser, scientific judgement, or authority. A task with a 👤 block is not done until you have done it and written the result down (in the PR, or in this file for decisions).
+- **👤 Human check**: what *you* must do or look at. These cannot be delegated to a model: they need real data, an interactive session, a browser, scientific judgment, or authority. A task with a 👤 block is not done until you have done it and written the result down (in the PR, or in this file for decisions).
 
 Tasks marked **Model: Human** are entirely yours.
 
@@ -45,7 +45,7 @@ Questions asked while writing this plan, and the answers given. Later changes go
 | Q3 | Which matrix stages are in scope? | **Stages 0–5.** Stage 6 (joint inversion of dithers) is out of scope. | §9 covers M0–M5. Stage 6 stays in matrix_cube_plan.md as future work |
 | Q4 | What reference data is on hand? | **Blue + red with standard stars, no nod-and-shuffle.** | S.3 uses BL/BM + KCRM sets. N&S paths are validated on synthetic data only; this is a known gap (§12) |
 | Q5 | After validation, what is the shipped default for `cube_method`? | **Flip to `matrix`** in this update. | M.6 makes the flip, gated by Keck maintainer sign-off (G6). Invsens/FluxCalibrate method guard (M.2d) becomes mandatory |
-| Q6 | Which covariance products should Stage 5 produce? | **A** (neighbour correlations), **B** (store `W`, opt-in) and **C** (noise-scaling curve in header). | M.5 implements all three. A and C on by default, B behind a config key |
+| Q6 | Which covariance products should Stage 5 produce? | **A** (neighbor correlations), **B** (store `W`, opt-in) and **C** (noise-scaling curve in header). | M.5 implements all three. A and C on by default, B behind a config key |
 | Q7 | Who makes maintainer-level decisions? | **You plus Keck maintainers.** You decide day-to-day; upstream merges and user-facing defaults need Keck sign-off. | Gates G1–G7 in §4 name what needs Keck sign-off |
 | Q8 | Should prompt answers be recorded in the pipeline log? | **Yes, at INFO.** Explanations go to the terminal only. | P.1 helper logs every answer and its effect |
 | Q9 | (Instruction, not a question) Which models may be used? | **Opus or Sonnet only.** | Bokeh-plan tasks assigned to Haiku move to Sonnet; the Fable review moves to Opus in a fresh session (§3) |
@@ -76,8 +76,8 @@ Decisions added after review (2026-10-22). Where one changes an earlier row, the
 | # | Decision | Why |
 |---|---|---|
 | D10 | Work starts from upstream `v1.3.2`, not `12fd4aa`. `git fetch`, check that `develop` contains `v1.3.2`, branch from it, and tag `upgrade-start` there. The `geckodriver_prefer_non_snap` question in S.1 is closed: it was merged as PR #218. | `v1.3.2` was released 2026-10-15 and is not an ancestor of `dfbcf9d`; PRs against `develop` must not undo it |
-| D11 | Two existing crashes when the viewer is off are fixed in PR0 (T.11, bugs B9 and B10 in §13): `context.bokeh_session` is initialised to `None` by the launch scripts, and `bokeh_clear(None)` returns. Behaviour with a working Bokeh server is unchanged. | Without it, no reduction at `plot_level ≥ 1` runs with the viewer disabled, so the regression suite (T.7) cannot run unattended and headless on `upgrade-start` code |
-| D12 | Track P's "no behaviour change" rule is: **for input that is valid today, PR3a must give identical prompts, logged results and outputs; input that is invalid today (crashes, silent resets, silent early exits, accidental quits) may re-prompt instead.** Bugs whose fix only affects invalid input (B1c, B2, B4, B5, B6) are fixed by the helper in PR3a. Bugs whose fix changes outputs, or the prompts seen with valid input, (B1, B1b, B3, B7, B8, and later B11–B13) are fixed in PR3b. Supersedes the "keep the bug in P.4" wording. | §8.2's helper design already fixes B4 and B5 by construction; the earlier text put the same fixes in both PRs |
+| D11 | Two existing crashes when the viewer is off are fixed in PR0 (T.11, bugs B9 and B10 in §13): `context.bokeh_session` is initialized to `None` by the launch scripts, and `bokeh_clear(None)` returns. Behavior with a working Bokeh server is unchanged. | Without it, no reduction at `plot_level ≥ 1` runs with the viewer disabled, so the regression suite (T.7) cannot run unattended and headless on `upgrade-start` code |
+| D12 | Track P's "no behavior change" rule is: **for input that is valid today, PR3a must give identical prompts, logged results and outputs; input that is invalid today (crashes, silent resets, silent early exits, accidental quits) may re-prompt instead.** Bugs whose fix only affects invalid input (B1c, B2, B4, B5, B6) are fixed by the helper in PR3a. Bugs whose fix changes outputs, or the prompts seen with valid input, (B1, B1b, B3, B7, B8, and later B11–B13) are fixed in PR3b. Supersedes the "keep the bug in P.4" wording. | §8.2's helper design already fixes B4 and B5 by construction; the earlier text put the same fixes in both PRs |
 | D13 | Test dependencies are a pip-installable extra (`pip install -e ".[test]"`), declared as PEP 621 `[project.optional-dependencies]` (supported by `poetry-core>=2`) or `[tool.poetry.extras]`, not a Poetry-only dependency group. Amends D9. | Users and maintainers install with pip and conda; a Poetry group cannot be installed by pip |
 | D14 | Two environments, both Python 3.12: the **baseline env** (repaired `kcwidrp` conda env plus the test extra) runs `upgrade-start` code and all of PR0; the **development env** for PR1 onward has the same numeric pins (`numpy`, `scipy`, `astropy`, `scikit-image`, `astroscrappy`) as the baseline, minus Bokeh. The environment check in T.7 is done in the baseline env, before any code change. | `upgrade-start` cannot import without Bokeh, so it cannot be run in a post-PR1 env; `numpy==1.26.4` has no Python 3.13 wheels |
 | D15 | The regression runner does not trust the exit code or stdin position. Failures are found by scanning the log; prompts are recorded by a `sitecustomize.py` that the runner places on `PYTHONPATH` and that wraps `builtins.input` to append each prompt and answer to a sidecar file. | The framework catches primitive exceptions, carries on, and always leaves through `os._exit(0)`; Python reads a redirected stdin file in 8 KB blocks, so file position shows nothing about how many answers were used |
@@ -92,7 +92,7 @@ Decisions added after review (2026-10-22). Where one changes an earlier row, the
 | D24 | (Maintainer decision, 2026-10-23.) S.3 uses datasets ds01 and ds03 of the maintainer's test suite (`~/drp/kcwi/test_suite/suite/manifest.csv`) for this development cycle, with the full profile. ds02 (after re-downloading its truncated flat), ds06, ds07 and ds08 become quick-profile regression datasets in T.7. ds04 and ds05 are dropped. The long-term dataset choice may change later. | Two dual-channel 2×2 nights cover BL, BM, RL, RH1, the Large and Medium slicers and sky frames, and ds03 blue exercises the BM ledge code (B1); the extra datasets add 1×1 binning, the Small slicer and BH3 at low interactive cost |
 | D25 | (Maintainer decisions, 2026-10-24, after T.8.) (1) B36 is fixed in PR3b, not as a hotfix; the S.3 references stay as made (self-sky for every science frame) until then. (2) Coverage minimum: 70 % line coverage per module for `kcwidrp/core/` and `kcwi_file_primitives.py`, exempting the vendored `core/bspline/` and the two plotting modules until PR1 (written into `docs/testing.md` §11). (3) The one breakage caught only by the regression suite (SolveArcs' initial outlier width doubled) is accepted as regression-only; no fast test. | T.8's 👤 check |
 | D26 | (Maintainer decision, 2026-10-28.) `requirements.txt` and `environment.yml` are deleted in PR1; `pyproject.toml` is the only dependency list. Supersedes bokeh-plan 5.1's bullets on regenerating `requirements.txt` and fixing or deleting `environment.yml`. | Both were stale or hand-maintained copies of `pyproject.toml`, and nothing consumes them since Travis was removed (T.10) |
-| D27 | (Maintainer decisions, 2026-10-28.) (1) Plots need to show the same information as Bokeh's, not Bokeh's exact look: where exact matching costs code clarity, the simpler Matplotlib behaviour is used, each compromise approved by the maintainer. Approved so far: Matplotlib's default look (title kept left and bold), named dash styles, Matplotlib autoscaling with a 5 % margin per end. Declined: square diamond, one legend symbol per label, sizes in points unconverted, wrapping instead of shrinking long titles, centred titles. (2) The viewer tests that drive a live viewer (`unit/plotting/test_plot_viewer.py`) get a `viewer` marker and leave the default `pytest` run, which went over 60 s; `pytest -m viewer` is required before PRs that touch plotting (`docs/testing.md`). | PR1 integration: the wrapper reproduced Bokeh details at a cost in code; the viewer tests added ~12 s |
+| D27 | (Maintainer decisions, 2026-10-28.) (1) Plots need to show the same information as Bokeh's, not Bokeh's exact look: where exact matching costs code clarity, the simpler Matplotlib behavior is used, each compromise approved by the maintainer. Approved so far: Matplotlib's default look (title kept left and bold), named dash styles, Matplotlib autoscaling with a 5 % margin per end. Declined: square diamond, one legend symbol per label, sizes in points unconverted, wrapping instead of shrinking long titles, centered titles. (2) The viewer tests that drive a live viewer (`unit/plotting/test_plot_viewer.py`) get a `viewer` marker and leave the default `pytest` run, which went over 60 s; `pytest -m viewer` is required before PRs that touch plotting (`docs/testing.md`). | PR1 integration: the wrapper reproduced Bokeh details at a cost in code; the viewer tests added ~12 s |
 | D28 | (Maintainer decision, 2026-10-28.) All upgrade PRs (PR0 onward) target a long-lived integration branch, `v3-upgrade`, created from `develop` at `af46243`, still through pull requests. `v3-upgrade` is merged into `develop` at a later date (R.5). Hotfixes for the live version keep going to `develop` (and `develop` → `master`) as before; `v3-upgrade` takes them by merging `develop` into it. PR #224 (PR0) was retargeted from `develop` to `v3-upgrade`. Amends D6. | Testers can be given the upgraded version from one branch while the live version still gets hotfixes |
 | D29 | (Maintainer decision, 2026-10-28.) The regression-tool tests (`unit/regression_tools/`, ~25 s of fake reductions in subprocesses) get a `regression_tools` marker and leave the default `pytest` run, which had reached 60.3 s with PR3a; `pytest -m regression_tools` is required before PRs that touch `kcwidrp/tests/regression/` (`docs/testing.md`). | Same approach as the `viewer` marker (D27); leaves headroom for Track M |
 | D30 | (Maintainer decision, 2026-10-28.) The S.3 level-3 answer files are not replayed on PR3a. They contain answers that today's code takes as a silent end of review (bug B4: e.g. `-42` at a bar-jump prompt in ds01 blue), which PR3a re-asks (D12), so every later answer shifts. Instead the maintainer records new answer files in P.6 (`answers_*_3_v2.txt`), which become the level-3 baseline: the L3 references are re-made from them and blessed after G3. Until then PR3a's replay checks cover the L0 and L1 entries (no prompts); the L3 entries are expected to fail tier 1. Amends D3 and the P.3/P.4 replay checks for the S.3 files. | Editing the S.3 files would be thrown away once the v2 files redefine the baseline |
@@ -104,7 +104,7 @@ Maintainer answers to the S.4 questions (gate G0), given 2026-10-22 by the maint
 | S4-Q1 | Does anything downstream read `plots/*.png`? | **Only file names and PNG format matter.** | Track A may change plot appearance; names, format and pixel size are preserved as the bokeh plan already requires |
 | S4-Q2 | How are plots viewed when the pipeline runs remotely? | **VNC / remote desktop.** The browser runs on the pipeline host. | The `localhost`-only viewer binding works as designed. R.3's remote session is done over VNC. SSH port-forwarding stays documented but is not tested |
 | S4-Q3 | Several processes watched at once; one tab per process acceptable? | **Yes, one tab per process.** | The default topology from bokeh plan 0.3 is confirmed; the shared-port alternative is dropped |
-| S4-Q4 | Auto-open the browser tab on summit and RTI hosts? | **Off everywhere.** | `plot_viewer_open_browser = False` in both `kcwi.cfg` and `kcwi_koarti.cfg` (§7 amendment 13). This changes today's behaviour (`session.show` opens a tab); the changelog says so and the printed URL is the way in |
+| S4-Q4 | Auto-open the browser tab on summit and RTI hosts? | **Off everywhere.** | `plot_viewer_open_browser = False` in both `kcwi.cfg` and `kcwi_koarti.cfg` (§7 amendment 13). This changes today's behavior (`session.show` opens a tab); the changelog says so and the printed URL is the way in |
 | S4-Q5 | Who merges the `documentation` branch; how is ReadTheDocs rebuilt? | **User documentation lives in a separate repository, [KCWI_DRP-Docs](https://github.com/Keck-DataReductionPipelines/KCWI_DRP-Docs) (`main`), maintained by the maintainer, and is updated under a separate plan.** | All `documentation`-branch and `docs/source/` work leaves this plan: T.10's second half, bokeh 5.1b and R.4 become a hand-off list for the docs plan (§10 R.4) |
 | S4-Q6 | Are prompts driven by scripts at Keck? | **No, humans only.** | Prompt wording can change freely in Track P; P.0 needs no maintainer wording approval |
 | S4-Q7 | Log user answers at INFO? | **Yes.** | As planned (Q8) |
@@ -130,7 +130,7 @@ Rules carried over from the bokeh plan and adapted to two models:
 1. **Tests are written by a different model, or a fresh session, from the code they test**, from the specification and not from the implementation's source. Where Opus implements, Sonnet writes tests. Where Sonnet implements, tests come from Opus or from a separate Sonnet session with no access to the implementation conversation. This includes tasks that both implement and test (T.11, M.2d, M.5b, M.6): their tests are written in a separate fresh session.
 2. **The final review (R.2) is Opus 5.5 at high effort in a fresh session** with no access to the implementation conversations. This replaces the Fable 5.1 review in the bokeh plan.
 3. Switch models with `/model` in Claude Code, or run a task as a subagent with the named model.
-4. These assignments are judgements, not benchmarks. If a Sonnet task produces work that fails validation twice, rerun it with Opus rather than iterating a third time.
+4. These assignments are judgments, not benchmarks. If a Sonnet task produces work that fails validation twice, rerun it with Opus rather than iterating a third time.
 
 Remapping of bokeh-plan tasks:
 
@@ -192,8 +192,8 @@ Gates. Each needs the named sign-off before the next step starts.
 | G0 | End of S.4 | You + Keck maintainers | Answers to the maintainer questions in S.4 |
 | G0T | PR0 review | Keck maintainers | New test layout, pytest moved to a `test` extra (D13), all Travis configuration and references removed (T.10), the viewer-off fixes B9 and B10 (T.11), the local pre-PR testing rule replacing "a pass from the automatic TravisCI tests" as a PR requirement |
 | G1 | PR1 review | Keck maintainers | Bokeh removal, new viewer, config key changes, one viewer tab per process |
-| G2 | PR2 review | You (Keck review as normal) | Vectorized GenerateMaps; no behaviour change |
-| G3 | PR3a review | Keck maintainers | New prompt wording and behaviour, answers in log, EOF handling, the invalid-input fixes listed in D12 |
+| G2 | PR2 review | You (Keck review as normal) | Vectorized GenerateMaps; no behavior change |
+| G3 | PR3a review | Keck maintainers | New prompt wording and behavior, answers in log, EOF handling, the invalid-input fixes listed in D12 |
 | G4 | PR3b review | Keck maintainers | Each bug fix and its measured effect on outputs |
 | G5 | PR4 review | Keck maintainers | New `cube_method` key, new header keywords and extensions (opt-in) |
 | G5b | PR6 review | Keck maintainers | Covariance config keys (`cube_covariance`, `cube_save_matrix`), the option A extension and option C header keywords, the opt-in `W` file (D19) |
@@ -226,7 +226,7 @@ Gates. Each needs the named sign-off before the next step starts.
 | M.1a | Vectorize GenerateMaps | Sonnet (medium) | M.0 | – |
 | M.1b | Pixel-edge coordinate helper | Opus (medium) | M.0 | – |
 | M.1t | Tests for M.1a/M.1b | Sonnet (medium), fresh session | M.1a, M.1b | – |
-| P.0 | Prompt catalogue and explanation text | Opus (medium) | S.5 | ✔ |
+| P.0 | Prompt catalog and explanation text | Opus (medium) | S.5 | ✔ |
 | P.1 | Interactive helper module | Opus (medium) | P.0 | – |
 | P.2 | Helper tests | Sonnet (medium) | P.1 | – |
 | P.3 | Convert simple pause/next sites | Sonnet (medium) | P.1, P.2, PR1 merged | – |
@@ -387,7 +387,7 @@ Other problems:
 - `kcwidrp/pytest.ini` passes `--noconftest`, which disables `conftest.py`, so shared fixtures cannot be used.
 - `pytest` is a **runtime** dependency in `pyproject.toml`, pinned to `>=5.4.1,<5.5.0`, which predates Python 3.12 (the package minimum).
 - `.travis.yml` targets Python 3.7 and a CI service that is no longer running.
-- No numerical behaviour, header handling, file I/O, config consistency or event-table wiring is tested, and nothing runs a primitive.
+- No numerical behavior, header handling, file I/O, config consistency or event-table wiring is tested, and nothing runs a primitive.
 
 Facts about the framework that every test and replay check must allow for (checked against `keckdrpframework` 1.0.0):
 - `BasePrimitive.apply` logs a primitive's exception and re-raises it; `Framework.execute` catches it, logs `Exception … while invoking <action>`, and the default `on_state` hook resets the state, so **the reduction carries on with the next event**. Only the failed frame's chain stops.
@@ -399,7 +399,7 @@ Facts about the framework that every test and replay check must allow for (check
 
 1. **Fast suite** (`pytest`): unit, invariant, config and CLI tests. Under 60 s on a laptop, with no display, no network and no data outside the repo. Run before every PR (§1).
 2. **Regression suite** (`pytest -m regression`): full reductions of real datasets from a local directory (`KCWI_REGRESSION_DATA`, Q12), compared with blessed reference outputs. Launched by hand; skipped cleanly when the variable is unset. Quick and full profiles (D16).
-3. **Characterization first.** Tests written in PR0 pin the behaviour of the code at `upgrade-start`. Known bugs are pinned as strict `xfail`s (D8), so later fixes show up as test changes.
+3. **Characterization first.** Tests written in PR0 pin the behavior of the code at `upgrade-start`. Known bugs are pinned as strict `xfail`s (D8), so later fixes show up as test changes.
 4. **Every later track adds to this structure** instead of inventing its own (§6.4).
 
 Layout (D7):
@@ -416,7 +416,7 @@ kcwidrp/tests/
 
 ### T.0 Test strategy and conventions — Opus 5.5 (medium)
 
-Draft `docs/testing.md` covering: the layout above; markers (`regression`, plus `slow` for fast-suite tests over 2 s, which should be rare); what qualifies as a unit test (writes only to `tmp_path`, no network, no display, under 2 s); the xfail policy (D8); the independence rule (§3 rule 1); the tolerance policy (exact equality for integers, flags and masks; floating-point tolerances only with a written reason next to them); where an expected value comes from (an independent source such as astropy, an analytic result or a published value, or a "characterization" value captured from `upgrade-start` and labelled as such); and the bless policy (T.7). Opus because every later test follows these rules.
+Draft `docs/testing.md` covering: the layout above; markers (`regression`, plus `slow` for fast-suite tests over 2 s, which should be rare); what qualifies as a unit test (writes only to `tmp_path`, no network, no display, under 2 s); the xfail policy (D8); the independence rule (§3 rule 1); the tolerance policy (exact equality for integers, flags and masks; floating-point tolerances only with a written reason next to them); where an expected value comes from (an independent source such as astropy, an analytic result or a published value, or a "characterization" value captured from `upgrade-start` and labeled as such); and the bless policy (T.7). Opus because every later test follows these rules.
 
 Validation: every rule in the document is concrete enough to be checked by reading a test (no "should be reasonable").
 
@@ -456,7 +456,7 @@ Validation:
 
 ### T.3 Characterization unit tests: core and helper functions — Sonnet 5.5 (medium)
 
-Depends on: T.1. Unit tests for the stand-alone functions, each expected value labelled with its source (T.0):
+Depends on: T.1. Unit tests for the stand-alone functions, each expected value labeled with its source (T.0):
 
 | Module | Functions | Expected values from |
 |---|---|---|
@@ -717,7 +717,7 @@ Status (2026-10-28, branch `upgrade/pr1-bokeh`, started from PR0's head before P
 
 11. **The viewer-off fix from PR0 must survive.** T.11 makes the launch scripts set `context.bokeh_session = None`. Bokeh 3.1 keeps that attribute name; with `enable_plot_viewer` false no `StartPlotViewer` event runs, so the default from T.11 is what primitives see. Bokeh 3.1's "With `enable_bokeh = False` … all PNGs still written" check covers it.
 12. **The starting point includes PR #218.** `v1.3.2` changed `kcwi_plotting.py` (non-snap Firefox/geckodriver preference). Bokeh 1.1 rewrites that file and 5.1 removes Firefox support, so the change is dropped deliberately; say so in the PR1 description and changelog.
-13. **Maintainer answers (S4-Q1–Q5).** PNG consumers depend only on file names and format, so plot appearance may change (Q1). Remote viewing is over VNC with the browser on the pipeline host, so the `localhost` binding is right and R.3 tests over VNC (Q2). One tab per process is accepted and the shared-port alternative is dropped (Q3). `plot_viewer_open_browser` defaults to `False` in both `kcwi.cfg` and `kcwi_koarti.cfg`, which changes today's behaviour: users open the printed URL. Bokeh 3.1's start-up message must make the URL easy to find, and the changelog must say the tab no longer opens by itself (Q4). Bokeh 5.1b is out of scope: the user documentation is in the separate `KCWI_DRP-Docs` repository and is updated under its own plan, fed by R.4's hand-off list (Q5).
+13. **Maintainer answers (S4-Q1–Q5).** PNG consumers depend only on file names and format, so plot appearance may change (Q1). Remote viewing is over VNC with the browser on the pipeline host, so the `localhost` binding is right and R.3 tests over VNC (Q2). One tab per process is accepted and the shared-port alternative is dropped (Q3). `plot_viewer_open_browser` defaults to `False` in both `kcwi.cfg` and `kcwi_koarti.cfg`, which changes today's behavior: users open the printed URL. Bokeh 3.1's start-up message must make the URL easy to find, and the changelog must say the tab no longer opens by itself (Q4). Bokeh 5.1b is out of scope: the user documentation is in the separate `KCWI_DRP-Docs` repository and is updated under its own plan, fed by R.4's hand-off list (Q5).
 
 ### Human checks in Track A (from the bokeh plan, collected here)
 
@@ -741,14 +741,14 @@ Goals (Q2, Q8):
 Constraints:
 - **D3:** for valid answers, the number and order of prompts is unchanged, so `answers_<channel>_3.txt` from S.3 replays on every commit of PR3a and produces identical outputs.
 - **D12: no change for input that is valid today in PR3a.** Prompts, logged results and outputs for input accepted today are unchanged. Input that is invalid today (it crashes, silently resets, silently ends a review or quits by accident) may re-prompt instead; this fixes B1c, B2, B4, B5 and B6 in PR3a. Everything that changes a reduction result for valid input or for an unattended run, or removes a prompt that valid runs see, is in PR3b (B1, B1b, B3, B7, B8, B11, B12, B13).
-- **EOF is a deliberate behaviour change in PR3a** (D4): today an `EOFError` fails the primitive and the reduction carries on without its output; after PR3a the default is used. It is listed in the changelog and covered by G3.
+- **EOF is a deliberate behavior change in PR3a** (D4): today an `EOFError` fails the primitive and the reduction carries on without its output; after PR3a the default is used. It is listed in the changelog and covered by G3.
 - **No plotting changes.** On-plot guidance was not selected (Q2). The helper must not import the plotting modules.
 
 ### 8.2 Design (to be fixed in P.1)
 
 A new module `kcwidrp/core/kcwi_interactive.py`. Proposed API; P.1 may refine names but not semantics:
 
-| Function | Replaces | Behaviour |
+| Function | Replaces | Behavior |
 |---|---|---|
 | `pause(config, logger, what=None)` | The 36 `if plot_level >= 2: input("Next? <cr>: ") else: time.sleep(plot_pause)` blocks | Same branching. When interactive, prints a one-line description (`what`) then `Next? <cr> (? for help)` |
 | `ask_next(config, logger, what, help, n_items=None, current=None)` | `Next? <cr>, q to quit` and `Next? <int> or <cr>, q to quit` loops (ArcOffsets, SolveArcs, FitCenter, ExtractArcs, FindBars, MakeCube, MakeInvsens slice loop) | Returns `NEXT`, `QUIT` or a validated item number. A number outside `current+1 … n_items-1` re-prompts with the valid range (today it silently ends the review: bug B4, fixed here in PR3a per D12) |
@@ -763,7 +763,7 @@ Rules:
 - **Ctrl-C:** unchanged. The framework's SIGINT handler is not touched (see bokeh plan 3.1).
 - **Logging (Q8):** explanations are printed to stdout and not logged. Each *answer* is logged at INFO in the form `<Primitive>: <effect>`, e.g. `ReadAtlas: atlas offset set by user to 12 px (calculated 10 px)` or `MakeInvsens: user quit slice review at slice 7`. Pure "next" presses are logged at DEBUG.
 - **Text location:** short `what` and long `help` strings live at the call site, as keyword arguments, so a reader of the primitive sees what the user is told. No central text registry.
-- **Text template** for `help`: *What you see* (plot title, which colour is which) / *What to look for* (good vs. bad) / *Your options* (each answer and its effect on the reduction) / *Default*.
+- **Text template** for `help`: *What you see* (plot title, which color is which) / *What to look for* (good vs. bad) / *Your options* (each answer and its effect on the reduction) / *Default*.
 
 #### Interface fixed for parallel work (2026-10-28)
 
@@ -783,14 +783,14 @@ P.0, P.1 and P.2 run in parallel, so the names are fixed here; semantics are §8
 
 P.0 writes each prompt's `what` (one line) and `help` (template above) in `docs/interactive_prompts.md`; P.3/P.4 paste them into the call sites.
 
-### P.0 Prompt catalogue and explanation text — Opus 5.5 (medium)
+### P.0 Prompt catalog and explanation text — Opus 5.5 (medium)
 
 Depends on: S.5. Produces `docs/interactive_prompts.md`: one section per logical prompt, using the S.5 prompt table, with the drafted `what` and `help` text following the template. This is domain writing (what a good arc fit or atlas cross-correlation looks like), hence Opus.
 
 Validation:
 - One section per logical prompt in S.5; none missing (count check).
 - Every "changes the reduction" prompt states which output is affected.
-- Every colour named in a help text matches the colour in the figure code at that site.
+- Every color named in a help text matches the color in the figure code at that site.
 
 👤 Human check: **read every explanation for scientific correctness and clarity.** This is the most important review in Track P: a model can describe the code correctly and the science wrongly. Mark each section approved or corrected. If S.4 Q6 said prompt strings are an interface, have the maintainers approve the wording too.
 
@@ -801,7 +801,7 @@ Depends on: P.0. Implement `kcwidrp/core/kcwi_interactive.py` per §8.2. Opus be
 Validation:
 - `python -c "import kcwidrp.core.kcwi_interactive, sys; assert not any(m.startswith(('matplotlib','bokeh')) for m in sys.modules)"` passes.
 - P.2 tests pass.
-- Docstrings state the EOF and strict-mode behaviour.
+- Docstrings state the EOF and strict-mode behavior.
 
 ### P.2 Helper tests — Sonnet 5.5 (medium)
 
@@ -827,7 +827,7 @@ Validation:
 
 Depends on: P.3. Sites: `ReadAtlas` offset; `MakeInvsens` limits, line mask, fit order and slice loop; `MakeMasterFlat` peak; `NandshuffSubtractSky` scale (×2); the bar-jump prompts in `ArcOffsets`, `SolveArcs`, `FitCenter`; the `Proceed?` prompts in `reduce_kcwi.py` and `kcwi_rti.py`. Opus because each site is interleaved with reduction logic, and a validator that is stricter than today changes which answers are accepted.
 
-Rules (D12): **identical results for every input that is valid today.** Input that is invalid today may re-prompt (B1c out-of-range peak, B2 one-number line mask, B4 bar number out of range, B5 accidental quit, B6 reset of accepted limits). Bugs that affect valid input or unattended runs (B1, B1b, B3, B7, B8, B11, B12, B13) keep today's behaviour in P.4 and are fixed in P.5.
+Rules (D12): **identical results for every input that is valid today.** Input that is invalid today may re-prompt (B1c out-of-range peak, B2 one-number line mask, B4 bar number out of range, B5 accidental quit, B6 reset of accepted limits). Bugs that affect valid input or unattended runs (B1, B1b, B3, B7, B8, B11, B12, B13) keep today's behavior in P.4 and are fixed in P.5.
 
 Validation:
 - As P.3, and the AST allow-list is now empty. The B1c, B2, B4, B5 and B6 `xfail` markers are removed (all their sites are converted by now).
@@ -860,9 +860,9 @@ Depends on: P.4 (and again after P.5 for PR3b). Run one `plot_level = 3` reducti
 
 ### P.7 Changelog and docs — Sonnet 5.5 (low)
 
-Changelog entries for PR3a (new prompt behaviour, logging, EOF handling, `KCWI_STRICT_INPUT`, the invalid-input fixes B1c, B2, B4, B5 and B6), committed in PR3a, and for PR3b (each fix and its effect), committed in PR3b. A short "Interactive mode" section for the documentation branch, held for R.4.
+Changelog entries for PR3a (new prompt behavior, logging, EOF handling, `KCWI_STRICT_INPUT`, the invalid-input fixes B1c, B2, B4, B5 and B6), committed in PR3a, and for PR3b (each fix and its effect), committed in PR3b. A short "Interactive mode" section for the documentation branch, held for R.4.
 
-Validation: every behaviour change listed in §8.2 rules and every §13 fix appears in the changelog.
+Validation: every behavior change listed in §8.2 rules and every §13 fix appears in the changelog.
 
 ---
 
@@ -880,7 +880,7 @@ Executes [matrix_cube_plan.md](matrix_cube_plan.md) Stages 0–5.
 6. **Plots.** Validation figures are produced by the regression suite's report (outside the installed package), not by the pipeline. If a pipeline plot is added (e.g. a coverage map at `plot_level = 3`), it uses the wrapper and passes the coverage scan (Track A amendment 5).
 7. **Line references** in the matrix plan were taken at `d0b4d7b`; the primitives are identical at `dfbcf9d` and `v1.3.2` (only `kcwi_plotting.py` differs), so they remain valid until Track A merges. By M.2 they will have moved: task prompts and reviews refer to code by function and symbol name, not line number.
 8. **Wavelength and DAR folding apply to object frames only.** `WavelengthCorrections` and `CorrectDar` run only after `object_make_cube` and `nandshuff_make_cube`. In matrix mode, `arc_make_cube` and `flat_make_cube` build `W` from geometry alone (M.2), with no `WAVCORR` or `DARCOR`. "All four MakeCube events use the same method" (M.2c) means the same `cube_method`, not the same corrections.
-9. **DAR breaks the per-slice block structure.** Once M.4 adds cross-slice weights, a pixel in slice *k* contributes to voxels in slices *k*−1, *k* and *k*+1, so `W` is no longer block-diagonal by slice. The matrix plan's "per slice, then `sp.vstack`/`sp.block_diag`" (§4) would only hold for M.2–M.3. So M.2a builds `W` from the start from per-*source*-slice blocks of global (row, column) indices that are summed, and the covariance in M.5 is computed per output slice with its neighbouring slices as a halo.
+9. **DAR breaks the per-slice block structure.** Once M.4 adds cross-slice weights, a pixel in slice *k* contributes to voxels in slices *k*−1, *k* and *k*+1, so `W` is no longer block-diagonal by slice. The matrix plan's "per slice, then `sp.vstack`/`sp.block_diag`" (§4) would only hold for M.2–M.3. So M.2a builds `W` from the start from per-*source*-slice blocks of global (row, column) indices that are summed, and the covariance in M.5 is computed per output slice with its neighboring slices as a halo.
 10. **Output files (S4-Q9, S4-Q11).** New products never add HDUs to existing outputs; each goes in its own file next to the cube: the coverage cube (M.2c), the option A correlation planes (M.5b) and the option B matrix (M.5b). The matrix file holds `W` in COO form as a FITS file with a single binary-table extension, replacing the matrix plan's `.npz`.
 
 ### M.0 Matrix fixture, metric thresholds and regions — Sonnet 5.5 (medium)
@@ -915,12 +915,12 @@ Validation:
 - The synthetic fixture's own tests pass in under 2 s.
 
 👤 Human check:
-- **Choose the sky regions and the standard-star aperture** in the S.3 cubes (ds9 or QFitsView) and write them to `regions_<channel>.json`. Regions must be free of the target and of bright sky-line residual artefacts. For the edge-slice metric, mark the target in every frame it is computed on (at least the standard), so that the outer slices and the slice ends keep enough sky spaxels.
+- **Choose the sky regions and the standard-star aperture** in the S.3 cubes (ds9 or QFitsView) and write them to `regions_<channel>.json`. Regions must be free of the target and of bright sky-line residual artifacts. For the edge-slice metric, mark the target in every frame it is computed on (at least the standard), so that the outer slices and the slice ends keep enough sky spaxels.
 - **Confirm or change the thresholds** in the table and commit them before M.2e.
 
 ### M.1a Vectorize GenerateMaps — Sonnet 5.5 (medium)
 
-Matrix plan Stage 1, first bullet. Replace the per-pixel loops in `GenerateMaps._perform` with one transform call per slice on all pixels, keeping the pixel-centre convention and the `0 <= x <= xsize` test.
+Matrix plan Stage 1, first bullet. Replace the per-pixel loops in `GenerateMaps._perform` with one transform call per slice on all pixels, keeping the pixel-center convention and the `0 <= x <= xsize` test.
 
 Validation:
 - `wavemap`, `slicemap`, `posmap` are `array_equal` (NaN positions included) to S.3 for both channels.
@@ -932,7 +932,7 @@ Validation:
 Matrix plan Stage 1, second bullet. `kcwidrp/core/cube_matrix.py`: from `geom`, return per on-slice pixel `u_lo, u_hi, lam_lo, lam_hi`, slice id and flat pixel index; cache as `*_pixcoords.npz` next to `*_geom.pkl`. Opus because pixel-edge sign conventions, the `xl0` offset and the red-channel rotation are where off-by-half-pixel errors originate, and every later stage inherits them.
 
 Validation:
-- Midpoints of `(u_lo, u_hi)` and `(lam_lo, lam_hi)` reproduce M.1a's `posmap` and `wavemap` at pixel centres to 1e-6.
+- Midpoints of `(u_lo, u_hi)` and `(lam_lo, lam_hi)` reproduce M.1a's `posmap` and `wavemap` at pixel centers to 1e-6.
 - `u_hi > u_lo` and `lam_hi > lam_lo` everywhere (or the reversed convention is documented and consistent).
 - The cache is invalidated when `geom.pkl` changes (keyed on its hash), and a stale cache is never read.
 - Synthetic affine fixture: edges exactly match the analytic answer.
@@ -986,7 +986,7 @@ Depends on: M.2c, M.2d. Add the `*_matrix` datasets to the manifest, compared `a
 Validation: every M.0 threshold has a recorded value; failures have a stated cause and either a fix (with a test) or an explicit request to relax the threshold.
 
 👤 Human check:
-- Blink warp and matrix `icube` in ds9/QFitsView for one science frame and one standard per channel. Look for: slice-edge artefacts or stripes, ringing around cosmic rays and bad pixels (should be gone), holes where coverage should be full, red channel orientation matching blue.
+- Blink warp and matrix `icube` in ds9/QFitsView for one science frame and one standard per channel. Look for: slice-edge artifacts or stripes, ringing around cosmic rays and bad pixels (should be gone), holes where coverage should be full, red channel orientation matching blue.
 - Look at the coverage cube: smooth, ~1 inside slices, falling to 0 only at slice and wavelength edges.
 - Read the regression report and sign off thresholds, or record why a relaxed threshold is accepted.
 - Once signed off, bless the `*_matrix` datasets with reason `M.2e initial`; from then on they are compared with their own references.
@@ -1010,11 +1010,11 @@ Validation:
 
 ### M.4 Fold DAR into `W` — Opus 5.5 (high)
 
-Matrix plan Stage 4. For object and N&S frames only (§9 amendment 8). Per-λ along-slice and cross-slice offsets from `CorrectDar.atm_disper` and the same projection; padded output grid per grating as `CorrectDar` does; cross-slice weights handled by the per-source-slice assembly from M.2a (§9 amendment 9); `DARCOR = T`; `CorrectDar` skips shifts when set but keeps header updates, CRPIX padding (matrix plan open question 3), padding flags (value 128) and the `icubed` output. Opus at high because the WCS and padding must match exactly and cross-slice weights are new behaviour.
+Matrix plan Stage 4. For object and N&S frames only (§9 amendment 8). Per-λ along-slice and cross-slice offsets from `CorrectDar.atm_disper` and the same projection; padded output grid per grating as `CorrectDar` does; cross-slice weights handled by the per-source-slice assembly from M.2a (§9 amendment 9); `DARCOR = T`; `CorrectDar` skips shifts when set but keeps header updates, CRPIX padding (matrix plan open question 3), padding flags (value 128) and the `icubed` output. Opus at high because the WCS and padding must match exactly and cross-slice weights are new behavior.
 
 Validation:
 - Standard-star centroid vs. λ (along and across slice): RMS about the mean ≤ the warp path's, both channels.
-- RA/Dec of the standard-star centroid at three wavelengths (blue end, centre, red end) from matrix `icubed` WCS matches warp `icubed` within 0.1″.
+- RA/Dec of the standard-star centroid at three wavelengths (blue end, center, red end) from matrix `icubed` WCS matches warp `icubed` within 0.1″.
 - Padding region carries flag 128 and the same extent as warp.
 - Standard-star flux within 1 %; invsens re-derived with matrix vs. warp within the M.0 threshold.
 - CRPIX1/2 in matrix `icubed` equal warp's.
@@ -1029,10 +1029,10 @@ PR5 = M.3 + M.4 (may be split if review prefers).
 
 ### M.5a Covariance mathematics — Opus 5.5 (high)
 
-Matrix plan Stage 5, options A, B, C (Q6). `W diag(var) Wᵀ` per output slice, with the neighbouring slices as a halo so cross-slice covariance from DAR is included (§9 amendment 9); option A extracts correlation coefficients with the +1 neighbour along each axis (3 planes; the −1 neighbour of a voxel is the +1 neighbour of the voxel before it, so 6 planes would repeat information); option B serializes `W` as a FITS file (§9 amendment 10; the per-pixel variance needed to use it is the uncertainty of the 2-D frame named in the file's header, not a copy); option C fits a binned-aperture noise-scaling curve and proposes header keyword names (for S.4 Q10b). Includes a documented formula for users of option B: `var(aᵀcube) = (Wᵀa)ᵀ diag(var) (Wᵀa)`.
+Matrix plan Stage 5, options A, B, C (Q6). `W diag(var) Wᵀ` per output slice, with the neighboring slices as a halo so cross-slice covariance from DAR is included (§9 amendment 9); option A extracts correlation coefficients with the +1 neighbor along each axis (3 planes; the −1 neighbor of a voxel is the +1 neighbor of the voxel before it, so 6 planes would repeat information); option B serializes `W` as a FITS file (§9 amendment 10; the per-pixel variance needed to use it is the uncertainty of the 2-D frame named in the file's header, not a copy); option C fits a binned-aperture noise-scaling curve and proposes header keyword names (for S.4 Q10b). Includes a documented formula for users of option B: `var(aᵀcube) = (Wᵀa)ᵀ diag(var) (Wᵀa)`.
 
 Validation:
-- Monte Carlo on the synthetic fixture: for apertures of 1, 2×2, 3×3, 5×5 spaxels, predicted variance from B equals empirical to within MC error (≤ 3 % at 1000 realizations); from A's neighbour approximation, within 10 %; C's curve within 10 % of empirical at each aperture size.
+- Monte Carlo on the synthetic fixture: for apertures of 1, 2×2, 3×3, 5×5 spaxels, predicted variance from B equals empirical to within MC error (≤ 3 % at 1000 realizations); from A's neighbor approximation, within 10 %; C's curve within 10 % of empirical at each aperture size.
 - Covariance build time per frame recorded; does not exceed 10 s on the S.3 machine (matrix plan measured ~6 s).
 
 ### M.5b Covariance I/O, config and tests — Sonnet 5.5 (medium)
@@ -1087,7 +1087,7 @@ Validation: the intentional list matches bokeh-plan 5.2's expected list plus the
 ### R.2 Independent review — Opus 5.5 (high), fresh session
 
 Replaces bokeh-plan 5.3. Over the diff from `upgrade-start` to the release candidate, with no access to implementation conversations. Bokeh-plan 5.3 focus list, plus:
-- Track P: any path where a prompt can change a reduction differently from the logged answer; EOF and strict-mode behaviour; any prompt whose order changed.
+- Track P: any path where a prompt can change a reduction differently from the logged answer; EOF and strict-mode behavior; any prompt whose order changed.
 - Track M: half-pixel conventions; `ncand` adequacy; masking before normalization; flag semantics; WCS/CRPIX with padding; variance and covariance formulas; mixing methods; memory at full-frame unbinned size.
 - No mode changes in the diff (S.1).
 
@@ -1104,15 +1104,15 @@ Bokeh-plan 5.4 in full (Ubuntu 24.04, no browser installed), plus, in the same s
 
 ### R.4 Documentation hand-off list — Sonnet 5.5 (medium)
 
-The user documentation lives in the separate `KCWI_DRP-Docs` repository and is updated under its own plan (S4-Q5). This task writes `docs/docs_handoff.md` in this repository: a checklist of every user-visible change that the docs plan must cover, each with the PR that introduced it and the source of truth (config comment, changelog entry, docstring). At least: bokeh-plan 5.1b's table (installation without Firefox/geckodriver/selenium/phantomjs; `enable_plot_viewer`, `plot_viewer_port`, `plot_viewer_open_browser = False`, `enable_bokeh` deprecation; the viewer URL and VNC viewing; viewer-port troubleshooting; `StartBokeh` → `StartPlotViewer`); the interactive-mode page (P.7: `?` help, quitting, EOF behaviour, `KCWI_STRICT_INPUT`, answers in the log); `cube_method`, `cube_covariance`, `cube_save_matrix` and the new output files (coverage, correlation, `W`); a short "cube construction" explanation and the invsens re-derivation note; API entries for `cube_matrix` and `kcwi_interactive`; the testing rule from T.10.
+The user documentation lives in the separate `KCWI_DRP-Docs` repository and is updated under its own plan (S4-Q5). This task writes `docs/docs_handoff.md` in this repository: a checklist of every user-visible change that the docs plan must cover, each with the PR that introduced it and the source of truth (config comment, changelog entry, docstring). At least: bokeh-plan 5.1b's table (installation without Firefox/geckodriver/selenium/phantomjs; `enable_plot_viewer`, `plot_viewer_port`, `plot_viewer_open_browser = False`, `enable_bokeh` deprecation; the viewer URL and VNC viewing; viewer-port troubleshooting; `StartBokeh` → `StartPlotViewer`); the interactive-mode page (P.7: `?` help, quitting, EOF behavior, `KCWI_STRICT_INPUT`, answers in the log); `cube_method`, `cube_covariance`, `cube_save_matrix` and the new output files (coverage, correlation, `W`); a short "cube construction" explanation and the invsens re-derivation note; API entries for `cube_matrix` and `kcwi_interactive`; the testing rule from T.10.
 
-Validation: every changelog entry from PR0–PR7 that changes user-visible behaviour, a config key or an output file appears in the list.
+Validation: every changelog entry from PR0–PR7 that changes user-visible behavior, a config key or an output file appears in the list.
 
 👤 Human check: read the list and hand it to the documentation plan.
 
 ### R.5 Release — Human, with Keck maintainers
 
-Run the full regression profile on the release candidate first. The release merges `v3-upgrade` into `develop` (D28), then `develop` into `master` as usual. Version bump: `pyproject.toml` still says `1.3.1` although `v1.3.2` is tagged, so set the version from the tag history, not the file; because the default cube method changes science results, agree with Keck whether this is a minor or major version. Consolidated changelog, release notes listing: Bokeh removal and new viewer; new prompt behaviour; each bug fix with its effect; matrix default and the invsens re-derivation requirement; new keys and products. Gate G7.
+Run the full regression profile on the release candidate first. The release merges `v3-upgrade` into `develop` (D28), then `develop` into `master` as usual. Version bump: `pyproject.toml` still says `1.3.1` although `v1.3.2` is tagged, so set the version from the tag history, not the file; because the default cube method changes science results, agree with Keck whether this is a minor or major version. Consolidated changelog, release notes listing: Bokeh removal and new viewer; new prompt behavior; each bug fix with its effect; matrix default and the invsens re-derivation requirement; new keys and products. Gate G7.
 
 ---
 

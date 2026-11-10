@@ -42,7 +42,7 @@ context.config    Real ``config.framework_config.ConfigClass`` read from
                   ``kcwidrp/configs/framework.cfg`` (as ``Framework.__init__``
                   reads it), with ``.instrument`` = the ``kcwi.cfg``
                   ConfigClass.  Note: ``ConfigClass.__getattr__`` returns
-                  ``None`` for an unknown key; that is the real behaviour and
+                  ``None`` for an unknown key; that is the real behavior and
                   the harness keeps it.
 context.logger    ``logging.getLogger("DRPF")`` and ``logging.getLogger(
 pipeline_logger   "KCWI")``: the logger names reduce_kcwi uses, but without

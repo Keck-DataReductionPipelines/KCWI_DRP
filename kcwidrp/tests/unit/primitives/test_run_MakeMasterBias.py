@@ -3,7 +3,7 @@
 Specification (class docstring): biases that went through TrimOverscan
 (``redux/<stem>_intb.fits`` plus a BIAS row in the proc table) are stacked
 once ``min_files`` of them are in the proc table: method 'average' with an
-upper 2-sigma clip (centre = median, deviation = MAD-based sigma) through
+upper 2-sigma clip (center = median, deviation = MAD-based sigma) through
 ``ccdproc.combine``.  The master is written to ``redux/mbias_<CCDCFG>.fits``
 and entered in the proc table as MBIAS.  The read noise of each amplifier,
 BIASRNn, comes from the difference of the 2nd and 3rd bias.

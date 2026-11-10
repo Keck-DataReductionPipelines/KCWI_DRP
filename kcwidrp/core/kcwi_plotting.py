@@ -135,7 +135,7 @@ LEGEND_LOCATIONS = {
     'top_left': 'upper left', 'top_center': 'upper center',
     'top_right': 'upper right', 'bottom_center': 'lower center',
 }
-# 'dashdotdot' is not a Bokeh name; it is kept for CWAVE (colour scheme,
+# 'dashdotdot' is not a Bokeh name; it is kept for CWAVE (color scheme,
 # docs/interactive_prompts.md)
 LINE_DASHES = ('solid', 'dashed', 'dashdot', 'dotted', 'dashdotdot')
 MARKERS = ('circle', 'x')
@@ -351,7 +351,7 @@ def _check_kw(kind, name, v):
     raise ValueError."""
     if name in ('color', 'line_color', 'fill_color'):
         if not _is_color(v):
-            raise ValueError("not a colour name")
+            raise ValueError("not a color name")
         return v
     if name in ('line_width', 'size'):
         if not _is_number(v) or v < 0:
@@ -792,7 +792,7 @@ def save_plot(fig, filename=None):
 
 
 # ---------------------------------------------------------------------------
-# Helpers used by the primitives (unchanged behaviour)
+# Helpers used by the primitives (unchanged behavior)
 # ---------------------------------------------------------------------------
 
 def get_plot_lims(data, padding=0.05, clip=True):
@@ -824,7 +824,7 @@ def oplot_cwave(fig, cwave, span, legend_label='CWAVE', horizontal=False,
 
     Vertical at x = ``cwave``, or horizontal at y = ``cwave`` with
     ``horizontal=True``.  ``legend_label=None`` leaves it out of the
-    legend; ``color`` overrides the scheme colour.
+    legend; ``color`` overrides the scheme color.
     """
     xs, ys = _span(cwave, span, horizontal)
     if legend_label:
@@ -840,7 +840,7 @@ def oplot_wavgood(fig, wavegood0, wavegood1, span, legend_label='WAVGOOD',
 
     Vertical at x = ``wavegood0``, ``wavegood1``, or horizontal with
     ``horizontal=True``.  ``legend_label=None`` leaves them out of the
-    legend; ``color`` overrides the scheme colour.
+    legend; ``color`` overrides the scheme color.
     """
     xs, ys = _span(wavegood0, span, horizontal)
     if legend_label:

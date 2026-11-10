@@ -115,7 +115,7 @@ def test_writer_reader_round_trip(tmp_path_factory, frame):
             # (FITS 4.0, section 4.2.4: columns 11-30).  With a sign, the
             # point and an exponent like 'E-300' that leaves 13 significant
             # digits, and astropy truncates longer representations, so the
-            # relative error is < 1e-12.  (astropy/FITS behaviour, not DRP.)
+            # relative error is < 1e-12.  (astropy/FITS behavior, not DRP.)
             assert got == pytest.approx(value, rel=1e-12, abs=0), key
         else:
             assert type(got) is type(value), key

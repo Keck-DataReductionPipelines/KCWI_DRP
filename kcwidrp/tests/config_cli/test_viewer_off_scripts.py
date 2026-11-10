@@ -1,4 +1,4 @@
-"""B9 (plan T.11): each launch script initialises the plot session in time.
+"""B9 (plan T.11): each launch script initializes the plot session in time.
 
 The scripts cannot be imported (smart_reduce_kcwi fails to import today and
 main() cannot be run in pieces), so the source is parsed with ast.

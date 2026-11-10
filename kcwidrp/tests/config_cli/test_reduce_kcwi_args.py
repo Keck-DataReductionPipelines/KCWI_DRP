@@ -35,7 +35,7 @@ def _parse(script, *argv):
     return _module(script)._parse_arguments([script, *extra, *argv])
 
 
-# --- documented behaviour of -f -l -b -r -------------------------------------
+# --- documented behavior of -f -l -b -r -------------------------------------
 
 @pytest.mark.parametrize("script", SCRIPTS)
 def test_frames_option_takes_a_list(script):

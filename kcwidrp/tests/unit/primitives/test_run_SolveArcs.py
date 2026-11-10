@@ -88,7 +88,7 @@ def test_solution_without_prompts(run_primitive, synthetic_ccddata, shown):
     assert run_primitive.last.prompts == []
     # source: analytic @ c0fed5c - lines placed at pixel (lambda - W0) / DISP
     # are found, so every bar's solution maps pixel x to W0 + DISP * x.
-    # Tolerance: Gaussian line centres on 1.5 px lines, ~1e-3 A.
+    # Tolerance: Gaussian line centers on 1.5 px lines, ~1e-3 A.
     x = np.arange(NPIX)
     for coeffs in out.fincoeff:
         np.testing.assert_allclose(np.polyval(coeffs, x), W0 + DISP * x,

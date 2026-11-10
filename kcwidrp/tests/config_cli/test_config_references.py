@@ -57,7 +57,7 @@ GETATTR_MAY_BE_ABSENT = {}
 # the code (a stale entry fails).
 DEPRECATED_READ_ONLY = {
     "enable_bokeh": "bokeh plan 5.1: deprecated alias of enable_plot_viewer, "
-                    "read by plot_config.viewer_requested() to honour old "
+                    "read by plot_config.viewer_requested() to honor old "
                     "config files and warn",
 }
 

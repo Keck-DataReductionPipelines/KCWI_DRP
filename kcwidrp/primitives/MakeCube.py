@@ -277,7 +277,7 @@ class MakeCube(BasePrimitive):
                                    0.4 * self.config.instrument.plot_width),
                                plot_height=self.config.instrument.plot_height)
                     p.x_range.range_padding = p.y_range.range_padding = 0
-                    # y in wavelength: pixel i is centred on wave0out + i*dw
+                    # y in wavelength: pixel i is centered on wave0out + i*dw
                     w0 = geom['wave0out'] - geom['dwout'] / 2.
                     w1 = w0 + ysize * geom['dwout']
                     p.image([warped], x=0, y=w0, dw=xsize,

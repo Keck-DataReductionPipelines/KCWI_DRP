@@ -419,7 +419,7 @@ class PlotViewer:
             if not self._stopped:
                 self._mark_dead("the viewer thread has ended")
             try:
-                # Let cancelled writes to closed tabs finish before closing.
+                # Let canceled writes to closed tabs finish before closing.
                 aio = asyncio.get_event_loop()
                 pending = asyncio.all_tasks(aio)
                 for task in pending:

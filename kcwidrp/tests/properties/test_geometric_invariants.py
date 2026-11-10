@@ -18,7 +18,7 @@ the control points.
   collapse, pixel scale changes of at most 2x as between binnings);
 * t puts the image in the positive quadrant, 1-500 px from the axes, like
   the detector and output-pixel frames SolveGeom uses (the estimator scales
-  by the median |x| and |y|, so a frame centred on 0 is outside its domain);
+  by the median |x| and |y|, so a frame centered on 0 is outside its domain);
 * q is a smooth quadratic distortion with each component bounded by
   D <= 0.5 px over the domain.  With q = 0 the inverse is affine and exactly
   representable; with q != 0 it is not polynomial, and the second-order

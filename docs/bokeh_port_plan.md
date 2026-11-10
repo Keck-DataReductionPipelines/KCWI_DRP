@@ -13,11 +13,11 @@ Date: 2026-10-08. Decision taken: Matplotlib behind a Bokeh-shaped wrapper; call
 | Sonnet 5.5 | `claude-sonnet-5-5` | Well-specified implementation: mechanical edits, tests, scripts, clean-up |
 | Haiku 5.5 | `claude-haiku-5-5` | Inventory and sweep checks with a known right answer |
 
-- The assignments are a judgement from each model's published positioning. None of them has been benchmarked on this repository.
-- The assignments are chosen to minimise rework: the stronger models go where an error is expensive to find later, not where there is the most typing.
+- The assignments are a judgment from each model's published positioning. None of them has been benchmarked on this repository.
+- The assignments are chosen to minimize rework: the stronger models go where an error is expensive to find later, not where there is the most typing.
 - Tests are deliberately assigned to a different model from the code they test, so the tests are not written from the implementer's own assumptions.
 - In Claude Code, switch with `/model`, or have a task run as a subagent with the named model.
-- Tasks marked **Human** need a person: they depend on real data, an interactive session, a machine with Firefox, or a judgement call about what "matches".
+- Tasks marked **Human** need a person: they depend on real data, an interactive session, a machine with Firefox, or a judgment call about what "matches".
 
 ## One change from the proposal
 
@@ -37,7 +37,7 @@ Four rules for the wrapper:
 1. **Strict in tests, tolerant in production.** An unsupported method or keyword is never silently ignored, because that would produce a plot that is wrong but looks plausible. What happens instead depends on a module-level `STRICT` flag:
    - `STRICT = True` (set by the test suite, and by the environment variable `KCWI_PLOT_STRICT=1`): raise `TypeError` at the call.
    - `STRICT = False` (the default in a reduction): log one warning naming the primitive file, line and the unsupported name, skip that one call or keyword, and carry on. This is what keeps requirement R10 (a plot failure never stops a reduction) true. An exception raised inside a primitive would abort the action.
-   - The guarantee that production never reaches this path comes from the coverage scan in 1.2, not from the runtime behaviour.
+   - The guarantee that production never reaches this path comes from the coverage scan in 1.2, not from the runtime behavior.
 2. **No plotting call may raise into a primitive.** `figure()`, every glyph method, every property assignment, `gridplot`, `save_plot`, `bokeh_plot` and `bokeh_clear` catch their own exceptions when `STRICT` is false, log a warning with the traceback at debug level, and return. `figure()` and `gridplot` still return a usable recorder object on failure, so the lines that follow do not hit `AttributeError`.
 3. **Snapshot data at record time.** Every array-like passed to a glyph call is copied when recorded (`numpy.array(x, copy=True)`), and scalars and lists are copied likewise. Primitives keep working on their arrays after the call, some of them in place, and the viewer renders later on another thread. Without the copy the thread-safety claim above does not hold. The recorded description is treated as immutable once handed to `bokeh_plot` or `save_plot`; the viewer receives its own deep copy of the description, so a later property assignment on `p` by the primitive cannot race with a render.
 4. **No `pyplot`.** Only `matplotlib.figure.Figure` and `FigureCanvasAgg`, so there is no process-global state. For the viewer this means `matplotlib.backends.backend_webagg_core` with our own Tornado application. The higher-level `backend_webagg` module looks figures up in pyplot's global registry and must not be used.
@@ -140,7 +140,7 @@ It must also settle the viewer topology. Today every pipeline process pushes int
 
 If 0.4 shows observers rely on a single fixed port for several processes, the alternative to prototype is: only the first process to bind the port runs a viewer and the others run with none.
 
-Why Opus at high effort: this is the only part of the port with real concurrency, an event loop on a non-main thread, and behaviour that differs between macOS and Linux, and a wrong conclusion here would misdirect phase 3. The concurrency is modest, though: one Tornado loop on a daemon thread with a single thread-safe hand-off, a pattern Matplotlib documents in its WebAgg embedding example, and the hard parts are spelled out above. The protection against a wrong design is the pass or fail criteria below, run on both operating systems, not the model tier. An earlier draft assigned this to Fable 5.1; that was reviewed and judged unnecessary.
+Why Opus at high effort: this is the only part of the port with real concurrency, an event loop on a non-main thread, and behavior that differs between macOS and Linux, and a wrong conclusion here would misdirect phase 3. The concurrency is modest, though: one Tornado loop on a daemon thread with a single thread-safe hand-off, a pattern Matplotlib documents in its WebAgg embedding example, and the hard parts are spelled out above. The protection against a wrong design is the pass or fail criteria below, run on both operating systems, not the model tier. An earlier draft assigned this to Fable 5.1; that was reviewed and judged unnecessary.
 
 Verification (all must hold for WebAgg to be chosen):
 - A plot submitted from the worker appears in the browser while the worker is blocked in `input()`.
@@ -156,7 +156,7 @@ Verification (all must hold for WebAgg to be chosen):
 - A browser tab that is closed and reopened, or a second tab opened on the same URL, shows the current plot.
 - All of the above pass on macOS and on Ubuntu 24.04.
 
-Output: a short written decision added to this document, covering: WebAgg or fallback; one figure reused or one per submission; the port and browser-opening behaviour; and the fork result. If the `fork` criterion fails but `spawn` passes, the decision is to switch `MakeCube` to `get_context("spawn").Pool()`, as `FitCenter` already does, and that change is added to task 2.2. If any other criterion fails and cannot be fixed, phase 3 uses the fallback (an auto-refreshing page showing the latest PNG) and the loss of zoom and cursor readout is raised with the team before continuing. The port, URL-printing, exit and fork criteria apply to the fallback as well.
+Output: a short written decision added to this document, covering: WebAgg or fallback; one figure reused or one per submission; the port and browser-opening behavior; and the fork result. If the `fork` criterion fails but `spawn` passes, the decision is to switch `MakeCube` to `get_context("spawn").Pool()`, as `FitCenter` already does, and that change is added to task 2.2. If any other criterion fails and cannot be fixed, phase 3 uses the fallback (an auto-refreshing page showing the latest PNG) and the loss of zoom and cursor readout is raised with the team before continuing. The port, URL-printing, exit and fork criteria apply to the fallback as well.
 
 #### 0.3 decision (2026-10-28)
 
@@ -192,7 +192,7 @@ Primitive `StartPlotViewer` (3.1), event `start_plot_viewer` with `start_bokeh` 
 
 - Whether anything downstream (RTI, KOA ingestion) reads `plots/*.png`, and whether it depends on more than file name and format.
 - How observers view plots today when the pipeline runs remotely (VNC, or an SSH port-forward to port 5006).
-- Whether several pipeline processes are ever watched at once, and if so whether one shared tab (today's behaviour) is relied on or one tab per process is acceptable. This decides between the two viewer topologies in 0.3.
+- Whether several pipeline processes are ever watched at once, and if so whether one shared tab (today's behavior) is relied on or one tab per process is acceptable. This decides between the two viewer topologies in 0.3.
 - Whether the automatic opening of a browser tab at start-up is wanted on the summit and RTI hosts, or should default to off there (`kcwi_koarti.cfg`).
 - Who can merge to the `documentation` branch and how ReadTheDocs is rebuilt, for task 5.1b.
 
@@ -241,13 +241,13 @@ The wrapper must support exactly what the feature summary in the inventory (0.2)
 | `p.extra_x_ranges = {name: Range1d}` + `p.add_layout(LinearAxis(x_range_name=, axis_label=), 'above')` | Provide a local `LinearAxis`; render with `twiny()`. Only `'above'` is supported |
 | `gridplot(plts, ncols=, plot_width=, plot_height=, toolbar_location=)` | Renders the recorded figures into subplots. `plot_width` and `plot_height` are per cell and override each figure's own size. `toolbar_location` accepted and ignored. The same figure list may be passed to several `gridplot` calls |
 
-Appearance defaults, set once: default glyph colour `#1f77b4` with no colour cycling; legend top-right with entries merged by label; marker size equivalent to Bokeh's 4 px; left-aligned bold title; light grey grid; automatic axis limits padded as Bokeh's `DataRange1d` pads them (10 % of the span by default), not with Matplotlib's 5 % margins.
+Appearance defaults, set once: default glyph color `#1f77b4` with no color cycling; legend top-right with entries merged by label; marker size equivalent to Bokeh's 4 px; left-aligned bold title; light gray grid; automatic axis limits padded as Bokeh's `DataRange1d` pads them (10 % of the span by default), not with Matplotlib's 5 % margins.
 
 Known mapping traps. Each has a named test in 1.2:
 
 - **Legend across the twin axis.** In `SolveArcs` three glyphs are on the main x-axis and five on the `"pix"` axis, and all share one legend of six entries, with `'Arc'` and `'Atlas'` each used by two glyphs. A Matplotlib legend only sees the artists of its own axes. The wrapper must collect handles from both axes, merge by label, and draw one legend on the axes that is on top.
 - **Draw order with a twin axis.** `twiny()` axes are drawn after the base axes, so everything on the `"pix"` range covers everything on the main range regardless of call order. Check the `SolveArcs` plot against the reference and set z-order explicitly if the result differs.
-- **`Spectral11` is eleven discrete colours.** Build a `ListedColormap` from Bokeh's eleven hex values, in Bokeh's order (`#5e4fa2` first, `#9e0142` last), mapped linearly from the array minimum to its maximum. Matplotlib's built-in `Spectral` is continuous and runs in the opposite direction, so using it would both smooth and invert the colours.
+- **`Spectral11` is eleven discrete colors.** Build a `ListedColormap` from Bokeh's eleven hex values, in Bokeh's order (`#5e4fa2` first, `#9e0142` last), mapped linearly from the array minimum to its maximum. Matplotlib's built-in `Spectral` is continuous and runs in the opposite direction, so using it would both smooth and invert the colors.
 - **Image orientation.** Bokeh's `image` puts row 0 at the bottom; Matplotlib's `imshow` puts it at the top by default. Use `origin='lower'` and an explicit `extent` of `(x, x + dw, y, y + dh)`.
 - **NaN handling.** Bokeh leaves a gap in a line at NaN and drops NaN markers; confirm the wrapper does the same and that an all-NaN series renders an empty plot and does not raise.
 - **Marker size units.** Bokeh `size` is a diameter in screen pixels. Matplotlib's `markersize` is a diameter in points, and `scatter`'s `s` is an area in points squared. At 100 dpi one pixel is 0.72 points. `size=1` point clouds must stay one pixel wide.
@@ -255,7 +255,7 @@ Known mapping traps. Each has a named test in 1.2:
 - **Dash names.** `'dashed'`, `'dashdot'`, `'dotted'` map by name; any other value is unsupported.
 - **Fixed pixel size.** Save with the figure's own size and dpi and never with a tight bounding box, which would change the pixel size. Long titles and the twin-axis label must fit inside the fixed size; use constrained layout.
 
-`save_plot` keeps today's behaviour apart from the renderer: it writes `plots/<filename>` relative to the current directory, creates `plots/` if missing, accepts a figure or a `gridplot` result, logs the same `>>> Saving to` line, and does not depend on the viewer or on `enable_bokeh`. It is called at `plot_level` 0 by `SolveArcs`, so it must work with no viewer and no `StartPlotViewer` event having run.
+`save_plot` keeps today's behavior apart from the renderer: it writes `plots/<filename>` relative to the current directory, creates `plots/` if missing, accepts a figure or a `gridplot` result, logs the same `>>> Saving to` line, and does not depend on the viewer or on `enable_bokeh`. It is called at `plot_level` 0 by `SolveArcs`, so it must work with no viewer and no `StartPlotViewer` event having run.
 
 Why Opus: every later task and all 48 plots inherit these choices, and the Bokeh-to-Matplotlib mapping has several unit and default traps.
 
@@ -273,7 +273,7 @@ Verification:
 
 Replace `kcwidrp/tests/test_bokeh_plotting.py` with `test_kcwi_plotting.py`. Written from the inventory and the table above, not from the wrapper's source.
 
-- **Structural tests.** For each supported feature, build a figure with synthetic data, render it, and assert on the Matplotlib axes: number of lines, colours, dash styles, limits, labels, title, legend entries and position, the second x-axis, subplot layout, image extent.
+- **Structural tests.** For each supported feature, build a figure with synthetic data, render it, and assert on the Matplotlib axes: number of lines, colors, dash styles, limits, labels, title, legend entries and position, the second x-axis, subplot layout, image extent.
 - **Coverage scan.** A test that parses every file in `kcwidrp/primitives` and `kcwidrp/core/kcwi_plotting.py` with `ast` and collects each method, keyword and attribute used on a figure object, then asserts the wrapper supports all of them. This is what guarantees that no call site reaches an unsupported feature at 3 a.m. during a reduction. It cannot work from variable names, so it is specified as follows:
   - A name is a figure only from the point where it is assigned the result of a call to `figure(...)`, and stops being one when it is assigned anything else. `p` is rebound many times per function, and in `MakeCube` and `FitCenter` it is first a multiprocessing pool (`p.map`, `p.close`) and later a figure. Tracking is per function, in source order.
   - Figure names in use are `p`, and in `MakeInvsens` also `peff`, `pivs`, `prsd` and `pcal`. The scan must not hard-code these; it discovers them.
@@ -285,7 +285,7 @@ Replace `kcwidrp/tests/test_bokeh_plotting.py` with `test_kcwi_plotting.py`. Wri
   - The scan's result is also compared with the feature summary in `docs/plot_inventory.md`; a difference in either direction fails.
 - **Strict and tolerant modes.** The whole suite runs with `STRICT` true. A separate group runs with `STRICT` false and checks, for an unsupported method, an unsupported keyword, an unsupported attribute and an unsupported literal value: one warning is logged with the caller's file and line, nothing is raised, the returned object still accepts further calls, and `save_plot` still writes a file.
 - **Snapshot test.** Record a line from an array, overwrite the array in place, render: the rendered data is the original. The same for a figure submitted to a stub viewer and then modified by a further glyph call on the primitive's side.
-- **Trap tests.** One named test per item in the 1.1 trap list: twin-axis legend merged across both axes; twin-axis draw order; `Spectral11` endpoint colours and discreteness; image orientation with an asymmetric array; NaN gaps and all-NaN series; one-pixel markers; pixel line width; dash names; fixed pixel size with a very long title.
+- **Trap tests.** One named test per item in the 1.1 trap list: twin-axis legend merged across both axes; twin-axis draw order; `Spectral11` endpoint colors and discreteness; image orientation with an asymmetric array; NaN gaps and all-NaN series; one-pixel markers; pixel line width; dash names; fixed pixel size with a very long title.
 - **Thread test.** Four threads each render and save ten plots concurrently; all files exist with the right pixel size.
 - **Failure isolation.** `save_plot` with an unwritable directory logs a warning and returns; it does not raise. The same for `bokeh_plot` with a viewer whose `show` raises, and for `bokeh_clear` with a viewer of `None` (today's `bokeh_clear` would raise on `None`; the new one must not).
 - **Plot level 0.** With no viewer started, `save_plot` on a figure writes its PNG. This protects the two files `SolveArcs` writes at every plot level.
@@ -293,7 +293,7 @@ Replace `kcwidrp/tests/test_bokeh_plotting.py` with `test_kcwi_plotting.py`. Wri
 Why Sonnet: well-specified, and independence from the implementer matters more than raw capability.
 
 Verification:
-- Tests fail when a deliberately broken wrapper is substituted (for example, colour cycling re-enabled, or `legend.location` ignored). Check at least three such mutations.
+- Tests fail when a deliberately broken wrapper is substituted (for example, color cycling re-enabled, or `legend.location` ignored). Check at least three such mutations.
 - The coverage scan fails if an unsupported call such as `p.wedge(...)` is added to a primitive, and also for each of: an unsupported keyword on a supported glyph; `figure(x_axis_type='log')`; `p.ygrid.grid_line_color = None`; a figure bound to a new name (`q = figure(...)`; `q.wedge(...)`); a figure passed to an unknown helper.
 - The coverage scan does **not** flag `p.map(...)` and `p.close()` on the pools in `MakeCube` and `FitCenter`.
 - Before phase 2 the scan is run against the unconverted primitives and its only failures are the items that 2.2 is due to remove (`ColumnDataSource` and the column-name `line` call in `MakeInvsens`).
@@ -327,7 +327,7 @@ Why Opus: each of these is a one-off where the right translation needs a decisio
 Verification:
 - Same three checks as 2.1; here non-import changes are expected and each is listed in the commit message.
 - A dedicated structural test for each of the five, using synthetic data shaped like the real inputs.
-- `MakeCube`: image orientation checked against the reference with an asymmetric test array, since `origin` conventions differ between the libraries. Colours at the array minimum and maximum match Bokeh's `Spectral11` first and last entries.
+- `MakeCube`: image orientation checked against the reference with an asymmetric test array, since `origin` conventions differ between the libraries. Colors at the array minimum and maximum match Bokeh's `Spectral11` first and last entries.
 - `MakeCube`, if the pool was switched to `spawn`: one blue and one red cube from the 0.1 data are numerically identical to the reference cubes, and the wall-clock time of the primitive is recorded before and after.
 - `SolveArcs`: the legend shows all six labels (`Atlas`, `AtCntr`, `Arc`, `Cntr`, `Gpeak`, `Peak`) once each, and the plot matches the 0.1 screenshot for which series is drawn on top.
 - `MakeInvsens`: the inverse-sensitivity plot renders with a log axis when the data include zero or negative values, with a warning at most and no exception.
@@ -343,13 +343,13 @@ Details the implementation must follow:
 - **Hand-off.** `show()` deep-copies the recorded description on the caller's thread and passes the copy to the Tornado loop with `IOLoop.add_callback`, which is the only thread-safe entry point to the loop. All Matplotlib objects of the viewer are created, drawn and destroyed on the viewer thread only. `show()` returns without waiting for the render.
 - **`show()` never blocks and never raises.** If the viewer thread has died, `show()` logs one warning, marks the viewer dead, and later calls return at once.
 - **Ports and URL.** As decided in 0.3: `plot_viewer_port` with the search range, `localhost` binding, the URL logged and printed, `plot_viewer_open_browser`. `StartPlotViewer` stores the URL on the context so later log lines can repeat it.
-- **Start-up failure.** Today `terminate_on_failed_bokeh_start = True` stops the pipeline if the server is unreachable. That key is removed in 5.1; the new behaviour is always to warn and continue (R10). State this in the changelog.
+- **Start-up failure.** Today `terminate_on_failed_bokeh_start = True` stops the pipeline if the server is unreachable. That key is removed in 5.1; the new behavior is always to warn and continue (R10). State this in the changelog.
 - **No exit-time clean-up.** The framework leaves through `os._exit`, so `stop()` is not called at the end of a normal run and `atexit` does not fire. `stop()` exists for tests and for an orderly restart. The viewer therefore uses daemon threads only and owns no child processes, temporary files or lock files. The listening socket is created with close-on-exec set and is not inheritable.
 - **Fork safety.** Whatever 0.3 found. At minimum the viewer thread must not hold the logging lock or any module-level lock across a render, and pool children must not service the viewer socket.
-- **Ctrl-C while blocked in `input()`.** The framework's handler only sets `keep_going`; the action thread stays in `input()` until return is pressed. This is today's behaviour and is not changed, but the viewer must keep serving during that wait and must not swallow or re-install the SIGINT handler. Tornado must be started without its own signal handling.
+- **Ctrl-C while blocked in `input()`.** The framework's handler only sets `keep_going`; the action thread stays in `input()` until return is pressed. This is today's behavior and is not changed, but the viewer must keep serving during that wait and must not swallow or re-install the SIGINT handler. Tornado must be started without its own signal handling.
 - **Launch scripts.** `enable_bokeh` is read in the three scripts to decide whether to queue the `start_bokeh` event; see 5.1 for the renamed key. The 5-second `time.sleep` that waits for `bokeh serve` goes away with the subprocess in 3.2.
 
-Why Opus at high effort: same reasoning as 0.3, now in production form, including shutdown behaviour and the multi-process case. The implementation details above and the verification list below carry the risk.
+Why Opus at high effort: same reasoning as 0.3, now in production form, including shutdown behavior and the multi-process case. The implementation details above and the verification list below carry the risk.
 
 Verification:
 - The 0.3 criteria, re-run against the real implementation inside `reduce_kcwi`.
@@ -387,11 +387,11 @@ Verification: run it on a reference directory against itself (every pair identic
 
 Re-run the 0.1 reductions on the ported branch with the same data, config and command lines: the unattended pass, the `plot_level = 0` pass, and the level-3 pass replayed from the recorded answers with `reduce_kcwi <same arguments> < answers_<channel>_3.txt`. No one types during the level-3 replay.
 
-The replay doubles as a check that the port did not change the prompts. If it stops waiting for input, ends with `EOFError`, or has unread lines left in the answers file, the number or order of prompts has changed. That is a behaviour change in a primitive and is a finding in its own right, to be resolved before comparing any images.
+The replay doubles as a check that the port did not change the prompts. If it stops waiting for input, ends with `EOFError`, or has unread lines left in the answers file, the number or order of prompts has changed. That is a behavior change in a primitive and is a finding in its own right, to be resolved before comparing any images.
 
 Before looking at plots, confirm the two level-3 runs reduced the data the same way: the final cubes and the `.proc` table match the 0.1 outputs (numerically identical unless 0.3 changed the `MakeCube` pool, in which case within floating-point tolerance with the reason stated).
 
-For each image pair, check and record: same file name; same pixel size; same title and axis labels; same axis limits; same number of series; same colours and dash styles; same legend entries and position; no clipped or overlapping text.
+For each image pair, check and record: same file name; same pixel size; same title and axis labels; same axis limits; same number of series; same colors and dash styles; same legend entries and position; no clipped or overlapping text.
 
 Why Opus: this needs careful reading of plot images against a checklist, and misses here are what reach users.
 
@@ -423,7 +423,7 @@ Verification:
 - `kcwi.cfg`, `kcwi_koarti.cfg`: remove `plot_firefox_compat`, `plot_prewarm_firefox`, `terminate_on_failed_bokeh_start`, and the comment lines that describe them. Add `plot_viewer_port` and `plot_viewer_open_browser` (see 0.3), with `plot_viewer_open_browser` set as decided in 0.4 for the RTI config.
 - **The enable switch.** Add `enable_plot_viewer`, not `enable_plots`. Today `enable_bokeh` controls only the live view: PNGs are saved whenever `plot_level` says so, whether or not Bokeh is enabled, and two `SolveArcs` PNGs are saved at every level. The new key keeps exactly that meaning, and its name says so. A key called `enable_plots` would invite someone to set it false and expect, or cause, PNG output to stop, which would change what RTI and KOA receive. Rules:
   - `enable_plot_viewer` present: it decides. `enable_bokeh` present as well: ignored, with a deprecation message logged once.
-  - Only `enable_bokeh` present: honoured, with the same deprecation message.
+  - Only `enable_bokeh` present: honored, with the same deprecation message.
   - Neither present: viewer off.
   - Neither key has any effect on `save_plot`.
   - Update the comment in `kcwi.cfg` to say that the key controls the live viewer only and that saved PNGs are governed by `plot_level`.
@@ -467,7 +467,7 @@ Verification: the list of intentional hits is short, explicit, and matches what 
 
 ### 5.3 Independent review — Fable 5.1 (high), or Opus 5.5 (high) in a fresh session
 
-A review of the full branch diff in a fresh session with no access to the implementation conversations, focused on: thread and process safety of the viewer, including the fork in `MakeCube` and reliance on any exit-time clean-up that `os._exit` would skip; any path where a plotting failure could stop a reduction, including every place the wrapper can raise when `STRICT` is false; recorded data that is not copied; behaviour changes in primitives beyond imports, including any change to the number or order of prompts; any way the viewer switch could affect PNG saving; wrapper mappings that are plausible but wrong (units, defaults, axis orientation, the items in the 1.1 trap list); and stray file-mode changes in the diff (0.5).
+A review of the full branch diff in a fresh session with no access to the implementation conversations, focused on: thread and process safety of the viewer, including the fork in `MakeCube` and reliance on any exit-time clean-up that `os._exit` would skip; any path where a plotting failure could stop a reduction, including every place the wrapper can raise when `STRICT` is false; recorded data that is not copied; behavior changes in primitives beyond imports, including any change to the number or order of prompts; any way the viewer switch could affect PNG saving; wrapper mappings that are plausible but wrong (units, defaults, axis orientation, the items in the 1.1 trap list); and stray file-mode changes in the diff (0.5).
 
 Why a fresh context: the reviewer should not share the implementers' assumptions, and this is the last automated check before release. Most of that independence comes from the fresh session with no access to the implementation conversations. Using Fable adds a little more, because Opus wrote both the wrapper and the viewer, and it is a single pass. It is a nicety, not a requirement: if Fable is not available, run this with Opus 5.5 in a fresh session and accept slightly less independence from the author.
 

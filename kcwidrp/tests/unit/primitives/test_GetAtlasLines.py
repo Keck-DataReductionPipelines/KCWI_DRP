@@ -1,7 +1,7 @@
 """Characterization tests for GetAtlasLines.gaus, get_line_window and
 findpeaks (task T.3).
 
-Synthetic spectra: Gaussian emission lines of known amplitude, centre and
+Synthetic spectra: Gaussian emission lines of known amplitude, center and
 sigma on a zero background, sampled at integer pixels.
 """
 import numpy as np
@@ -11,8 +11,8 @@ from kcwidrp.primitives.GetAtlasLines import findpeaks, gaus, get_line_window
 
 X = np.arange(400.0)
 SIGMA = 2.0
-# (centre, amplitude): centres are deliberately not on pixel centres, because
-# a peak exactly on a pixel centre of a noiseless symmetric line is reported
+# (center, amplitude): centers are deliberately not on pixel centers, because
+# a peak exactly on a pixel center of a noiseless symmetric line is reported
 # twice by findpeaks (see the report for T.3).
 LINES = [(50.3, 1000.0), (120.4, 500.0), (200.6, 2000.0), (300.25, 800.0)]
 
@@ -54,7 +54,7 @@ def test_gaus_accepts_arrays_and_sign_of_sigma_irrelevant():
 
 # ------------------------------------------------------ get_line_window
 def test_window_half_maximum_hand_computed_line_1():
-    # source: analytic - line at 50.3, sigma 2, nominal centre 50.  Half
+    # source: analytic - line at 50.3, sigma 2, nominal center 50.  Half
     # maximum is reached at 50.3 -/+ 2.355: y[48]=0.52 > 0.5, y[47]=0.26 < 0.5
     # -> x0 = 47;  y[52]=0.70 > 0.5, y[53]=0.40 < 0.5 -> x1 = 53.  Count: the
     # starting 5 pixels plus one added per side.
@@ -67,8 +67,8 @@ def test_window_half_maximum_hand_computed_line_2():
     assert get_line_window(_spectrum(), 120) == (118, 123, 6)
 
 
-def test_window_contains_the_line_centre_for_all_lines():
-    # source: analytic - the half-maximum window contains the centre
+def test_window_contains_the_line_center_for_all_lines():
+    # source: analytic - the half-maximum window contains the center
     y = _spectrum()
     for c, _ in LINES:
         x0, x1, n = get_line_window(y, int(round(c)))
@@ -85,13 +85,13 @@ def test_window_frac_max_widens_window():
     assert w1[0] < w5[0] and w1[1] > w5[1]
 
 
-def test_window_strict_accepts_centred_line():
-    # source: analytic - the nominal centre is inside the final window
+def test_window_strict_accepts_centered_line():
+    # source: analytic - the nominal center is inside the final window
     assert get_line_window(_spectrum(), 50, strict=True) == (47, 53, 7)
 
 
 def test_window_rejects_line_near_edges():
-    # source: analytic - the nominal centre must be at least 2 pixels from the
+    # source: analytic - the nominal center must be at least 2 pixels from the
     # edges; (None, None, 0) is the documented rejection
     y = _spectrum()
     assert get_line_window(y, 1) == (None, None, 0)
@@ -122,7 +122,7 @@ def test_window_rejects_wiggly_profile():
 # converges to the generating parameters; measured error < 1e-11, tolerance
 # 1e-6 pixel / 1e-6 relative leaves a large margin without hiding a misplaced
 # peak.
-def test_findpeaks_recovers_line_centres_widths_and_heights():
+def test_findpeaks_recovers_line_centers_widths_and_heights():
     # source: analytic - the lines were generated at LINES with sigma 2
     y = _spectrum()
     pks, sgmn, hts = findpeaks(X, y, 5, 0.001, 50.0)
@@ -143,7 +143,7 @@ def test_findpeaks_amplitude_threshold_drops_faint_lines():
 
 def test_findpeaks_x_axis_in_wavelength_units():
     # source: analytic - the same lines on x = 4000 + 0.5*pixel (Angstrom)
-    # are reported in x units: centre = 4000 + 0.5*c, sigma = 0.5*2 = 1.0
+    # are reported in x units: center = 4000 + 0.5*c, sigma = 0.5*2 = 1.0
     xw = 4000.0 + 0.5 * X
     y = _spectrum()
     pks, sgmn, _ = findpeaks(xw, y, 5, 0.001, 50.0)
@@ -162,7 +162,7 @@ def test_findpeaks_flat_spectrum_returns_nothing(capsys):
 
 def test_findpeaks_ignores_lines_within_window_of_edge():
     # source: characterization @ b0e2550 - the scan starts `pkg` (= wid)
-    # pixels from either end, so a line centred at 3.3 is not reported while
+    # pixels from either end, so a line centered at 3.3 is not reported while
     # a line at 20.3 is.
     y = _spectrum([(3.3, 1000.0), (20.3, 1000.0), (200.6, 2000.0)])
     pks, _, _ = findpeaks(X, y, 5, 0.001, 50.0)

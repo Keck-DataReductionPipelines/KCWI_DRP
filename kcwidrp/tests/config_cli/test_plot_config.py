@@ -4,7 +4,7 @@ Specification (docs/bokeh_port_plan.md, "The enable switch" and the
 "Interfaces fixed for parallel implementation" subsection):
 
 * ``enable_plot_viewer`` present: it decides; ``enable_bokeh`` is then ignored.
-* Only ``enable_bokeh`` present: honoured.
+* Only ``enable_bokeh`` present: honored.
 * Neither present: viewer off.
 * ``enable_bokeh`` present (in any combination) -> a deprecation message is
   logged, and at most once per process.  ``enable_bokeh`` absent -> no message.
@@ -89,7 +89,7 @@ def expected_viewer(epv, eb):
     if epv is not ABSENT:
         return epv          # source: 5.1 "present: it decides"
     if eb is not ABSENT:
-        return eb           # source: 5.1 "only enable_bokeh: honoured"
+        return eb           # source: 5.1 "only enable_bokeh: honored"
     return False            # source: 5.1 "neither present: viewer off"
 
 

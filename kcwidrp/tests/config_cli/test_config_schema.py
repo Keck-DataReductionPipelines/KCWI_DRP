@@ -157,7 +157,7 @@ SCHEMA = {
                      lo=-90.0, hi=90.0),
     "longitude": _num("cfg comment 'Keck II Location'; degrees",
                       lo=-360.0, hi=360.0),
-    "altitude": _num("cfg comment 'Keck II Location'; metres"),
+    "altitude": _num("cfg comment 'Keck II Location'; meters"),
     # --- cosmic ray rejection (astroscrappy.detect_cosmics) -----------------
     "crr_minexptime": _num("cfg: frames shorter than this are not cleaned "
                            "(RemoveCosmicRays.py `exptime >= ...`)", lo=0.0),

@@ -5,7 +5,7 @@ fix_header, plotlabel, kcwi_fits_writer <-> kcwi_fits_reader, write_table <->
 read_table.
 
 Expected values are hand-built (inputs written in the test), round trips, or
-labelled characterizations of tables that have no external specification.
+labeled characterizations of tables that have no external specification.
 """
 import logging
 from types import SimpleNamespace

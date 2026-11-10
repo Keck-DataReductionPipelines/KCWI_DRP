@@ -24,7 +24,7 @@ newlines) and one new bug (B32, the shipped .lmsk files are never found).
 B2 (one-number line mask), B5 (an answer containing "q" quit, at P13) and
 B6 (an invalid limits entry reset accepted limits) were pinned too; P.4
 fixed them by converting the sites to kcwi_interactive and removed the
-markers.  The passing tests characterize today's behaviour for valid
+markers.  The passing tests characterize today's behavior for valid
 answers (D3/D12).
 
 Input: a synthetic DAR-corrected standard-star cube (the frame's OBJECT
