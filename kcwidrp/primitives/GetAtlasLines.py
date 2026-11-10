@@ -525,9 +525,9 @@ class GetAtlasLines(BasePrimitive):
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height)
                 p.line(subwvals, subyvals / np.nanmax(subyvals),
-                       legend_label='RefArc', color='black')
+                       legend_label='RefArc', color='blue')
                 p.line(atwave, atspec / norm_fac, legend_label='Atlas',
-                       color='blue')
+                       color='black')
                 # Rejected: window bad
                 if len(rej_win_w) > 0:
                     p.diamond(rej_win_w, rej_win_a / norm_fac,
@@ -563,8 +563,8 @@ class GetAtlasLines(BasePrimitive):
                     help=(
                         "What you see:\n"
                         "  Title \"ATLAS LINES Ngood = <n>, Nrej = <m>\", normalised flux.\n"
-                        "  Black: reference-bar arc spectrum on its central-fit wavelengths.\n"
-                        "  Blue: atlas spectrum of the arc lamp.\n"
+                        "  Blue: reference-bar arc spectrum on its central-fit wavelengths.\n"
+                        "  Black: atlas spectrum of the arc lamp.\n"
                         "  Large magenta diamonds: atlas lines kept for the fit (\"Kept\").\n"
                         "  Small diamonds, rejected lines (plotted at the arc line's height):\n"
                         "    cyan: WinRej (no clean window).\n"
@@ -574,9 +574,9 @@ class GetAtlasLines(BasePrimitive):
                         "    grey: FntRej (faintest dropped when > 400 lines).\n"
                         "  Purple verticals: wavelength limits used (\"WavLim\").\n"
                         "What to look for:\n"
-                        "  Good: black and blue spectra line up; kept lines sit on clean atlas\n"
+                        "  Good: blue and black spectra line up; kept lines sit on clean atlas\n"
                         "  peaks spread over the whole range between the purple lines.\n"
-                        "  Bad: black and blue offset (atlas offset wrong); kept lines missing\n"
+                        "  Bad: blue and black offset (atlas offset wrong); kept lines missing\n"
                         "  from part of the range, which weakens the solution there.\n"
                         "Your options:\n"
                         "  <cr>  continue. Display only (the list is written to\n"

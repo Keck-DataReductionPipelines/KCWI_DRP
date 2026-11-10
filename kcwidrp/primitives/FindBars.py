@@ -86,7 +86,7 @@ class FindBars(BasePrimitive):
                     x_axis_label='CCD X (px)', y_axis_label='e-',
                     plot_width=self.config.instrument.plot_width,
                     plot_height=self.config.instrument.plot_height)
-                p.line(x, middle_vector, color='black', legend_label="Trace")
+                p.line(x, middle_vector, color='blue', legend_label="Trace")
                 p.scatter(peaks_vector,
                           middle_vector[peaks_vector], marker='x',
                           color='magenta', legend_label="FoundBar")
@@ -100,7 +100,7 @@ class FindBars(BasePrimitive):
                         "What you see:\n"
                         "  Title \"BARS TRACE at = <row>, TRY <n>\": the continuum-bars image\n"
                         "  across CCD x, median of a few rows around <row>.\n"
-                        "  Black line: the profile.\n"
+                        "  Blue line: the profile.\n"
                         "  Magenta x: peaks found above the threshold.\n"
                         "  Grey dashed: threshold (mean + 0.5 x standard deviation).\n"
                         "What to look for:\n"
@@ -143,7 +143,7 @@ class FindBars(BasePrimitive):
                     x_axis_label='CCD X (px)', y_axis_label='e-',
                     plot_width=self.config.instrument.plot_width,
                     plot_height=self.config.instrument.plot_height)
-                p.line(x, middle_vector, color='black', legend_label="MidTrace")
+                p.line(x, middle_vector, color='blue', legend_label="MidTrace")
                 p.scatter(peaks_vector,
                           middle_vector[peaks_vector], marker='x',
                           color='magenta', legend_label="FoundBar")
@@ -157,7 +157,7 @@ class FindBars(BasePrimitive):
                         "What you see:\n"
                         "  Title \"BARS MID TRACE Thresh = <value>\": the continuum-bars profile\n"
                         "  across CCD x at the row where all bars were found.\n"
-                        "  Black line: profile.\n"
+                        "  Blue line: profile.\n"
                         "  Magenta x: the bar peaks.\n"
                         "  Grey dashed: peak threshold.\n"
                         "What to look for:\n"
@@ -189,8 +189,8 @@ class FindBars(BasePrimitive):
                         x_axis_label='CCD X (px)', y_axis_label='e-',
                         plot_width=self.config.instrument.plot_width,
                         plot_height=self.config.instrument.plot_height)
-                    p.line(xs, ys, color='black', legend_label='Bar Trace')
-                    p.circle(xs, ys, color='black', legend_label='Bar Trace')
+                    p.line(xs, ys, color='blue', legend_label='Bar Trace')
+                    p.circle(xs, ys, color='blue', legend_label='Bar Trace')
                     p.line([xc, xc], [bar_thresh, middle_vector[peak]],
                            color='magenta', legend_label='Cntrd')
                     bokeh_plot(p, self.context.bokeh_session)
@@ -200,10 +200,10 @@ class FindBars(BasePrimitive):
                             help=(
                                 "What you see:\n"
                                 "  Title \"BAR <n> CENTRD = <x>\": bar n across CCD x, minimum subtracted.\n"
-                                "  Black line and circles: the profile (\"Bar Trace\").\n"
+                                "  Blue line and circles: the profile (\"Bar Trace\").\n"
                                 "  Magenta vertical: the centroid, the x position used for this bar\n"
                                 "    (its height spans threshold to peak of the raw profile, so it need\n"
-                                "    not touch the black curve).\n"
+                                "    not touch the blue curve).\n"
                                 "What to look for:\n"
                                 "  Good: one clean, roughly symmetric peak with the magenta line at its\n"
                                 "  centre.\n"

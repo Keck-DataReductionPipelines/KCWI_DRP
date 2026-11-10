@@ -231,10 +231,10 @@ class SolveArcs(BasePrimitive):
                             plot_height=self.config.instrument.plot_height)
                         ylim = [0, np.nanmax(yvec)]
                         p.line(atwave[atx0:atx1], atspec[atx0:atx1] * atnorm,
-                               color='blue', legend_label='Atlas')
+                               color='black', legend_label='Atlas')
                         p.circle(atwave[atx0:atx1], atspec[atx0:atx1] * atnorm,
-                                 color='blue', legend_label='Atlas')
-                        p.line([aw, aw], ylim, color='blue',
+                                 color='black', legend_label='Atlas')
+                        p.line([aw, aw], ylim, color='black',
                                line_dash='dashed', legend_label='AtCntr')
                         p.x_range = Range1d(start=min(wvec), end=max(wvec))
                         p.extra_x_ranges = {"pix": Range1d(start=min(xvec),
@@ -244,7 +244,7 @@ class SolveArcs(BasePrimitive):
                                      'above')
                         p.line(xplot, plt_line, color='red',
                                legend_label='Arc', x_range_name="pix")
-                        p.circle(xvec, yvec, legend_label='Arc', color='black',
+                        p.circle(xvec, yvec, legend_label='Arc', color='blue',
                                  x_range_name="pix")
                         ylim = [0, np.nanmax(plt_line)]
                         p.line([cent, cent], ylim, color='magenta',
@@ -269,17 +269,17 @@ class SolveArcs(BasePrimitive):
                                   "  wavelength (bottom, atlas) and CCD y pixel (top, arc), matched over\n"
                                   "  this window by the central wavelength fit.\n"
                                   "  Atlas:\n"
-                                  "    Blue line and circles: atlas spectrum.\n"
-                                  "    Blue dashed vertical: the atlas line.\n"
+                                  "    Black line and circles: atlas spectrum.\n"
+                                  "    Black dashed vertical: the atlas line.\n"
                                   "  Arc:\n"
-                                  "    Black circles: smoothed data in the fit window.\n"
+                                  "    Blue circles: smoothed data in the fit window.\n"
                                   "    Red line: interpolation.\n"
                                   "    Magenta vertical: interpolated peak, the position used.\n"
                                   "    Magenta dashed: centroid.\n"
                                   "    Magenta dotted: Gaussian peak.\n"
                                   "What to look for:\n"
                                   "  Good: one clean arc line whose three magenta verticals coincide, at\n"
-                                  "  the same place as the blue atlas line.\n"
+                                  "  the same place as the black atlas line.\n"
                                   "  Bad: blended or distorted lines, or an arc line far from the atlas\n"
                                   "  line (misidentification); the residual clipping may then reject it.\n"
                                   "Your options:\n"
@@ -424,7 +424,7 @@ class SolveArcs(BasePrimitive):
                            y_axis_label="Fit - Atlas (A)",
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height)
-                p.diamond(at_wave_dat, resid, color='black',
+                p.diamond(at_wave_dat, resid, color='blue',
                           legend_label='Kept', size=8)
                 if rej_rsd_wave:
                     p.diamond(rej_rsd_wave, rej_rsd, color='gold',
@@ -454,7 +454,7 @@ class SolveArcs(BasePrimitive):
                             "  N = <k>\": for each line, the wavelength the fit gives at the arc\n"
                             "  line's pixel minus the atlas wavelength (A). RMS is that of the kept\n"
                             "  lines; the px value divides it by this bar's dispersion.\n"
-                            "  Black diamonds: lines kept.\n"
+                            "  Blue diamonds: lines kept.\n"
                             "  Gold diamonds: lines rejected as outliers in the iterative clipping.\n"
                             "  Grey x (at 0): lines rejected before the fit (no clean window,\n"
                             "    failed Gaussian, centroid off).\n"
@@ -465,7 +465,7 @@ class SolveArcs(BasePrimitive):
                             "  Orange dash-dot-dot: CWAVE.\n"
                             "  No WAVGOOD lines: WAVGOOD is only known after SolveGeom.\n"
                             "What to look for:\n"
-                            "  Good: black points scatter randomly about zero over the whole range;\n"
+                            "  Good: blue points scatter randomly about zero over the whole range;\n"
                             "  RMS (A) well below this bar's dispersion, so the px value in the\n"
                             "  title is well below 1.\n"
                             "  Bad: a trend or curve with wavelength (misidentified lines or too\n"
@@ -484,11 +484,11 @@ class SolveArcs(BasePrimitive):
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height)
                 bwav = pwfit(self.action.args.xsvals)
-                p.line(bwav, b, color='black', legend_label='Arc')
-                p.diamond(arc_wave_fit, arc_int_dat, color='black', size=8)
+                p.line(bwav, b, color='blue', legend_label='Arc')
+                p.diamond(arc_wave_fit, arc_int_dat, color='blue', size=8)
                 ylim = [np.nanmin(b), np.nanmax(b)]
                 atnorm = np.nanmax(b) / np.nanmax(atspec)
-                p.line(atwave, atspec * atnorm, color='blue',
+                p.line(atwave, atspec * atnorm, color='black',
                        legend_label='Atlas')
                 p.line([self.action.args.cwave, self.action.args.cwave],
                        ylim, color='orange', line_dash='dashdotdot',
@@ -506,17 +506,17 @@ class SolveArcs(BasePrimitive):
                     what="Arc spectrum of this bar on its final wavelength solution, over the atlas.",
                     help=("What you see:\n"
                           "  Title \"ATLAS/ARC FIT for Bar <n> ...\".\n"
-                          "  Black line: this bar's arc on its final wavelength solution.\n"
-                          "  Black diamonds: lines used in the fit, at their fitted wavelengths.\n"
-                          "  Blue: atlas spectrum (scaled).\n"
+                          "  Blue line: this bar's arc on its final wavelength solution.\n"
+                          "  Blue diamonds: lines used in the fit, at their fitted wavelengths.\n"
+                          "  Black: atlas spectrum (scaled).\n"
                           "  Magenta diamonds (\"Kept\"): every line of the atlas line list.\n"
                           "  Gold: lines rejected as residual outliers.\n"
                           "  Grey x: lines rejected before the fit.\n"
                           "  Orange dash-dot-dot: CWAVE.\n"
                           "What to look for:\n"
-                          "  Good: black arc lines fall on the blue atlas lines over the whole\n"
-                          "  range, with black diamonds on most magenta ones.\n"
-                          "  Bad: black lines shifted from blue in part of the range: the\n"
+                          "  Good: blue arc lines fall on the black atlas lines over the whole\n"
+                          "  range, with blue diamonds on most magenta ones.\n"
+                          "  Bad: blue lines shifted from black in part of the range: the\n"
                           "  solution for this bar is wrong there.\n"
                           "Your options:\n"
                           "  <cr>      show the next bar.\n"
@@ -576,7 +576,7 @@ class SolveArcs(BasePrimitive):
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height)
 
-                p.diamond(list(range(nbars)), coef, color='black', size=8)
+                p.diamond(list(range(nbars)), coef, color='blue', size=8)
                 xlim = [-1, nbars]
                 ylim = get_plot_lims(coef, clip=False)
                 p.xgrid.grid_line_color = None
@@ -591,7 +591,7 @@ class SolveArcs(BasePrimitive):
                             "  number. The polynomial has n + 1 coefficients, C0 to Cn: C0 is the\n"
                             "  wavelength (A) at the first pixel, C1 the dispersion (A/px), higher\n"
                             "  terms the curvature. One plot per coefficient.\n"
-                            "  Black diamonds: values.\n"
+                            "  Blue diamonds: values.\n"
                             "  Black dash-dot lines: slice boundaries.\n"
                             "What to look for:\n"
                             "  Good: a smooth pattern within and between slices, no isolated\n"
@@ -617,7 +617,7 @@ class SolveArcs(BasePrimitive):
                    y_axis_label="N Lines",
                    plot_width=self.config.instrument.plot_width,
                    plot_height=self.config.instrument.plot_height)
-        p.diamond(list(range(nbars)), bar_nls, color='black', size=8,
+        p.diamond(list(range(nbars)), bar_nls, color='blue', size=8,
                   legend_label='Bars')
         xlim = [-1, nbars]
         ylim = get_plot_lims(bar_nls)
@@ -625,7 +625,7 @@ class SolveArcs(BasePrimitive):
         for isl in range(nbars // 5):
             sl_av = float(np.nanmean(bar_nls[isl*5:isl*5+5]))
             p.line([isl*5 - 0.5, isl*5 + 4.5], [sl_av, sl_av],
-                   color='blue', line_width=3, legend_label='Slice mean')
+                   color='black', line_width=3, legend_label='Slice mean')
         self.logger.info("<N Lines> = %.1f +- %.1f" %
                          (self.action.args.av_bar_nls,
                           self.action.args.st_bar_nls))
@@ -652,10 +652,10 @@ class SolveArcs(BasePrimitive):
                   help=("What you see:\n"
                         "  Title \"FIT STATS <Nlns> = <mean> +- <std>\": number of lines in each\n"
                         "  bar's final fit, against bar number.\n"
-                        "  Black diamonds (\"Bars\"): values.\n"
+                        "  Blue diamonds (\"Bars\"): values.\n"
                         "  Red (\"Mean\"): mean of all bars.\n"
                         "  Red dashed: mean +- 1 standard deviation.\n"
-                        "  Blue thick, one per slice (\"Slice mean\"): mean of the slice's 5 bars.\n"
+                        "  Black thick, one per slice (\"Slice mean\"): mean of the slice's 5 bars.\n"
                         "  Black dash-dot: slice boundaries.\n"
                         "What to look for:\n"
                         "  Good: similar numbers for all bars and slices.\n"
@@ -690,7 +690,7 @@ class SolveArcs(BasePrimitive):
         p = figure(title=ptitle, x_axis_label="Bar #", y_axis_label="RMS (A)",
                    plot_width=self.config.instrument.plot_width,
                    plot_height=self.config.instrument.plot_height)
-        p.diamond(list(range(nbars)), bar_sig, color='black', size=8,
+        p.diamond(list(range(nbars)), bar_sig, color='blue', size=8,
                   legend_label='Bars')
         xlim = [-1, nbars]
         ylim = get_plot_lims(bar_sig)
@@ -720,7 +720,7 @@ class SolveArcs(BasePrimitive):
                         "  of its kept lines' residuals: the wavelength the fit gives at the arc\n"
                         "  line's pixel minus the atlas wavelength (as in P43). The px value\n"
                         "  divides the mean by the mean dispersion.\n"
-                        "  Black diamonds (\"Bars\"): values.\n"
+                        "  Blue diamonds (\"Bars\"): values.\n"
                         "  Red (\"Mean\"): mean.\n"
                         "  Red dashed: mean +- 1 standard deviation.\n"
                         "  Black dash-dot: slice boundaries.\n"

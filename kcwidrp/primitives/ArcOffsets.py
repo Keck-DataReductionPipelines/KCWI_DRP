@@ -82,10 +82,10 @@ class ArcOffsets(BasePrimitive):
                                plot_width=self.config.instrument.plot_width,
                                plot_height=self.config.instrument.plot_height)
                     x = range(len(reference_arc))
-                    p.line(x, reference_arc, color='blue',
+                    p.line(x, reference_arc, color='black',
                            legend_label='ref bar (%d)' %
                            self.config.instrument.REFBAR)
-                    p.line(x, np.roll(arc, offset), color='black',
+                    p.line(x, np.roll(arc, offset), color='blue',
                            legend_label='bar %d' % arc_number)
                     bokeh_plot(p, self.context.bokeh_session)
                     q = ask_next(
@@ -93,14 +93,14 @@ class ArcOffsets(BasePrimitive):
                         what="Arc spectrum of this bar, shifted by its cross-correlation offset, over the reference bar.",
                         help=("What you see:\n"
                               "  Title \"BAR OFFSET for Arc: <bar> Slice: <slice> = <offset>\".\n"
-                              "  Blue: arc spectrum of the reference bar (REFBAR) along CCD y.\n"
-                              "  Black: arc spectrum of this bar, shifted by the offset (px) that\n"
+                              "  Black: arc spectrum of the reference bar (REFBAR) along CCD y.\n"
+                              "  Blue: arc spectrum of this bar, shifted by the offset (px) that\n"
                               "    maximises its cross-correlation with the reference bar.\n"
                               "  Both are tapered at the ends (Tukey window, TUKEYALPHA).\n"
                               "What to look for:\n"
-                              "  Good: black and blue arc lines coincide line for line over the whole\n"
+                              "  Good: blue and black arc lines coincide line for line over the whole\n"
                               "  range; different relative line strengths are normal.\n"
-                              "  Bad: black lines displaced from blue everywhere, or aligned in one\n"
+                              "  Bad: blue lines displaced from black everywhere, or aligned in one\n"
                               "  part only. A bright line near an end can pull the correlation; a\n"
                               "  larger TUKEYALPHA reduces its weight.\n"
                               "Your options:\n"
@@ -131,7 +131,7 @@ class ArcOffsets(BasePrimitive):
                            y_axis_label="Wave offset (px)",
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height)
-                p.diamond(list(range(nbars)), offsets, color='black', size=8)
+                p.diamond(list(range(nbars)), offsets, color='blue', size=8)
                 xlim = [-1, nbars]
                 ylim = get_plot_lims(offsets)
                 p.xgrid.grid_line_color = None
@@ -143,7 +143,7 @@ class ArcOffsets(BasePrimitive):
                       help=("What you see:\n"
                             "  Title \"BAR OFFSETS\": the offset (px along CCD y) of each bar's arc\n"
                             "  spectrum from the reference bar, against bar number.\n"
-                            "  Black diamonds: the offsets.\n"
+                            "  Blue diamonds: the offsets.\n"
                             "  Black dash-dot lines: slice boundaries (every 5 bars).\n"
                             "What to look for:\n"
                             "  Good: the reference bar is at 0; the five bars of a slice have similar\n"

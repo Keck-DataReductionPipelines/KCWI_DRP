@@ -158,7 +158,7 @@ class SolveAIT(BasePrimitive):
                            y_axis_label="Flux",
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height)
-                p.line(yout, arcout, legend_label='Arc', color='black')
+                p.line(yout, arcout, legend_label='Arc', color='blue')
                 p.line(yout, barout, legend_label='Bar', color='cyan')
                 p.line([wgoo0, wgoo0], yran, legend_label='Good WLs',
                        color='green')
@@ -176,7 +176,7 @@ class SolveAIT(BasePrimitive):
                             "What you see:\n"
                             "  Title \"ARC # <n>\": spectra of AIT trace n, resampled onto the output\n"
                             "  wavelength grid.\n"
-                            "  Black: arc spectrum.\n"
+                            "  Blue: arc spectrum.\n"
                             "  Cyan: continuum-bar spectrum.\n"
                             "  Green verticals: good wavelength range (WAVGOOD).\n"
                             "  Grey verticals: full wavelength range (WAVALL).\n"

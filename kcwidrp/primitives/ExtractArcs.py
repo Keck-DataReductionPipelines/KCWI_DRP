@@ -143,7 +143,7 @@ class ExtractArcs(BasePrimitive):
                                y_axis_label="Flux",
                                plot_width=self.config.instrument.plot_width,
                                plot_height=self.config.instrument.plot_height)
-                    p.line(xp, arc, legend_label='Arc', color='black')
+                    p.line(xp, arc, legend_label='Arc', color='blue')
                     p.line(xp, bkg, legend_label='Bkg', color='cyan')
                     p.line(xp, bkgf, legend_label='BkgFit', color='red')
                     bokeh_plot(p, self.context.bokeh_session)
@@ -153,12 +153,12 @@ class ExtractArcs(BasePrimitive):
                             "What you see:\n"
                             "  Title \"ARC # <n>\": the arc spectrum extracted along bar n's trace,\n"
                             "  against CCD y pixel.\n"
-                            "  Black: arc flux summed across the extraction window.\n"
+                            "  Blue: arc flux summed across the extraction window.\n"
                             "  Cyan: background, the window's minimum times its width, row by row.\n"
                             "  Red: smoothed background (Savitzky-Golay); this is subtracted.\n"
                             "What to look for:\n"
                             "  Good: sharp arc lines on a low background; the red curve runs\n"
-                            "  smoothly under the black continuum between lines.\n"
+                            "  smoothly under the blue continuum between lines.\n"
                             "  Bad: red curve following line peaks or lying well above the\n"
                             "  inter-line level (the window is off the bar: check the trace).\n"
                             "Your options:\n"
@@ -230,7 +230,7 @@ class ExtractArcs(BasePrimitive):
                             x_axis_label="Y CCD Pixel", y_axis_label="Flux",
                             plot_width=self.config.instrument.plot_width,
                             plot_height=self.config.instrument.plot_height)
-                        p.line(xp, arc, legend_label='Arc', color='black')
+                        p.line(xp, arc, legend_label='Arc', color='blue')
                         p.line(xp, bkg, legend_label='Bkg', color='red')
                         bokeh_plot(p, self.context.bokeh_session)
                         q = ask_next(self.logger,
@@ -239,7 +239,7 @@ class ExtractArcs(BasePrimitive):
                                 "What you see:\n"
                                 "  Title \"ARC # <n>\": the arc spectrum of bar n, the median across the\n"
                                 "  bar in the geometrically warped arc image, against CCD y pixel.\n"
-                                "  Black: arc spectrum.\n"
+                                "  Blue: arc spectrum.\n"
                                 "  Red: background model, a cubic fitted to the minima of 16 sections\n"
                                 "    of the spectrum; it is subtracted from the arc.\n"
                                 "What to look for:\n"
@@ -247,7 +247,7 @@ class ExtractArcs(BasePrimitive):
                                 "  lines and stays below the line-free continuum.\n"
                                 "  Bad: red curve cutting through the spectrum or bending up at the ends\n"
                                 "  (e.g. a section without a line-free minimum); a featureless or very\n"
-                                "  faint black spectrum (bar missed by the trace).\n"
+                                "  faint blue spectrum (bar missed by the trace).\n"
                                 "Your options:\n"
                                 "  <cr>      show the next bar.\n"
                                 "  q / quit  stop showing extracted arcs (all bars are still extracted).\n"

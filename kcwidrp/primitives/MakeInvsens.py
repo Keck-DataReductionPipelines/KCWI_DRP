@@ -191,7 +191,7 @@ class MakeInvsens(BasePrimitive):
                     y_axis_label="Flux summed over WLs",
                     plot_width=self.config.instrument.plot_width,
                     plot_height=self.config.instrument.plot_height)
-                p.scatter(px, py, marker='x', color='black')
+                p.scatter(px, py, marker='x', color='blue')
                 bokeh_plot(p, self.context.bokeh_session)
                 print("sl, std: %02d, %.3f" % (i, tstd))
                 qstr = ask_next(
@@ -199,7 +199,7 @@ class MakeInvsens(BasePrimitive):
                     what="Standard-star cube: flux summed over wavelength along this slice.",
                     help=("What you see:\n"
                           "  Title \"Std Slice <n> (DAR padded)\".\n"
-                          "  Black x: flux summed over the good wavelength range, against\n"
+                          "  Blue x: flux summed over the good wavelength range, against\n"
                           "    position along slice n.\n"
                           "  The line printed above gives the slice and the standard deviation of\n"
                           "  this profile; the slice with the largest value is taken as the\n"
@@ -388,7 +388,7 @@ class MakeInvsens(BasePrimitive):
                     y_axis_label='Intensity (e-)',
                     plot_width=self.config.instrument.plot_width,
                     plot_height=self.config.instrument.plot_height)
-                p.line(w, obsspec, line_color='black')
+                p.line(w, obsspec, line_color='blue')
                 p.line([wgoo0, wgoo0], yran, line_color='green',
                        legend_label='WAVGOOD')
                 p.line([wgoo1, wgoo1], yran, line_color='green')
@@ -404,7 +404,7 @@ class MakeInvsens(BasePrimitive):
                     "New fit limits? <float> <float> (<cr> = accept)",
                     help=("What you see:\n"
                           "  Title \"<std> Obs Spec\". The x range is WAVALL0 - WAVALL1.\n"
-                          "  Black: the standard star's observed spectrum (e-/s, summed over the\n"
+                          "  Blue: the standard star's observed spectrum (e-/s, summed over the\n"
                           "    star's slices, extinction corrected).\n"
                           "  Green verticals: WAVGOOD, the range covered by all slices.\n"
                           "  Purple verticals: the current fit limits (\"LIMITS\").\n"
@@ -522,7 +522,7 @@ class MakeInvsens(BasePrimitive):
                     y_axis_label='Intensity (e-)',
                     plot_width=self.config.instrument.plot_width,
                     plot_height=self.config.instrument.plot_height)
-                p.line(w, obsspec, line_color='black')
+                p.line(w, obsspec, line_color='blue')
                 p.line([wgoo0, wgoo0], yran, line_color='green',
                        legend_label='WAVGOOD')
                 p.line([wgoo1, wgoo1], yran, line_color='green')
@@ -544,7 +544,7 @@ class MakeInvsens(BasePrimitive):
                     "Mask line: <start> <stop> [comment] in A (<cr> = done)",
                     help=("What you see:\n"
                           "  Title \"<std> Obs Spec\", as before.\n"
-                          "  Black: the observed standard spectrum.\n"
+                          "  Blue: the observed standard spectrum.\n"
                           "  Green verticals: WAVGOOD.\n"
                           "  Purple verticals: the fit limits.\n"
                           "  Orange dash-dot-dot: CWAVE.\n"
@@ -560,7 +560,7 @@ class MakeInvsens(BasePrimitive):
                           "  <cr>               done; use the masks shown.\n"
                           "  start stop [text]  add a mask from start to stop (Angstrom, start <\n"
                           "                     stop), optional comment; both ends must be inside\n"
-                          "                     the blue limits. The plot is redrawn with it.\n"
+                          "                     the purple limits. The plot is redrawn with it.\n"
                           "  Masks cannot be removed here: edit or delete <star>.lmsk (in the\n"
                           "  directory you started the DRP from) and rerun. Masked points are left\n"
                           "  out of the fits for *_invsens.fits and *_ea.fits.\n"
@@ -664,7 +664,7 @@ class MakeInvsens(BasePrimitive):
                     y_axis_label='Effective Efficiency (%)',
                     plot_width=self.config.instrument.plot_width,
                     plot_height=self.config.instrument.plot_height)
-                peff.line(wf, 100.*af/area, line_color='black',
+                peff.line(wf, 100.*af/area, line_color='blue',
                           legend_label='Data')
                 peff.line(w, 100.*fearea/area, line_color='red',
                           legend_label='Fit')
@@ -688,7 +688,7 @@ class MakeInvsens(BasePrimitive):
                           help=("What you see:\n"
                                 "  Title \"<std> Efficiency\": observed photons / expected photons on the\n"
                                 "  Keck aperture, in per cent (not extinction corrected).\n"
-                                "  Black: data.\n"
+                                "  Blue: data.\n"
                                 "  Red: polynomial fit.\n"
                                 "  Grey x: masked points (\"Rej\").\n"
                                 "  Purple verticals: fit limits.\n"
@@ -718,7 +718,7 @@ class MakeInvsens(BasePrimitive):
                     y_axis_type='log',
                     plot_width=self.config.instrument.plot_width,
                     plot_height=self.config.instrument.plot_height)
-                pivs.line(wf, sf, line_color='black', legend_label='Data')
+                pivs.line(wf, sf, line_color='blue', legend_label='Data')
                 pivs.line(w, finvsen, line_color='red', legend_label='Fit')
                 pivs.scatter(ww, mf, marker='x', color='grey',
                              legend_label='Rej')
@@ -736,14 +736,14 @@ class MakeInvsens(BasePrimitive):
                           help=("What you see:\n"
                                 "  Title \"<std> Inverse sensitivity\", logarithmic y axis: reference flux\n"
                                 "  divided by observed e-/s, the curve that flux-calibrates later data.\n"
-                                "  Black: data.\n"
+                                "  Blue: data.\n"
                                 "  Red: polynomial fit (also drawn outside the limits, where it is\n"
                                 "    extrapolated).\n"
                                 "  Grey x: masked points.\n"
                                 "  Purple verticals: fit limits.\n"
                                 "  Green verticals: WAVGOOD.\n"
                                 "What to look for:\n"
-                                "  Good: the red fit follows the black data closely between the limits.\n"
+                                "  Good: the red fit follows the blue data closely between the limits.\n"
                                 "  Bad: systematic departures, or the fit turning sharply up or down\n"
                                 "  just outside the limits where you still need calibrated data.\n"
                                 "Your options:\n"
@@ -762,8 +762,8 @@ class MakeInvsens(BasePrimitive):
                     y_axis_label='Flux (ergs/s/cm^2/A)',
                     plot_width=self.config.instrument.plot_width,
                     plot_height=self.config.instrument.plot_height)
-                pcal.line(w, calspec, line_color='black', legend_label='Obs')
-                pcal.line(w, rsflx, line_color='blue', legend_label='Ref')
+                pcal.line(w, calspec, line_color='blue', legend_label='Obs')
+                pcal.line(w, rsflx, line_color='black', legend_label='Ref')
                 pcal.line([wlm0, wlm0], yran, line_color='purple',
                           legend_label='WL lims')
                 pcal.line([wlm1, wlm1], yran, line_color='purple')
@@ -777,12 +777,12 @@ class MakeInvsens(BasePrimitive):
                           what="Standard star calibrated with the fitted inverse sensitivity, over its reference spectrum.",
                           help=("What you see:\n"
                                 "  Title \"<std> Calibrated\", flux in erg/s/cm^2/A.\n"
-                                "  Black: observed spectrum times the fitted inverse sensitivity.\n"
-                                "  Blue: the star's reference spectrum.\n"
+                                "  Blue: observed spectrum times the fitted inverse sensitivity.\n"
+                                "  Black: the star's reference spectrum.\n"
                                 "  Purple verticals: fit limits.\n"
                                 "  Green verticals: WAVGOOD.\n"
                                 "What to look for:\n"
-                                "  Good: black lies on blue between the limits, apart from narrow\n"
+                                "  Good: blue lies on black between the limits, apart from narrow\n"
                                 "  features (absorption lines, telluric bands) that differ in resolution.\n"
                                 "  Bad: broad differences (fit order or limits) or a mismatch at a\n"
                                 "  feature you meant to mask.\n"
@@ -803,7 +803,7 @@ class MakeInvsens(BasePrimitive):
                     y_axis_label='Obs - Ref / Ref (%)',
                     plot_width=self.config.instrument.plot_width,
                     plot_height=self.config.instrument.plot_height)
-                prsd.line(wf, resid, line_color='black',
+                prsd.line(wf, resid, line_color='blue',
                           legend_label='Obs - Ref (%)')
                 if len(not_used) > 0:
                     prsd.scatter(ww, rbad, marker='x', color='grey',
@@ -834,7 +834,7 @@ class MakeInvsens(BasePrimitive):
                         help=("What you see:\n"
                               "  Title \"<std> Residuals = <mean> +- <std> (%)\": (calibrated -\n"
                               "  reference) / reference in per cent, over the fit range.\n"
-                              "  Black: residuals.\n"
+                              "  Blue: residuals.\n"
                               "  Grey x: masked points (if any).\n"
                               "  Purple verticals: fit limits.\n"
                               "  Green verticals: WAVGOOD.\n"

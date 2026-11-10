@@ -108,7 +108,7 @@ class SubtractOverscan(BasePrimitive):
                                y_axis_label='counts',
                                plot_width=self.config.instrument.plot_width,
                                plot_height=self.config.instrument.plot_height)
-                    p.circle(x, osvec, color='black', legend_label="Data")
+                    p.circle(x, osvec, color='blue', legend_label="Data")
                     p.line(x, osfit, line_color='red', line_width=3,
                            legend_label="Fit")
                     bokeh_plot(p, self.context.bokeh_session)
@@ -119,7 +119,7 @@ class SubtractOverscan(BasePrimitive):
                             help=(
                                 "What you see:\n"
                                 "  Title \"Img # <n> OSCAN [x0:x1, y0:y1] amp <a>, noise: <s> e-/px\".\n"
-                                "  Black circles: median of the overscan columns for each row (counts).\n"
+                                "  Blue circles: median of the overscan columns for each row (counts).\n"
                                 "  Red thick line: polynomial fit; the residuals give the read noise\n"
                                 "    in the title (OSCNRN<a>).\n"
                                 "  The value subtracted from the amplifier is a single number, the\n"
@@ -163,7 +163,7 @@ class SubtractOverscan(BasePrimitive):
                     "What you see:\n"
                     "  The overscan plots of all amplifiers of this frame in one grid, each\n"
                     "  titled with its noise.\n"
-                    "  Black circles: row medians.\n"
+                    "  Blue circles: row medians.\n"
                     "  Red line: fit.\n"
                     "What to look for:\n"
                     "  Good: all amplifiers flat and smooth, with similar noise.\n"

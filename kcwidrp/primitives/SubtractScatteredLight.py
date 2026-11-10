@@ -98,7 +98,7 @@ class SubtractScatteredLight(BasePrimitive):
                            x_axis_label='y pixel', y_axis_label='e-',
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height)
-                p.circle(xvals, yvals, color='black', legend_label="Scat")
+                p.circle(xvals, yvals, color='blue', legend_label="Scat")
                 p.line(xvals, scat, color='red', line_width=3,
                        legend_label="Smooth")
                 p.legend.location = "top_left"
@@ -112,7 +112,7 @@ class SubtractScatteredLight(BasePrimitive):
                         "  along the spectral (y) direction.\n"
                         "  y axis in e-: CorrectGain has already converted counts to electrons\n"
                         "  (it runs just before this step).\n"
-                        "  Black circles (\"Scat\"): the medians.\n"
+                        "  Blue circles (\"Scat\"): the medians.\n"
                         "  Red thick line (\"Smooth\"): Savitzky-Golay smoothing (window 151, 303\n"
                         "    or 501 rows, wider for noisier data); this curve is subtracted\n"
                         "    from every column.\n"

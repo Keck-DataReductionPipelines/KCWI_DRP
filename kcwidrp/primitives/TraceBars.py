@@ -136,7 +136,7 @@ class TraceBars(BasePrimitive):
                            x_axis_label="CCD X (px)", y_axis_label="CCD Y (px)",
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height)
-                p.scatter(xi, yi, marker='x', size=2, color='black')
+                p.scatter(xi, yi, marker='x', size=2, color='blue')
                 p.scatter(self.action.args.middle_centers,
                           [self.action.args.middle_row]*nbars, color='magenta')
                 bokeh_plot(p, self.context.bokeh_session)
@@ -145,7 +145,7 @@ class TraceBars(BasePrimitive):
                     help=(
                         "What you see:\n"
                         "  Title \"SPATIAL CONTROL POINTS\" on CCD x, y.\n"
-                        "  Black x: centroids of each bar traced up and down the CCD from the\n"
+                        "  Blue x: centroids of each bar traced up and down the CCD from the\n"
                         "    middle row.\n"
                         "  Magenta circles: the bar positions found on the middle row.\n"
                         "What to look for:\n"

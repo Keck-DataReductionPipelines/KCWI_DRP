@@ -328,13 +328,13 @@ class FitCenter(BasePrimitive):
                            plot_height=self.config.instrument.plot_height,
                            x_axis_label="Central dispersion (Ang/px)",
                            y_axis_label="X-Corr Peak Value")
-                p.scatter(disps, maxima, color='black', legend_label="Data")
-                p.line(disps, maxima, color='black', legend_label="Data")
+                p.scatter(disps, maxima, color='blue', legend_label="Data")
+                p.line(disps, maxima, color='blue', legend_label="Data")
                 ylim = [min(maxima), max(maxima)]
                 p.line([_centdisp, _centdisp], ylim, color='magenta',
                        legend_label="Fit Disp")
                 p.line([self.context.prelim_disp, self.context.prelim_disp],
-                       ylim, color='blue', line_dash='dashed',
+                       ylim, color='black', line_dash='dashed',
                        legend_label="Calc Disp")
                 bokeh_plot(p, self.context.bokeh_session)
                 q = ask_next(
@@ -345,13 +345,13 @@ class FitCenter(BasePrimitive):
                           "  x: trial central dispersion (A/px), within 5 % of the calculated one.\n"
                           "  y: peak of the cross-correlation of this bar's central arc spectrum\n"
                           "  with the atlas at that dispersion.\n"
-                          "  Black circles and line: the scan (\"Data\").\n"
+                          "  Blue circles and line: the scan (\"Data\").\n"
                           "  Magenta vertical: dispersion adopted (maximum of the interpolated\n"
                           "    scan, searched in the middle third of the range).\n"
-                          "  Blue dashed vertical: dispersion calculated from the grating\n"
+                          "  Black dashed vertical: dispersion calculated from the grating\n"
                           "    equation.\n"
                           "What to look for:\n"
-                          "  Good: one clear maximum, magenta line on it, close to the blue line.\n"
+                          "  Good: one clear maximum, magenta line on it, close to the black line.\n"
                           "  Bad: flat, noisy or multi-peaked scan, or the maximum at the edge of\n"
                           "  the middle third: the atlas offset (ReadAtlas) or the arc is suspect.\n"
                           "Your options:\n"
@@ -379,7 +379,7 @@ class FitCenter(BasePrimitive):
                        plot_width=self.config.instrument.plot_width,
                        plot_height=self.config.instrument.plot_height)
             x = range(len(centwave))
-            p.scatter(x, centwave, marker='x', color='black',
+            p.scatter(x, centwave, marker='x', color='blue',
                       legend_label='bar wave')
             p.line([0, nbars], [self.action.args.cwave, self.action.args.cwave],
                    color='orange', line_dash='dashdotdot',
@@ -395,7 +395,7 @@ class FitCenter(BasePrimitive):
                   what="Central wavelength found for every bar, against bar number.",
                   help=("What you see:\n"
                         "  Title \"CENTRAL VALUES\", y \"Central Wavelength (A)\".\n"
-                        "  Black x: the central wavelength fitted for each bar.\n"
+                        "  Blue x: the central wavelength fitted for each bar.\n"
                         "  Orange dash-dot-dot: CWAVE, the grating central wavelength from the\n"
                         "    header.\n"
                         "  Black dash-dot lines: slice boundaries.\n"
@@ -423,10 +423,10 @@ class FitCenter(BasePrimitive):
                        plot_width=self.config.instrument.plot_width,
                        plot_height=self.config.instrument.plot_height)
             x = range(len(centdisp))
-            p.scatter(x, centdisp, marker='x', color='black',
+            p.scatter(x, centdisp, marker='x', color='blue',
                       legend_label='bar disp')
             p.line([0, nbars], [self.context.prelim_disp,
-                                self.context.prelim_disp], color='blue',
+                                self.context.prelim_disp], color='black',
                    line_dash='dashed', legend_label='Calc Disp')
             xlim = [-2, nbars+1]
             ylim = get_plot_lims(centdisp)
@@ -439,14 +439,14 @@ class FitCenter(BasePrimitive):
                   what="Central dispersion found for every bar, against bar number.",
                   help=("What you see:\n"
                         "  Title \"CENTRAL VALUES\", y \"Central Dispersion (A)\".\n"
-                        "  Black x: the central dispersion (A/px) fitted for each bar.\n"
-                        "  Blue dashed line: dispersion calculated from the grating equation.\n"
+                        "  Blue x: the central dispersion (A/px) fitted for each bar.\n"
+                        "  Black dashed line: dispersion calculated from the grating equation.\n"
                         "  Black dash-dot lines: slice boundaries.\n"
                         "What to look for:\n"
-                        "  Good: all bars close to each other and to the blue line, varying\n"
+                        "  Good: all bars close to each other and to the black line, varying\n"
                         "  smoothly across the field.\n"
                         "  Bad: isolated bars far off, or values at the edge of the scanned range\n"
-                        "  (5 % either side of the blue line): a failed central fit.\n"
+                        "  (5 % either side of the black line): a failed central fit.\n"
                         "Your options:\n"
                         "  <cr>  continue. Display only: the reduction is not changed.\n"
                         "Default:\n"

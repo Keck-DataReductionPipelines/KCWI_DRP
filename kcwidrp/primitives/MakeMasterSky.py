@@ -336,7 +336,7 @@ class MakeMasterSky(BaseImg):
                     plot_width=self.config.instrument.plot_width,
                     plot_height=self.config.instrument.plot_height)
                 p.circle(std_sl_max_pos_data, std_sl_max_flx_data, size=1,
-                         line_alpha=0., fill_color='black',
+                         line_alpha=0., fill_color='blue',
                          legend_label='Data')
                 p.line([ppk, ppk], [0, fpk], color='magenta')
                 p.line([std_pos_mask_0, std_pos_mask_0], [0, fpk],
@@ -352,7 +352,7 @@ class MakeMasterSky(BaseImg):
                         "  Title \"Std max sl <n>\": flux against position along slice n, the\n"
                         "  slice with the largest spread, in a 10 % wavelength window around\n"
                         "  the middle wavelength.\n"
-                        "  Black dots: data.\n"
+                        "  Blue dots: data.\n"
                         "  Red: Gaussian fit.\n"
                         "  Magenta vertical: peak position.\n"
                         "  Purple verticals: +- 5 sigma of the fit; this range of slice\n"
@@ -439,7 +439,7 @@ class MakeMasterSky(BaseImg):
                         plot_width=self.config.instrument.plot_width,
                         plot_height=self.config.instrument.plot_height)
                     p.circle(con_sl_max_pos_data, con_sl_max_flx_data,
-                             size=1, line_alpha=0., fill_color='black',
+                             size=1, line_alpha=0., fill_color='blue',
                              legend_label='Data')
                     p.line([ppk, ppk], [0, fpk], color='magenta')
                     p.line([con_pos_mask_lo_0, con_pos_mask_lo_0], [0, fpk],
@@ -458,7 +458,7 @@ class MakeMasterSky(BaseImg):
                             "What you see:\n"
                             "  Title \"Cont source max sl <n>\": flux against position along slice n,\n"
                             "  in a 10 % wavelength window around the middle wavelength.\n"
-                            "  Black dots: data.\n"
+                            "  Blue dots: data.\n"
                             "  Red: Gaussian fit.\n"
                             "  Magenta vertical: peak.\n"
                             "  Purple verticals: +- 7 sigma, the source region.\n"
@@ -636,7 +636,7 @@ class MakeMasterSky(BaseImg):
                 y_axis_label='Flux (e-)',
                 plot_width=self.config.instrument.plot_width,
                 plot_height=self.config.instrument.plot_height)
-            p.circle(xplt, yplt, size=1, line_alpha=0., fill_color='black',
+            p.circle(xplt, yplt, size=1, line_alpha=0., fill_color='blue',
                      legend_label='Data')
             p.line(xplt, fplt, line_color='red', legend_label='Fit')
             p.line([wavegood0, wavegood0], yrng, line_color='green')
@@ -649,7 +649,7 @@ class MakeMasterSky(BaseImg):
                 help=(
                     "What you see:\n"
                     "  Title \"Master Sky\", flux (e-) against wavelength.\n"
-                    "  Black dots: unmasked sky pixels from all slices (subsampled).\n"
+                    "  Blue dots: unmasked sky pixels from all slices (subsampled).\n"
                     "  Red: the spline sky model subtracted from this frame.\n"
                     "  Green verticals: WAVGOOD.\n"
                     "What to look for:\n"

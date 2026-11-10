@@ -262,7 +262,7 @@ class MakeMasterFlat(BaseImg):
                            y_axis_label='counts',
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height)
-                p.circle(wwflat, ywflat, color='black', legend_label="Data")
+                p.circle(wwflat, ywflat, color='blue', legend_label="Data")
                 p.line(wflat, wslfit, line_color='red', line_width=3,
                        legend_label="Fit")
                 bokeh_plot(p, self.context.bokeh_session)
@@ -275,7 +275,7 @@ class MakeMasterFlat(BaseImg):
                             "  is 1/15 of that range wide. x: wavelength (A).\n"
                             "  The reference slice is slice 9 in all the flat plots; it is not the\n"
                             "  reference bar of the arc plots.\n"
-                            "  Black circles: counts.\n"
+                            "  Blue circles: counts.\n"
                             "  Red: quadratic fit, divided out before the vignetting is measured.\n"
                             "What to look for:\n"
                             "  Good: the red line follows the trend of the points.\n"
@@ -328,7 +328,7 @@ class MakeMasterFlat(BaseImg):
                            y_axis_label='Ratio',
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height)
-                p.circle(posmap.data.flat[qq], ycdata, color='black',
+                p.circle(posmap.data.flat[qq], ycdata, color='blue',
                          legend_label='Data')
                 p.line(allidx, resfit[1] + resfit[0]*allidx,
                        line_color='red', line_dash='dashed',
@@ -364,7 +364,7 @@ class MakeMasterFlat(BaseImg):
                             "  Internal flats only: their lamp light falls off near one edge of\n"
                             "  every slice (left on blue, right on red). The DRP fits a line to the\n"
                             "  fall-off and one to the flat part; where they cross is the knee.\n"
-                            "  Black circles (\"Data\"): data.\n"
+                            "  Blue circles (\"Data\"): data.\n"
                             "  Red dashed (\"Vign.\"): linear fit to the vignetted part.\n"
                             "  Purple dashed verticals (\"Vign. window\"): the window of that fit.\n"
                             "  Red line (\"UnVign.\"): linear fit to the un-vignetted part, drawn\n"
@@ -421,7 +421,7 @@ class MakeMasterFlat(BaseImg):
                            y_axis_label='Ratio',
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height)
-                p.circle(xbuff, ybuff, color='black', legend_label='Data')
+                p.circle(xbuff, ybuff, color='blue', legend_label='Data')
                 p.line(xbuff, np.polyval(buffit, xbuff), line_color='red',
                        legend_label='Fit')
                 bokeh_plot(p, self.context.bokeh_session)
@@ -435,7 +435,7 @@ class MakeMasterFlat(BaseImg):
                             "  the red un-vignetted line of P22, which removes the lamp's fall-off.\n"
                             "  A sharp switch at the knee would leave a step, so inside the buffer\n"
                             "  the flat is instead scaled by that line divided by this cubic fit.\n"
-                            "  Black circles (\"Data\"): data.\n"
+                            "  Blue circles (\"Data\"): data.\n"
                             "  Red (\"Fit\"): cubic fit used to join the corrected and uncorrected\n"
                             "    parts smoothly.\n"
                             "What to look for:\n"
@@ -516,10 +516,10 @@ class MakeMasterFlat(BaseImg):
                            y_axis_label='Value',
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height)
-                p.circle(xledge, smyledge, color='black')
+                p.circle(xledge, smyledge, color='blue')
                 p.line(fpoints, ylfit, color='red')
                 ylim = get_plot_lims(ylfit)
-                p.line([ledge_wave, ledge_wave], ylim, color='blue',
+                p.line([ledge_wave, ledge_wave], ylim, color='black',
                        line_dash='dashed')
                 bokeh_plot(p, self.context.bokeh_session)
                 pause(self.config.instrument, self.logger,
@@ -528,11 +528,11 @@ class MakeMasterFlat(BaseImg):
                             "  Title \"Ledge\": reference-slice flat within +- 25 A of the wavelength\n"
                             "  where the BM grating's ledge (a step in the flat-field spectrum) is\n"
                             "  predicted from CWAVE.\n"
-                            "  Black circles: smoothed data.\n"
+                            "  Blue circles: smoothed data.\n"
                             "  Red line: spline fit.\n"
-                            "  Blue dashed vertical: predicted ledge wavelength.\n"
+                            "  Black dashed vertical: predicted ledge wavelength.\n"
                             "What to look for:\n"
-                            "  Good: a clear step near the blue line. Its position is found from the\n"
+                            "  Good: a clear step near the black line. Its position is found from the\n"
                             "  derivative in the next plot.\n"
                             "  Bad: no step, or several similar steps; then the peak choice in the\n"
                             "  next step needs care.\n"
@@ -549,8 +549,8 @@ class MakeMasterFlat(BaseImg):
                            plot_height=self.config.instrument.plot_height)
                 xx = list(range(len(deriv)))
                 ylim = get_plot_lims(deriv)
-                p.circle(xx, deriv, color='black')
-                p.line([len(xx)/2, len(xx)/2], ylim, color='blue',
+                p.circle(xx, deriv, color='blue')
+                p.line([len(xx)/2, len(xx)/2], ylim, color='black',
                        line_dash='dashed')
                 for pk in peaks:
                     p.line([pk, pk], ylim, color='magenta')
@@ -585,13 +585,13 @@ class MakeMasterFlat(BaseImg):
                                   "  Title \"Deriv\": derivative of the ledge fit, in 0.5 A steps, against\n"
                                   "  index 0-59 (axis \"px (Wavelength)\"; index i is at predicted ledge\n"
                                   "  wavelength - 15 A + 0.5 i A).\n"
-                                  "  Black circles: derivative.\n"
-                                  "  Blue dashed vertical (index 30): the predicted ledge wavelength.\n"
+                                  "  Blue circles: derivative.\n"
+                                  "  Black dashed vertical (index 30): the predicted ledge wavelength.\n"
                                   "  Magenta verticals: peaks found (height >= 20); there is more than\n"
                                   "    one.\n"
                                   "What to look for:\n"
                                   "  The ledge is a single sharp peak, usually the strongest one close to\n"
-                                  "  the blue line. Smaller or broader peaks come from noise or spectral\n"
+                                  "  the black line. Smaller or broader peaks come from noise or spectral\n"
                                   "  structure in the flat.\n"
                                   "Your options:\n"
                                   "  <index>  put the ledge at that index (read it off the x axis). The\n"
@@ -625,7 +625,7 @@ class MakeMasterFlat(BaseImg):
                             y_axis_label='Value',
                             plot_width=self.config.instrument.plot_width,
                             plot_height=self.config.instrument.plot_height)
-                        p.circle(xvals, deriv, color='black',
+                        p.circle(xvals, deriv, color='blue',
                                  legend_label='Data')
                         p.line([apk, apk], [-50, 200], line_color='magenta',
                                legend_label='Pk')
@@ -635,7 +635,7 @@ class MakeMasterFlat(BaseImg):
                               help=("What you see:\n"
                                     "  Title \"Peak of ledge\": the derivative of the ledge fit against\n"
                                     "  wavelength (A).\n"
-                                    "  Black circles: data.\n"
+                                    "  Blue circles: data.\n"
                                     "  Magenta vertical (\"Pk\"): the ledge position used.\n"
                                     "What to look for:\n"
                                     "  Good: the magenta line sits on the sharp peak you intended.\n"
@@ -674,7 +674,7 @@ class MakeMasterFlat(BaseImg):
                             plot_width=self.config.instrument.plot_width,
                             plot_height=self.config.instrument.plot_height)
                         # Input data
-                        p.circle(xledge, yledge, color='black',
+                        p.circle(xledge, yledge, color='blue',
                                  legend_label='Data')
                         # correct input data
                         qcorrect = [i for i, v in enumerate(xledge) if v >= apk]
@@ -707,7 +707,7 @@ class MakeMasterFlat(BaseImg):
                               what="BM ledge: flat data before and after the step correction.",
                               help=("What you see:\n"
                                     "  Title \"BM Ledge Region\", within +- 25 A of the predicted ledge.\n"
-                                    "  Black circles: reference-slice flat data.\n"
+                                    "  Blue circles: reference-slice flat data.\n"
                                     "  Cyan circles: the same data redward of the ledge after dividing by\n"
                                     "    the step ratio (\"Corrected\").\n"
                                     "  Red: spline fit to the smoothed data.\n"
@@ -717,7 +717,7 @@ class MakeMasterFlat(BaseImg):
                                     "  Purple dotted verticals: the window of the redward fit.\n"
                                     "  Magenta vertical (\"Pk\"): ledge position.\n"
                                     "What to look for:\n"
-                                    "  Good: the cyan points continue the level of the black points below\n"
+                                    "  Good: the cyan points continue the level of the blue points below\n"
                                     "  the ledge, with no step left.\n"
                                     "  Bad: a step remains or is overcorrected: the wrong peak was taken.\n"
                                     "Your options:\n"
@@ -1131,7 +1131,7 @@ class MakeMasterFlat(BaseImg):
                 y_range=yran,
                 plot_width=self.config.instrument.plot_width,
                 plot_height=self.config.instrument.plot_height)
-            p.circle(xplt, yplt, size=1, line_alpha=0., fill_color='black',
+            p.circle(xplt, yplt, size=1, line_alpha=0., fill_color='blue',
                      legend_label='Data')
             p.line(fxplt, fplt, line_color='red', legend_label='Fit',
                    line_width=2)
@@ -1147,7 +1147,7 @@ class MakeMasterFlat(BaseImg):
                   what="Master illumination spectrum: combined flat data over the full range, with fit.",
                   help=("What you see:\n"
                         "  Title \"Master Illumination\", flux (e-) against wavelength.\n"
-                        "  Black dots: reference-slice data plus the scaled blue- and red-end\n"
+                        "  Blue dots: reference-slice data plus the scaled blue- and red-end\n"
                         "    slice data.\n"
                         "  Red thick line: the spline fit, the illumination spectrum the flat\n"
                         "    is divided by.\n"

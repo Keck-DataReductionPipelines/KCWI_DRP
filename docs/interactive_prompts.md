@@ -83,17 +83,17 @@ describe the plots in this scheme; the per-site list is in
 
 | Role | Colour / style |
 |---|---|
-| Data being inspected (points, spectra, profiles, histogram bars) | black |
+| Data being inspected (points, spectra, profiles, histogram bars) | blue |
 | Second data series of the same kind (raw background, corrected data, continuum-bar spectrum, red-end slice) | cyan |
-| Reference or comparison data (atlas, REFBAR arc, the star's reference spectrum, blue-end slice) | blue |
+| Reference or comparison data (atlas, REFBAR arc, the star's reference spectrum, reference slice) | black |
 | Fit, model, smoothing | red solid |
 | Mean / ±σ, ±RMS of a fit or of the data | red solid / red dashed |
-| Mean of a subset (per-slice mean, P46) | blue, thick, over the subset only |
+| Mean of a subset (per-slice mean, P46) | black, thick, over the subset only |
 | CWAVE | orange, dash-dot-dot (used for nothing else) |
 | WAVGOOD | green solid verticals |
 | WAVALL | grey solid verticals |
 | Found or adopted value (peak, centroid, adopted dispersion, kept lines) | magenta |
-| Predicted or calculated value (grating equation, predicted ledge, ATOFF) | blue dashed |
+| Predicted or calculated value (grating equation, predicted ledge, ATOFF) | black dashed |
 | Limits and windows (fit limits, fit windows, buffer zones, WavLim, Cor lim, source masks) | purple; a second set dashed or dotted |
 | Line masks | purple dashed pairs |
 | Thresholds / zero lines | grey dashed / grey dotted |
@@ -474,7 +474,7 @@ Overscan of one amplifier along the readout, with the fit used for the noise est
 ```text
 What you see:
   Title "Img # <n> OSCAN [x0:x1, y0:y1] amp <a>, noise: <s> e-/px".
-  Black circles: median of the overscan columns for each row (counts).
+  Blue circles: median of the overscan columns for each row (counts).
   Red thick line: polynomial fit; the residuals give the read noise
     in the title (OSCNRN<a>).
   The value subtracted from the amplifier is a single number, the
@@ -510,7 +510,7 @@ Overscan of all amplifiers of this frame side by side.
 What you see:
   The overscan plots of all amplifiers of this frame in one grid, each
   titled with its noise.
-  Black circles: row medians.
+  Blue circles: row medians.
   Red line: fit.
 What to look for:
   Good: all amplifiers flat and smooth, with similar noise.
@@ -543,7 +543,7 @@ Read-noise histogram of one amplifier, from the difference of two bias frames.
 ```text
 What you see:
   Title "BIAS NOISE amp <n> = <sigma>" (e-).
-  Black bars: histogram of (bias 2 - bias 3) x gain / sqrt(2) over
+  Blue bars: histogram of (bias 2 - bias 3) x gain / sqrt(2) over
     amplifier n, within the 3.5 sigma clipping range.
   Red thick line: Gaussian of the measured sigma (centred on 0, scaled
     to the histogram peak).
@@ -582,7 +582,7 @@ Continuum-bar profile across one CCD row, with the peaks found above the thresho
 What you see:
   Title "BARS TRACE at = <row>, TRY <n>": the continuum-bars image
   across CCD x, median of a few rows around <row>.
-  Black line: the profile.
+  Blue line: the profile.
   Magenta x: peaks found above the threshold.
   Grey dashed: threshold (mean + 0.5 x standard deviation).
 What to look for:
@@ -615,7 +615,7 @@ Continuum-bar profile at the row used for bar finding: all bars found.
 What you see:
   Title "BARS MID TRACE Thresh = <value>": the continuum-bars profile
   across CCD x at the row where all bars were found.
-  Black line: profile.
+  Blue line: profile.
   Magenta x: the bar peaks.
   Grey dashed: peak threshold.
 What to look for:
@@ -648,10 +648,10 @@ Profile of this bar across CCD x and its centroid.
 ```text
 What you see:
   Title "BAR <n> CENTRD = <x>": bar n across CCD x, minimum subtracted.
-  Black line and circles: the profile ("Bar Trace").
+  Blue line and circles: the profile ("Bar Trace").
   Magenta vertical: the centroid, the x position used for this bar
     (its height spans threshold to peak of the raw profile, so it need
-    not touch the black curve).
+    not touch the blue curve).
 What to look for:
   Good: one clean, roughly symmetric peak with the magenta line at its
   centre.
@@ -684,7 +684,7 @@ Continuum-bar traces: control points used for the geometric solution.
 ```text
 What you see:
   Title "SPATIAL CONTROL POINTS" on CCD x, y.
-  Black x: centroids of each bar traced up and down the CCD from the
+  Blue x: centroids of each bar traced up and down the CCD from the
     middle row.
   Magenta circles: the bar positions found on the middle row.
 What to look for:
@@ -723,12 +723,12 @@ Arc spectrum extracted along this bar's trace, with its background estimate.
 What you see:
   Title "ARC # <n>": the arc spectrum extracted along bar n's trace,
   against CCD y pixel.
-  Black: arc flux summed across the extraction window.
+  Blue: arc flux summed across the extraction window.
   Cyan: background, the window's minimum times its width, row by row.
   Red: smoothed background (Savitzky-Golay); this is subtracted.
 What to look for:
   Good: sharp arc lines on a low background; the red curve runs
-  smoothly under the black continuum between lines.
+  smoothly under the blue continuum between lines.
   Bad: red curve following line peaks or lying well above the
   inter-line level (the window is off the bar: check the trace).
 Your options:
@@ -757,7 +757,7 @@ Arc spectrum extracted at this bar (warped arc image), with its fitted backgroun
 What you see:
   Title "ARC # <n>": the arc spectrum of bar n, the median across the
   bar in the geometrically warped arc image, against CCD y pixel.
-  Black: arc spectrum.
+  Blue: arc spectrum.
   Red: background model, a cubic fitted to the minima of 16 sections
     of the spectrum; it is subtracted from the arc.
 What to look for:
@@ -765,7 +765,7 @@ What to look for:
   lines and stays below the line-free continuum.
   Bad: red curve cutting through the spectrum or bending up at the ends
   (e.g. a section without a line-free minimum); a featureless or very
-  faint black spectrum (bar missed by the trace).
+  faint blue spectrum (bar missed by the trace).
 Your options:
   <cr>      show the next bar.
   q / quit  stop showing extracted arcs (all bars are still extracted).
@@ -793,14 +793,14 @@ Arc spectrum of this bar, shifted by its cross-correlation offset, over the refe
 ```text
 What you see:
   Title "BAR OFFSET for Arc: <bar> Slice: <slice> = <offset>".
-  Blue: arc spectrum of the reference bar (REFBAR) along CCD y.
-  Black: arc spectrum of this bar, shifted by the offset (px) that
+  Black: arc spectrum of the reference bar (REFBAR) along CCD y.
+  Blue: arc spectrum of this bar, shifted by the offset (px) that
     maximises its cross-correlation with the reference bar.
   Both are tapered at the ends (Tukey window, TUKEYALPHA).
 What to look for:
-  Good: black and blue arc lines coincide line for line over the whole
+  Good: blue and black arc lines coincide line for line over the whole
   range; different relative line strengths are normal.
-  Bad: black lines displaced from blue everywhere, or aligned in one
+  Bad: blue lines displaced from black everywhere, or aligned in one
   part only. A bright line near an end can pull the correlation; a
   larger TUKEYALPHA reduces its weight.
 Your options:
@@ -833,7 +833,7 @@ Offset of every bar's arc spectrum from the reference bar (px), by bar number.
 What you see:
   Title "BAR OFFSETS": the offset (px along CCD y) of each bar's arc
   spectrum from the reference bar, against bar number.
-  Black diamonds: the offsets.
+  Blue diamonds: the offsets.
   Black dash-dot lines: slice boundaries (every 5 bars).
 What to look for:
   Good: the reference bar is at 0; the five bars of a slice have similar
@@ -870,9 +870,9 @@ What you see:
   Title "ATLAS OFFSET = <n> px": cross-correlation of the reference-bar
   arc spectrum (on its calculated wavelengths) with the atlas spectrum,
   against offset in atlas pixels (central third of the range).
-  Black: cross-correlation.
+  Blue: cross-correlation.
   Magenta vertical ("Peak"): offset found.
-  Blue dashed vertical: offset requested with ATOFF (only if set).
+  Black dashed vertical: offset requested with ATOFF (only if set).
 What to look for:
   Good: one sharp peak clearly above the rest, with the magenta line on
   it.
@@ -905,16 +905,16 @@ Reference-bar arc over the lamp atlas: accept the offset or enter a new one (atl
 ```text
 What you see:
   Title "ATLAS OFFSET = <A> Ang (<n> px)".
-  Black: reference-bar arc spectrum (bar REFBAR), normalised, on its
+  Blue: reference-bar arc spectrum (bar REFBAR), normalised, on its
     calculated wavelengths minus the current offset.
-  Blue: atlas spectrum of the lamp, normalised.
+  Black: atlas spectrum of the lamp, normalised.
   Orange dash-dot-dot: CWAVE.
 What to look for:
-  Good: black and blue lines coincide line for line over the range
+  Good: blue and black lines coincide line for line over the range
   (relative strengths differ; small misalignments at the ends are
   fixed later, since the dispersion is not yet refined).
   Bad: a constant shift between the two patterns. Enter a new offset:
-  a larger offset moves the black spectrum to shorter wavelengths; the
+  a larger offset moves the blue spectrum to shorter wavelengths; the
   title gives the offset in A and px, i.e. the atlas A per px.
 Your options:
   <cr>      accept the offset shown and continue.
@@ -949,13 +949,13 @@ What you see:
   x: trial central dispersion (A/px), within 5 % of the calculated one.
   y: peak of the cross-correlation of this bar's central arc spectrum
   with the atlas at that dispersion.
-  Black circles and line: the scan ("Data").
+  Blue circles and line: the scan ("Data").
   Magenta vertical: dispersion adopted (maximum of the interpolated
     scan, searched in the middle third of the range).
-  Blue dashed vertical: dispersion calculated from the grating
+  Black dashed vertical: dispersion calculated from the grating
     equation.
 What to look for:
-  Good: one clear maximum, magenta line on it, close to the blue line.
+  Good: one clear maximum, magenta line on it, close to the black line.
   Bad: flat, noisy or multi-peaked scan, or the maximum at the edge of
   the middle third: the atlas offset (ReadAtlas) or the arc is suspect.
 Your options:
@@ -985,7 +985,7 @@ Central wavelength found for every bar, against bar number.
 ```text
 What you see:
   Title "CENTRAL VALUES", y "Central Wavelength (A)".
-  Black x: the central wavelength fitted for each bar.
+  Blue x: the central wavelength fitted for each bar.
   Orange dash-dot-dot: CWAVE, the grating central wavelength from the
     header.
   Black dash-dot lines: slice boundaries.
@@ -1018,14 +1018,14 @@ Central dispersion found for every bar, against bar number.
 ```text
 What you see:
   Title "CENTRAL VALUES", y "Central Dispersion (A)".
-  Black x: the central dispersion (A/px) fitted for each bar.
-  Blue dashed line: dispersion calculated from the grating equation.
+  Blue x: the central dispersion (A/px) fitted for each bar.
+  Black dashed line: dispersion calculated from the grating equation.
   Black dash-dot lines: slice boundaries.
 What to look for:
-  Good: all bars close to each other and to the blue line, varying
+  Good: all bars close to each other and to the black line, varying
   smoothly across the field.
   Bad: isolated bars far off, or values at the edge of the scanned range
-  (5 % either side of the blue line): a failed central fit.
+  (5 % either side of the black line): a failed central fit.
 Your options:
   <cr>  continue. Display only: the reduction is not changed.
 Default:
@@ -1053,8 +1053,8 @@ Atlas lines selected for the wavelength fit, and those rejected, over the arc.
 ```text
 What you see:
   Title "ATLAS LINES Ngood = <n>, Nrej = <m>", normalised flux.
-  Black: reference-bar arc spectrum on its central-fit wavelengths.
-  Blue: atlas spectrum of the arc lamp.
+  Blue: reference-bar arc spectrum on its central-fit wavelengths.
+  Black: atlas spectrum of the arc lamp.
   Large magenta diamonds: atlas lines kept for the fit ("Kept").
   Small diamonds, rejected lines (plotted at the arc line's height):
     cyan: WinRej (no clean window).
@@ -1064,9 +1064,9 @@ What you see:
     grey: FntRej (faintest dropped when > 400 lines).
   Purple verticals: wavelength limits used ("WavLim").
 What to look for:
-  Good: black and blue spectra line up; kept lines sit on clean atlas
+  Good: blue and black spectra line up; kept lines sit on clean atlas
   peaks spread over the whole range between the purple lines.
-  Bad: black and blue offset (atlas offset wrong); kept lines missing
+  Bad: blue and black offset (atlas offset wrong); kept lines missing
   from part of the range, which weakens the solution there.
 Your options:
   <cr>  continue. Display only (the list is written to
@@ -1098,17 +1098,17 @@ What you see:
   wavelength (bottom, atlas) and CCD y pixel (top, arc), matched over
   this window by the central wavelength fit.
   Atlas:
-    Blue line and circles: atlas spectrum.
-    Blue dashed vertical: the atlas line.
+    Black line and circles: atlas spectrum.
+    Black dashed vertical: the atlas line.
   Arc:
-    Black circles: smoothed data in the fit window.
+    Blue circles: smoothed data in the fit window.
     Red line: interpolation.
     Magenta vertical: interpolated peak, the position used.
     Magenta dashed: centroid.
     Magenta dotted: Gaussian peak.
 What to look for:
   Good: one clean arc line whose three magenta verticals coincide, at
-  the same place as the blue atlas line.
+  the same place as the black atlas line.
   Bad: blended or distorted lines, or an arc line far from the atlas
   line (misidentification); the residual clipping may then reject it.
 Your options:
@@ -1141,7 +1141,7 @@ What you see:
   N = <k>": for each line, the wavelength the fit gives at the arc
   line's pixel minus the atlas wavelength (A). RMS is that of the kept
   lines; the px value divides it by this bar's dispersion.
-  Black diamonds: lines kept.
+  Blue diamonds: lines kept.
   Gold diamonds: lines rejected as outliers in the iterative clipping.
   Grey x (at 0): lines rejected before the fit (no clean window,
     failed Gaussian, centroid off).
@@ -1152,7 +1152,7 @@ What you see:
   Orange dash-dot-dot: CWAVE.
   No WAVGOOD lines: WAVGOOD is only known after SolveGeom.
 What to look for:
-  Good: black points scatter randomly about zero over the whole range;
+  Good: blue points scatter randomly about zero over the whole range;
   RMS (A) well below this bar's dispersion, so the px value in the
   title is well below 1.
   Bad: a trend or curve with wavelength (misidentified lines or too
@@ -1181,17 +1181,17 @@ Arc spectrum of this bar on its final wavelength solution, over the atlas.
 ```text
 What you see:
   Title "ATLAS/ARC FIT for Bar <n> ...".
-  Black line: this bar's arc on its final wavelength solution.
-  Black diamonds: lines used in the fit, at their fitted wavelengths.
-  Blue: atlas spectrum (scaled).
+  Blue line: this bar's arc on its final wavelength solution.
+  Blue diamonds: lines used in the fit, at their fitted wavelengths.
+  Black: atlas spectrum (scaled).
   Magenta diamonds ("Kept"): every line of the atlas line list.
   Gold: lines rejected as residual outliers.
   Grey x: lines rejected before the fit.
   Orange dash-dot-dot: CWAVE.
 What to look for:
-  Good: black arc lines fall on the blue atlas lines over the whole
-  range, with black diamonds on most magenta ones.
-  Bad: black lines shifted from blue in part of the range: the
+  Good: blue arc lines fall on the black atlas lines over the whole
+  range, with blue diamonds on most magenta ones.
+  Bad: blue lines shifted from black in part of the range: the
   solution for this bar is wrong there.
 Your options:
   <cr>      show the next bar.
@@ -1227,7 +1227,7 @@ What you see:
   number. The polynomial has n + 1 coefficients, C0 to Cn: C0 is the
   wavelength (A) at the first pixel, C1 the dispersion (A/px), higher
   terms the curvature. One plot per coefficient.
-  Black diamonds: values.
+  Blue diamonds: values.
   Black dash-dot lines: slice boundaries.
 What to look for:
   Good: a smooth pattern within and between slices, no isolated
@@ -1259,10 +1259,10 @@ Number of arc lines used in the wavelength fit of every bar.
 What you see:
   Title "FIT STATS <Nlns> = <mean> +- <std>": number of lines in each
   bar's final fit, against bar number.
-  Black diamonds ("Bars"): values.
+  Blue diamonds ("Bars"): values.
   Red ("Mean"): mean of all bars.
   Red dashed: mean +- 1 standard deviation.
-  Blue thick, one per slice ("Slice mean"): mean of the slice's 5 bars.
+  Black thick, one per slice ("Slice mean"): mean of the slice's 5 bars.
   Black dash-dot: slice boundaries.
 What to look for:
   Good: similar numbers for all bars and slices.
@@ -1301,7 +1301,7 @@ What you see:
   of its kept lines' residuals: the wavelength the fit gives at the arc
   line's pixel minus the atlas wavelength (as in P43). The px value
   divides the mean by the mean dispersion.
-  Black diamonds ("Bars"): values.
+  Blue diamonds ("Bars"): values.
   Red ("Mean"): mean.
   Red dashed: mean +- 1 standard deviation.
   Black dash-dot: slice boundaries.
@@ -1338,7 +1338,7 @@ AIT data: arc and bar spectrum of this trace on the output wavelength grid.
 What you see:
   Title "ARC # <n>": spectra of AIT trace n, resampled onto the output
   wavelength grid.
-  Black: arc spectrum.
+  Blue: arc spectrum.
   Cyan: continuum-bar spectrum.
   Green verticals: good wavelength range (WAVGOOD).
   Grey verticals: full wavelength range (WAVALL).
@@ -1424,7 +1424,7 @@ What you see:
   along the spectral (y) direction.
   y axis in e-: CorrectGain has already converted counts to electrons
   (it runs just before this step).
-  Black circles ("Scat"): the medians.
+  Blue circles ("Scat"): the medians.
   Red thick line ("Smooth"): Savitzky-Golay smoothing (window 151, 303
     or 501 rows, wider for noisier data); this curve is subtracted
     from every column.
@@ -1465,7 +1465,7 @@ What you see:
   is 1/15 of that range wide. x: wavelength (A).
   The reference slice is slice 9 in all the flat plots; it is not the
   reference bar of the arc plots.
-  Black circles: counts.
+  Blue circles: counts.
   Red: quadratic fit, divided out before the vignetting is measured.
 What to look for:
   Good: the red line follows the trend of the points.
@@ -1499,7 +1499,7 @@ What you see:
   Internal flats only: their lamp light falls off near one edge of
   every slice (left on blue, right on red). The DRP fits a line to the
   fall-off and one to the flat part; where they cross is the knee.
-  Black circles ("Data"): data.
+  Blue circles ("Data"): data.
   Red dashed ("Vign."): linear fit to the vignetted part.
   Purple dashed verticals ("Vign. window"): the window of that fit.
   Red line ("UnVign."): linear fit to the un-vignetted part, drawn
@@ -1543,7 +1543,7 @@ What you see:
   the red un-vignetted line of P22, which removes the lamp's fall-off.
   A sharp switch at the knee would leave a step, so inside the buffer
   the flat is instead scaled by that line divided by this cubic fit.
-  Black circles ("Data"): data.
+  Blue circles ("Data"): data.
   Red ("Fit"): cubic fit used to join the corrected and uncorrected
     parts smoothly.
 What to look for:
@@ -1579,11 +1579,11 @@ What you see:
   Title "Ledge": reference-slice flat within +- 25 A of the wavelength
   where the BM grating's ledge (a step in the flat-field spectrum) is
   predicted from CWAVE.
-  Black circles: smoothed data.
+  Blue circles: smoothed data.
   Red line: spline fit.
-  Blue dashed vertical: predicted ledge wavelength.
+  Black dashed vertical: predicted ledge wavelength.
 What to look for:
-  Good: a clear step near the blue line. Its position is found from the
+  Good: a clear step near the black line. Its position is found from the
   derivative in the next plot.
   Bad: no step, or several similar steps; then the peak choice in the
   next step needs care.
@@ -1619,13 +1619,13 @@ What you see:
   Title "Deriv": derivative of the ledge fit, in 0.5 A steps, against
   index 0-59 (axis "px (Wavelength)"; index i is at predicted ledge
   wavelength - 15 A + 0.5 i A).
-  Black circles: derivative.
-  Blue dashed vertical (index 30): the predicted ledge wavelength.
+  Blue circles: derivative.
+  Black dashed vertical (index 30): the predicted ledge wavelength.
   Magenta verticals: peaks found (height >= 20); there is more than
     one.
 What to look for:
   The ledge is a single sharp peak, usually the strongest one close to
-  the blue line. Smaller or broader peaks come from noise or spectral
+  the black line. Smaller or broader peaks come from noise or spectral
   structure in the flat.
 Your options:
   <index>  put the ledge at that index (read it off the x axis). The
@@ -1659,7 +1659,7 @@ BM ledge: derivative against wavelength with the chosen ledge position.
 What you see:
   Title "Peak of ledge": the derivative of the ledge fit against
   wavelength (A).
-  Black circles: data.
+  Blue circles: data.
   Magenta vertical ("Pk"): the ledge position used.
 What to look for:
   Good: the magenta line sits on the sharp peak you intended.
@@ -1688,7 +1688,7 @@ BM ledge: flat data before and after the step correction.
 ```text
 What you see:
   Title "BM Ledge Region", within +- 25 A of the predicted ledge.
-  Black circles: reference-slice flat data.
+  Blue circles: reference-slice flat data.
   Cyan circles: the same data redward of the ledge after dividing by
     the step ratio ("Corrected").
   Red: spline fit to the smoothed data.
@@ -1698,7 +1698,7 @@ What you see:
   Purple dotted verticals: the window of the redward fit.
   Magenta vertical ("Pk"): ledge position.
 What to look for:
-  Good: the cyan points continue the level of the black points below
+  Good: the cyan points continue the level of the blue points below
   the ledge, with no step left.
   Bad: a step remains or is overcorrected: the wrong peak was taken.
 Your options:
@@ -1893,7 +1893,7 @@ Master illumination spectrum: combined flat data over the full range, with fit.
 ```text
 What you see:
   Title "Master Illumination", flux (e-) against wavelength.
-  Black dots: reference-slice data plus the scaled blue- and red-end
+  Blue dots: reference-slice data plus the scaled blue- and red-end
     slice data.
   Red thick line: the spline fit, the illumination spectrum the flat
     is divided by.
@@ -1933,7 +1933,7 @@ What you see:
   Title "Std max sl <n>": flux against position along slice n, the
   slice with the largest spread, in a 10 % wavelength window around
   the middle wavelength.
-  Black dots: data.
+  Blue dots: data.
   Red: Gaussian fit.
   Magenta vertical: peak position.
   Purple verticals: +- 5 sigma of the fit; this range of slice
@@ -1969,7 +1969,7 @@ Continuum source: profile in its brightest slice, source region and local sky wi
 What you see:
   Title "Cont source max sl <n>": flux against position along slice n,
   in a 10 % wavelength window around the middle wavelength.
-  Black dots: data.
+  Blue dots: data.
   Red: Gaussian fit.
   Magenta vertical: peak.
   Purple verticals: +- 7 sigma, the source region.
@@ -2005,7 +2005,7 @@ Sky model: sky pixels from all slices against wavelength, with the spline fit.
 ```text
 What you see:
   Title "Master Sky", flux (e-) against wavelength.
-  Black dots: unmasked sky pixels from all slices (subsampled).
+  Blue dots: unmasked sky pixels from all slices (subsampled).
   Red: the spline sky model subtracted from this frame.
   Green verticals: WAVGOOD.
 What to look for:
@@ -2040,7 +2040,7 @@ Standard-star cube: flux summed over wavelength along this slice.
 ```text
 What you see:
   Title "Std Slice <n> (DAR padded)".
-  Black x: flux summed over the good wavelength range, against
+  Blue x: flux summed over the good wavelength range, against
     position along slice n.
   The line printed above gives the slice and the standard deviation of
   this profile; the slice with the largest value is taken as the
@@ -2081,7 +2081,7 @@ Check the wavelength limits of the sensitivity fit; enter new limits to avoid ba
 ```text
 What you see:
   Title "<std> Obs Spec". The x range is WAVALL0 - WAVALL1.
-  Black: the standard star's observed spectrum (e-/s, summed over the
+  Blue: the standard star's observed spectrum (e-/s, summed over the
     star's slices, extinction corrected).
   Green verticals: WAVGOOD, the range covered by all slices.
   Purple verticals: the current fit limits ("LIMITS").
@@ -2129,7 +2129,7 @@ Mask narrow features (absorption lines, telluric bands, cosmic rays) out of the 
 ```text
 What you see:
   Title "<std> Obs Spec", as before.
-  Black: the observed standard spectrum.
+  Blue: the observed standard spectrum.
   Green verticals: WAVGOOD.
   Purple verticals: the fit limits.
   Orange dash-dot-dot: CWAVE.
@@ -2145,7 +2145,7 @@ Your options:
   <cr>               done; use the masks shown.
   start stop [text]  add a mask from start to stop (Angstrom, start <
                      stop), optional comment; both ends must be inside
-                     the blue limits. The plot is redrawn with it.
+                     the purple limits. The plot is redrawn with it.
   Masks cannot be removed here: edit or delete <star>.lmsk (in the
   directory you started the DRP from) and rerun. Masked points are left
   out of the fits for *_invsens.fits and *_ea.fits.
@@ -2173,7 +2173,7 @@ Effective efficiency of telescope + KCWI (+ atmosphere) from the standard, with 
 What you see:
   Title "<std> Efficiency": observed photons / expected photons on the
   Keck aperture, in per cent (not extinction corrected).
-  Black: data.
+  Blue: data.
   Red: polynomial fit.
   Grey x: masked points ("Rej").
   Purple verticals: fit limits.
@@ -2211,14 +2211,14 @@ Inverse sensitivity (flux per e-/s) from the standard star, with its polynomial 
 What you see:
   Title "<std> Inverse sensitivity", logarithmic y axis: reference flux
   divided by observed e-/s, the curve that flux-calibrates later data.
-  Black: data.
+  Blue: data.
   Red: polynomial fit (also drawn outside the limits, where it is
     extrapolated).
   Grey x: masked points.
   Purple verticals: fit limits.
   Green verticals: WAVGOOD.
 What to look for:
-  Good: the red fit follows the black data closely between the limits.
+  Good: the red fit follows the blue data closely between the limits.
   Bad: systematic departures, or the fit turning sharply up or down
   just outside the limits where you still need calibrated data.
 Your options:
@@ -2245,12 +2245,12 @@ Standard star calibrated with the fitted inverse sensitivity, over its reference
 ```text
 What you see:
   Title "<std> Calibrated", flux in erg/s/cm^2/A.
-  Black: observed spectrum times the fitted inverse sensitivity.
-  Blue: the star's reference spectrum.
+  Blue: observed spectrum times the fitted inverse sensitivity.
+  Black: the star's reference spectrum.
   Purple verticals: fit limits.
   Green verticals: WAVGOOD.
 What to look for:
-  Good: black lies on blue between the limits, apart from narrow
+  Good: blue lies on black between the limits, apart from narrow
   features (absorption lines, telluric bands) that differ in resolution.
   Bad: broad differences (fit order or limits) or a mismatch at a
   feature you meant to mask.
@@ -2283,7 +2283,7 @@ Calibration residuals; accept the fit or enter a new polynomial order to refit.
 What you see:
   Title "<std> Residuals = <mean> +- <std> (%)": (calibrated -
   reference) / reference in per cent, over the fit range.
-  Black: residuals.
+  Blue: residuals.
   Grey x: masked points (if any).
   Purple verticals: fit limits.
   Green verticals: WAVGOOD.
@@ -2428,51 +2428,54 @@ above (files in `kcwidrp/primitives/` unless stated). The plots draw the
 "Colour in help" column. The "Code" column gives the line that drew each
 element at `cb7444c` and the colour it had then, before the colour scheme;
 the WAVGOOD lines of P16-P19, P28 and P33 and the P12 colour bar (drawn by
-`_plot_render.py`, `_draw`) are new.
+`_plot_render.py`, `_draw`) are new, as are the rows marked "new".
 
 | ID | Colour in help | Code (line, colour at `cb7444c`) |
 |---|---|---|
 | S01–S08 | none (no figure) | — |
-| P48, P49 | black circles / red thick | SubtractOverscan.py:110 default / :111 red |
-| P20 | black bars / red thick / red dashed verticals | MakeMasterBias.py:144-145 navy / :146 `#ff8888` / :148, :150 red |
-| P05 | black line / magenta x / grey dashed | FindBars.py:89 / :90-92 red / :93-94 grey |
-| P06 | black line / magenta x / grey dashed | FindBars.py:127 / :128-130 red / :131-132 grey |
-| P07 | black line and circles / magenta vertical | FindBars.py:157 blue, :158 red / :159-160 green |
-| P51 | black x / magenta circles | TraceBars.py:139 blue / :140-141 red |
-| P03 | black / cyan / red | ExtractArcs.py:145 blue / :146 red / :147 green |
-| P04 | black / red | ExtractArcs.py:212 blue / :213 red |
-| P01 | blue (REFBAR) / black (this bar) | ArcOffsets.py:86 green / :89 red |
-| P02 | black diamonds / black dash-dot | ArcOffsets.py:113 default / :117 `oplot_slices` |
-| P39 | black / magenta vertical / blue dashed vertical | ReadAtlas.py:183 default / :186-187 red / :189-190 green |
-| P40 | black / blue / orange dash-dot-dot | ReadAtlas.py:207 default / :211-213 red / :219 magenta dash-dot |
-| P08 | black circles and line / magenta vertical / blue dashed vertical | FitCenter.py:331 red, :332 blue / :334 green / :336-337 red |
-| P09 | black x / orange dash-dot-dot / black dash-dot | FitCenter.py:359 default / :360-361 red / :365 |
-| P10 | black x / blue dashed / black dash-dot | FitCenter.py:386 default / :387-388 red / :393 |
-| P11 | black / blue | GetAtlasLines.py:527-528 lightgray / :529-530 blue |
+| P48, P49 | blue circles / red thick | SubtractOverscan.py:110 default / :111 red |
+| P20 | blue bars / red thick / red dashed verticals | MakeMasterBias.py:144-145 navy / :146 `#ff8888` / :148, :150 red |
+| P05 | blue line / magenta x / grey dashed | FindBars.py:89 / :90-92 red / :93-94 grey |
+| P06 | blue line / magenta x / grey dashed | FindBars.py:127 / :128-130 red / :131-132 grey |
+| P07 | blue line and circles / magenta vertical | FindBars.py:157 blue, :158 red / :159-160 green |
+| P51 | blue x / magenta circles | TraceBars.py:139 blue / :140-141 red |
+| P03 | blue / cyan / red | ExtractArcs.py:145 blue / :146 red / :147 green |
+| P04 | blue / red | ExtractArcs.py:212 blue / :213 red |
+| P01 | black (REFBAR) / blue (this bar) | ArcOffsets.py:86 green / :89 red |
+| P02 | blue diamonds / black dash-dot | ArcOffsets.py:113 default / :117 `oplot_slices` |
+| P39 | blue / magenta vertical / black dashed vertical | ReadAtlas.py:183 default / :186-187 red / :189-190 green |
+| P40 | blue / black / orange dash-dot-dot | ReadAtlas.py:207 default / :211-213 red / :219 magenta dash-dot |
+| P08 | blue circles and line / magenta vertical / black dashed vertical | FitCenter.py:331 red, :332 blue / :334 green / :336-337 red |
+| P09 | blue x / orange dash-dot-dot / black dash-dot | FitCenter.py:359 default / :360-361 red / :365 |
+| P10 | blue x / black dashed / black dash-dot | FitCenter.py:386 default / :387-388 red / :393 |
+| P11 | blue / black | GetAtlasLines.py:527-528 lightgray / :529-530 blue |
 | P11 | magenta diamonds (Kept) | GetAtlasLines.py:552-553 green |
 | P11 | cyan, pink, olive, brown, grey diamonds | GetAtlasLines.py:534 cyan, :538 red, :542 orange, :546 brown, :550 magenta |
 | P11 | purple verticals (WavLim) | GetAtlasLines.py:554-556 brown |
-| P42 | blue line and circles / blue dashed vertical | SolveArcs.py:233-234 blue / :235-236 green / :237 red |
-| P42 | black circles / red line | SolveArcs.py:247 red / :245 black |
+| P42 | black line and circles / black dashed vertical | SolveArcs.py:233-234 blue / :235-236 green / :237 red |
+| P42 | blue circles / red line | SolveArcs.py:247 red / :245 black |
 | P42 | magenta solid / dashed / dotted verticals | SolveArcs.py:256 black dash-dot / :250 green dashed / :253 magenta dash-dot |
-| P43 | black / gold diamonds / grey x | SolveArcs.py:394 green / :397 orange / :400-401 red |
+| P43 | blue / gold diamonds / grey x | SolveArcs.py:394 green / :397 orange / :400-401 red |
 | P43 | grey dotted / red dashed / orange dash-dot-dot | SolveArcs.py:404 black dotted / :405-406 gray dash-dot / :407-408 magenta |
-| P44 | black line and diamonds | SolveArcs.py:421 / :422 darkgrey |
-| P44 | blue / magenta diamonds / gold / grey x / orange dash-dot-dot | SolveArcs.py:425 blue / :430-431 green / :433-434 orange / :435-436 red / :427-428 magenta |
-| P45 | black diamonds / black dash-dot | SolveArcs.py:485 default / :489 |
-| P46 | black diamonds / red / red dashed / black dash-dot | SolveArcs.py:509 default / :515-516 red / :517-525 green dashed / :528 |
-| P47 | black diamonds / red / red dashed / black dash-dot | SolveArcs.py:552 default / :555-556 red / :557-565 green dashed / :568 |
-| P41 | black / cyan / green / grey | SolveAIT.py:160 blue / :161 red / :162-164 green / :165-167 orange |
+| P43 | purple verticals (WavLim) | new |
+| P44 | blue line and diamonds | SolveArcs.py:421 / :422 darkgrey |
+| P44 | black / magenta diamonds / gold / grey x / orange dash-dot-dot | SolveArcs.py:425 blue / :430-431 green / :433-434 orange / :435-436 red / :427-428 magenta |
+| P45 | blue diamonds / black dash-dot | SolveArcs.py:485 default / :489 |
+| P46 | blue diamonds / red / red dashed / black dash-dot | SolveArcs.py:509 default / :515-516 red / :517-525 green dashed / :528 |
+| P46 | black thick (slice mean) | new |
+| P47 | blue diamonds / red / red dashed / black dash-dot | SolveArcs.py:552 default / :555-556 red / :557-565 green dashed / :568 |
+| P41 | blue / cyan / green / grey | SolveAIT.py:160 blue / :161 red / :162-164 green / :165-167 orange |
 | P12 | Spectral11, grey NaN, colour bar | MakeCube.py:276-277; `_plot_render.py:268` (`_image`, no colour bar) |
-| P50 | black circles / red thick | SubtractScatteredLight.py:101 default / :102 red |
-| P21 | black circles / red | MakeMasterFlat.py:265 default / :266 red |
-| P22 | black circles / red dashed, red / magenta vertical | MakeMasterFlat.py:314 default / :315-316 purple, :317 red / :327 red |
+| P12 | black ticks (pixel boundaries) / green horizontals (WAVGOOD) | new |
+| P50 | blue circles / red thick | SubtractScatteredLight.py:101 default / :102 red |
+| P21 | blue circles / red | MakeMasterFlat.py:265 default / :266 red |
+| P22 | blue circles / red dashed, red / magenta vertical | MakeMasterFlat.py:314 default / :315-316 purple, :317 red / :327 red |
 | P22 | purple dashed / purple / purple dotted verticals | MakeMasterFlat.py:319-320 blue / :321-322 green / :323-326 black |
-| P23 | black circles / red | MakeMasterFlat.py:371 default / :372 red |
-| P24 | black circles / red / blue dashed vertical | MakeMasterFlat.py:446 green fill / :447 default / :449 red |
-| P25 | black circles / blue dashed vertical / magenta verticals | MakeMasterFlat.py:462 default / :463 green / :465 red |
-| P26 | black circles / magenta vertical | MakeMasterFlat.py:495 default / :496 red |
-| P27 | black / cyan circles / red | MakeMasterFlat.py:531 blue / :540 orange / :542 red |
+| P23 | blue circles / red | MakeMasterFlat.py:371 default / :372 red |
+| P24 | blue circles / red / black dashed vertical | MakeMasterFlat.py:446 green fill / :447 default / :449 red |
+| P25 | blue circles / black dashed vertical / magenta verticals | MakeMasterFlat.py:462 default / :463 green / :465 red |
+| P26 | blue circles / magenta vertical | MakeMasterFlat.py:495 default / :496 red |
+| P27 | blue / cyan circles / red | MakeMasterFlat.py:531 blue / :540 orange / :542 red |
 | P27 | red dashed, purple dashed verticals (blueward) | MakeMasterFlat.py:547-548 purple / :543-544 blue |
 | P27 | red dotted, purple dotted verticals (redward) | MakeMasterFlat.py:549-550 green / :545-546 black |
 | P27 | magenta vertical (Pk) | MakeMasterFlat.py:551 green |
@@ -2481,17 +2484,17 @@ the WAVGOOD lines of P16-P19, P28 and P33 and the P12 colour bar (drawn by
 | P30 | black / red (line and circles) | MakeMasterFlat.py:743, :745-746 black / :747-750 blue |
 | P31 | black / cyan (line and circles) | MakeMasterFlat.py:764, :766 black / :767, :769 red |
 | P32 | black / red (line and circles) | MakeMasterFlat.py:782, :784 black / :785-787 red |
-| P33 | black dots / red thick / purple verticals, green verticals | MakeMasterFlat.py:884 black / :886 red / :888, :890 orange |
-| P34 | black dots / red / magenta vertical / purple verticals | MakeMasterSky.py:338-339 purple / :341 red / :342-343 green / :344 blue |
-| P35 | black dots / red / magenta vertical / purple, purple dashed | MakeMasterSky.py:420-421 purple / :423 red / :424-431 green / :432 blue |
-| P36 | black dots / red / green verticals | MakeMasterSky.py:598 purple / :600 red / :601-602 green |
-| P13 | black x | MakeInvsens.py:193 default |
-| P14 | black / green / purple / orange dash-dot-dot | MakeInvsens.py:354 black / :355, :357 green / :358, :360 blue / :361 red |
+| P33 | blue dots / red thick / purple verticals, green verticals | MakeMasterFlat.py:884 black / :886 red / :888, :890 orange |
+| P34 | blue dots / red / magenta vertical / purple verticals | MakeMasterSky.py:338-339 purple / :341 red / :342-343 green / :344 blue |
+| P35 | blue dots / red / magenta vertical / purple, purple dashed | MakeMasterSky.py:420-421 purple / :423 red / :424-431 green / :432 blue |
+| P36 | blue dots / red / green verticals | MakeMasterSky.py:598 purple / :600 red / :601-602 green |
+| P13 | blue x | MakeInvsens.py:193 default |
+| P14 | blue / green / purple / orange dash-dot-dot | MakeInvsens.py:354 black / :355, :357 green / :358, :360 blue / :361 red |
 | P15 | as P14, plus purple dashed pairs | MakeInvsens.py:452-459 as P14 / :462, :464 orange dashed |
-| P16 | black / red / grey x / purple, green verticals | MakeInvsens.py:569 black / :571 red / :573 default / :574, :576 green |
+| P16 | blue / red / grey x / purple, green verticals | MakeInvsens.py:569 black / :571 red / :573 default / :574, :576 green |
 | P16 | red dashed / red dash-dot horizontals | MakeInvsens.py:577-578 / :579-580 black |
-| P17 | black / red / grey x / purple, green verticals | MakeInvsens.py:596 black / :597 red / :598 default / :599, :601 green |
-| P18 | black / blue / purple, green verticals | MakeInvsens.py:616 black / :617 red / :618, :620 green |
-| P19 | black / grey x / purple, green verticals | MakeInvsens.py:636 black / :639 default / :640, :642 green |
+| P17 | blue / red / grey x / purple, green verticals | MakeInvsens.py:596 black / :597 red / :598 default / :599, :601 green |
+| P18 | blue / black / purple, green verticals | MakeInvsens.py:616 black / :617 red / :618, :620 green |
+| P19 | blue / grey x / purple, green verticals | MakeInvsens.py:636 black / :639 default / :640, :642 green |
 | P19 | red / red dashed | MakeInvsens.py:643-644 red / :645-650 black dashed |
 | P37, P38 | none (no figure) | — |

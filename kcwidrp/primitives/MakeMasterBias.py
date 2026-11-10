@@ -142,7 +142,7 @@ class MakeMasterBias(BaseImg):
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height)
                 p.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:],
-                       fill_color="black", line_color="white", alpha=0.5)
+                       fill_color="blue", line_color="white", alpha=0.5)
                 p.line(x, pdf, line_color="red", line_width=4, alpha=0.7,
                        legend_label="PDF")
                 p.line([-bias_rn, -bias_rn], [0, np.max(hist)], color='red',
@@ -156,7 +156,7 @@ class MakeMasterBias(BaseImg):
                     help=(
                         "What you see:\n"
                         "  Title \"BIAS NOISE amp <n> = <sigma>\" (e-).\n"
-                        "  Black bars: histogram of (bias 2 - bias 3) x gain / sqrt(2) over\n"
+                        "  Blue bars: histogram of (bias 2 - bias 3) x gain / sqrt(2) over\n"
                         "    amplifier n, within the 3.5 sigma clipping range.\n"
                         "  Red thick line: Gaussian of the measured sigma (centred on 0, scaled\n"
                         "    to the histogram peak).\n"
