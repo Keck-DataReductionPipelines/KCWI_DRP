@@ -24,7 +24,7 @@
 
 ## Who wrote the tests
 
-<!-- Which model or person wrote the tests and which the code under test (docs/testing.md, section 8).
+<!-- Which model or person wrote the tests and which the code under test (docs/dev/testing.md, section 8).
      For each new test file, the deliberate breakage that made a test fail. -->
 
 ## Checklist

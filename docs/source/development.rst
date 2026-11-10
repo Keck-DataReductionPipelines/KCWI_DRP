@@ -79,7 +79,7 @@ issue a pull request. The pull request must contain the following:
 1. A short but thorough explanation of the feature and its purpose 
 2. A summary of the tests you ran and their results. There is currently no
    automatic CI; the tests are run locally, as described in the
-   `testing guide <https://github.com/Keck-DataReductionPipelines/KCWI_DRP/blob/v3-upgrade/docs/testing.md>`_
+   `testing guide <https://github.com/Keck-DataReductionPipelines/KCWI_DRP/blob/v3-upgrade/docs/dev/testing.md>`_
 3. Evidence of successfully processing a night of KCWI data
 
 Additionally, the code must meet the following:

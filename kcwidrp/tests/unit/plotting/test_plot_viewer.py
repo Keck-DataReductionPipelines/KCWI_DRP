@@ -2,7 +2,7 @@
 
 Written from the specification, not from the implementation.  A browser tab
 is emulated by a WebSocket client that speaks mpl.js's protocol, as in
-docs/prototype/viewer_0.3/check_proto.py.
+docs/dev/prototype/viewer_0.3/check_proto.py.
 
 Assumptions about what the spec leaves open (see the task report):
 * the page is served at ``viewer.url`` and the WebSocket at ``<url>ws``

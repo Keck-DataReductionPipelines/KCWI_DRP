@@ -16,7 +16,7 @@ The env had two psutil installs mixed in one directory: conda's psutil 7.2.2 (pu
 
 Known, accepted: `pip check` reports `ipython 9.17.1 requires psutil>=7`. The baseline keeps the pin from `upgrade-start`; psutil is only used to list processes and does not affect reduction results.
 
-To rebuild this env from scratch: create a Python 3.12 conda env, `pip install -r docs/baseline/env_baseline.txt` (skipping lines that fail on another platform), then `pip install -e .` from `upgrade-start`.
+To rebuild this env from scratch: create a Python 3.12 conda env, `pip install -r docs/dev/baseline/env_baseline.txt` (skipping lines that fail on another platform), then `pip install -e .` from `upgrade-start`.
 
 ### Validation
 

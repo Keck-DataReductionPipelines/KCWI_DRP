@@ -8,7 +8,7 @@ by the live viewer.  Every array is copied when it is recorded, so a primitive
 may go on changing its arrays, and a recorded plot can be rendered any number
 of times, on any thread.
 
-Exactly the Bokeh features listed in ``docs/plot_inventory.md`` section 2 are
+Exactly the Bokeh features listed in ``docs/dev/plot_inventory.md`` section 2 are
 supported.  Anything else is *unsupported*:
 
 * ``STRICT`` true (the test suite, or ``KCWI_PLOT_STRICT=1`` in the

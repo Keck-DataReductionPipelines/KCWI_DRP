@@ -99,7 +99,7 @@ Verification:
 
 ### 0.2 Plot inventory — Haiku 5.5
 
-Produce `docs/plot_inventory.md`: one row per `figure()` call with file, line, the variable name the figure is bound to, title string, the `plot_level` condition guarding it, whether it is saved (and the file name pattern and the `plot_level` condition on the `save_plot` call, which is not always the same as the one on the figure) or live-only, and which Bokeh features it uses.
+Produce `docs/dev/plot_inventory.md`: one row per `figure()` call with file, line, the variable name the figure is bound to, title string, the `plot_level` condition guarding it, whether it is saved (and the file name pattern and the `plot_level` condition on the `save_plot` call, which is not always the same as the one on the figure) or live-only, and which Bokeh features it uses.
 
 The inventory ends with a **feature summary**: one deduplicated list each of
 - every keyword passed to `figure()`,
@@ -160,7 +160,7 @@ Output: a short written decision added to this document, covering: WebAgg or fal
 
 #### 0.3 decision (2026-10-28)
 
-Prototype and checker: `docs/prototype/viewer_0.3/` (`python check_proto.py` runs every automatable criterion; a WebSocket client speaking `mpl.js`'s protocol stands in for the browser).
+Prototype and checker: `docs/dev/prototype/viewer_0.3/` (`python check_proto.py` runs every automatable criterion; a WebSocket client speaking `mpl.js`'s protocol stands in for the browser).
 
 - **WebAgg is chosen.** On macOS (Darwin 25.5, Python 3.12, Matplotlib 3.9.4, Tornado 6.5) every automatable criterion passes: plot shown while the worker is in `input()`; 200 submissions at 0.1 s with one `Figure` alive throughout; cursor readout (`(x, y) = (…)`); zoom; zoom history cleared on a new plot; 1000×600, 1000×600 2×2 grid, 500×600 1×2 grid and twin-axis submissions each shown at their own size; in-place mutation after submission not shown; reopened and second tabs show the current plot; two instances on two ports each showing their own plots; all ten ports taken gives one warning and harmless submissions; with no tab connected nothing is rendered and the browser is tried at most once; Ctrl-C leaves through `os._exit` in under 0.1 s with nothing on disk and the port free at once.
 - **One long-lived figure per viewer**, cleared and re-rendered per submission, with the toolbar history reset (`toolbar.update()`), a `resize` event sent to every tab, and the figure label set so a reconnecting tab gets the right title. Rendering is lazy: a submission stores the description and only draws when a tab is connected.
@@ -204,7 +204,7 @@ At the time of writing, `git status` on `master` shows every tracked file as mod
 
 1. Decide whether the mode change is wanted. If not, restore it with `git diff --summary | grep 'mode change'` to confirm the scope, then either `git config core.filemode false` for this clone or reset the modes. If it is wanted, commit it on its own, separately from the port.
 2. Review and commit, or stash, the handful of real content changes that are mixed in (`git diff --stat` reports about 27 inserted and 10 deleted lines).
-3. Commit `docs/bokeh_replacement_proposal.md` and this plan.
+3. Commit `docs/dev/bokeh_replacement_proposal.md` and this plan.
 4. Create the port branch from that clean commit and tag the starting point.
 
 Verification:
@@ -282,7 +282,7 @@ Replace `kcwidrp/tests/test_bokeh_plotting.py` with `test_kcwi_plotting.py`. Wri
   - Also collected: every call to `Range1d`, `LinearAxis` and `gridplot` with its keywords, and the literal values of `marker=`, `line_dash=`, `palette=`, `y_axis_type=`, `legend.location` and the second argument of `add_layout`, which are checked against the wrapper's supported values.
   - A string argument in the x or y position of a glyph call (the `ColumnDataSource` column-name form) is reported as unsupported.
   - Any use the scan cannot classify (a figure passed to an unknown function, an attribute set through `setattr`, keywords passed as `**kwargs`) fails the test with the file and line. Unknown must never pass silently.
-  - The scan's result is also compared with the feature summary in `docs/plot_inventory.md`; a difference in either direction fails.
+  - The scan's result is also compared with the feature summary in `docs/dev/plot_inventory.md`; a difference in either direction fails.
 - **Strict and tolerant modes.** The whole suite runs with `STRICT` true. A separate group runs with `STRICT` false and checks, for an unsupported method, an unsupported keyword, an unsupported attribute and an unsupported literal value: one warning is logged with the caller's file and line, nothing is raised, the returned object still accepts further calls, and `save_plot` still writes a file.
 - **Snapshot test.** Record a line from an array, overwrite the array in place, render: the rendered data is the original. The same for a figure submitted to a stub viewer and then modified by a further glyph call on the primitive's side.
 - **Trap tests.** One named test per item in the 1.1 trap list: twin-axis legend merged across both axes; twin-axis draw order; `Spectral11` endpoint colours and discreteness; image orientation with an asymmetric array; NaN gaps and all-NaN series; one-pixel markers; pixel line width; dash names; fixed pixel size with a very long title.

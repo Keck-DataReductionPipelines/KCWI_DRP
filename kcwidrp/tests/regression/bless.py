@@ -1,4 +1,4 @@
-"""Bless a run as the new reference (T.7; rules in docs/testing.md section 10).
+"""Bless a run as the new reference (T.7; rules in docs/dev/testing.md section 10).
 
 A bless never happens automatically and only the maintainer runs it. It needs
 a reason from the plan's T.7 table, a run whose outputs still exist, and (unless
@@ -39,7 +39,7 @@ def parse_reason(reason):
     if head not in ALLOWED_REASONS and not BUG_REASON.match(head):
         raise BlessError(
             "reason %r is not allowed. Use '<reason>: <text>' with one of: %s"
-            ", or 'P.5 <bug ID>' (docs/drp_upgrade_plan.md, T.7 bless table)"
+            ", or 'P.5 <bug ID>' (docs/dev/drp_upgrade_plan.md, T.7 bless table)"
             % (head, ", ".join(ALLOWED_REASONS)))
     if not sep or not text:
         raise BlessError("the reason needs a written explanation after the "

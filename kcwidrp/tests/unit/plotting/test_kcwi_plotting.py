@@ -1,9 +1,9 @@
 """Tests for the Matplotlib plotting wrapper ``kcwidrp.core.kcwi_plotting``
 (bokeh plan task 1.2; upgrade plan s7 amendments 5, 8 and 10).
 
-Written from the specification only -- docs/bokeh_port_plan.md ("Core design
+Written from the specification only -- docs/dev/bokeh_port_plan.md ("Core design
 decision", "1.1 Wrapper", "1.2 Wrapper tests", "Interfaces fixed for parallel
-implementation") and docs/plot_inventory.md section 2 -- never from the
+implementation") and docs/dev/plot_inventory.md section 2 -- never from the
 wrapper's source.  The AST coverage scan (the other half of task 1.2) is in
 ``test_plot_coverage_scan.py``.
 
@@ -25,7 +25,7 @@ Units and sources of expected values
 * Bokeh defaults (colour ``#1f77b4``, line width 1 px, circle size 4 px,
   10 % ``DataRange1d`` padding) are the values the plan's "Appearance
   defaults" paragraph names.
-  # source: published - docs/bokeh_port_plan.md section 1.1, Bokeh 2.4 docs
+  # source: published - docs/dev/bokeh_port_plan.md section 1.1, Bokeh 2.4 docs
 * Every expected value below carries its own ``# source:`` comment.
 
 All tests run with ``STRICT`` true unless they are in the tolerant group.

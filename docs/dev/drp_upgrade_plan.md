@@ -63,7 +63,7 @@ Decisions taken by the plan author rather than asked, because they have a conven
 
 | # | Decision | Why |
 |---|---|---|
-| D1 | The matrix plan is copied into `docs/matrix_cube_plan.md` so it is versioned with the code and visible to maintainers. The copy in `~/drp/kcwi/` is no longer the source of truth. | A plan linked from a PR must be readable by reviewers |
+| D1 | The matrix plan is copied into `docs/dev/matrix_cube_plan.md` so it is versioned with the code and visible to maintainers. The copy in `~/drp/kcwi/` is no longer the source of truth. | A plan linked from a PR must be readable by reviewers |
 | D2 | The reference reductions for Track A (bokeh 0.1) and Track M (Stage 0) are one human session (S.3), not two. | Same data, same runs; halves the human effort |
 | D3 | In Track P, the number and order of prompts **for valid answers** does not change. Re-prompting on *invalid* input is allowed. | Keeps the S.3 answer files usable as a regression harness for every later PR |
 | D4 | End-of-input (Ctrl-D / closed stdin) at a prompt: by default, log a warning and take the default answer for that and all later prompts. With `KCWI_STRICT_INPUT=1`, raise `EOFError` as today. | Robustness for users; the strict mode keeps the bokeh-plan replay check ("ends with `EOFError` → prompts changed") working |
@@ -89,18 +89,18 @@ Decisions added after review (2026-10-22). Where one changes an earlier row, the
 | D19 | *(Deferred with Track M, D31.)* PR6 (covariance) gets its own gate, G5b. S.4 Q10 is split: Q10a (`CUBEMETH`, `WAVCORR`, `DARCOR`) before M.2c; Q10b (noise-curve keywords, named in M.5a) before M.5b. | PR6 adds user-facing keys, extensions and header keywords (Q7), and the M.5 names do not exist when M.2c starts |
 | D20 | (Maintainer decision, 2026-10-22.) Upstream `develop` was fast-forwarded to `master` (`9be28f5`, `v1.3.2`), so `upgrade-start` is on `develop` and PRs target `develop` (D6) with no extra commits. `stash@{0}` (an earlier draft of PR #218 plus mode flips) was dropped. S.1 is complete. | `develop` had stayed at `6058c37` while `master` received PR #207's merge and PR #218 |
 | D21 | (Maintainer decision, 2026-10-22.) Bug B26 (with B27) was fixed as a hotfix before S.3 rather than in PR3b: PR #219 merged into `develop` as `6270cba`, version 1.3.3; PR #220 (`develop` → `master`) opened, not merged. `upgrade-start` moves from `9be28f5` to `6270cba`, and S.3's references are made with 1.3.3. | Every stacked flat since 1.2.0 used only the first flat; references made with that bug would have had to be re-blessed in PR3b, and users get the fix without waiting for the upgrade |
-| D22 | (Maintainer decision, 2026-10-22.) The plan and the testing rules in `docs/testing.md` are approved. T.0 is done. | T.0's 👤 check |
+| D22 | (Maintainer decision, 2026-10-22.) The plan and the testing rules in `docs/dev/testing.md` are approved. T.0 is done. | T.0's 👤 check |
 | D23 | (Maintainer decision, 2026-10-23.) Bugs B1 and B1b were fixed as a hotfix before S.3 rather than in PR3b: PR #223 merged into `develop` as `af46243`. When no BM ledge peak is found, MakeMasterFlat logs a warning and skips the ledge correction, at every `plot_level`; with several peaks it uses the highest peak's pixel. `upgrade-start` moves to `af46243`. The version number for the hotfixes is settled by the maintainer at the end of the upgrade. | B1b stopped every object frame of the ds03 blue S.3 night (BM, Medium, 2×2: no ledge peak found), so no unattended reference could be made; B1 sits in the same lines. Checked on that night: master flat and all cubes written, no failed primitives |
 | D24 | (Maintainer decision, 2026-10-23.) S.3 uses datasets ds01 and ds03 of the maintainer's test suite (`~/drp/kcwi/test_suite/suite/manifest.csv`) for this development cycle, with the full profile. ds02 (after re-downloading its truncated flat), ds06, ds07 and ds08 become quick-profile regression datasets in T.7. ds04 and ds05 are dropped. The long-term dataset choice may change later. | Two dual-channel 2×2 nights cover BL, BM, RL, RH1, the Large and Medium slicers and sky frames, and ds03 blue exercises the BM ledge code (B1); the extra datasets add 1×1 binning, the Small slicer and BH3 at low interactive cost |
-| D25 | (Maintainer decisions, 2026-10-24, after T.8.) (1) B36 is fixed in PR3b, not as a hotfix; the S.3 references stay as made (self-sky for every science frame) until then. (2) Coverage minimum: 70 % line coverage per module for `kcwidrp/core/` and `kcwi_file_primitives.py`, exempting the vendored `core/bspline/` and the two plotting modules until PR1 (written into `docs/testing.md` §11). (3) The one breakage caught only by the regression suite (SolveArcs' initial outlier width doubled) is accepted as regression-only; no fast test. | T.8's 👤 check |
+| D25 | (Maintainer decisions, 2026-10-24, after T.8.) (1) B36 is fixed in PR3b, not as a hotfix; the S.3 references stay as made (self-sky for every science frame) until then. (2) Coverage minimum: 70 % line coverage per module for `kcwidrp/core/` and `kcwi_file_primitives.py`, exempting the vendored `core/bspline/` and the two plotting modules until PR1 (written into `docs/dev/testing.md` §11). (3) The one breakage caught only by the regression suite (SolveArcs' initial outlier width doubled) is accepted as regression-only; no fast test. | T.8's 👤 check |
 | D26 | (Maintainer decision, 2026-10-28.) `requirements.txt` and `environment.yml` are deleted in PR1; `pyproject.toml` is the only dependency list. Supersedes bokeh-plan 5.1's bullets on regenerating `requirements.txt` and fixing or deleting `environment.yml`. | Both were stale or hand-maintained copies of `pyproject.toml`, and nothing consumes them since Travis was removed (T.10) |
-| D27 | (Maintainer decisions, 2026-10-28.) (1) Plots need to show the same information as Bokeh's, not Bokeh's exact look: where exact matching costs code clarity, the simpler Matplotlib behavior is used, each compromise approved by the maintainer. Approved so far: Matplotlib's default look (title kept left and bold), named dash styles, Matplotlib autoscaling with a 5 % margin per end. Declined: square diamond, one legend symbol per label, sizes in points unconverted, wrapping instead of shrinking long titles, centered titles. (2) The viewer tests that drive a live viewer (`unit/plotting/test_plot_viewer.py`) get a `viewer` marker and leave the default `pytest` run, which went over 60 s; `pytest -m viewer` is required before PRs that touch plotting (`docs/testing.md`). | PR1 integration: the wrapper reproduced Bokeh details at a cost in code; the viewer tests added ~12 s |
+| D27 | (Maintainer decisions, 2026-10-28.) (1) Plots need to show the same information as Bokeh's, not Bokeh's exact look: where exact matching costs code clarity, the simpler Matplotlib behavior is used, each compromise approved by the maintainer. Approved so far: Matplotlib's default look (title kept left and bold), named dash styles, Matplotlib autoscaling with a 5 % margin per end. Declined: square diamond, one legend symbol per label, sizes in points unconverted, wrapping instead of shrinking long titles, centered titles. (2) The viewer tests that drive a live viewer (`unit/plotting/test_plot_viewer.py`) get a `viewer` marker and leave the default `pytest` run, which went over 60 s; `pytest -m viewer` is required before PRs that touch plotting (`docs/dev/testing.md`). | PR1 integration: the wrapper reproduced Bokeh details at a cost in code; the viewer tests added ~12 s |
 | D28 | (Maintainer decision, 2026-10-28.) All upgrade PRs (PR0 onward) target a long-lived integration branch, `v3-upgrade`, created from `develop` at `af46243`, still through pull requests. `v3-upgrade` is merged into `develop` at a later date (R.5). Hotfixes for the live version keep going to `develop` (and `develop` → `master`) as before; `v3-upgrade` takes them by merging `develop` into it. PR #224 (PR0) was retargeted from `develop` to `v3-upgrade`. Amends D6. | Testers can be given the upgraded version from one branch while the live version still gets hotfixes |
-| D29 | (Maintainer decision, 2026-10-28.) The regression-tool tests (`unit/regression_tools/`, ~25 s of fake reductions in subprocesses) get a `regression_tools` marker and leave the default `pytest` run, which had reached 60.3 s with PR3a; `pytest -m regression_tools` is required before PRs that touch `kcwidrp/tests/regression/` (`docs/testing.md`). | Same approach as the `viewer` marker (D27); leaves headroom for Track M |
+| D29 | (Maintainer decision, 2026-10-28.) The regression-tool tests (`unit/regression_tools/`, ~25 s of fake reductions in subprocesses) get a `regression_tools` marker and leave the default `pytest` run, which had reached 60.3 s with PR3a; `pytest -m regression_tools` is required before PRs that touch `kcwidrp/tests/regression/` (`docs/dev/testing.md`). | Same approach as the `viewer` marker (D27); leaves headroom for Track M |
 | D30 | (Maintainer decision, 2026-10-28.) The S.3 level-3 answer files are not replayed on PR3a. They contain answers that today's code takes as a silent end of review (bug B4: e.g. `-42` at a bar-jump prompt in ds01 blue), which PR3a re-asks (D12), so every later answer shifts. Instead the maintainer records new answer files in P.6 (`answers_*_3_v2.txt`), which become the level-3 baseline: the L3 references are re-made from them and blessed after G3. Until then PR3a's replay checks cover the L0 and L1 entries (no prompts); the L3 entries are expected to fail tier 1. Amends D3 and the P.3/P.4 replay checks for the S.3 files. | Editing the S.3 files would be thrown away once the v2 files redefine the baseline |
 | D31 | (Maintainer decision, 2026-11-09.) **Scope of this release:** Track T (PR0), Track A (PR1), Track P (PR3a and PR3b) with the plot changes of D33, small changes (Track X: plot viewer fixes such as #227, and `develop` hotfixes merged into `v3-upgrade`, such as #232 and, once merged, #228), and the documentation merge (Track D, D32). **Track M is deferred** to a later release: M.0–M.7, PR2 and PR4–PR7, gates G2, G5, G5b and G6, and S4-Q10b. §9 is kept unchanged for then. Amends Q1, Q3, Q5, S4-Q8, S4-Q14, D5, D17 and D19. | The test, plotting, prompt and docs work is ready long before the matrix track, and none of it depends on M |
 | D32 | (Maintainer decision, 2026-11-09.) **The documentation is merged into this repository next**, as its own PR (PRD, Track D, §8a) on a branch from `v3-upgrade`, before PR3a opens: the docs plan's Phase 4 runs before its Phase 3. Each later PR then updates `docs/source/` itself, so the docs plan's separate `v3` docs branch and the R.4 hand-off list are dropped (R.4 becomes a docs check). The Read the Docs switch and archiving `KCWI_DRP-Docs` happen at release (R.5); until then the docs repository keeps serving the released 1.3.x. Amends S4-Q5. | PR3a and PR3b can carry their own user docs, and nothing is written out of tree |
-| D33 | (Maintainer decisions, 2026-11-09.) **Plot changes from the P.0 review go into PR3a:** one color per role across all plots ("Plot color scheme" in `docs/interactive_prompts.md`: data inspected blue, reference black, fits red, CWAVE orange dash-dot-dot, WAVGOOD green, ...), held as constants in `kcwidrp/core/kcwi_plot_colors.py` with `oplot_cwave` and `oplot_wavgood` helpers (a convention, not enforced); a color bar on images; WAVGOOD on full-range plots; the reviewer's fixes to P11, P12, P21–P23 and P43–P47; help texts with one color per line, a blank line around `?` help, and bold headings on a terminal; American spelling throughout the code and docs. Amends §8.1 ("No plotting changes") and P.3's pixel-identical PNG check: plot appearance changes in PR3a, but cubes and the `.proc` table must not (tier 1–5 unchanged), and the plots are blessed with the new reason `plot scheme PR3a` after G3. | The review showed the prompts can't be explained well without consistent plots; plot appearance is free to change (S4-Q1) |
+| D33 | (Maintainer decisions, 2026-11-09.) **Plot changes from the P.0 review go into PR3a:** one color per role across all plots ("Plot color scheme" in `docs/dev/interactive_prompts.md`: data inspected blue, reference black, fits red, CWAVE orange dash-dot-dot, WAVGOOD green, ...), held as constants in `kcwidrp/core/kcwi_plot_colors.py` with `oplot_cwave` and `oplot_wavgood` helpers (a convention, not enforced); a color bar on images; WAVGOOD on full-range plots; the reviewer's fixes to P11, P12, P21–P23 and P43–P47; help texts with one color per line, a blank line around `?` help, and bold headings on a terminal; American spelling throughout the code and docs. Amends §8.1 ("No plotting changes") and P.3's pixel-identical PNG check: plot appearance changes in PR3a, but cubes and the `.proc` table must not (tier 1–5 unchanged), and the plots are blessed with the new reason `plot scheme PR3a` after G3. | The review showed the prompts can't be explained well without consistent plots; plot appearance is free to change (S4-Q1) |
 
 Maintainer answers to the S.4 questions (gate G0), given 2026-10-22 by the maintainer. Numbered after the S.4 list (S4-Q*n*) so they do not clash with Q1–Q16 above. S4-Q10b is still open (asked after M.5a), and is deferred with Track M (D31).
 
@@ -326,8 +326,8 @@ The shell environment active at time of writing (`pypeit`, Python 3.13) does **n
 
 Do (environments as in D14):
 1. Repair the baseline environment: `conda activate kcwidrp`, then `pip uninstall -y psutil` (repeat until it reports nothing installed), delete any leftover `site-packages/psutil/` directory, and `pip install "psutil>=5.7.0,<5.8.0"`. If the pinned psutil will not build or import on this Mac, rebuild the env from scratch with Python 3.12 and record the reason; the `psutil` pin is then a question for the maintainers.
-2. Baseline environment: `pip install -e .` from `upgrade-start`. Record `pip freeze > docs/baseline/env_baseline.txt`. Add a `.gitignore` rule so that only text files (`*.md`, `*.txt`, `*.json`) under `docs/baseline/` can be committed; the FITS outputs and plots from S.3 stay local. After T.1 lands, `pip install -e ".[test]"` into the same env; PR0 is developed and tested here.
-3. Development environment for PR1 onward: a fresh Python 3.12 env from the branch's `pyproject.toml`, with the numeric packages (`numpy`, `scipy`, `astropy`, `scikit-image`, `astroscrappy`) pinned to the exact versions in `env_baseline.txt`. Record its `pip freeze` as `docs/baseline/env_dev.txt`, and diff the two files in the PR1 description. Python 3.13 is not usable while `numpy==1.26.4` is pinned.
+2. Baseline environment: `pip install -e .` from `upgrade-start`. Record `pip freeze > docs/dev/baseline/env_baseline.txt`. Add a `.gitignore` rule so that only text files (`*.md`, `*.txt`, `*.json`) under `docs/dev/baseline/` can be committed; the FITS outputs and plots from S.3 stay local. After T.1 lands, `pip install -e ".[test]"` into the same env; PR0 is developed and tested here.
+3. Development environment for PR1 onward: a fresh Python 3.12 env from the branch's `pyproject.toml`, with the numeric packages (`numpy`, `scipy`, `astropy`, `scikit-image`, `astroscrappy`) pinned to the exact versions in `env_baseline.txt`. Record its `pip freeze` as `docs/dev/baseline/env_dev.txt`, and diff the two files in the PR1 description. Python 3.13 is not usable while `numpy==1.26.4` is pinned.
 
 Validation:
 - `python -c "import psutil, kcwidrp, bokeh, matplotlib; print(bokeh.__version__, matplotlib.__version__)"` succeeds in the baseline env and the versions are recorded.
@@ -338,16 +338,16 @@ Validation:
 
 ### S.3 Reference reductions — Human
 
-Status: **done, 2026-10-23.** Results, checks and timings are in `docs/baseline/README.md`: all 16 passes completed with no failed primitive; each level-3 replay is identical to its pass; levels 0 and 1 give identical cubes; `Picking the highest peak` never appears (ds03 blue found no ledge peak and skipped the correction, D23).
+Status: **done, 2026-10-23.** Results, checks and timings are in `docs/dev/baseline/README.md`: all 16 passes completed with no failed primitive; each level-3 replay is identical to its pass; levels 0 and 1 give identical cubes; `Picking the highest peak` never appears (ds03 blue found no ledge peak and skipped the correction, D23).
 
 Replaces bokeh-plan task 0.1 **and** matrix Stage 0's data capture (decision D2). Follow bokeh-plan 0.1 steps 1–4 exactly, with these additions:
 
-**As run (2026-10-23, D24):** datasets `ds01_F22491_pt2_60266` (BL + RH1, Large, 2×2, sky frames) and `ds03_Compact_groupHS_60406` (BM + RL, Medium, 2×2, sky frames) from `~/drp/kcwi/test_suite/suite/` (`manifest.csv`), each channel reduced with its `files_flatlamp_<channel>.txt` list and the dataset's `kcwi.sky`, in group mode (`-g`). Each pass runs in its own directory `~/drp/kcwi/s3/<dataset>/<channel>/L<level>/` (and `L3_replay/`), outside the repository and the raw data, which serves as the archive instead of `docs/baseline/<channel>/`; only text files (answers, README) are copied into `docs/baseline/`. The suite's other datasets ds02, ds06, ds07 and ds08 are added later as quick-profile regression datasets (T.7); ds04 and ds05 were dropped (slicer keywords `FPCam` and `Home`).
+**As run (2026-10-23, D24):** datasets `ds01_F22491_pt2_60266` (BL + RH1, Large, 2×2, sky frames) and `ds03_Compact_groupHS_60406` (BM + RL, Medium, 2×2, sky frames) from `~/drp/kcwi/test_suite/suite/` (`manifest.csv`), each channel reduced with its `files_flatlamp_<channel>.txt` list and the dataset's `kcwi.sky`, in group mode (`-g`). Each pass runs in its own directory `~/drp/kcwi/s3/<dataset>/<channel>/L<level>/` (and `L3_replay/`), outside the repository and the raw data, which serves as the archive instead of `docs/dev/baseline/<channel>/`; only text files (answers, README) are copied into `docs/dev/baseline/`. The suite's other datasets ds02, ds06, ds07 and ds08 are added later as quick-profile regression datasets (T.7); ds04 and ds05 were dropped (slicer keywords `FPCam` and `Home`).
 
 - **Datasets:** one blue night (BL or BM) and one red (KCRM) night, each with bias, flat, arc, continuum bars, a standard star and at least one science frame with a point source. No nod-and-shuffle (Q4). Keep the raw data in directories whose full path contains neither `kr` nor `kb` other than in the file names, so the channel check (bug B8) does not insert extra prompts that would consume answer lines.
 - **Viewer:** S.3 runs with `enable_bokeh = True` and a working Bokeh server, as users run today. Runs with the viewer off are not possible on this code (B9, B10).
 - **Passes per channel:** `plot_level = 0`, the usual `plot_level` (1), and `plot_level = 3` with answers captured via `tee answers_<channel>_3.txt`. Give at least one non-default *valid* answer at every value prompt (ReadAtlas offset, MakeInvsens limits / one line mask / fit order, MakeMasterFlat peak if it appears). Do **not** type invalid input in this pass: some invalid inputs crash the current code (§13), which would make the replay unusable.
-- **Archive per channel**, under `docs/baseline/<channel>/` (data excluded by the S.2 `.gitignore` rule): `plots_ref_<channel>_<level>/`; `answers_<channel>_3.txt`; the full `redux/` directory including `*_geom.pkl`, `*_wavemap`, `*_slicemap`, `*_posmap`, `icube`, `icubew`, `icubed`, `icubes`, `invsens`, the `.proc` table; and the pipeline log for each pass.
+- **Archive per channel**, under `docs/dev/baseline/<channel>/` (data excluded by the S.2 `.gitignore` rule): `plots_ref_<channel>_<level>/`; `answers_<channel>_3.txt`; the full `redux/` directory including `*_geom.pkl`, `*_wavemap`, `*_slicemap`, `*_posmap`, `icube`, `icubew`, `icubed`, `icubes`, `invsens`, the `.proc` table; and the pipeline log for each pass.
 - **Timings:** per-primitive wall time from the log for `GenerateMaps`, `MakeCube`, `WavelengthCorrections`, `CorrectDar` (matrix plan §3 baseline). Machine, CPU and core count recorded.
 - **Screenshots** of the live-only plots during the level-3 pass, as bokeh 0.1 requires.
 
@@ -357,7 +357,7 @@ Validation (in addition to bokeh-plan 0.1's list):
 - No log contains `Failed executing primitive` or `while invoking`. The pipeline exits with status 0 even when a primitive fails (the framework logs the exception, carries on with the next event and leaves through `os._exit(0)`), so the log is the only evidence of a failure.
 - Search both level-1 logs for `Picking the highest peak`. Record whether it occurs: it decides how bug B1 (§13) can be validated.
 
-👤 Human check: this whole task is yours. Write a short `docs/baseline/README.md` with dataset IDs (KOA file names), dates, config used, command lines, machine, and anything unusual during the runs.
+👤 Human check: this whole task is yours. Write a short `docs/dev/baseline/README.md` with dataset IDs (KOA file names), dates, config used, command lines, machine, and anything unusual during the runs.
 
 ### S.4 Maintainer questions — Human
 
@@ -397,7 +397,7 @@ Validation: every question has an answer row in §2 before the task that depends
 
 ### S.5 Plot and prompt inventory — Sonnet 5.5 (low)
 
-Bokeh-plan task 0.2 as written (file `docs/plot_inventory.md`, 48 figure rows, feature summary), with the prompt table extended for Track P. For every `input(` call, one row with:
+Bokeh-plan task 0.2 as written (file `docs/dev/plot_inventory.md`, 48 figure rows, feature summary), with the prompt table extended for Track P. For every `input(` call, one row with:
 
 - file and line; the `plot_level` guard; the exact prompt string;
 - which figure is on screen when it is asked (cross-reference to the figure row);
@@ -463,13 +463,13 @@ kcwidrp/tests/
 
 ### T.0 Test strategy and conventions — Opus 5.5 (medium)
 
-Draft `docs/testing.md` covering: the layout above; markers (`regression`, plus `slow` for fast-suite tests over 2 s, which should be rare); what qualifies as a unit test (writes only to `tmp_path`, no network, no display, under 2 s); the xfail policy (D8); the independence rule (§3 rule 1); the tolerance policy (exact equality for integers, flags and masks; floating-point tolerances only with a written reason next to them); where an expected value comes from (an independent source such as astropy, an analytic result or a published value, or a "characterization" value captured from `upgrade-start` and labeled as such); and the bless policy (T.7). Opus because every later test follows these rules.
+Draft `docs/dev/testing.md` covering: the layout above; markers (`regression`, plus `slow` for fast-suite tests over 2 s, which should be rare); what qualifies as a unit test (writes only to `tmp_path`, no network, no display, under 2 s); the xfail policy (D8); the independence rule (§3 rule 1); the tolerance policy (exact equality for integers, flags and masks; floating-point tolerances only with a written reason next to them); where an expected value comes from (an independent source such as astropy, an analytic result or a published value, or a "characterization" value captured from `upgrade-start` and labeled as such); and the bless policy (T.7). Opus because every later test follows these rules.
 
 Validation: every rule in the document is concrete enough to be checked by reading a test (no "should be reasonable").
 
 Status: **done, 2026-10-22** (approved by the maintainer, D22).
 
-👤 Human check: read and approve `docs/testing.md`. In particular, approve the tolerance policy and the rule that floating-point regression comparisons start out exact (T.7).
+👤 Human check: read and approve `docs/dev/testing.md`. In particular, approve the tolerance policy and the rule that floating-point regression comparisons start out exact (T.7).
 
 ### T.1 Test infrastructure and packaging — Sonnet 5.5 (medium)
 
@@ -648,7 +648,7 @@ Validation:
 - Delete the last line of a level-3 answers file: tier 1 fails on the prompt-record count or the `EOF` entry. Add one extra line: tier 1 fails on the count.
 - With `KCWI_REGRESSION_DATA` unset: every test is skipped with the reason.
 - A bless records its reason, and a bless without `--reason` is refused.
-- The full suite's wall time is recorded in `docs/testing.md`.
+- The full suite's wall time is recorded in `docs/dev/testing.md`.
 
 👤 Human check:
 - **Assemble the data directory** from S.3: copy the raw frames, the answers files and the reference outputs. Sonnet can draft `manifest.json` (with checksums) from the directory; you check every entry.
@@ -658,7 +658,7 @@ Validation:
 
 ### T.8 Suite quality check — Sonnet 5.5 (medium), fresh session
 
-Status: **done, 2026-10-24** (maintainer decisions D25). 16 breakages were applied one at a time in a throwaway worktree (the plan's 10 plus 6). The fast suite caught 10; the others now have fast tests (SubtractSky exposure scaling, MakeCube placement and red rotation, MakeInvsens effective area, SolveArcs outlier rejection, air-to-vacuum pinned to Ciddor 1996), so every breakage is caught by the fast suite except one: doubling SolveArcs' initial outlier width (2.5σ effectively 5σ) is caught only by the regression suite (tiers 3–4 on `ds03_blue_L1`). The SubtractSky breakage also revealed B36. Coverage of the source: 10 % → 45 % (`docs/baseline/coverage_t8.txt`); `kcwi_file_primitives.py` 75 %; core modules at or above 70 % except `bokeh_plotting` (65 %), `kcwi_plotting` (32 %) and the vendored `bspline` package.
+Status: **done, 2026-10-24** (maintainer decisions D25). 16 breakages were applied one at a time in a throwaway worktree (the plan's 10 plus 6). The fast suite caught 10; the others now have fast tests (SubtractSky exposure scaling, MakeCube placement and red rotation, MakeInvsens effective area, SolveArcs outlier rejection, air-to-vacuum pinned to Ciddor 1996), so every breakage is caught by the fast suite except one: doubling SolveArcs' initial outlier width (2.5σ effectively 5σ) is caught only by the regression suite (tiers 3–4 on `ds03_blue_L1`). The SubtractSky breakage also revealed B36. Coverage of the source: 10 % → 45 % (`docs/dev/baseline/coverage_t8.txt`); `kcwi_file_primitives.py` 75 %; core modules at or above 70 % except `bokeh_plotting` (65 %), `kcwi_plotting` (32 %) and the vendored `bspline` package.
 
 Depends on: T.3–T.7. Checks that the tests find real faults. In a scratch branch, apply at least 10 deliberate breakages one at a time, and record which test catches each:
 
@@ -668,15 +668,15 @@ Then report coverage per module, against the T.1 baseline.
 
 Validation: every breakage is caught by the fast suite (or by the regression suite, for the ones only real data can show, stated explicitly). A breakage that nothing catches gets a new test before PR0.
 
-👤 Human check: review the coverage table and set a minimum per module for `core/` and `kcwi_file_primitives.py` (proposed: 70 % line coverage), to be written in `docs/testing.md`. Review any breakage that only the regression suite catches and decide whether that is acceptable.
+👤 Human check: review the coverage table and set a minimum per module for `core/` and `kcwi_file_primitives.py` (proposed: 70 % line coverage), to be written in `docs/dev/testing.md`. Review any breakage that only the regression suite catches and decide whether that is acceptable.
 
 ### T.9 Testing guide and pre-PR checklist — Sonnet 5.5 (low)
 
-Status (2026-10-23): guide written in `docs/testing.md` (approved rules §1–§11 unchanged) with a proposed `.github/pull_request_template.md`. Validation, first half done: a fresh Sonnet session, given only a clean clone and the guide, created a new venv, installed the test extra and got the fast suite green (710 passed, 60 xfailed; 49 s on a first run). Second half done 2026-10-24: a fresh Sonnet session, given only `docs/testing.md` and the maintainer's data directory, verified the checksums and ran the quick profile (all 4 entries passed every tier, 12 min 7 s); its small findings were fixed in the guide. **T.9 is done.**
+Status (2026-10-23): guide written in `docs/dev/testing.md` (approved rules §1–§11 unchanged) with a proposed `.github/pull_request_template.md`. Validation, first half done: a fresh Sonnet session, given only a clean clone and the guide, created a new venv, installed the test extra and got the fast suite green (710 passed, 60 xfailed; 49 s on a first run). Second half done 2026-10-24: a fresh Sonnet session, given only `docs/dev/testing.md` and the maintainer's data directory, verified the checksums and ran the quick profile (all 4 entries passed every tier, 12 min 7 s); its small findings were fixed in the guide. **T.9 is done.**
 
-Finish `docs/testing.md`: installing the test dependencies (`pip install -e ".[test]"`, Python 3.12); running the fast suite; setting up the regression data directory; running, reading and blessing regressions; writing a new test with `run_primitive` (a worked example); the pre-PR checklist that enforces the §1 rule. Propose a GitHub pull-request template with sections for the two test summaries, subject to Keck agreement.
+Finish `docs/dev/testing.md`: installing the test dependencies (`pip install -e ".[test]"`, Python 3.12); running the fast suite; setting up the regression data directory; running, reading and blessing regressions; writing a new test with `run_primitive` (a worked example); the pre-PR checklist that enforces the §1 rule. Propose a GitHub pull-request template with sections for the two test summaries, subject to Keck agreement.
 
-Validation: a fresh Sonnet session, given only a clean clone and `docs/testing.md`, installs the test dependencies and runs the fast suite and (with a data directory) the regression suite, without other help.
+Validation: a fresh Sonnet session, given only a clean clone and `docs/dev/testing.md`, installs the test dependencies and runs the fast suite and (with a data directory) the regression suite, without other help.
 
 ### T.10 Remove Travis CI — Sonnet 5.5 (low)
 
@@ -684,7 +684,7 @@ Depends on: nothing. Q15: all Travis configuration and references go. Nothing co
 
 Do, on the PR0 branch:
 - Delete `.travis.yml`.
-- `README.rst`: remove the "Tests" section's Travis link and status badge (lines 30–38 at `dfbcf9d`). Replace them with one sentence pointing to `docs/testing.md` for running the tests locally. Keep the ReadTheDocs badge.
+- `README.rst`: remove the "Tests" section's Travis link and status badge (lines 30–38 at `dfbcf9d`). Replace them with one sentence pointing to `docs/dev/testing.md` for running the tests locally. Keep the ReadTheDocs badge.
 - `environment.yml`: `.travis.yml` is its only consumer in the repo. Do not delete or change it here, but note in the PR that its fate is decided in bokeh-plan 5.1 (§7 amendment 9).
 
 Hand-off to the documentation plan (S4-Q5; not done in this upgrade): the user documentation in `KCWI_DRP-Docs` should replace the pull-request requirement "A pass from the automatic TravisCI tests" (if it still carries it) with the §1 rule: fast-suite and (for reduction-code changes) regression-suite summaries in the PR description, with a link to the testing guide. R.4 collects this item.
@@ -737,7 +737,7 @@ Execute [bokeh_port_plan.md](bokeh_port_plan.md) tasks 0.3, 1.1, 1.2, 2.1, 2.2, 
 
 Status (2026-10-28, branch `upgrade/pr1-bokeh`, started from PR0's head before PR0 merged):
 - **Done:** 0.3 (prototype and decision; Ubuntu run and browser checks still 👤), 1.1, 1.2, 2.1, 2.2 (MakeCube keeps its `fork` pool), 3.1, 3.2, 4.1 (`kcwidrp/tests/regression/plot_compare_page.py`), 5.1 (with D26: `requirements.txt` and `environment.yml` deleted). 1.1, 1.2, 2.x, 3.x, 4.1 and 5.1 were built in parallel against the interfaces in bokeh plan 0.3, then integrated; plot style per D27.
-- **Development environment** (S.2 step 3): `kcwidrp-dev`, recorded in `docs/baseline/env_dev.txt`.
+- **Development environment** (S.2 step 3): `kcwidrp-dev`, recorded in `docs/dev/baseline/env_dev.txt`.
 - **Regression:** full profile, baseline env, before the D27 style changes: 96 passed (all 12 entries, every tier). Full profile in the development environment at `f593896` (after D27): 96 passed in 35 min, every tier of all 12 entries; the newer `astropy-iers-data` changed no output, so no `environment` bless is needed.
 - **Maintainer browser checks (2026-10-28, macOS, level-3 ds03 blue run):** pan, zoom and cursor readout work; the optional vertical cursor line (added at the maintainer's request, a checkbox on the viewer page) works.
 - **4.3 sign-off (2026-10-28, maintainer): pass.** Reviewed the side-by-side pages of every saved plot of the 12 full-profile entries (Bokeh reference against Matplotlib) and a live level-3 session. Accepted differences: Matplotlib's look in place of Bokeh's (D27). The plot bless with reason `bokeh port 4.3` is the maintainer's to run.
@@ -829,11 +829,11 @@ P.0, P.1 and P.2 run in parallel, so the names are fixed here; semantics are §8
 - `who` is the primitive's name, used as the `"<who>: "` prefix of log lines (no prefix when `None`). Pure "next" answers are logged at DEBUG. Explanations (`what`, `help`) go to stdout only.
 - The module imports neither Matplotlib nor Bokeh nor any `kcwidrp` plotting module.
 
-P.0 writes each prompt's `what` (one line) and `help` (template above) in `docs/interactive_prompts.md`; P.3/P.4 paste them into the call sites.
+P.0 writes each prompt's `what` (one line) and `help` (template above) in `docs/dev/interactive_prompts.md`; P.3/P.4 paste them into the call sites.
 
 ### P.0 Prompt catalog and explanation text — Opus 5.5 (medium)
 
-Depends on: S.5. Produces `docs/interactive_prompts.md`: one section per logical prompt, using the S.5 prompt table, with the drafted `what` and `help` text following the template. This is domain writing (what a good arc fit or atlas cross-correlation looks like), hence Opus.
+Depends on: S.5. Produces `docs/dev/interactive_prompts.md`: one section per logical prompt, using the S.5 prompt table, with the drafted `what` and `help` text following the template. This is domain writing (what a good arc fit or atlas cross-correlation looks like), hence Opus.
 
 Validation:
 - One section per logical prompt in S.5; none missing (count check).
@@ -1223,10 +1223,10 @@ Run the full regression profile on the release candidate first. The release merg
 |---|---|---|---|
 | Start | S.1 | Drop `stash@{0}`; fetch; confirm `develop` has `v1.3.2`; tag `upgrade-start` | Tag exists on a commit containing `v1.3.2`, tree clean |
 | Start | S.2 | Repair the psutil install in the baseline env; confirm it runs Bokeh and opens the browser; create the Python 3.12 dev env later with matching numeric pins | Versions and test baseline recorded |
-| Start | S.3 | Run blue and red reference reductions at levels 0, 1, 3; capture answers; archive outputs and screenshots; check replay and logs | ✔ Done 2026-10-23: `docs/baseline/README.md` written, replays identical, no failed primitives |
+| Start | S.3 | Run blue and red reference reductions at levels 0, 1, 3; capture answers; archive outputs and screenshots; check replay and logs | ✔ Done 2026-10-23: `docs/dev/baseline/README.md` written, replays identical, no failed primitives |
 | Start | S.4 | Ask maintainers questions 1–14 (10b after M.5a) | Answers in §2 (done 2026-10-22 except 10b) |
 | After S.5 | S.5 | Spot-check 5 figure rows and 5 prompt rows | Noted in inventory |
-| Track T | T.0 | Approve `docs/testing.md`, especially tolerance and bless policies | ✔ Approved 2026-10-22 (D22) |
+| Track T | T.0 | Approve `docs/dev/testing.md`, especially tolerance and bless policies | ✔ Approved 2026-10-22 (D22) |
 | Track T | T.7 | Assemble `$KCWI_REGRESSION_DATA` from S.3; check the drafted manifest; first run on unmodified code; "environment" bless if needed; keep a second copy of the data | Suite passes on `upgrade-start` |
 | Track T | T.8 | Set per-module coverage minimums; accept or reject breakages only regression catches | ✔ Done 2026-10-24 (D25): 70 % per module with exemptions; one regression-only breakage accepted |
 | Every PR | §1 rule | Run fast and regression suites; paste summaries; do any bless yourself, with a reason | Summaries in the PR |
@@ -1272,7 +1272,7 @@ Run the full regression profile on the release candidate first. The release merg
 | A primitive fails but the run "succeeds" (exit status always 0, §6.1) | Tier 1 scans logs for failed primitives (D15); S.3 checks its own logs |
 | IERS table updates change velocity corrections and `icubew` with no code change | Auto-download off in tests and runner; IERS versions in provenance (D18) |
 | Regression runs too slow to do for every PR, so they get skipped | Quick profile per PR, full profile only where required (D16) |
-| Baseline env breaks again (it was already broken by a mixed psutil install) | `env_baseline.txt` recorded in S.2; rebuild instructions in `docs/baseline/README.md` |
+| Baseline env breaks again (it was already broken by a mixed psutil install) | `env_baseline.txt` recorded in S.2; rebuild instructions in `docs/dev/baseline/README.md` |
 
 Rollback: each PR is independently revertable. No matrix code ships in this release (D31). Track A rollback is as in the bokeh plan. PRD is reverted by reverting its merge; the docs repository stays live until R.5.
 

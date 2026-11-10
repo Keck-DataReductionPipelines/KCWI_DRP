@@ -43,7 +43,7 @@ Paths below are relative to the docs repo, so `source/` means `docs/source/`.
 | B3 | `index.rst:28` | "Mac intel M2 and M3 chips". | Apple Silicon (M-series), as in changelog 1.2.0. |
 | B4 | `issues.rst:40-47` | Known issue "Pipeline ingests blue files as red": two instances can't run at once. | Fixed in 1.2.0 (changelog). Remove it. |
 | B5 | `issues.rst:49-107` | Firefox workaround: edit `kcwi_plotting.save_plot`, then `python setup.py install`. There has been no `setup.py` since the move to Poetry. `firefox_binary=`/`firefox_options=` were removed in Selenium 4. Partly superseded by PR #218 (1.3.2). | Replace with the current advice for 1.3.x (`conda install -c conda-forge firefox geckodriver`, the snap note). Delete it for v3. |
-| B6 | `development.rst:73` | Requires "a pass from the automatic TravisCI tests". | Travis has been removed (T.10). Use the testing rule from `docs/testing.md` §1: fast-suite and regression summaries go in the PR description. |
+| B6 | `development.rst:73` | Requires "a pass from the automatic TravisCI tests". | Travis has been removed (T.10). Use the testing rule from `docs/dev/testing.md` §1: fast-suite and regression summaries go in the PR description. |
 | B7 | `development.rst:124,130` | Release steps say `python setup.py sdist bdist_wheel` and "version number in `setup.py`". | `python -m build` (or `poetry build`); the version lives in `pyproject.toml`. |
 | B8 | `development.rst:41-63` | The branch model doesn't mention `v3-upgrade` (D28). It also says PRs merge "during the next developer meeting". | Update once v3 has merged; in the meantime a short note is enough. |
 | B9 | `sky_subtraction.rst:127-129` | Says to enter `skip` "on the line after the raw file". | It's the second column of the same line (`MakeMasterSky.py:131-141`). |
@@ -70,7 +70,7 @@ Paths below are relative to the docs repo, so `source/` means `docs/source/`.
 | C6 | **Nod and shuffle**: no page. | `NandshuffSubtractSky.py` |
 | C7 | **Flux calibration processing.** `calibration.rst` covers observing a standard only, not how `invsens` is made and applied, or how to use a standard from another night. | `MakeInvsens.py`, `FluxCalibrate.py` |
 | C8 | **Install versions.** PyPI's latest is 1.3.1, but 1.3.2 and 1.3.3 are tagged or merged, so `pip install kcwidrp` misses the StackFlats fix. Either publish to PyPI or tell users to install from git. *This is a release gap rather than a docs gap; it needs a maintainer action.* | PyPI |
-| C9 | **Developer docs.** No link to `docs/testing.md` and no description of the test layout. | KCWI_DRP `docs/testing.md` |
+| C9 | **Developer docs.** No link to `docs/dev/testing.md` and no description of the test layout. | KCWI_DRP `docs/dev/testing.md` |
 | C10 | **FAQ items not yet written:** KOA versus original file names; why a frame was skipped (proc table); reducing the red and blue channels together; plot levels. | — |
 
 ### D. Stale once v3 is released (keep on `main` until then)
