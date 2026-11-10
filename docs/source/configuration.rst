@@ -180,17 +180,36 @@ Plotting parameters
 
 .. code-block:: python
 
- # BOKEH SERVER
- enable_bokeh = True
+ enable_plot_viewer = True
+ plot_viewer_port = 5006
+ plot_viewer_open_browser = False
  plot_level = 1
 
-These parameters control the plotting features of the DRP. Plotting is
-performed using a combination of a Bokeh server running in the background and a
-browser front end.
+Plots are drawn with Matplotlib. Two things are controlled separately:
 
-To activate the plotting features, set ``enable_bokeh = True``. When the DRP
-starts, it will check if there is an instance of the Bokeh server running or
-start one. A browser window will be opened automatically when needed.
+* **Saved plots.** At ``plot_level`` 1 or more, every plot is saved as a PNG
+  file in the ``plots`` directory, whatever the viewer settings are.
+* **The live plot viewer.** With ``enable_plot_viewer = True``, each pipeline
+  process serves its plots as a web page while it runs. At start-up it prints
+  the address to open, for example::
+
+     ========================================================================
+       Plot viewer: http://127.0.0.1:5006/  (open this in a browser)
+     ========================================================================
+
+  The page shows each plot as it is drawn, with pan, zoom, a cursor readout
+  and a download button. See :ref:`running:Viewing the plots`.
+
+``plot_viewer_port`` is the first port tried. If it is taken (for example by
+a second reduction running at the same time), the next 9 ports are tried, and
+the address actually used is printed. Each process has its own viewer and its
+own page.
+
+``plot_viewer_open_browser = True`` opens the page in a browser tab
+automatically; by default, open the printed address yourself.
+
+If the viewer cannot start, the pipeline logs a warning and carries on: plots
+are still saved, only the live page is missing.
 
 The ``plot_level`` parameter controls the level of interactivity. Setting it 0
 will disable plotting.  Setting it to 1 will enable plotting, but the DRP will
@@ -204,24 +223,14 @@ For general use, it is advisable to leave the plot level to 1.
 The size of the plotting window can be specified using ``plot_width`` and
 ``plot_height``.
 
-.. code-block:: python
+.. note::
 
- terminate_on_failed_bokeh_start = False
- plot_firefox_compat = False
- plot_prewarm_firefox = False
-
-These help when Bokeh or Firefox does not work on your system; see
-:ref:`issues:Bokeh Issues`.
-
-* ``terminate_on_failed_bokeh_start``: stop the pipeline if the Bokeh server
-  fails to start. When ``False``, the pipeline continues without interactive
-  plots and logs a warning.
-* ``plot_firefox_compat``: use the Firefox-compatible way of saving plots. Set
-  it to ``True`` only if saving plots fails (for example with a snap-installed
-  Firefox on Ubuntu 24.04).
-* ``plot_prewarm_firefox``: start Firefox when the pipeline starts, so that the
-  first saved plot does not wait for it. Only used when
-  ``plot_firefox_compat = True``.
+   Configuration files from versions before 3 may contain ``enable_bokeh``,
+   ``terminate_on_failed_bokeh_start``, ``plot_firefox_compat`` or
+   ``plot_prewarm_firefox``. They still load without error. The last three are
+   ignored. ``enable_bokeh`` is deprecated: it is used only when
+   ``enable_plot_viewer`` is absent, and a warning is logged. Replace it with
+   ``enable_plot_viewer``.
 
 Cosmic rays rejection parameters
 --------------------------------

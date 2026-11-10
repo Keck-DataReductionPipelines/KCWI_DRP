@@ -141,6 +141,39 @@ For an even finer control, each file in the bias list could be run individually,
 and only when enough bias frames are present and reduced, the DRP will generate
 a master bias.
 
+Viewing the plots
+-----------------
+
+At ``plot_level`` 1 or more, every plot is saved as a PNG file in the
+``plots`` directory. With ``enable_plot_viewer = True`` (the default), you can
+also watch the plots while the pipeline runs: at start-up it prints the
+address of its plot viewer, for example ``http://127.0.0.1:5006/``. Open that
+address in a browser. The page shows each plot as it is drawn and keeps
+working while the pipeline waits for your answer at a prompt.
+
+Each pipeline process has its own viewer and its own address. If you run two
+reductions at once, for example one per channel, the second uses the next
+free port (5007, and so on), and prints its own address.
+
+The viewer only accepts connections from the machine the pipeline runs on.
+To see the plots from somewhere else:
+
+* **Remote desktop (VNC).** Run the browser on the pipeline machine, inside
+  the remote desktop session, and open the printed address there. This is how
+  the pipeline is used at WMKO.
+* **SSH port forwarding.** Forward the viewer's port to your own machine and
+  open it in your local browser:
+
+  .. code-block:: bash
+
+     ssh -L 5006:127.0.0.1:5006 user@pipeline-host
+     # then open http://localhost:5006/ locally
+
+  Use the port from the printed address. This works in principle but is not
+  part of the tests run for each release.
+
+If the viewer does not start, see :ref:`issues:Plot viewer issues`.
+
 Other command line options
 --------------------------
 

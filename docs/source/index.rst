@@ -22,7 +22,8 @@ New in 1.3
 * Fixed the Tukey taper being applied repeatedly to the continuum bars during
   the dispersion calculation
 * The ``NOSKYSUB`` extension is written as 32-bit floats and carries the WCS
-* Options for troubleshooting Bokeh and Firefox (see :doc:`issues`)
+* Options for troubleshooting Bokeh and Firefox (1.3.x only: version 3 no
+  longer uses them)
 * Fixed stacked flats (1.3.3): from 1.2.0 to 1.3.2, each stacked flat was made
   from the first input flat only. If flat-field noise matters for your data,
   consider re-reducing data reduced with those versions

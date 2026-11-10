@@ -15,11 +15,13 @@ pipeline. To get an editable copy of the default configuration file
 
 For a quick start, it is enough to decide if you want to see plots as the
 pipeline runs or not.  This is controlled by
-:ref:`two parameters <configuration:Plotting parameters>`  ``enable_bokeh``
-and ``plot_level``. For no plotting, disable Bokeh and set the plot level to 0.
-For plotting without interaction, enable Bokeh and set the plot level to 1 (this
-is the default configuration). For interactive plotting (where you have to hit
-<cr> to proceed after each step) set the plot level to 2 or more.
+:ref:`two parameters <configuration:Plotting parameters>`,
+``enable_plot_viewer`` and ``plot_level``. For no plotting, set the plot level
+to 0. For plotting without interaction, set the plot level to 1 (this is the
+default configuration): plots are saved in the ``plots`` directory, and with
+``enable_plot_viewer = True`` you can also watch them in a browser, at the
+address the pipeline prints when it starts. For interactive plotting (where you
+have to hit <cr> to proceed after each step) set the plot level to 2 or more.
 
 Before reducing, you can check that every science frame has the calibrations
 it needs:

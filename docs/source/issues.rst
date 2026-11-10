@@ -91,85 +91,32 @@ See :ref:`configuration:Plotting parameters`.
 Known Issues
 ============
 
-Bokeh Issues
-------------
+Plot viewer issues
+------------------
 
-The DRP relies on a package called ``Bokeh`` to render plots. This package has a
-large number of dependencies (both Python and system) that can cause issues. If
-you are having issues plotting, read on.
+The live plot viewer (see :ref:`running:Viewing the plots`) is optional:
+when it cannot start, the pipeline logs a warning such as ``Plot viewer not
+started, live plots disabled; plots are still saved`` and carries on. The PNG
+files in ``plots`` are written either way.
 
-As a first check, try to kill any hanging ``bokeh`` processes:
+* **No address printed.** Check that ``enable_plot_viewer = True`` in your
+  configuration file. An old configuration file that only has
+  ``enable_bokeh`` still works, with a deprecation warning in the log; replace
+  the key with ``enable_plot_viewer``.
+* **The page stays empty.** At ``plot_level = 0`` no plots are drawn, so the
+  viewer has nothing to show; use 1 or more.
+* **All ports taken.** The viewer tries ``plot_viewer_port`` (default 5006)
+  and the next 9 ports. If another program uses that whole range, set
+  ``plot_viewer_port`` to a free port, for example ``plot_viewer_port = 8100``.
+  A leftover ``bokeh serve`` process from version 1.3.x can hold port 5006;
+  the viewer skips it, but you can stop it with ``pkill -f "bokeh serve"``.
+* **The page does not load from another machine.** The viewer only accepts
+  connections from the pipeline machine itself. Use a remote desktop or SSH
+  port forwarding, as described in :ref:`running:Viewing the plots`.
 
-.. code-block:: bash
-
-    pkill bokeh
-
-Try running the pipeline again, sometimes this is enough to clear any issues.
-
-Failing that, add/update the following parameter in your ``kcwi.cfg`` config file:
-
-.. code-block:: bash
-
-    terminate_on_failed_bokeh_start = True
-
-This tells the pipeline to exit immediately if Bokeh fails to start. If the
-pipeline then stops at ``StartBokeh`` when you run it again, Bokeh is the
-problem.
-
-Next, try adding/updating the following to your config:
-
-.. code-block:: bash
-
-    plot_firefox_compat = True
-
-This will try to automatically find a firefox installation and use it - this is
-especially an issue if your machine is running firefox installed via snap on
-Ubuntu, although it may well manifest on other machines. You may need to follow
-steps 1 through 3 in the next section, as well.
-
-The next time you run the pipeline, it may appear to hang at the first plotting
-call - wait to see if it proceeds. It may take up to a minute or two
-for firefox to sort itself out (there's a timeout somewhere that must be waited
-out).
-
-You may see a scary looking warning like
-
-.. code-block:: bash
-
-    [Parent 808986, Main Thread] WARNING: Failed to mkdir /home/kcwidrp/snap/firefox/7967/.config/ibus/bus: Not a directory: 'glib warning', file /build/firefox/parts/firefox/build/toolkit/xre/nsSigHandlers.cpp:201
-
-This is not something to worry about.
-
-Firefox/geckodriver cannot be found
-+++++++++++++++++++++++++++++++++++
-
-Error message:
-
-.. code-block:: bash
-
-    RuntimeError: Neither firefox and geckodriver nor a variant of chromium browser and chromedriver are available on system PATH. You can install the former with 'conda install -c conda-forge firefox geckodriver'.
-
-This issue has been submitted by a small number of users. This error is thrown
-by our plotting library, bokeh, when it can't automatically find the path to a
-driver needed to generate plots. The following describes a one-off workaround.
-
-These instructions assume you are using :code:`conda` to manage your environment.
-
-
-#. If you installed the pipeline with :code:`pip`, uninstall with 
-   :code:`pip uninstall kcwidrp`
-#. Install the pipeline following the Installing for Development instructions on
-   the :doc:`installing` page.
-#. Install the following two packages: ::
-
-    pip install selenium
-    pip install geckodriver
-
-Add or update the following in your config file:
-
-.. code-block:: bash
-
-    plot_firefox_compat = True
+Version 3 needs no Bokeh server, Firefox, geckodriver, selenium or Qt
+binding. The 1.3.x troubleshooting steps for those (``pkill bokeh``,
+``plot_firefox_compat``, installing ``pyqt5``) no longer apply.
 
 Massive Slowdown When Calculating Central Dispersion
 ----------------------------------------------------
@@ -203,22 +150,3 @@ your terminal:
 
 This will not persist between terminal sessions, so you should add it to your
 :code:`.bashrc` file.
-
-
-PyQt5
------
-
-Some users have reported an issue where ``PyQt5`` is required to run the DRP, which
-looks like 
-
-.. code-block:: console
-
-    Failed to import any Qt binding
-
-If this is the case, run
-
-.. code-block:: bash
-
-    pip install pyqt5
-
-and the issue should be fixed.

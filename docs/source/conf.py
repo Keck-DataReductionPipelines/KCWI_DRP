@@ -93,9 +93,9 @@ SOURCE_DIR = pathlib.Path(__file__).parent
 logger = logging.getLogger(__name__)
 
 # Scripts whose --help output is included in scripts.rst. The other scripts
-# (wb, wr, kcwi_masksky_ds9) do not use argparse, and smart_reduce_kcwi does
-# not import in kcwidrp 1.3.x.
-HELP_SCRIPTS = ['reduce_kcwi', 'check_cals', 'modhead', 'start_kcwi_rti']
+# (wb, wr, kcwi_masksky_ds9) do not use argparse.
+HELP_SCRIPTS = ['reduce_kcwi', 'check_cals', 'modhead', 'start_kcwi_rti',
+                'smart_reduce_kcwi']
 
 
 def kcwidrp_scripts():

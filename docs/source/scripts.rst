@@ -100,5 +100,8 @@ Observatory Archive. It is not intended for general use.
 smart_reduce_kcwi
 -----------------
 
-A test script for the Keck DRP Framework. In 1.3.x it does not run (it fails
-with an ``ImportError``); use ``reduce_kcwi``.
+A test script for the Keck DRP Framework. For reductions, use
+``reduce_kcwi``.
+
+.. literalinclude:: _generated/smart_reduce_kcwi.txt
+    :language: none

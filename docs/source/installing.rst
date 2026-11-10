@@ -44,16 +44,13 @@ and activate it.
         conda activate kcwidrp
 
 
-Firefox
--------
+Web browser
+-----------
 
-The KCWI DRP uses `bokeh <http://bokeh.org/>`_ for plotting, which requires access
-to a web browser. We recommend installing `Firefox <https://www.mozilla.org/en-US/firefox/new/>`_
-for this purpose, as it is the browser used for testing and validating the DRP.
-Other browsers have been reported to work, but we haven't tested them ourselves.
-
-If you are running the DRP on a headless system and run into issues with driver
-support, see :ref:`firefox/geckodriver issues <issues:Firefox/geckodriver cannot be found>`.
+The DRP saves its plots as PNG files and needs no browser or browser driver
+for that. To watch plots live while the pipeline runs, you need a web browser
+on a machine that can reach the pipeline host (see
+:ref:`running:Viewing the plots`). Any current browser works.
 
 
 Getting and Installing the DRP

@@ -118,7 +118,7 @@ Primitives/API
 .. automodule:: kcwidrp.primitives.StackFlats
    :members:
 
-.. automodule:: kcwidrp.primitives.StartBokeh
+.. automodule:: kcwidrp.primitives.StartPlotViewer
    :members:
 
 .. automodule:: kcwidrp.primitives.SubtractBias
