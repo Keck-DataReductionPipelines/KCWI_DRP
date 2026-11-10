@@ -285,6 +285,19 @@ def test_serves_http_on_the_url(make_viewer):
         assert b"<html" in r.read().lower()
 
 
+def test_download_button_url_serves_png(make_viewer):
+    import urllib.request
+    v = make_viewer()
+    v.start()
+    v.show(line_plot("download"))
+    observe(v)
+    # mpl_tornado.js's download button opens <fignum>/download.<fmt>
+    url = v.url + "1/download.png"
+    with urllib.request.urlopen(url, timeout=10) as r:
+        assert r.status == 200
+        assert r.read().startswith(b"\x89PNG\r\n\x1a\n")
+
+
 def test_next_free_port_when_first_is_taken(make_viewer, base_port, holders):
     holders(base_port)
     v = make_viewer()
