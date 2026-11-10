@@ -124,7 +124,7 @@ Defined in task T.7 of the upgrade plan. The rules that matter for reviewers:
 
 ## 11. Coverage
 
-Coverage is measured (`pytest --cov=kcwidrp`) and reported in PR0 against the baseline (`docs/baseline/coverage_upgrade_start.txt`, then `docs/baseline/coverage_t8.txt`).
+Coverage is measured (`pytest --cov=kcwidrp`) and reported in PR0 against the baseline (`docs/dev/baseline/coverage_upgrade_start.txt`, then `docs/dev/baseline/coverage_t8.txt`).
 
 **Minimum (set by the maintainer after T.8, 2026-10-24): 70 % line coverage per module** for every module in `kcwidrp/core/` and for `kcwidrp/primitives/kcwi_file_primitives.py`. A pull request may not take one of these modules below 70 %, and a new module there starts at 70 % or more. Exempt:
 
@@ -158,7 +158,7 @@ The path must be inside your repository (`.../KCWI_DRP/kcwidrp/__init__.py`), no
 python -c "import importlib.metadata as m; print(m.version('kcwidrp'))"
 ```
 
-A stale `kcwidrp.egg-info/` directory at the repository root (left by an old `setup.py`-style build) shadows the installed metadata whenever Python runs from the repository root, so the version above, and the version in every output's HISTORY, comes out wrong (an old build there reported 1.2.0 instead of the `pyproject.toml` version). It is untracked. If it exists, delete it: `ls -d kcwidrp.egg-info` should say "No such file". See `docs/baseline/README.md`.
+A stale `kcwidrp.egg-info/` directory at the repository root (left by an old `setup.py`-style build) shadows the installed metadata whenever Python runs from the repository root, so the version above, and the version in every output's HISTORY, comes out wrong (an old build there reported 1.2.0 instead of the `pyproject.toml` version). It is untracked. If it exists, delete it: `ls -d kcwidrp.egg-info` should say "No such file". See `docs/dev/baseline/README.md`.
 
 ## Running the tests
 
@@ -236,7 +236,7 @@ Two rules for the path:
 
 ### Worked example
 
-Assume the S.3 run directories are in `~/drp/kcwi/s3/<dataset>/<channel>/L<level>/` (each with `redux/`, `plots/` and `kcwib.proc` or `kcwir.proc`), the raw datasets in `~/drp/kcwi/test_suite/suite/data/<dataset>/`, and the level-3 answer files in `docs/baseline/<dataset>/` of the repository. Run this from the repository root, once per dataset and channel (shown for ds01; repeat for `ds03_Compact_groupHS_60406`, and for `red` / `kcwir.proc`):
+Assume the S.3 run directories are in `~/drp/kcwi/s3/<dataset>/<channel>/L<level>/` (each with `redux/`, `plots/` and `kcwib.proc` or `kcwir.proc`), the raw datasets in `~/drp/kcwi/test_suite/suite/data/<dataset>/`, and the level-3 answer files in `docs/dev/baseline/<dataset>/` of the repository. Run this from the repository root, once per dataset and channel (shown for ds01; repeat for `ds03_Compact_groupHS_60406`, and for `red` / `kcwir.proc`):
 
 ```bash
 export KCWI_REGRESSION_DATA=~/drp/kcwi/regression_data
@@ -257,7 +257,7 @@ for L in 0 1 3; do
 done
 
 # level-3 answer files
-cp docs/baseline/$DS/answers_${DS}_${CH}_3.txt $KCWI_REGRESSION_DATA/answers/
+cp docs/dev/baseline/$DS/answers_${DS}_${CH}_3.txt $KCWI_REGRESSION_DATA/answers/
 ```
 
 (`cp -c` is the macOS APFS clone flag; on Linux use `cp -R` or `cp --reflink=auto -R`.) The `logs/` and `kcwi.cfg` of the S.3 runs are not needed in the data directory.
@@ -303,7 +303,7 @@ With the variable unset, every regression test is skipped with the reason `KCWI_
 
 Each entry is reduced once, by running `reduce_kcwi` as a subprocess in a fresh directory, with the plot viewer off, IERS downloads off, and stdin taken from `/dev/null` (levels 0 and 1) or from the answers file (level 3). The runner checks the raw checksums first; a mismatch stops that entry before it runs. Entries run one at a time, and **an entry's `redux/` is deleted after all its required tiers pass**, so the disk holds roughly one reduction at a time. Before starting, the runner checks that the free space is at least 1.5 times the size of the reference `redux/` (5 GB if there is no reference yet) and stops that entry if not. Failed runs are kept. Logs, the prompt record and the per-entry report are always kept.
 
-Time: on the maintainer's Apple M4, a level-1 reduction takes about 3 to 5 minutes (193 to 288 s in S.3, `docs/baseline/README.md`), plus the comparison. The quick profile has four entries (two datasets, two channels), and took 12 minutes in the first run (2026-10-24: 132 to 172 s of reduction per entry, the rest comparison). The full-profile time is to be recorded here after its first run. Level-3 entries replay the interactive answers and take about the same as level 1. The runner gives up on an entry after 2 hours (`KCWI_REGRESSION_TIMEOUT`, in seconds, changes this).
+Time: on the maintainer's Apple M4, a level-1 reduction takes about 3 to 5 minutes (193 to 288 s in S.3, `docs/dev/baseline/README.md`), plus the comparison. The quick profile has four entries (two datasets, two channels), and took 12 minutes in the first run (2026-10-24: 132 to 172 s of reduction per entry, the rest comparison). The full-profile time is to be recorded here after its first run. Level-3 entries replay the interactive answers and take about the same as level 1. The runner gives up on an entry after 2 hours (`KCWI_REGRESSION_TIMEOUT`, in seconds, changes this).
 
 Where the output goes: `$KCWI_REGRESSION_OUT/<timestamp>/` (default: `kcwi_regression_out/` under the system temporary directory). The directory is created if missing, and each run adds a new timestamped session directory; nothing is removed automatically, so delete old sessions yourself. A quick-profile session in which everything passed takes about 11 MB (the reductions' `redux/` directories are deleted); a failing entry keeps its `redux/` (about 2.5–3.5 GB per entry). The path of `report.md` is printed at the end. The run prints a few `SyntaxWarning`s from pipeline docstrings; they are expected. To run without pytest, with the same checks:
 
@@ -341,7 +341,7 @@ Start with the first failing tier: tier 1 says the reduction itself broke (read 
 
 A bless makes a run the new reference. Rules (section 10): it is never automatic, **only the maintainer runs it** (a model may prepare the command), and it needs a reason from this list, written as `"<reason>: <text>"`:
 
-`initial` (an entry with no reference yet), `environment`, `T.11 viewer-off`, `bokeh port 4.3`, `prompt text PR3a`, `P.5 <bug ID>` (for example `P.5 B2`), `M.2c header`, `M.2e initial`, `M.3`, `M.4`, `M.5`, `matrix default`, `release version`.
+`initial` (an entry with no reference yet), `environment`, `T.11 viewer-off`, `bokeh port 4.3`, `prompt text PR3a`, `plot scheme PR3a`, `P.5 <bug ID>` (for example `P.5 B2`), `M.2c header`, `M.2e initial`, `M.3`, `M.4`, `M.5`, `matrix default` (the `M.*` and `matrix` reasons are unused while Track M is deferred, plan D31), `release version`.
 
 The upgrade plan's T.7 bless table says when each applies and to which datasets. Anything else is refused.
 
@@ -429,3 +429,4 @@ Do all of the following, and put the results in the pull request description (`.
 6. Say who wrote the tests and who wrote the code under test (section 8): a different model, or a fresh session. For each new test file, name the deliberate breakage that made a test fail.
 7. Run `pytest -m "not regression" --cov=kcwidrp --cov-report=term-missing` (the fast and viewer tests) and paste the lines for the modules the pull request touches. They must not fall below the minimum in section 11 (70 % per module for `core/` and `kcwi_file_primitives.py`, with the exemptions listed there).
 8. Check `git status`: no stray files from the tests (`.hypothesis/`, `__pycache__` changes outside what is tracked, files in the repository root).
+9. If the pull request changes user-visible behavior, a config key, a console script, an output file or `docs/`, update `docs/source/` in the same pull request and build the documentation as Read the Docs does, with `pip install -e ".[docs]"` and then `sphinx-build -W --keep-going docs/source docs/_build`. Paste its last line. The build fails on any warning, including a `kcwi.cfg` key missing from `configuration.rst` or a console script missing from `scripts.rst`.

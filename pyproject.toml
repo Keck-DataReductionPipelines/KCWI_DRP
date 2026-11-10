@@ -41,9 +41,14 @@ importlib_resources = "6.5.2"
 pytest = {version = ">=8", optional = true}
 hypothesis = {version = ">=6.100", optional = true}
 pytest-cov = {version = ">=5", optional = true}
+# Documentation dependencies (D.3): pip install -e ".[docs]"
+sphinx = {version = ">=7.3,<8", optional = true}
+sphinx-rtd-theme = {version = ">=3.0,<4", optional = true}
+myst-parser = {version = ">=3,<5", optional = true}
 
 [tool.poetry.extras]
 test = ["pytest", "hypothesis", "pytest-cov"]
+docs = ["sphinx", "sphinx-rtd-theme", "myst-parser"]
 
 [tool.poetry.scripts]
 reduce_kcwi = "kcwidrp.scripts.reduce_kcwi:main"

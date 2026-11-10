@@ -5,7 +5,7 @@ synthetic.  Panel layout (class code, BLUE): with NSHFDN != NSHFUP + 1 the
 observation was aborted and the panels are inverted, sky in rows SHUFROWS
 ... 2*SHUFROWS-1, object above it; the sky row start (>= 10) makes this the
 "non-standard" configuration, where the user is asked for a sky scale
-factor (docs/plot_inventory.md P37/P38):
+factor (docs/dev/plot_inventory.md P37/P38):
 
     ``Enter scale factor for sky to match obj (float): ``
 

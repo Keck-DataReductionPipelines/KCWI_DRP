@@ -1,6 +1,6 @@
 """Tests for the primitive test harness (task T.2, kcwidrp/tests/harness.py).
 
-Validation list of T.2 in docs/drp_upgrade_plan.md:
+Validation list of T.2 in docs/dev/drp_upgrade_plan.md:
   * SubtractOverscan, TrimOverscan and CorrectGain run on synthetic data;
   * with plot_level = 0 a run calls no input(), time.sleep() or plotting
     function;

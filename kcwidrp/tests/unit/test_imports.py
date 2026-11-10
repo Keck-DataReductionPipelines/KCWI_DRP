@@ -15,7 +15,7 @@ PACKAGES = ("kcwidrp.primitives", "kcwidrp.core", "kcwidrp.pipelines",
 # Modules that fail to import in the baseline environment (python 3.12,
 # bokeh 2.4.3, keckdrpframework 1.0.0 at upgrade-start), with the plan ID that
 # will fix or remove the failure. strict=True: when the cause is fixed the
-# test XPASSes, fails, and this entry must be deleted (docs/testing.md s.7).
+# test XPASSes, fails, and this entry must be deleted (docs/dev/testing.md s.7).
 KNOWN_IMPORT_FAILURES = {
     # ModuleNotFoundError: No module named 'keckdrpframework.utils.easyHTTP'
     # (absent from keckdrpframework 1.0.0).

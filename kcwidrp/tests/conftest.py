@@ -1,4 +1,4 @@
-"""Shared fixtures for the KCWI DRP test suite (task T.1; rules in docs/testing.md).
+"""Shared fixtures for the KCWI DRP test suite (task T.1; rules in docs/dev/testing.md).
 
 Fixtures
 --------

@@ -1,4 +1,4 @@
-"""Run one primitive without the framework queue (task T.2; rules in docs/testing.md).
+"""Run one primitive without the framework queue (task T.2; rules in docs/dev/testing.md).
 
 ``run_primitive(PrimitiveClass, ccddata, ...)`` builds the ``action`` and
 ``context`` a primitive receives from ``Framework.execute``, calls

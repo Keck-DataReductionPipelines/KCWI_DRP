@@ -1,0 +1,177 @@
+=====================
+Development Procedure
+=====================
+
+The following document describes the procedure to follow for making changes to
+KCWI_DRP.
+
+Installing for Development
+==========================
+
+We recommend installing directly from the source code if you plan on working on
+the pipeline.
+
+    .. code-block:: bash
+
+        git clone git@github.com:Keck-DataReductionPipelines/KCWI_DRP.git
+        cd KCWI_DRP
+        pip install -e ".[test,docs]"
+
+The ``test`` extra installs the test tools (``pytest``, ``hypothesis``,
+``pytest-cov``) and the ``docs`` extra the documentation tools (Sphinx and its
+extensions). All dependencies are listed in ``pyproject.toml``; there is no
+``requirements.txt`` or ``environment.yml``.
+
+.. note::
+
+    We are using ``ssh`` to clone from GitHub, this is
+    required if you plan on making pushes directly to the repository. You may use 
+    HTTPS (i.e. ``git clone https://github.com/Keck-DataReductionPipelines/KCWI_DRP.git``)
+    if needed for your setup.
+
+Using the ``-e`` flag with ``pip`` makes the installation editable. This means
+that any changes you make to the code will take effect immediately, and you will
+not need to re-install the pipeline after each change.
+
+.. warning::
+
+    If ``kcwidrp`` was previously installed in your environment (for example
+    from PyPI), create a new conda environment before installing from source.
+    It is possible to uninstall the ``kcwidrp`` module, but it is not 100%
+    reliable.
+
+Managing Git
+------------
+
+There are three persistent branches in the KCWI_DRP repo:
+
+- ``master`` (default): This branch contains the current release version of the code, and provides the source used to build the package for ``conda`` and  ``pip``. 
+- ``develop``: This branch contains new features and non-essential fixes. It should be stable at all times. A new release is triggered by this branch being merged into ``master``. Any new code should be added to this branch.
+- ``v3-upgrade``: While version 3 is being developed, its work collects on this
+  long-lived integration branch. Pull requests for version 3 target
+  ``v3-upgrade``; fixes for the released version still target ``develop``, and
+  reach ``v3-upgrade`` when ``develop`` is merged into it (a merge, not a
+  rebase, because the branch is shared). At the version 3 release,
+  ``v3-upgrade`` is merged into ``develop``.
+
+When adding new code, please do your development in a branch off of ``develop``:
+
+.. code-block:: bash
+
+    git checkout develop
+    git pull
+    git checkout -b new_feature
+
+While developing, it is important to stay up-to-date with any changes in the
+``develop`` branch:
+
+.. code-block:: bash
+
+    git checkout develop
+    git pull
+    git checkout new_feature
+    git merge --no-ff develop
+
+Alternatively, you can do your own development in your own fork of the repo.
+
+Pull Requests
+-------------
+
+Once your new feature is ready for merging into the develop branch, you need to
+issue a pull request. The pull request template
+(``.github/pull_request_template.md``) has a heading for each item below. The
+pull request must contain the following:
+
+1. A short but thorough explanation of the feature and its purpose 
+2. A summary of the tests you ran and their results. There is currently no
+   automatic CI; the tests are run locally, as described in the
+   :doc:`testing guide <testing>` ("Before opening a pull request")
+3. Evidence of successfully processing a night of KCWI data
+4. The documentation changes for any user-visible change (behavior, a
+   configuration key, a script or an output file), in ``docs/source/`` in the
+   same pull request, built without warnings (see :doc:`updating_docs`)
+
+Additionally, the code must meet the following:
+
+- All code must be documented. This includes updated docstrings for altered code and new ones for new functions or classes
+- Comments explaining any unusually complicated or unintuitive code blocks, in addition to the documentation above
+- Remove all print statements. If you need to output information to terminal, use the logging interface
+- At least two developers must approve of the request for it to be accepted
+
+If your pull request meets all of the above, it is merged into its target
+branch (``develop``, or ``v3-upgrade`` for version 3 work) once two developers
+have approved it.
+
+Merging ``develop`` into ``master``
+-----------------------------------
+
+At the developer's discretion, ``develop`` will be merged into ``master``, which
+will signify a new sub-release. The version number should be incremented in
+``develop``, and a summary of changes should be added to changelog.txt. Then,
+issue and accept a pull request from ``develop`` into ``master``.
+
+Building for Release
+====================
+
+These instructions summarize the steps required to build a new release of 
+kcwidrp for pip. These steps should be followed every time ``master``
+is updated.
+
+In order to upload to pip, you will need access to a PyPI account with
+ownership status for the kcwidrp project. For access to the KeckDRPs account,
+ask the `DSI Team <dsi-team@keck.hawaii.edu>`_. You will need to generate an
+API token for the project and add it to Poetry:
+
+.. code-block:: bash
+
+    # Make sure you have the most recent version of Poetry installed
+    pip install poetry --upgrade
+
+    # For PyPI:
+    poetry config pypi-token.pypi [YOUR_PYPI_TOKEN]
+
+    # Add TestPyPI as a repository:
+    poetry config repositories.testpypi https://test.pypi.org/legacy/
+
+    # For TestPyPI:
+    poetry config pypi-token.testpypi [YOUR_TESTPYPI_TOKEN]
+
+After your pull request is merged into master, download the changes:
+
+.. code-block:: bash
+
+    git checkout master
+    git pull
+
+Double check: has the version number been incremented in ``pyproject.toml``?
+
+Next, ensure that the ``build`` and ``dist`` directories are empty, or do not exist. If any
+previous versions exist in the ``dist`` directory, they will conflict with the upload to PyPI.
+
+
+.. code-block:: bash
+
+    # Construct the build:
+    poetry build
+
+    # Test the upload to TestPyPI:
+    poetry publish -r testpypi
+
+Make sure that the test upload worked using the following command, replacing
+``VERSION`` with the version number in ``pyproject.toml``
+
+.. code-block:: bash
+
+    pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple kcwidrp==VERSION
+
+Setting ``--index-url`` tells pip where to find our package (in this case, the
+test server). ``--extra-index-url`` tells pip to install all *other* packages
+(i.e. requirements) from the default server.
+
+Ensure that the pipeline is built correctly, requirements were installed, and 
+that you are able to reduce a test dataset. If all went well, finalize the
+upload to PyPI (``pip``) with 
+
+.. code-block:: bash
+
+    poetry publish

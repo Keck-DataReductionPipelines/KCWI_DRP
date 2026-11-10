@@ -1,5 +1,7 @@
 # KCWI DRP: sparse-matrix cube construction — staged implementation plan
 
+> **Deferred (2026-11-09).** This work is not part of the current upgrade release; see decision D31 and the banner on §9 of [drp_upgrade_plan.md](drp_upgrade_plan.md). The plan below is kept unchanged for when it resumes.
+
 Repo: `~/drp/kcwi/KCWI_DRP` (at `d0b4d7b`, 2026-10-13). Reference implementations
 consulted: SCALES DRP (`~/drp/scales/SCALES-DRP`) and PypeIt
 (`~/drp/MyPypeIt/PypeIt`, `pypeit/core/datacube.py::subpixellate`).

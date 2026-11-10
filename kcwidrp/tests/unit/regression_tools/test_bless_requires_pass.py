@@ -2,7 +2,7 @@
 
 A tier that did not run (deselected with ``-k``), was made informational, or
 was skipped does not vouch for the run, so the run must not become a
-reference. Written from the rule in docs/testing.md section 10.
+reference. Written from the rule in docs/dev/testing.md section 10.
 """
 import pytest
 

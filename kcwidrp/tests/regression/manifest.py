@@ -21,10 +21,10 @@ SCHEMA_VERSION = 1
 CHANNELS = {"blue": ("-b", "kcwib.proc"), "red": ("-r", "kcwir.proc")}
 PROFILES = ("quick", "full")
 LEVELS = (0, 1, 3)
-# S.3 conventions (docs/baseline/README.md): L1 is the quick profile.
+# S.3 conventions (docs/dev/baseline/README.md): L1 is the quick profile.
 LEVEL_PROFILE = {0: "full", 1: "quick", 3: "full"}
 DEFAULT_OVERRIDES = {"enable_plot_viewer": False, "plot_pause": 0}
-DEFAULT_ENVIRONMENT_FILE = "docs/baseline/env_baseline.txt"
+DEFAULT_ENVIRONMENT_FILE = "docs/dev/baseline/env_baseline.txt"
 
 
 class ManifestError(Exception):
@@ -134,7 +134,7 @@ def validate_manifest(manifest):
         for pat, tol in (ent.get("tolerances") or {}).items():
             if not isinstance(tol, dict) or not tol.get("reason"):
                 errors.append(pre + "tolerance %r needs a written 'reason' "
-                              "(docs/testing.md section 6)" % pat)
+                              "(docs/dev/testing.md section 6)" % pat)
     for ent in entries:
         cmp_ = ent.get("compare", {}) if isinstance(ent, dict) else {}
         if cmp_.get("mode") == "against" and cmp_.get("entry") not in ids:
