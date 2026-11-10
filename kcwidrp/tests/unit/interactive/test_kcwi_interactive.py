@@ -135,6 +135,13 @@ def test_pause_help_then_cr(ki, script, capsys, log):
     assert len(s.prompts) == 3 and s.consumed_all
 
 
+def test_help_is_set_off_by_blank_lines(ki, script, capsys, log):
+    script("?", "")
+    ki.pause(Config(plot_level=2), log, help="LONG HELP TEXT")
+    # the typed answer ends the prompt line, so one "\n" is a blank line
+    assert capsys.readouterr().out == "\nLONG HELP TEXT\n\n"
+
+
 def test_pause_does_not_log_info(ki, script, caplog, log):
     script("")
     ki.pause(Config(plot_level=2), log, what="W", who="Prim")

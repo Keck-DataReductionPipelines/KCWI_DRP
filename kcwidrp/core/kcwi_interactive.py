@@ -76,7 +76,9 @@ def _prefix(who):
 
 
 def _show_help(help):
-    print(help if help else "No further help for this prompt.")
+    # blank line before and after, to set the help off from the prompts
+    text = help if help else "No further help for this prompt."
+    print("\n" + text + "\n")
 
 
 def _read(prompt, logger, who, default_text):
