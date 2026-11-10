@@ -30,10 +30,10 @@ not need to re-install the pipeline after each change.
 
 .. warning::
 
-    Installing using :code:`setup.py` directly can lead to conflicts if you
-    later try using ``pip``. If you need to install using ``pip`` later, it is
-    highly recommended that you create a new conda environment first. It is possible
-    to uninstall the ``kcwidrp`` module, but it is not 100% reliable.
+    If ``kcwidrp`` was previously installed in your environment (for example
+    from PyPI), create a new conda environment before installing from source.
+    It is possible to uninstall the ``kcwidrp`` module, but it is not 100%
+    reliable.
 
 Managing Git
 ------------
@@ -63,6 +63,13 @@ While developing, it is important to stay up-to-date with any changes in the
 
 Alternatively, you can do your own development in your own fork of the repo.
 
+.. note::
+
+    A larger upgrade of the pipeline (version 3) is being developed on a
+    long-lived integration branch, ``v3-upgrade``. Pull requests for that work
+    target ``v3-upgrade``; fixes for the released version still target
+    ``develop``.
+
 Pull Requests
 -------------
 
@@ -70,7 +77,9 @@ Once your new feature is ready for merging into the develop branch, you need to
 issue a pull request. The pull request must contain the following:
 
 1. A short but thorough explanation of the feature and its purpose 
-2. A pass from the automatic TravisCI tests
+2. A summary of the tests you ran and their results. There is currently no
+   automatic CI; the tests are run locally, as described in the
+   `testing guide <https://github.com/Keck-DataReductionPipelines/KCWI_DRP/blob/v3-upgrade/docs/testing.md>`_
 3. Evidence of successfully processing a night of KCWI data
 
 Additionally, the code must meet the following:
@@ -95,15 +104,27 @@ Building for Release
 ====================
 
 These instructions summarize the steps required to build a new release of 
-kcwidrp for conda or pip. These steps should be followed every time ``master``
+kcwidrp for pip. These steps should be followed every time ``master``
 is updated.
 
-Pip 
----
-
 In order to upload to pip, you will need access to a PyPI account with
-owndership status for the kcwidrp project. For access to the KeckDRPs account,
-ask the `DSI Team <dsi-team@keck.hawaii.edu>`_.
+ownership status for the kcwidrp project. For access to the KeckDRPs account,
+ask the `DSI Team <dsi-team@keck.hawaii.edu>`_. You will need to generate an
+API token for the project and add it to Poetry:
+
+.. code-block:: bash
+
+    # Make sure you have the most recent version of Poetry installed
+    pip install poetry --upgrade
+
+    # For PyPI:
+    poetry config pypi-token.pypi [YOUR_PYPI_TOKEN]
+
+    # Add TestPyPI as a repository:
+    poetry config repositories.testpypi https://test.pypi.org/legacy/
+
+    # For TestPyPI:
+    poetry config pypi-token.testpypi [YOUR_TESTPYPI_TOKEN]
 
 After your pull request is merged into master, download the changes:
 
@@ -112,22 +133,22 @@ After your pull request is merged into master, download the changes:
     git checkout master
     git pull
 
-Next, ensure that the ``dist`` directory is empty, or does not exist. If any
-previous versions exist in the ``dist`` directory, they will conflict with the upload to PyPI):
+Double check: has the version number been incremented in ``pyproject.toml``?
+
+Next, ensure that the ``build`` and ``dist`` directories are empty, or do not exist. If any
+previous versions exist in the ``dist`` directory, they will conflict with the upload to PyPI.
+
 
 .. code-block:: bash
 
-    # Make sure you have the most recent version of twine installed
-    pip install twine --upgrade
+    # Construct the build:
+    poetry build
 
-    # Construct the pip distribution
-    python setup.py sdist bdist_wheel
-
-    # Test the upload by uploading to TestPyPI
-    twine upload --repository-url https://test.pypi.org/legacy/ dist/*
+    # Test the upload to TestPyPI:
+    poetry publish -r testpypi
 
 Make sure that the test upload worked using the following command, replacing
-``VERSION`` with the version number in ``setup.py``
+``VERSION`` with the version number in ``pyproject.toml``
 
 .. code-block:: bash
 
@@ -143,23 +164,4 @@ upload to PyPI (``pip``) with
 
 .. code-block:: bash
 
-    twine upload dist/*
-
-
-Conda
------
-
-Eventually, these steps will be rendered obsolete by the use of conda-forge. In
-the meantime, the following instructions will build a conda package from the pip
-package. This should be run whenever a new pip version is created.
-
-.. code-block:: bash
-
-    conda update conda
-    conda install conda-build anaconda-client
-
-    conda-build conda_build_files
-    conda build conda_build_files --output
-
-    anaconda login
-    anaconda upload PATH-FROM-OUTPUT
+    poetry publish

@@ -14,9 +14,10 @@ The latter method is accomplished with a mask file (see `Building a mask file`_)
 and will exclude the user-selected object-affected pixels from the calculation
 of the sky.
 
-To specify the preferred method for sky subtraction, create a file in the data
-directory called ``kcwi.sky``. For each KCWI frame for which you want to modify
-the sky subtraction algorithm, enter a row with this format:
+To specify the preferred method for sky subtraction, create a file called
+``kcwi.sky`` in the directory where you run ``reduce_kcwi``. For each KCWI
+frame for which you want to modify the sky subtraction algorithm, enter a row
+with this format:
 
 ``raw_object_file.fits raw_sky_frame.fits <mask.fits>``
 
@@ -32,14 +33,30 @@ columns contain the *same* file name and add the mask file.
 
 For example:
 
-``kb230605_00098.fits kb230605_00098.fits kb230605_00098_smsk.fits``
+``kb230605_00098.fits kb230605_00098.fits redux/kb230605_00098_smsk.fits``
+
+Lines starting with ``#`` and empty lines are ignored.
+
+.. warning::
+
+    In versions up to 1.3.x, ``kcwi.sky`` only takes effect when you run
+    ``reduce_kcwi`` in the directory that contains the raw files, and give the
+    raw files without a directory path (for example ``-f kb*.fits``, or a
+    ``-l`` list of bare file names). If the frames are given with a path, the
+    rows in ``kcwi.sky`` are not matched and the default sky subtraction is
+    used, with no message in the log.
+
+    The sky frame and the mask file are looked up relative to the directory
+    where you run ``reduce_kcwi``: give the mask as ``redux/..._smsk.fits``.
+    When a row is used, the log says ``Found sky entry for``; a mask that
+    cannot be found is reported as ``Sky mask file not found``.
 
 Building a mask file
 --------------------
 
-To build a mask file based on ``ds9`` regions, use the script
-:func:`kcwi_masksky_ds9.py <kcwidrp.scripts.kcwi_masksky_ds9>` contained in the
-``scripts`` directory.
+To build a mask file based on ``ds9`` regions, use the
+:func:`kcwi_masksky_ds9 <kcwidrp.scripts.kcwi_masksky_ds9.main>` command, which
+is installed with the pipeline.
 
 This script uses the ``_intf.fits`` files which are generated as part of the
 first execution of the pipeline. You should run the pipeline first and verify
@@ -47,9 +64,15 @@ the quality of the sky subtraction. If you are not satisfied with the sky
 subtraction, use the procedure described here and run the pipeline again.
 
 To start, display the ``_intf.fits`` frame in ``ds9`` and create regions around
-areas of the frame that you would like to exclude. Save the regions to a file
-and run the ``kcwi_masksky_ds9`` command indicating the file name
-(``_intf.fits``) and the region file.  This will produce a mask file with a
+areas of the frame that you would like to exclude. Save the regions to a file,
+in **physical** coordinates, and run the ``kcwi_masksky_ds9`` command with the
+``_intf.fits`` file name and the region file name:
+
+.. code-block:: bash
+
+    kcwi_masksky_ds9 redux/kb230605_00098_intf.fits ds9.reg
+
+This will produce a mask file with a
 filename that is the same as the input ``_intf.fits`` file, but replacing the
 ``intf`` with ``smsk``.  That filename can be added to the ``kcwi.sky`` file
 as in the example above.
@@ -97,19 +120,16 @@ Re-run the reduction of this file
 ---------------------------------
 
 Rather than re-run the entire pipeline, it is possible to run it only on the
-file that needs an improved sky subtraction.
+file that needs an improved sky subtraction. Because the file is already in the
+proc file, you need to either set ``clobber = True`` or remove the file's lines
+from the proc file first; see
+:ref:`Re-reducing frames <running:Re-reducing frames>`. For example:
 
-The instructions are listed in :doc:`running`. In summary, you will need to 
-specify just one file, the one for which you want to improve the sky
-subtraction, and make sure that ``clobber`` is set to True in the config file
-and be sure to remove the entry for this file in the proc file (`kcwib.proc` or
-`kcwir.proc`).  For example:
-
-``reduce_kcwi -b -f kb230605_00098.fits``
+``reduce_kcwi -b -c kcwi.cfg -f kb230605_00098.fits``
 
 or
 
-``reduce_kcwi -r -f kr230605_00120.fits``
+``reduce_kcwi -r -c kcwi.cfg -f kr230605_00120.fits``
 
 depending on which channel was used for the observation.
 
@@ -124,9 +144,9 @@ subtraction.
 
 In addition, there are two methods to allow the user to skip sky subtraction.
 
-#. If you enter the word ``skip`` on the line after the raw file in the
-   ``kcwi.sky`` file, sky subtraction will be skipped for that file. For example:
-   ``kr230605_00120.fits skip``.
+#. If you enter the word ``skip`` in the second column, after the raw file
+   name, of that file's line in ``kcwi.sky``, sky subtraction will be skipped
+   for that file. For example: ``kr230605_00120.fits skip``.
 
 #. If you use the command line parameter ``-k``, sky subtraction will be skipped
    for all images processed from that command line.

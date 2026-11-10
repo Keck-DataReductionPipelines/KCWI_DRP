@@ -1,0 +1,8 @@
+Suffix,Units,Description
+obj,electron,"Object panel of the nod-and-shuffle image (before sky subtraction)"
+sky,electron,"Sky panel of the nod-and-shuffle image"
+objf,electron,"Object panel corrected for illumination"
+skyf,electron,"Sky panel corrected for illumination"
+ocube / ocubed / ocubes,electron or flux,"Object panel cube; DAR corrected; flux calibrated"
+scube / scubed / scubes,electron or flux,"Sky panel cube; DAR corrected; flux calibrated"
+dcube / dcubed,Angstrom,"Wavelength width (delmap) cube; DAR corrected"

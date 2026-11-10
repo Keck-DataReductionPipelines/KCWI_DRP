@@ -21,7 +21,7 @@ pointing to that file. For example,
 
     .. code-block:: bash
 
-        reduce_kcwi -r -c PATH/TO/CONFIG/kcwi.cfg -f kb0001.fits
+        reduce_kcwi -b -c PATH/TO/CONFIG/kcwi.cfg -f kb0001.fits
 
 The configuration file contains a number of parameters connected to the
 structure of the files and to the specifications of the instrument, e.g., the
@@ -39,12 +39,27 @@ described here.
 Blue and Red sections of the configuration file
 -----------------------------------------------
 
-Now that the Red channel has been installed, there is a need to specify
-different default parameters for each channel.  These are delineated in the
-config file with ``[BLUE]`` and ``[RED]`` section headers.  For example, to
-deal with cosmic rays, the Red channel uses a median stack of three continuum
-bars images and a median stack of three arc lamp images, while the Blue channel
-only requires one each of those images.
+Most parameters are in the ``[KCWI]`` section and apply to both channels. A
+few have different defaults for each channel, and are set again in the
+``[BLUE]`` and ``[RED]`` sections. For example, to deal with cosmic rays, the
+Red channel uses a median stack of three continuum bars images and a median
+stack of three arc lamp images, while the Blue channel only requires one each
+of those images.
+
+When you run with ``-b`` or ``-r``, the values in the ``[BLUE]`` or ``[RED]``
+section replace those in ``[KCWI]`` for these parameters only:
+
+``arc_min_nframes``, ``contbars_min_nframes``, ``object_min_nframes``,
+``minoscanpix``, ``oscanbuf``, ``procfile``, ``LINETHRESH``, ``TUKEYALPHA``,
+``FRACMAX``
+
+.. warning::
+
+    To change one of these parameters, edit it in the ``[BLUE]`` or ``[RED]``
+    section: a value in ``[KCWI]`` is overwritten by the channel section.
+    ``LINETHRESH``, ``TUKEYALPHA`` and ``FRACMAX`` can also be set on the
+    command line (``-e``, ``-u`` and ``-F``), which takes precedence over both.
+    Adding any other parameter to ``[BLUE]`` or ``[RED]`` has no effect.
 
 Processing parameters
 ---------------------
@@ -124,8 +139,27 @@ KCWI has two calibration lamps, Thorium/Argon (ThAr) and Iron/Argon (FeAr).
 This parameter specifies which of the two lamps should be used by the DRP.
 The default is to use the ThAr lamp.
 
-Wavelength correction parameters:
----------------------------------
+Output and re-reduction parameters
+----------------------------------
+
+.. code-block:: python
+
+ clobber = False
+ output_directory = "redux"
+ procfile = kcwib.proc      # = kcwir.proc for [RED]
+
+``clobber``: when ``False`` (the default), frames that are already in the proc
+file are skipped. Set it to ``True`` to re-reduce frames; see
+:ref:`Re-reducing frames <running:Re-reducing frames>`.
+
+``output_directory``: where the products are written. Do not change it: in
+1.3.x several steps read their inputs from ``redux`` whatever this is set to.
+
+``procfile``: the name of the processing table, set per channel. It can also be
+set with ``-p`` on the command line.
+
+Wavelength correction parameters
+--------------------------------
 
 .. code-block:: python
 
@@ -169,6 +203,25 @@ For general use, it is advisable to leave the plot level to 1.
 
 The size of the plotting window can be specified using ``plot_width`` and
 ``plot_height``.
+
+.. code-block:: python
+
+ terminate_on_failed_bokeh_start = False
+ plot_firefox_compat = False
+ plot_prewarm_firefox = False
+
+These help when Bokeh or Firefox does not work on your system; see
+:ref:`issues:Bokeh Issues`.
+
+* ``terminate_on_failed_bokeh_start``: stop the pipeline if the Bokeh server
+  fails to start. When ``False``, the pipeline continues without interactive
+  plots and logs a warning.
+* ``plot_firefox_compat``: use the Firefox-compatible way of saving plots. Set
+  it to ``True`` only if saving plots fails (for example with a snap-installed
+  Firefox on Ubuntu 24.04).
+* ``plot_prewarm_firefox``: start Firefox when the pipeline starts, so that the
+  first saved plot does not wait for it. Only used when
+  ``plot_firefox_compat = True``.
 
 Cosmic rays rejection parameters
 --------------------------------
@@ -233,3 +286,25 @@ will be equivalent to a single exposure.  The other frames in the group will not
 be processed beyond the point where they are combined (currently just after
 illumination correction: ``_intf.fits`` creation).
 
+Instrument and observatory constants
+------------------------------------
+
+These describe the instrument, the detector and the observatory. Do not change
+them.
+
+.. code-block:: python
+
+ NBARS = 120              # number of continuum bars
+ REFBAR = 57              # reference bar for the geometry solution
+ PIXSCALE = 0.00004048    # unbinned pixel size in degrees
+ SLICESCALE = 0.00037718  # Large slicer slice size in degrees
+ PIX = 0.0150             # pixel size in mm
+ FCAM = 305.              # focal length of the camera (mm)
+ GAMMA = 4.               # mean out-of-plane angle for diffraction (deg)
+ WAVEFID = 3000.          # fiducial wavelength for wavelength bins (Angstrom)
+ ROTOFF = 0.              # rotator/IFU offset angle in degrees
+ KNOTSPP = 1.25           # B-spline knots per image pixel for the sky model
+ psfwid = 30              # nominal window for a point source (unbinned px)
+ latitude = 19.82656      # Keck II, used for the radial velocity correction
+ longitude = -155.4742
+ altitude = 4160

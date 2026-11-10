@@ -1,33 +1,34 @@
 Keck Cosmic Web Imager Data Reduction Pipeline
 ==============================================
 
-KCWI_DRP is a the official data reduction pipeline (DRP) for the Keck Cosmic Web Imager.
+KCWI_DRP is the official data reduction pipeline (DRP) for the Keck Cosmic Web Imager.
 This DRP has been developed by the KCWI team at Caltech in
 collaboration with the W. M. Keck Observatory Scientific Software Group.
 
-Release 1.2
+Release 1.3
 ===========
 
-We are excited to announce the release version of 1.2.0 of the KCWI DRP!
+The current release is version 1.3.3. Like previous versions, it supports both
+the Blue and Red channels of the instrument. This pipeline is based on the
+original KCWI IDL pipeline developed by the KCWI team at Caltech, and it is
+the only pipeline supported by the W. M. Keck Observatory.
 
-Like version 1.1, this version now with support for both the red and blue sides
-of the instrument. This pipeline is based off of the original KCWIdrp IDL pipeline
-developed by the KCWI team at Caltech, and this pipeline continues to be the only
-pipeline supported by the W. M. Keck Observatory.
+New in 1.3
+----------
 
+* Installation is defined by Poetry and ``pyproject.toml`` (``setup.py`` is gone)
+* More spectrophotometric standards, including CALSPEC standards; HD 19445,
+  HD 60753, HZ 29 and HZ 43 were removed
+* Fixed the Tukey taper being applied repeatedly to the continuum bars during
+  the dispersion calculation
+* The ``NOSKYSUB`` extension is written as 32-bit floats and carries the WCS
+* Options for troubleshooting Bokeh and Firefox (see :doc:`issues`)
+* Fixed stacked flats (1.3.3): from 1.2.0 to 1.3.2, each stacked flat was made
+  from the first input flat only. If flat-field noise matters for your data,
+  consider re-reducing data reduced with those versions
 
-New Features
-------------
-
-* Simplified installation via pip and conda environment
-* Vacuum to air and heliocentric or barycentric correction
-* Ability of using KOA file names or original file names
-* Full traceability of DRP versions and execution steps in HISTORY headers
-* Versatile sky subtraction modes including using external sky frames, ability to manually mask regions, or skipping it entirely
-* Formal support system via GitHub issues
-* Added support for Mac intel M2 and M3 chips in Python 3.12
-
-For older versions, see :doc:`versions`.
+For the details of each 1.3.x release, and for older versions, see
+:doc:`versions`.
 
 Users
 =====
@@ -41,7 +42,9 @@ Follow the documentation in this section to reduce KCWI data.
    quickstart
    configuration
    running
+   processing
    sky_subtraction
+   nod_and_shuffle
    calibration
    data_products
    scripts
@@ -53,11 +56,21 @@ More information
 ================
 
 For more information on the internals of the pipeline, see the following sections:
+
 .. toctree::
    :maxdepth: 1
 
    pipeline_concepts
    api
+
+Citing the KCWI DRP
+===================
+
+If you use the KCWI DRP in published work, please cite the KCWI instrument
+paper, `Morrissey et al. 2018, ApJ, 864, 93
+<https://ui.adsabs.harvard.edu/abs/2018ApJ...864...93M>`_, and give the
+version of the DRP you used. Every output file records it in a ``HISTORY``
+card of the form ``kcwidrp version=1.3.3``.
 
 Other Helpful Packages
 ======================
@@ -85,7 +98,7 @@ Developers
 
 The KCWI DRP was developed in collaboration between:
 
-* Don Neill, Matt Matuszewki, Nik Prusinski, Chris Martin and the KCWI Team at Caltech
+* Don Neill, Matt Matuszewski, Nik Prusinski, Chris Martin and the KCWI Team at Caltech
 * Max Brodheim, Luca Rizzi, and Rosalie McGurk at W. M. Keck Observatory
 
 Vacuum-to-air and helio/barycentric correction algorithms provided by Yuguang Chen at Caltech.

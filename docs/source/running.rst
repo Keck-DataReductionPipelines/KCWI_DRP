@@ -54,18 +54,19 @@ parameter), one per line in the file.
 
    reduce_kcwi -b -f kb001.fits
 
+.. note::
+
+    In 1.3.x, group mode (``-g``) does not process ``DARK`` frames. See
+    :doc:`processing` for the order in which group mode processes frames.
+
 For the "list" and "single file" cases, please note that the preliminary
 calibrations needed to reduce the file or the file list must be already on
 disk.  For example, if the file you are trying to reduce is a science frame,
 the wavelength calibration, flat field and bias frames must already exist.
 
 Reducing a single file is a good way to re-reduce a target for which the
-pipeline didn't do a good job. An example case would be the sky subtraction:
-if you realize that the sky subtraction is not correct, and you modify the sky
-subtraction using an external file, then you can rerun the pipeline just on the
-trouble file. In this case it is advisable to remove the previously processed
-image files in the `redux` directory, and remove that file's entry in the proc
-file.
+pipeline didn't do a good job, for example after changing its sky subtraction
+in ``kcwi.sky`` (see :doc:`sky_subtraction`). See `Re-reducing frames`_ below.
 
 The following option can be used to modify the behaviour of the DRP when
 processing files in a directory:
@@ -75,6 +76,32 @@ then processes them in the correct order so that master calibrations are
 produced before processing science images, regardless of the order in which the
 files appear on disk or are specified in the input list. This is also accessible
 with the ``-g`` flag.
+
+Re-reducing frames
+------------------
+
+The DRP records every frame it processes in a processing table, the "proc
+file": ``kcwib.proc`` for the Blue channel and ``kcwir.proc`` for the Red
+channel, in the directory where you run ``reduce_kcwi``. A frame that is
+already in the proc file is not processed again: the log says ``Already
+processed (already in proctab)`` and the frame is skipped.
+
+To re-reduce a frame, do one of the following:
+
+* set ``clobber = True`` in your configuration file (see
+  :doc:`configuration`) and run with ``-c``, or
+* delete the frame's lines from the proc file.
+
+Then run the pipeline on just that frame, from the same directory as before:
+
+.. code-block:: bash
+
+   reduce_kcwi -b -c kcwi.cfg -f kb230605_00098.fits
+
+With ``clobber = True``, every frame you give on the command line is
+re-reduced, so only give the frames you want to redo. The output files in the
+``redux`` directory are overwritten. The calibrations the frame needs must
+already be in ``redux`` and in the proc file, as they are after the first run.
 
 Running individual steps
 ------------------------
@@ -94,18 +121,20 @@ example:
 
 This will create a list of images (with extension .txt) that group images into
 processing blocks.  If you had a set of Blue channel biases, it might produce a
-list called `bias2x2TUP010.txt`, for example.  This can then be input as a list
+list called ``bias2x2TUP010_0.txt``, for example.  Lists for other frame types
+end with the last four characters of the ``STATEID`` header keyword, so that
+identical configurations from different states can be told apart.  This can then be input as a list
 to produce a master bias, which should be the first step in the pipeline
 reduction:
 
 .. code-block:: shell
 
-   reduce_kcwi -b -l bias2x2TUP010.txt
+   reduce_kcwi -b -l bias2x2TUP010_0.txt
 
 Because the files are all and only bias, the pipeline will only proceed as far
 as generating the master bias.  Next, you can reduce a list of continuum bars,
 which will have a list for each configuration, for example:
-`cbars2x2MedKBlueBL_4500_0.7.txt`.  This can be followed by arcs and then flats,
+``cbars2x2MedKBlueBL_4500_0.7_75fe.txt``.  This can be followed by arcs and then flats,
 etc.
 
 For an even finer control, each file in the bias list could be run individually,
@@ -115,9 +144,9 @@ a master bias.
 Other command line options
 --------------------------
 
-* ``-c config_file.cfg``  This options overrides the standard configuration
+* ``-c config_file.cfg``  This option overrides the default configuration
   file that is stored in the installation directory in
-  ``kcwidrp/config/kcwi.cfg``.
+  ``kcwidrp/configs/kcwi.cfg``.
 
 * ``--write_config`` If this option is set, an editable copy of the default DRP
   configuration file is written to wherever the command was invoked from. This
@@ -152,6 +181,8 @@ Other command line options
 
 * ``-a atlas_line_list`` Specify an input line list for the atlas instead of
   generating it on the fly.
+
+* ``-v`` or ``--verbose``  Write debug messages to the log as well.
 
 * ``-p proctable.proc``  When the DRP runs, it keeps track of the files
   processed using a processing table. Normally that table is called

@@ -4,27 +4,27 @@
 # list see the documentation:
 # https://www.sphinx-doc.org/en/master/usage/configuration.html
 
-# -- Path setup --------------------------------------------------------------
-
-# If extensions (or modules to document with autodoc) are in another directory,
-# add these directories to sys.path here. If the directory is relative to the
-# documentation root, use os.path.abspath to make it absolute, like shown here.
-#
+import configparser
 import os
+import pathlib
+import re
+import subprocess
 import sys
+from importlib.metadata import entry_points, version
+from importlib.resources import files
 
-sys.path.insert(0, os.path.abspath('../../'))
-
+from sphinx.util import logging
 
 # -- Project information -----------------------------------------------------
 
 project = 'Keck Cosmic Web Imager DRP'
-copyright = '2023, Don Neill, KCWI Team, Luca Rizzi, Max Brodheim'
+copyright = '2020-2026, Don Neill, KCWI Team, Luca Rizzi, Max Brodheim'
 author = 'Don Neill, KCWI Team, Luca Rizzi, Max Brodheim'
-# sys.path.append(os.path.abspath('./docs/'))
 
-# The full version, including alpha/beta/rc tags
-release = '1.0'
+# The full version, including alpha/beta/rc tags, taken from the installed
+# kcwidrp package (see docs/requirements.txt)
+release = version('kcwidrp')
+version = '.'.join(release.split('.')[:2])
 
 
 # -- General configuration ---------------------------------------------------
@@ -34,26 +34,22 @@ release = '1.0'
 # ones.
 extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.napoleon',
-              'sphinx.ext.autodoc',
               'sphinx.ext.viewcode',
-              'sphinx_automodapi.automodapi',
               'sphinx.ext.autosectionlabel'
               ]
 napoleon_numpy_docstring = True
-# autosummary_generate = False
 autosectionlabel_prefix_document = True
-
-# automodapi_toctreedirnm = 'api'
 
 # Class documentation should contain *both* the class docstring and
 # the __init__ docstring
 autoclass_content = "class"
 
+# kcwi_masksky_ds9 imports regions, which kcwidrp 1.3.x does not list as a
+# dependency (it lists pyregion instead), so autodoc could not import it
+autodoc_mock_imports = ['regions']
+
 
 master_doc = 'index'
-
-# Add any paths that contain templates here, relative to this directory.
-templates_path = ['_templates']
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -68,10 +64,7 @@ exclude_patterns = []
 #
 html_theme = 'sphinx_rtd_theme'
 html_theme_options = {
-    'canonical_url': '',
-    'analytics_id': 'UA-XXXXXXX-1',  # Provided by Google in your dashboard
     'logo_only': True,
-    'display_version': True,
     'prev_next_buttons_location': 'bottom',
     'style_external_links': False,
     'style_nav_header_background': 'white',
@@ -82,10 +75,70 @@ html_theme_options = {
     'includehidden': True,
     'titles_only': False
 }
-html_theme_path = ["../.."]
 
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
 html_logo = "_static/Keck_Logo_Tag.jpg"
+
+
+# -- Generated pages and consistency checks ----------------------------------
+
+SOURCE_DIR = pathlib.Path(__file__).parent
+logger = logging.getLogger(__name__)
+
+# Scripts whose --help output is included in scripts.rst. The other scripts
+# (wb, wr, kcwi_masksky_ds9) do not use argparse, and smart_reduce_kcwi does
+# not import in kcwidrp 1.3.x.
+HELP_SCRIPTS = ['reduce_kcwi', 'check_cals', 'modhead', 'start_kcwi_rti']
+
+
+def kcwidrp_scripts():
+    """Return {name: 'module:function'} for kcwidrp's console scripts."""
+    return {ep.name: ep.value for ep in entry_points(group='console_scripts')
+            if ep.value.startswith('kcwidrp.')}
+
+
+def write_script_help(app):
+    """Write each script's --help output to _generated/<name>.txt."""
+    out_dir = SOURCE_DIR / '_generated'
+    out_dir.mkdir(exist_ok=True)
+    scripts = kcwidrp_scripts()
+    # Fix the width so the output does not depend on the terminal
+    env = dict(os.environ, COLUMNS='80')
+    for name in HELP_SCRIPTS:
+        module, function = scripts[name].split(':')
+        code = (f"import sys; sys.argv = [{name!r}, '--help']; "
+                f"from {module} import {function}; {function}()")
+        result = subprocess.run([sys.executable, '-c', code], env=env,
+                                capture_output=True, text=True)
+        if result.returncode != 0 or not result.stdout:
+            logger.warning(f"{name} --help failed: {result.stderr}")
+        (out_dir / f'{name}.txt').write_text(result.stdout)
+
+
+def check_scripts_documented(app):
+    """Warn about console scripts that scripts.rst does not describe."""
+    text = (SOURCE_DIR / 'scripts.rst').read_text()
+    for name in kcwidrp_scripts():
+        if not re.search(rf'^{re.escape(name)}\n-+$', text, re.MULTILINE):
+            logger.warning(f"script {name} has no section in scripts.rst")
+
+
+def check_config_documented(app):
+    """Warn about kcwi.cfg keys that configuration.rst does not mention."""
+    config = configparser.ConfigParser()
+    config.optionxform = str  # keep the case of keys such as TAPERFRAC
+    config.read_string(files('kcwidrp').joinpath('configs/kcwi.cfg').read_text())
+    keys = {key for section in config.sections() for key in config[section]}
+    text = (SOURCE_DIR / 'configuration.rst').read_text()
+    for key in sorted(keys):
+        if not re.search(rf'\b{re.escape(key)}\b', text):
+            logger.warning(f"kcwi.cfg key {key} is not in configuration.rst")
+
+
+def setup(app):
+    app.connect('builder-inited', write_script_help)
+    app.connect('builder-inited', check_scripts_documented)
+    app.connect('builder-inited', check_config_documented)

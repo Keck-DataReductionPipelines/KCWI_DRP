@@ -10,7 +10,8 @@ names of the files are those assigned at the telescope, ``kb*.fits`` and
 ``kr*.fits``.
 
 Give a quick look at the :doc:`configuration parameters <configuration>` for the
-pipeline, contained in the file ``kcwidrp/config/kcwi.cfg``.
+pipeline. To get an editable copy of the default configuration file
+(``kcwi.cfg``) in the current directory, run ``reduce_kcwi --write_config``.
 
 For a quick start, it is enough to decide if you want to see plots as the
 pipeline runs or not.  This is controlled by
@@ -19,6 +20,14 @@ and ``plot_level``. For no plotting, disable Bokeh and set the plot level to 0.
 For plotting without interaction, enable Bokeh and set the plot level to 1 (this
 is the default configuration). For interactive plotting (where you have to hit
 <cr> to proceed after each step) set the plot level to 2 or more.
+
+Before reducing, you can check that every science frame has the calibrations
+it needs:
+
+.. code-block:: bash
+
+   cd mydata
+   check_cals kb*.fits
 
 Next, go to the data directory and run the startup script:
 
@@ -39,6 +48,8 @@ channel data run:
 Three directories will be created: a ``redux`` directory with the results of the
 reduction, a ``logs`` directory with separate logs for the framework itself
 and for the DRP, and a ``plots`` directory containing diagnostic plots.
+The file you most likely want is the flux-calibrated cube, ``redux/*_icubes.fits``;
+see :doc:`data_products`.
 
 
 

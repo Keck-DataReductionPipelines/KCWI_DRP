@@ -74,9 +74,15 @@ all the requirements needed for the pipeline.
         pip install kcwidrp
 
 
-Installing the pipeline by directly invoking `setup.py` is not recommended.
-This method does not install the required dependencies in the recommended way,
-and may lead to conflicts with other packages on your system.
+.. note::
+
+    New versions sometimes reach GitHub before they are uploaded to PyPI. To
+    check which version ``pip`` installed, run ``pip show kcwidrp``. To install
+    the latest released code directly from GitHub instead, run:
+
+    .. code-block:: bash
+
+        pip install git+https://github.com/Keck-DataReductionPipelines/KCWI_DRP.git@master
 
 
 Installing From Source

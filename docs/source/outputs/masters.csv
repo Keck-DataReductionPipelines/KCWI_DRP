@@ -1,12 +1,12 @@
-File Extension,Full Name,Note
-marcs,Master Arc,"New with the red side, required due to sensitvity to cosmic rays."
-mbias,Master Bias,
-mcbars,Master Continuum Bars,
-mdarks,Master Dark,
-mdome,Master Dome Flat,
-mflat,Master Internal Flat,
-mobj,Master Object,"Only created if multiple exposures of the same target are collected. Can mitigate cosmic rays, in certain situations."
-mtwif,Master Twilight Flat,
-sdome,Stacked Dome Flat,"Stacked, but un-merged Dome Flat"
-sflat,Stacked Internal Flat,"Stacked, but un-merged Internal Flat"
-stwif,Stacked Twilight Flat,"Stacked, but un-merged Twilight Flat"
+File name,Full Name,Note
+mbias_<CCDCFG>.fits,Master Bias,"One per CCD configuration (CCDCFG header keyword, made from the binning, readout mode, gain setting and amplifier mode), shared by every frame with that configuration"
+mdark_<STATEID>.fits,Master Dark,"One per instrument state (STATEID header keyword)"
+<first frame>_mcbars.fits,Master Continuum Bars,
+<first frame>_marc.fits,Master Arc,"The Red channel combines three arcs (and three continuum bars frames) to reject cosmic rays"
+<first frame>_mflat.fits,Master Internal Flat,
+<first frame>_mdome.fits,Master Dome Flat,
+<first frame>_mtwif.fits,Master Twilight Flat,
+<first frame>_sflat.fits,Stacked Internal Flat,"Stacked flat, the input to the master flat"
+<first frame>_sdome.fits,Stacked Dome Flat,"Stacked dome flat, the input to the master dome flat"
+<first frame>_stwif.fits,Stacked Twilight Flat,"Stacked twilight flat, the input to the master twilight flat"
+<first frame>_mobj.fits,Master Object,"Only created when object_min_nframes is more than 1; see :ref:`configuration:Combining science images`"

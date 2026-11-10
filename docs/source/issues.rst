@@ -15,9 +15,10 @@ Why are my output cubes reduced with this pipeline slightly offset from cubes ma
 ---------------------------------------------------------------------------------------------------------
 
 This version of the pipeline includes functionality that the IDL pipeline did not,
-notably an air-to-vacuum wavelength correction, and a barycentric wavelength
-correction. These, predictably, result in small but noticable offsets between 
-new and old cubes.
+notably an air-to-vacuum wavelength correction, and a heliocentric (or
+barycentric) wavelength correction. These, predictably, result in small but
+noticeable offsets between new and old cubes. Both can be changed in the
+:ref:`configuration <configuration:Wavelength correction parameters>`.
 
 What are all of these output files?
 -----------------------------------
@@ -34,20 +35,113 @@ report about what calibrations it matched with what science frames. If any are
 missing, it tells you which, and how many are needed. More details can be found
 :ref:`here <scripts:check_cals>`.
 
+Can I reduce files with KOA names (``KB.20230605.12345.67.fits``)?
+-------------------------------------------------------------------
+
+Yes. Since 1.2.0, input files can have any name; for example
+``reduce_kcwi -b -f KB.*.fits -g``. The outputs are named after the input
+files (``KB.20230605.12345.67_icubes.fits``), and the rows in ``kcwi.sky``
+must use the same names as the files you give the pipeline.
+
+Why was my frame not reduced?
+-----------------------------
+
+Look for these in the log (``logs`` directory):
+
+* ``Already processed``: the frame is already in the proc file. See
+  :ref:`Re-reducing frames <running:Re-reducing frames>`.
+* ``BIAS frame with exposure time ... > 0. Discarding``: a bias with a
+  non-zero exposure time (for example a focus image) is ignored.
+* A missing calibration, for example no master arc or flat for the frame's
+  configuration. A step whose calibration is missing is skipped (the log says
+  so in the ``Checking precondition for ...`` messages), and the frame goes on
+  without it, so later steps that need its output also produce nothing. Run
+  ``check_cals`` to see which calibrations are missing.
+
+Why is there no ``icubes`` file for my science frame?
+-----------------------------------------------------
+
+``icubes`` is only made when a standard star taken with the same instrument
+configuration was reduced in the same directory, before the science frame. See
+:ref:`calibration:How flux calibration works`.
+
+Why did my ``kcwi.sky`` file have no effect?
+--------------------------------------------
+
+In 1.3.x, ``kcwi.sky`` is only read when you run ``reduce_kcwi`` in the
+directory that contains it and the raw files, and give the raw files without a
+directory path. See the warning in :doc:`sky_subtraction`.
+
+Can I reduce Blue and Red data at the same time?
+------------------------------------------------
+
+Yes, since 1.2.0. Run one ``reduce_kcwi -b`` and one ``reduce_kcwi -r`` in
+separate terminals, in the same directory: each channel has its own proc file
+(``kcwib.proc`` and ``kcwir.proc``).
+
+Which ``plot_level`` should I use?
+----------------------------------
+
+``1`` (the default) shows and saves the main diagnostic plots without stopping.
+``0`` turns plots off, which is fastest for unattended reductions. ``2`` and
+``3`` show more plots and stop for you to inspect and answer questions,
+mainly during wavelength calibration; use them when a solution needs checking.
+See :ref:`configuration:Plotting parameters`.
+
 Known Issues
 ============
 
-Pipeline Ingests Blue Files as Red, and Vice Versa
---------------------------------------------------
+Bokeh Issues
+------------
 
-There is a known bug in the Keck DRP framework that prevents two instances of
-the DRP from running at the same time. This can be inconvenient, as this means
-you cannot reduce red and blue side data at the same time on the same machine.
-Until this bug gets fixed, the only solution is to run through your data first
-for one set of blue/red data, then the other.
+The DRP relies on a package called ``Bokeh`` to render plots. This package has a
+large number of dependencies (both Python and system) that can cause issues. If
+you are having issues plotting, read on.
+
+As a first check, try to kill any hanging ``bokeh`` processes:
+
+.. code-block:: bash
+
+    pkill bokeh
+
+Try running the pipeline again, sometimes this is enough to clear any issues.
+
+Failing that, add/update the following parameter in your ``kcwi.cfg`` config file:
+
+.. code-block:: bash
+
+    terminate_on_failed_bokeh_start = True
+
+This tells the pipeline to exit immediately if Bokeh fails to start. If the
+pipeline then stops at ``StartBokeh`` when you run it again, Bokeh is the
+problem.
+
+Next, try adding/updating the following to your config:
+
+.. code-block:: bash
+
+    plot_firefox_compat = True
+
+This will try to automatically find a firefox installation and use it - this is
+especially an issue if your machine is running firefox installed via snap on
+Ubuntu, although it may well manifest on other machines. You may need to follow
+steps 1 through 3 in the next section, as well.
+
+The next time you run the pipeline, it may appear to hang at the first plotting
+call - wait to see if it proceeds. It may take up to a minute or two
+for firefox to sort itself out (there's a timeout somewhere that must be waited
+out).
+
+You may see a scary looking warning like
+
+.. code-block:: bash
+
+    [Parent 808986, Main Thread] WARNING: Failed to mkdir /home/kcwidrp/snap/firefox/7967/.config/ibus/bus: Not a directory: 'glib warning', file /build/firefox/parts/firefox/build/toolkit/xre/nsSigHandlers.cpp:201
+
+This is not something to worry about.
 
 Firefox/geckodriver cannot be found
------------------------------------
++++++++++++++++++++++++++++++++++++
 
 Error message:
 
@@ -70,41 +164,12 @@ These instructions assume you are using :code:`conda` to manage your environment
 
     pip install selenium
     pip install geckodriver
-    
-#. Open :code:`KCWI_DRP/kcwidrp/core/kcwi_plotting.py` in a text editor
 
-#. Add the following import at the top of the file: ::
+Add or update the following in your config file:
 
-    from selenium import webdriver
+.. code-block:: bash
 
-#. Find your firefox installation by executing :code:`which firefox` from the
-   command line. Make note of the output. It should look something like
-   :code:`/PATH/TO/CONDA/envs/kcwidrp/bin/firefox`
-#. Replace the function :code:`save_plot` with the following: ::
-
-    def save_plot(fig, filename=None):
-        if filename is None:
-            fnam = os.path.join('plots', 'kcwi_drp_plot.png')
-        else:
-            fnam = os.path.join('plots', filename)
-
-        options = webdriver.FirefoxOptions()
-
-        options.add_argument("--headless")
-        options.add_argument("--hide-scrollbars")
-        options.add_argument("--force-device-scale-factor=1")
-        options.add_argument("--force-color-profile=srgb")
-        driver = webdriver.Firefox(firefox_binary="[YOUR/PATH/HERE]",
-                                    firefox_options=options)
-        export_png(fig, filename=fnam, webdriver=driver)
-        driver.close()
-        logger.info(">>> Saving to %s" % fnam)
-
-   where :code:`[YOUR/PATH/HERE]` is replaced by the path found in the
-   previous step
-#. Navigate to the :code:`KCWI_DRP` directory, and run::
-
-        python setup.py install
+    plot_firefox_compat = True
 
 Massive Slowdown When Calculating Central Dispersion
 ----------------------------------------------------
