@@ -551,12 +551,13 @@ class GetAtlasLines(BasePrimitive):
                               legend_label='FntRej', color='grey', size=8)
                 # Kept
                 p.diamond(refws, refas / norm_fac, legend_label='Kept',
-                          color='magenta', size=16)
+                          color='green', size=12)
                 p.line([minwav, minwav], [-0.1, 1.1], legend_label='WavLim',
                        color='purple')
                 p.line([maxwav, maxwav], [-0.1, 1.1], color='purple')
-                p.x_range = Range1d(min([min(subwvals), minwav-10.]),
-                                    max([max(subwvals), maxwav+10.]))
+                # pad past the wavelength limits on both sides
+                xpad = 0.03 * (maxwav - minwav)
+                p.x_range = Range1d(minwav - xpad, maxwav + xpad)
                 p.y_range = Range1d(-0.04, 1.04)
                 bokeh_plot(p, self.context.bokeh_session)
                 pause(self.config.instrument, self.logger,
@@ -566,7 +567,7 @@ class GetAtlasLines(BasePrimitive):
                         "  Title \"ATLAS LINES Ngood = <n>, Nrej = <m>\", normalised flux.\n"
                         "  Blue: reference-bar arc spectrum on its central-fit wavelengths.\n"
                         "  Black: atlas spectrum of the arc lamp.\n"
-                        "  Large magenta diamonds: atlas lines kept for the fit (\"Kept\").\n"
+                        "  Large green diamonds: atlas lines kept for the fit (\"Kept\").\n"
                         "  Small diamonds, rejected lines (plotted at the arc line's height):\n"
                         "    cyan: WinRej (no clean window).\n"
                         "    pink: FitRej (Gaussian fit failed).\n"
@@ -574,6 +575,7 @@ class GetAtlasLines(BasePrimitive):
                         "    brown: DupRej (duplicate).\n"
                         "    grey: FntRej (faintest dropped when > 400 lines).\n"
                         "  Purple verticals: wavelength limits used (\"WavLim\").\n"
+                        "  x range: the WavLim range plus 3 % on each side.\n"
                         "What to look for:\n"
                         "  Good: blue and black spectra line up; kept lines sit on clean atlas\n"
                         "  peaks spread over the whole range between the purple lines.\n"

@@ -92,7 +92,7 @@ describe the plots in this scheme; the per-site list is in
 | CWAVE | orange, dash-dot-dot (used for nothing else) |
 | WAVGOOD | green solid verticals |
 | WAVALL | grey solid verticals |
-| Found or adopted value (peak, centroid, adopted dispersion, kept lines) | magenta |
+| Found or adopted value (peak, centroid, adopted dispersion, kept lines) | magenta; P11 kept lines green (maintainer, 2026-11-09; P11 has no WAVGOOD) |
 | Predicted or calculated value (grating equation, predicted ledge, ATOFF) | black dashed |
 | Limits and windows (fit limits, fit windows, buffer zones, WavLim, Cor lim, source masks) | purple; a second set dashed or dotted |
 | Line masks | purple dashed pairs |
@@ -1055,7 +1055,7 @@ What you see:
   Title "ATLAS LINES Ngood = <n>, Nrej = <m>", normalised flux.
   Blue: reference-bar arc spectrum on its central-fit wavelengths.
   Black: atlas spectrum of the arc lamp.
-  Large magenta diamonds: atlas lines kept for the fit ("Kept").
+  Large green diamonds: atlas lines kept for the fit ("Kept").
   Small diamonds, rejected lines (plotted at the arc line's height):
     cyan: WinRej (no clean window).
     pink: FitRej (Gaussian fit failed).
@@ -1063,6 +1063,7 @@ What you see:
     brown: DupRej (duplicate).
     grey: FntRej (faintest dropped when > 400 lines).
   Purple verticals: wavelength limits used ("WavLim").
+  x range: the WavLim range plus 3 % on each side.
 What to look for:
   Good: blue and black spectra line up; kept lines sit on clean atlas
   peaks spread over the whole range between the purple lines.
@@ -2449,7 +2450,7 @@ the WAVGOOD lines of P16-P19, P28 and P33 and the P12 colour bar (drawn by
 | P09 | blue x / orange dash-dot-dot / black dash-dot | FitCenter.py:359 default / :360-361 red / :365 |
 | P10 | blue x / black dashed / black dash-dot | FitCenter.py:386 default / :387-388 red / :393 |
 | P11 | blue / black | GetAtlasLines.py:527-528 lightgray / :529-530 blue |
-| P11 | magenta diamonds (Kept) | GetAtlasLines.py:552-553 green |
+| P11 | green diamonds (Kept) | GetAtlasLines.py:552-553 green |
 | P11 | cyan, pink, olive, brown, grey diamonds | GetAtlasLines.py:534 cyan, :538 red, :542 orange, :546 brown, :550 magenta |
 | P11 | purple verticals (WavLim) | GetAtlasLines.py:554-556 brown |
 | P42 | black line and circles / black dashed vertical | SolveArcs.py:233-234 blue / :235-236 green / :237 red |
