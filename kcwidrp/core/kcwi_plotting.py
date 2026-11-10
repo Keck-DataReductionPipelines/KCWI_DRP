@@ -32,6 +32,8 @@ import sys
 
 import numpy as np
 
+from kcwidrp.core import kcwi_plot_colors as pc
+
 logger = logging.getLogger('KCWI')
 
 STRICT = os.environ.get('KCWI_PLOT_STRICT', '') == '1'
@@ -39,7 +41,8 @@ STRICT = os.environ.get('KCWI_PLOT_STRICT', '') == '1'
 __all__ = ['STRICT', 'UnsupportedPlotFeature', 'figure', 'PlotFigure',
            'Range1d', 'LinearAxis', 'gridplot', 'PlotGrid', 'render',
            'pixel_size', 'snapshot', 'plot_label', 'save_plot',
-           'get_plot_lims', 'set_plot_lims', 'oplot_slices']
+           'get_plot_lims', 'set_plot_lims', 'oplot_slices', 'oplot_cwave',
+           'oplot_wavgood']
 
 
 class UnsupportedPlotFeature(TypeError):
@@ -802,11 +805,50 @@ def get_plot_lims(data, padding=0.05, clip=True):
     return dmin - padding * ddel, dmax + padding * ddel
 
 
-def oplot_slices(fig, yrange):
+def oplot_slices(fig, yrange, color=pc.SLICE_BOUNDARY):
     """Overplot slices vertically on plot"""
     for ix in range(1, 24):
         sx = ix * 5 - 0.5
-        fig.line([sx, sx], yrange, color='black', line_dash='dashdot')
+        fig.line([sx, sx], yrange, color=color, line_dash='dashdot')
+
+
+def _span(value, span, horizontal):
+    """x and y of a line at ``value`` across ``span``: vertical (x = value),
+    or horizontal (y = value) with ``horizontal=True``."""
+    return (span, [value, value]) if horizontal else ([value, value], span)
+
+
+def oplot_cwave(fig, cwave, span, legend_label='CWAVE', horizontal=False,
+                color=pc.CWAVE):
+    """Overplot CWAVE across ``span``, dash-dot-dot (kept for CWAVE).
+
+    Vertical at x = ``cwave``, or horizontal at y = ``cwave`` with
+    ``horizontal=True``.  ``legend_label=None`` leaves it out of the
+    legend; ``color`` overrides the scheme colour.
+    """
+    xs, ys = _span(cwave, span, horizontal)
+    if legend_label:
+        fig.line(xs, ys, color=color, line_dash='dashdotdot',
+                 legend_label=legend_label)
+    else:
+        fig.line(xs, ys, color=color, line_dash='dashdotdot')
+
+
+def oplot_wavgood(fig, wavegood0, wavegood1, span, legend_label='WAVGOOD',
+                  horizontal=False, color=pc.WAVGOOD):
+    """Overplot the WAVGOOD limits across ``span`` (one legend entry).
+
+    Vertical at x = ``wavegood0``, ``wavegood1``, or horizontal with
+    ``horizontal=True``.  ``legend_label=None`` leaves them out of the
+    legend; ``color`` overrides the scheme colour.
+    """
+    xs, ys = _span(wavegood0, span, horizontal)
+    if legend_label:
+        fig.line(xs, ys, color=color, legend_label=legend_label)
+    else:
+        fig.line(xs, ys, color=color)
+    xs, ys = _span(wavegood1, span, horizontal)
+    fig.line(xs, ys, color=color)
 
 
 def set_plot_lims(fig, xlim=None, ylim=None):

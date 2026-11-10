@@ -6,6 +6,8 @@ from kcwidrp.core.bokeh_plotting import bokeh_plot
 from kcwidrp.core.kcwi_plotting import save_plot
 from kcwidrp.core.bspline import Bspline
 from kcwidrp.core.kcwi_plotting import figure
+from kcwidrp.core import kcwi_plot_colors as pc
+from kcwidrp.core.kcwi_plotting import oplot_wavgood
 from kcwidrp.core.kcwi_plotting import Range1d
 from kcwidrp.core.kcwi_interactive import ask_value, pause
 
@@ -262,8 +264,8 @@ class MakeMasterFlat(BaseImg):
                            y_axis_label='counts',
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height)
-                p.circle(wwflat, ywflat, color='blue', legend_label="Data")
-                p.line(wflat, wslfit, line_color='red', line_width=3,
+                p.circle(wwflat, ywflat, color=pc.DATA, legend_label="Data")
+                p.line(wflat, wslfit, line_color=pc.FIT, line_width=3,
                        legend_label="Fit")
                 bokeh_plot(p, self.context.bokeh_session)
                 pause(self.config.instrument, self.logger,
@@ -328,31 +330,31 @@ class MakeMasterFlat(BaseImg):
                            y_axis_label='Ratio',
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height)
-                p.circle(posmap.data.flat[qq], ycdata, color='blue',
+                p.circle(posmap.data.flat[qq], ycdata, color=pc.DATA,
                          legend_label='Data')
                 p.line(allidx, resfit[1] + resfit[0]*allidx,
-                       line_color='red', line_dash='dashed',
+                       line_color=pc.FIT, line_dash='dashed',
                        legend_label='Vign.')
                 # un-vignetted fit: its window, extended to the vignetted side
                 if self.action.args.camera == 0:    # Blue: vignetted at left
                     uvidx = allidx[allidx <= flatr]
                 else:                               # Red: vignetted at right
                     uvidx = allidx[allidx >= flatl]
-                p.line(uvidx, resflat[1] + resflat[0]*uvidx, line_color='red',
+                p.line(uvidx, resflat[1] + resflat[0]*uvidx, line_color=pc.FIT,
                        legend_label='UnVign.')
-                p.line([fitl, fitl], [ycmin, ycmax], line_color='purple',
+                p.line([fitl, fitl], [ycmin, ycmax], line_color=pc.LIMIT,
                        line_dash='dashed', legend_label='Vign. window')
-                p.line([fitr, fitr], [ycmin, ycmax], line_color='purple',
+                p.line([fitr, fitr], [ycmin, ycmax], line_color=pc.LIMIT,
                        line_dash='dashed')
-                p.line([flatl, flatl], [ycmin, ycmax], line_color='purple',
+                p.line([flatl, flatl], [ycmin, ycmax], line_color=pc.LIMIT,
                        legend_label='UnVign. window')
-                p.line([flatr, flatr], [ycmin, ycmax], line_color='purple')
+                p.line([flatr, flatr], [ycmin, ycmax], line_color=pc.LIMIT)
                 p.line([xinter-buffer, xinter-buffer], [ycmin, ycmax],
-                       line_color='purple', line_dash='dotted',
+                       line_color=pc.LIMIT, line_dash='dotted',
                        legend_label='Buffer')
                 p.line([xinter + buffer, xinter + buffer], [ycmin, ycmax],
-                       line_color='purple', line_dash='dotted')
-                p.line([xinter, xinter], [ycmin, ycmax], line_color='magenta',
+                       line_color=pc.LIMIT, line_dash='dotted')
+                p.line([xinter, xinter], [ycmin, ycmax], line_color=pc.FOUND,
                        legend_label='Crossing')
                 p.y_range = Range1d(ycmin, ycmax)
                 bokeh_plot(p, self.context.bokeh_session)
@@ -421,8 +423,8 @@ class MakeMasterFlat(BaseImg):
                            y_axis_label='Ratio',
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height)
-                p.circle(xbuff, ybuff, color='blue', legend_label='Data')
-                p.line(xbuff, np.polyval(buffit, xbuff), line_color='red',
+                p.circle(xbuff, ybuff, color=pc.DATA, legend_label='Data')
+                p.line(xbuff, np.polyval(buffit, xbuff), line_color=pc.FIT,
                        legend_label='Fit')
                 bokeh_plot(p, self.context.bokeh_session)
                 pause(self.config.instrument, self.logger,
@@ -516,10 +518,10 @@ class MakeMasterFlat(BaseImg):
                            y_axis_label='Value',
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height)
-                p.circle(xledge, smyledge, color='blue')
-                p.line(fpoints, ylfit, color='red')
+                p.circle(xledge, smyledge, color=pc.DATA)
+                p.line(fpoints, ylfit, color=pc.FIT)
                 ylim = get_plot_lims(ylfit)
-                p.line([ledge_wave, ledge_wave], ylim, color='black',
+                p.line([ledge_wave, ledge_wave], ylim, color=pc.PREDICTED,
                        line_dash='dashed')
                 bokeh_plot(p, self.context.bokeh_session)
                 pause(self.config.instrument, self.logger,
@@ -549,11 +551,11 @@ class MakeMasterFlat(BaseImg):
                            plot_height=self.config.instrument.plot_height)
                 xx = list(range(len(deriv)))
                 ylim = get_plot_lims(deriv)
-                p.circle(xx, deriv, color='blue')
-                p.line([len(xx)/2, len(xx)/2], ylim, color='black',
+                p.circle(xx, deriv, color=pc.DATA)
+                p.line([len(xx)/2, len(xx)/2], ylim, color=pc.PREDICTED,
                        line_dash='dashed')
                 for pk in peaks:
-                    p.line([pk, pk], ylim, color='magenta')
+                    p.line([pk, pk], ylim, color=pc.FOUND)
                 bokeh_plot(p, self.context.bokeh_session)
                 if len(peaks) == 0:
                     # No ledge detected: nothing to correct
@@ -625,9 +627,9 @@ class MakeMasterFlat(BaseImg):
                             y_axis_label='Value',
                             plot_width=self.config.instrument.plot_width,
                             plot_height=self.config.instrument.plot_height)
-                        p.circle(xvals, deriv, color='blue',
+                        p.circle(xvals, deriv, color=pc.DATA,
                                  legend_label='Data')
-                        p.line([apk, apk], [-50, 200], line_color='magenta',
+                        p.line([apk, apk], [-50, 200], line_color=pc.FOUND,
                                legend_label='Pk')
                         bokeh_plot(p, self.context.bokeh_session)
                         pause(self.config.instrument, self.logger,
@@ -674,7 +676,7 @@ class MakeMasterFlat(BaseImg):
                             plot_width=self.config.instrument.plot_width,
                             plot_height=self.config.instrument.plot_height)
                         # Input data
-                        p.circle(xledge, yledge, color='blue',
+                        p.circle(xledge, yledge, color=pc.DATA,
                                  legend_label='Data')
                         # correct input data
                         qcorrect = [i for i, v in enumerate(xledge) if v >= apk]
@@ -683,22 +685,25 @@ class MakeMasterFlat(BaseImg):
                         for i in qcorrect:
                             xplt.append(xledge[i])
                             yplt.append(yledge[i] / ratio)
-                        p.circle(xplt, yplt, color='cyan',
+                        p.circle(xplt, yplt, color=pc.SECOND,
                                  legend_label='Corrected')
-                        p.line(fpoints, ylfit, line_color='red', legend_label='Fit')
-                        p.line([xlow, xlow], [ylmin, ylmax], line_color='purple',
+                        p.line(fpoints, ylfit, line_color=pc.FIT,
+                               legend_label='Fit')
+                        p.line([xlow, xlow], [ylmin, ylmax],
+                               line_color=pc.LIMIT,
                                line_dash='dashed')
-                        p.line([xhi, xhi], [ylmin, ylmax], line_color='purple',
+                        p.line([xhi, xhi], [ylmin, ylmax], line_color=pc.LIMIT,
                                line_dash='dashed')
-                        p.line([zlow, zlow], [ylmin, ylmax], line_color='purple',
+                        p.line([zlow, zlow], [ylmin, ylmax],
+                               line_color=pc.LIMIT,
                                line_dash='dotted')
-                        p.line([zhi, zhi], [ylmin, ylmax], line_color='purple',
+                        p.line([zhi, zhi], [ylmin, ylmax], line_color=pc.LIMIT,
                                line_dash='dotted')
                         p.line(fpoints, lowfit[1] + lowfit[0] * fpoints,
-                               line_color='red', line_dash='dashed')
+                               line_color=pc.FIT, line_dash='dashed')
                         p.line(fpoints, hifit[1] + hifit[0] * fpoints,
-                               line_color='red', line_dash='dotted')
-                        p.line([apk, apk], [ylmin, ylmax], line_color='magenta',
+                               line_color=pc.FIT, line_dash='dotted')
+                        p.line([apk, apk], [ylmin, ylmax], line_color=pc.FOUND,
                                legend_label='Pk')
                         p.y_range = Range1d(ylmin, ylmax)
                         p.legend.location = 'top_left'
@@ -822,15 +827,14 @@ class MakeMasterFlat(BaseImg):
                 y_range=ylim,
                 plot_width=self.config.instrument.plot_width,
                 plot_height=self.config.instrument.plot_height)
-            p.line(xrplt, yrplt, line_color='black', legend_label='Ref')
-            p.circle(xrplt, yrplt_d, size=1, line_alpha=0., fill_color='black')
+            p.line(xrplt, yrplt, line_color=pc.REFERENCE, legend_label='Ref')
+            p.circle(xrplt, yrplt_d, size=1, line_alpha=0.,
+                     fill_color=pc.REFERENCE)
             p.line(xbplt, ybplt, line_color='blue', legend_label='Blue')
             p.circle(xbplt, ybplt_d, size=1, line_alpha=0., fill_color='blue')
             p.line(xdplt, ydplt, line_color='cyan', legend_label='Red')
             p.circle(xdplt, ydplt_d, size=1, line_alpha=0., fill_color='cyan')
-            p.line([wavegood0, wavegood0], ylim, line_color='green',
-                   legend_label='WAVGOOD')
-            p.line([wavegood1, wavegood1], ylim, line_color='green')
+            oplot_wavgood(p, wavegood0, wavegood1, ylim)
             bokeh_plot(p, self.context.bokeh_session)
             pause(self.config.instrument, self.logger,
                   what="Flat spectra of the reference slice and of the slices reaching furthest blue and red.",
@@ -914,9 +918,9 @@ class MakeMasterFlat(BaseImg):
                     y_axis_label='Flux (e-)',
                     plot_width=self.config.instrument.plot_width,
                     plot_height=self.config.instrument.plot_height)
-                p.line(waves[qbluefit], refbluefit, line_color='black',
+                p.line(waves[qbluefit], refbluefit, line_color=pc.REFERENCE,
                        legend_label='Ref')
-                p.circle(waves[qbluefit], refbluefit, color='black')
+                p.circle(waves[qbluefit], refbluefit, color=pc.REFERENCE)
                 p.line(waves[qbluefit], bluefit, line_color='blue',
                        legend_label='Blue')
                 p.circle(waves[qbluefit], bluefit, color='blue')
@@ -946,14 +950,15 @@ class MakeMasterFlat(BaseImg):
                     y_axis_label='Ratio',
                     plot_width=self.config.instrument.plot_width,
                     plot_height=self.config.instrument.plot_height)
-                p.line(waves[qbluefit], refbluefit/bluefit, line_color='black',
+                p.line(waves[qbluefit], refbluefit/bluefit,
+                       line_color=pc.REFERENCE,
                        legend_label='Ref')
                 p.circle(waves[qbluefit], refbluefit/bluefit,
-                         color='black')
+                         color=pc.REFERENCE)
                 p.line(waves[qbluefit], bluelinfity,
-                       line_color='red', legend_label='Blue')
+                       line_color=pc.FIT, legend_label='Blue')
                 p.circle(waves[qbluefit], bluelinfity,
-                         color='red')
+                         color=pc.FIT)
                 bokeh_plot(p, self.context.bokeh_session)
                 pause(self.config.instrument, self.logger,
                       what="Blue overlap: ratio of reference to blue-slice fit, and its linear fit.",
@@ -982,9 +987,9 @@ class MakeMasterFlat(BaseImg):
                     y_axis_label='Flux (e-)',
                     plot_width=self.config.instrument.plot_width,
                     plot_height=self.config.instrument.plot_height)
-                p.line(waves[qredfit], refredfit, line_color='black',
+                p.line(waves[qredfit], refredfit, line_color=pc.REFERENCE,
                        legend_label='Ref')
-                p.circle(waves[qredfit], refredfit, color='black')
+                p.circle(waves[qredfit], refredfit, color=pc.REFERENCE)
                 p.line(waves[qredfit], redfit, line_color='cyan',
                        legend_label='Red')
                 p.circle(waves[qredfit], redfit, color='cyan')
@@ -1014,12 +1019,13 @@ class MakeMasterFlat(BaseImg):
                     y_axis_label='Ratio',
                     plot_width=self.config.instrument.plot_width,
                     plot_height=self.config.instrument.plot_height)
-                p.line(waves[qredfit], refredfit/redfit, line_color='black',
+                p.line(waves[qredfit], refredfit/redfit,
+                       line_color=pc.REFERENCE,
                        legend_label='Ref')
-                p.circle(waves[qredfit], refredfit/redfit, color='black')
+                p.circle(waves[qredfit], refredfit/redfit, color=pc.REFERENCE)
                 p.line(waves[qredfit], redlinfity,
-                       line_color='red', legend_label='Red')
-                p.circle(waves[qredfit], redlinfity, color='red')
+                       line_color=pc.FIT, legend_label='Red')
+                p.circle(waves[qredfit], redlinfity, color=pc.FIT)
                 bokeh_plot(p, self.context.bokeh_session)
                 pause(self.config.instrument, self.logger,
                       what="Red overlap: ratio of reference to red-slice fit, and its linear fit.",
@@ -1131,16 +1137,14 @@ class MakeMasterFlat(BaseImg):
                 y_range=yran,
                 plot_width=self.config.instrument.plot_width,
                 plot_height=self.config.instrument.plot_height)
-            p.circle(xplt, yplt, size=1, line_alpha=0., fill_color='blue',
+            p.circle(xplt, yplt, size=1, line_alpha=0., fill_color=pc.DATA,
                      legend_label='Data')
-            p.line(fxplt, fplt, line_color='red', legend_label='Fit',
+            p.line(fxplt, fplt, line_color=pc.FIT, legend_label='Fit',
                    line_width=2)
-            p.line([minrwave, minrwave], yran, line_color='purple',
+            p.line([minrwave, minrwave], yran, line_color=pc.LIMIT,
                    legend_label='Cor lim')
-            p.line([maxrwave, maxrwave], yran, line_color='purple')
-            p.line([wavegood0, wavegood0], yran, line_color='green',
-                   legend_label='WAVGOOD')
-            p.line([wavegood1, wavegood1], yran, line_color='green')
+            p.line([maxrwave, maxrwave], yran, line_color=pc.LIMIT)
+            oplot_wavgood(p, wavegood0, wavegood1, yran)
             p.legend.location = "top_left"
             bokeh_plot(p, self.context.bokeh_session)
             pause(self.config.instrument, self.logger,

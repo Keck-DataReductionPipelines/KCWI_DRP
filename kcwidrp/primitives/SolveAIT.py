@@ -6,6 +6,8 @@ import os
 import numpy as np
 from scipy.interpolate import interpolate
 from kcwidrp.core.kcwi_plotting import figure
+from kcwidrp.core import kcwi_plot_colors as pc
+from kcwidrp.core.kcwi_plotting import oplot_wavgood
 from kcwidrp.core.kcwi_interactive import pause
 from astropy.io import fits as pf
 
@@ -158,14 +160,12 @@ class SolveAIT(BasePrimitive):
                            y_axis_label="Flux",
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height)
-                p.line(yout, arcout, legend_label='Arc', color='blue')
-                p.line(yout, barout, legend_label='Bar', color='cyan')
-                p.line([wgoo0, wgoo0], yran, legend_label='Good WLs',
-                       color='green')
-                p.line([wgoo1, wgoo1], yran, color='green')
+                p.line(yout, arcout, legend_label='Arc', color=pc.DATA)
+                p.line(yout, barout, legend_label='Bar', color=pc.SECOND)
+                oplot_wavgood(p, wgoo0, wgoo1, yran, legend_label='Good WLs')
                 p.line([wall0, wall0], yran, legend_label='All WLs',
-                       color='grey')
-                p.line([wall1, wall1], yran, color='grey')
+                       color=pc.WAVALL)
+                p.line([wall1, wall1], yran, color=pc.WAVALL)
                 set_plot_lims(p, xlim=[wall0, wall1], ylim=yran)
                 bokeh_plot(p, self.context.bokeh_session)
                 save_plot(p, filename=pfname + '_bar%d.png' % ib)

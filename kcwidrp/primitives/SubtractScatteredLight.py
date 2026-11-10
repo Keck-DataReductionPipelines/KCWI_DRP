@@ -4,6 +4,7 @@ from kcwidrp.core.bokeh_plotting import bokeh_plot
 from kcwidrp.core.kcwi_plotting import save_plot
 
 from kcwidrp.core.kcwi_plotting import figure
+from kcwidrp.core import kcwi_plot_colors as pc
 import numpy as np
 from scipy.signal import savgol_filter
 from kcwidrp.core.kcwi_interactive import pause
@@ -98,8 +99,8 @@ class SubtractScatteredLight(BasePrimitive):
                            x_axis_label='y pixel', y_axis_label='e-',
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height)
-                p.circle(xvals, yvals, color='blue', legend_label="Scat")
-                p.line(xvals, scat, color='red', line_width=3,
+                p.circle(xvals, yvals, color=pc.DATA, legend_label="Scat")
+                p.line(xvals, scat, color=pc.FIT, line_width=3,
                        legend_label="Smooth")
                 p.legend.location = "top_left"
                 bokeh_plot(p, self.context.bokeh_session)

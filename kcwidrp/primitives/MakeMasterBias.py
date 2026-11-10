@@ -6,6 +6,7 @@ from kcwidrp.core.bokeh_plotting import bokeh_plot
 from kcwidrp.core.kcwi_plotting import save_plot
 
 from kcwidrp.core.kcwi_plotting import figure
+from kcwidrp.core import kcwi_plot_colors as pc
 import ccdproc
 import numpy as np
 from scipy.stats import sigmaclip
@@ -142,12 +143,12 @@ class MakeMasterBias(BaseImg):
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height)
                 p.quad(top=hist, bottom=0, left=edges[:-1], right=edges[1:],
-                       fill_color="blue", line_color="white", alpha=0.5)
-                p.line(x, pdf, line_color="red", line_width=4, alpha=0.7,
+                       fill_color=pc.DATA, line_color="white", alpha=0.5)
+                p.line(x, pdf, line_color=pc.FIT, line_width=4, alpha=0.7,
                        legend_label="PDF")
-                p.line([-bias_rn, -bias_rn], [0, np.max(hist)], color='red',
+                p.line([-bias_rn, -bias_rn], [0, np.max(hist)], color=pc.MEAN,
                        line_dash='dashed', legend_label="Sigma")
-                p.line([bias_rn, bias_rn], [0, np.max(hist)], color='red',
+                p.line([bias_rn, bias_rn], [0, np.max(hist)], color=pc.MEAN,
                        line_dash='dashed')
                 p.y_range.start = 0
                 bokeh_plot(p, self.context.bokeh_session)

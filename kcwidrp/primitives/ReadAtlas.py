@@ -7,6 +7,8 @@ from kcwidrp.core.kcwi_interactive import ask_value, pause
 
 
 from kcwidrp.core.kcwi_plotting import figure
+from kcwidrp.core import kcwi_plot_colors as pc
+from kcwidrp.core.kcwi_plotting import oplot_cwave
 from kcwidrp.core.kcwi_plotting import Range1d
 import os
 from astropy.io import fits as pf
@@ -180,15 +182,15 @@ class ReadAtlas(BasePrimitive):
                        plot_width=self.config.instrument.plot_width,
                        plot_height=self.config.instrument.plot_height)
 
-            p.line(offar_central, xcorr_central, color='blue',
+            p.line(offar_central, xcorr_central, color=pc.DATA,
                    legend_label='Data')
             ylim_min = min(xcorr_central)
             ylim_max = max(xcorr_central)
             p.line([calc_offset_pix, calc_offset_pix], [ylim_min, ylim_max],
-                   color='magenta', legend_label='Peak')
+                   color=pc.FOUND, legend_label='Peak')
             if atoff != 0:
                 p.line([req_offset_pix, req_offset_pix], [ylim_min, ylim_max],
-                       color='black', line_dash='dashed',
+                       color=pc.PREDICTED, line_dash='dashed',
                        legend_label='Reqested')
             bokeh_plot(p, self.context.bokeh_session)
             pause(self.config.instrument, self.logger,
@@ -225,18 +227,17 @@ class ReadAtlas(BasePrimitive):
                 # atlas first, so the arc being inspected is drawn on top
                 p.line(refwav[minrw:maxrw],
                        reflux[minrw:maxrw]/np.nanmax(reflux[minrw:maxrw]),
-                       color="black", legend_label="Atlas")
+                       color=pc.REFERENCE, legend_label="Atlas")
                 p.line(obswav[minow:maxow] - offset_wav,
                        obsarc[minow:maxow]/np.nanmax(obsarc[minow:maxow]),
-                       color="blue", legend_label="ref bar (%d)" %
+                       color=pc.DATA, legend_label="ref bar (%d)" %
                        self.config.instrument.REFBAR)
                 p.x_range = Range1d(minwav, maxwav)
                 ylim_min = min(
                     obsarc[minow:maxow]/np.nanmax(obsarc[minow:maxow]))
                 ylim_max = max(
                     obsarc[minow:maxow]/np.nanmax(obsarc[minow:maxow]))
-                p.line([cwave, cwave], [ylim_min, ylim_max], color="orange",
-                       legend_label="CWAVE", line_dash="dashdotdot")
+                oplot_cwave(p, cwave, [ylim_min, ylim_max])
                 bokeh_plot(p, self.context.bokeh_session)
 
                 if self.config.instrument.plot_level >= 2:

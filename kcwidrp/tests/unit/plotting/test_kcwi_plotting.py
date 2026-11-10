@@ -348,7 +348,7 @@ def test_module_exposes_the_fixed_interface():
     for name in ('STRICT', 'figure', 'PlotFigure', 'Range1d', 'LinearAxis',
                  'gridplot', 'PlotGrid', 'render', 'pixel_size', 'snapshot',
                  'plot_label', 'save_plot', 'get_plot_lims', 'set_plot_lims',
-                 'oplot_slices'):
+                 'oplot_slices', 'oplot_cwave', 'oplot_wavgood'):
         assert hasattr(kp, name), name
 
 
@@ -965,6 +965,63 @@ def test_oplot_slices_draws_23_black_dashdot_lines():
                for l in ls)
     assert all(line_info(l)['ls'] == '-.' for l in ls)
     assert ax.get_legend() is None
+
+
+def test_oplot_slices_takes_a_custom_colour():
+    p = fig_()
+    kp.oplot_slices(p, [0., 1.], color='red')
+    ls = glyph_lines(rendered(p).axes[0])
+    assert all(mcolors.to_hex(line_info(l)['colour']) == '#ff0000'
+               for l in ls)
+
+
+def test_oplot_cwave_vertical_orange_dashdotdot_in_legend():
+    p = fig_()
+    kp.oplot_cwave(p, 4500., [0., 2.])
+    ax = rendered(p).axes[0]
+    (l,) = glyph_lines(ax)
+    # source: analytic - plot colour scheme: CWAVE orange, dash-dot-dot
+    assert np.array_equal(line_info(l)['x'], [4500., 4500.])
+    assert np.array_equal(line_info(l)['y'], [0., 2.])
+    assert mcolors.to_hex(line_info(l)['colour']) == \
+        mcolors.to_hex('orange')
+    assert tuple(l._unscaled_dash_pattern[1]) == (6, 2, 1, 2, 1, 2)
+    assert legend_labels(ax) == ['CWAVE']
+
+
+def test_oplot_cwave_horizontal_no_legend_custom_colour():
+    p = fig_()
+    kp.oplot_cwave(p, 7., [0., 10.], legend_label=None, horizontal=True,
+                   color='black')
+    ax = rendered(p).axes[0]
+    (l,) = glyph_lines(ax)
+    assert np.array_equal(line_info(l)['x'], [0., 10.])
+    assert np.array_equal(line_info(l)['y'], [7., 7.])
+    assert mcolors.to_hex(line_info(l)['colour']) == '#000000'
+    assert ax.get_legend() is None
+
+
+def test_oplot_wavgood_two_green_lines_one_legend_entry():
+    p = fig_()
+    kp.oplot_wavgood(p, 4000., 5000., [0., 1.], legend_label='Good WLs')
+    ax = rendered(p).axes[0]
+    ls = glyph_lines(ax)
+    assert [line_info(l)['x'].tolist() for l in ls] == \
+        [[4000., 4000.], [5000., 5000.]]
+    assert all(mcolors.to_hex(line_info(l)['colour']) ==
+               mcolors.to_hex('green') and line_info(l)['ls'] == '-'
+               for l in ls)
+    assert legend_labels(ax) == ['Good WLs']
+
+
+def test_oplot_wavgood_horizontal_custom_colour():
+    p = fig_()
+    kp.oplot_wavgood(p, 1., 2., [0., 5.], horizontal=True, color='cyan')
+    ls = glyph_lines(rendered(p).axes[0])
+    assert [line_info(l)['y'].tolist() for l in ls] == [[1., 1.], [2., 2.]]
+    assert all(np.array_equal(line_info(l)['x'], [0., 5.]) for l in ls)
+    assert all(mcolors.to_hex(line_info(l)['colour']) == '#00ffff'
+               for l in ls)
 
 
 def test_log_y_axis():

@@ -5,6 +5,7 @@ from kcwidrp.core.bokeh_plotting import bokeh_plot
 from kcwidrp.core.kcwi_plotting import save_plot
 
 from kcwidrp.core.kcwi_plotting import figure
+from kcwidrp.core import kcwi_plot_colors as pc
 import numpy as np
 import os
 from kcwidrp.core.kcwi_interactive import pause
@@ -136,9 +137,9 @@ class TraceBars(BasePrimitive):
                            x_axis_label="CCD X (px)", y_axis_label="CCD Y (px)",
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height)
-                p.scatter(xi, yi, marker='x', size=2, color='blue')
+                p.scatter(xi, yi, marker='x', size=2, color=pc.DATA)
                 p.scatter(self.action.args.middle_centers,
-                          [self.action.args.middle_row]*nbars, color='magenta')
+                          [self.action.args.middle_row]*nbars, color=pc.FOUND)
                 bokeh_plot(p, self.context.bokeh_session)
                 pause(self.config.instrument, self.logger,
                     what="Continuum-bar traces: control points used for the geometric solution.",

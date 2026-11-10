@@ -13,6 +13,8 @@ from scipy.optimize import curve_fit
 from scipy.interpolate import interpolate
 from scipy.stats import sigmaclip
 from kcwidrp.core.kcwi_plotting import figure
+from kcwidrp.core import kcwi_plot_colors as pc
+from kcwidrp.core.kcwi_plotting import oplot_cwave
 from kcwidrp.core.kcwi_plotting import Range1d, LinearAxis
 
 
@@ -231,10 +233,10 @@ class SolveArcs(BasePrimitive):
                             plot_height=self.config.instrument.plot_height)
                         ylim = [0, np.nanmax(yvec)]
                         p.line(atwave[atx0:atx1], atspec[atx0:atx1] * atnorm,
-                               color='black', legend_label='Atlas')
+                               color=pc.REFERENCE, legend_label='Atlas')
                         p.circle(atwave[atx0:atx1], atspec[atx0:atx1] * atnorm,
-                                 color='black', legend_label='Atlas')
-                        p.line([aw, aw], ylim, color='black',
+                                 color=pc.REFERENCE, legend_label='Atlas')
+                        p.line([aw, aw], ylim, color=pc.REFERENCE,
                                line_dash='dashed', legend_label='AtCntr')
                         p.x_range = Range1d(start=min(wvec), end=max(wvec))
                         p.extra_x_ranges = {"pix": Range1d(start=min(xvec),
@@ -242,18 +244,18 @@ class SolveArcs(BasePrimitive):
                         p.add_layout(LinearAxis(x_range_name="pix",
                                                 axis_label="CCD Y pix"),
                                      'above')
-                        p.line(xplot, plt_line, color='red',
+                        p.line(xplot, plt_line, color=pc.FIT,
                                legend_label='Arc', x_range_name="pix")
-                        p.circle(xvec, yvec, legend_label='Arc', color='blue',
+                        p.circle(xvec, yvec, legend_label='Arc', color=pc.DATA,
                                  x_range_name="pix")
                         ylim = [0, np.nanmax(plt_line)]
-                        p.line([cent, cent], ylim, color='magenta',
+                        p.line([cent, cent], ylim, color=pc.FOUND,
                                legend_label='Cntr', line_dash='dashed',
                                x_range_name="pix")
-                        p.line([sp_pk_x, sp_pk_x], ylim, color='magenta',
+                        p.line([sp_pk_x, sp_pk_x], ylim, color=pc.FOUND,
                                legend_label='Gpeak', line_dash='dotted',
                                x_range_name="pix")
-                        p.line([peak, peak], ylim, color='magenta',
+                        p.line([peak, peak], ylim, color=pc.FOUND,
                                legend_label='Peak',
                                x_range_name="pix")
                         p.y_range.start = 0
@@ -424,27 +426,26 @@ class SolveArcs(BasePrimitive):
                            y_axis_label="Fit - Atlas (A)",
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height)
-                p.diamond(at_wave_dat, resid, color='blue',
+                p.diamond(at_wave_dat, resid, color=pc.DATA,
                           legend_label='Kept', size=8)
                 if rej_rsd_wave:
-                    p.diamond(rej_rsd_wave, rej_rsd, color='gold',
+                    p.diamond(rej_rsd_wave, rej_rsd, color=pc.OUTLIER,
                               legend_label='RejRsd', size=8)
                 if rej_wave:
                     p.scatter(rej_wave, np.zeros(len(rej_wave)), marker='x',
-                              color='grey', legend_label='RejFit', size=6)
+                              color=pc.MASKED, legend_label='RejFit', size=6)
                 wlim = [self.action.args.atminwave, self.action.args.atmaxwave]
                 xlim = get_plot_lims(wlim, padding=0.02)
                 ylim = get_plot_lims(list(resid)+list(rej_rsd))
-                p.line(wlim, [0., 0.], color='grey', line_dash='dotted')
-                p.line(wlim, [wsig, wsig], color='red', line_dash='dashed',
+                p.line(wlim, [0., 0.], color=pc.THRESHOLD, line_dash='dotted')
+                p.line(wlim, [wsig, wsig], color=pc.MEAN, line_dash='dashed',
                        legend_label='+-RMS')
-                p.line(wlim, [-wsig, -wsig], color='red', line_dash='dashed')
-                p.line([wlim[0], wlim[0]], ylim, color='purple',
+                p.line(wlim, [-wsig, -wsig], color=pc.MEAN, line_dash='dashed')
+                p.line([wlim[0], wlim[0]], ylim, color=pc.LIMIT,
                        legend_label='WavLim')
-                p.line([wlim[1], wlim[1]], ylim, color='purple')
-                p.line([self.action.args.cwave, self.action.args.cwave],
-                       ylim, legend_label='CWAV', color='orange',
-                       line_dash='dashdotdot')
+                p.line([wlim[1], wlim[1]], ylim, color=pc.LIMIT)
+                oplot_cwave(p, self.action.args.cwave, ylim,
+                            legend_label='CWAV')
                 set_plot_lims(p, xlim=xlim, ylim=ylim)
                 bokeh_plot(p, self.context.bokeh_session)
                 pause(self.config.instrument, self.logger,
@@ -487,20 +488,19 @@ class SolveArcs(BasePrimitive):
                 ylim = [np.nanmin(b), np.nanmax(b)]
                 atnorm = np.nanmax(b) / np.nanmax(atspec)
                 # atlas first, so the arc being inspected is drawn on top
-                p.line(atwave, atspec * atnorm, color='black',
+                p.line(atwave, atspec * atnorm, color=pc.REFERENCE,
                        legend_label='Atlas')
-                p.line(bwav, b, color='blue', legend_label='Arc')
-                p.diamond(arc_wave_fit, arc_int_dat, color='blue', size=8)
-                p.line([self.action.args.cwave, self.action.args.cwave],
-                       ylim, color='orange', line_dash='dashdotdot',
-                       legend_label='CWAV')
+                p.line(bwav, b, color=pc.DATA, legend_label='Arc')
+                p.diamond(arc_wave_fit, arc_int_dat, color=pc.DATA, size=8)
+                oplot_cwave(p, self.action.args.cwave, ylim,
+                            legend_label='CWAV')
                 p.diamond(at_wave, at_flux * atnorm, legend_label='Kept',
-                          color='magenta', size=8)
+                          color=pc.FOUND, size=8)
                 if rej_rsd_wave:
                     p.diamond(rej_rsd_wave, [rj*atnorm for rj in rej_rsd_flux],
-                              color='gold', legend_label='RejRsd', size=6)
+                              color=pc.OUTLIER, legend_label='RejRsd', size=6)
                 p.scatter(rej_wave, [rj*atnorm for rj in rej_flux], marker='x',
-                          color='grey', legend_label='RejFit', size=6)
+                          color=pc.MASKED, legend_label='RejFit', size=6)
                 bokeh_plot(p, self.context.bokeh_session)
                 q = ask_next(
                     self.logger,
@@ -577,7 +577,7 @@ class SolveArcs(BasePrimitive):
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height)
 
-                p.diamond(list(range(nbars)), coef, color='blue', size=8)
+                p.diamond(list(range(nbars)), coef, color=pc.DATA, size=8)
                 xlim = [-1, nbars]
                 ylim = get_plot_lims(coef, clip=False)
                 p.xgrid.grid_line_color = None
@@ -618,7 +618,7 @@ class SolveArcs(BasePrimitive):
                    y_axis_label="N Lines",
                    plot_width=self.config.instrument.plot_width,
                    plot_height=self.config.instrument.plot_height)
-        p.diamond(list(range(nbars)), bar_nls, color='blue', size=8,
+        p.diamond(list(range(nbars)), bar_nls, color=pc.DATA, size=8,
                   legend_label='Bars')
         xlim = [-1, nbars]
         ylim = get_plot_lims(bar_nls)
@@ -626,22 +626,23 @@ class SolveArcs(BasePrimitive):
         for isl in range(nbars // 5):
             sl_av = float(np.nanmean(bar_nls[isl*5:isl*5+5]))
             p.line([isl*5 - 0.5, isl*5 + 4.5], [sl_av, sl_av],
-                   color='black', line_width=3, legend_label='Slice mean')
+                   color=pc.SUBSET_MEAN, line_width=3,
+                   legend_label='Slice mean')
         self.logger.info("<N Lines> = %.1f +- %.1f" %
                          (self.action.args.av_bar_nls,
                           self.action.args.st_bar_nls))
         p.line(xlim, [self.action.args.av_bar_nls,
-                      self.action.args.av_bar_nls], color='red',
+                      self.action.args.av_bar_nls], color=pc.MEAN,
                legend_label='Mean')
         p.line(xlim, [(self.action.args.av_bar_nls -
                        self.action.args.st_bar_nls),
                       (self.action.args.av_bar_nls -
-                       self.action.args.st_bar_nls)], color='red',
+                       self.action.args.st_bar_nls)], color=pc.MEAN,
                line_dash='dashed', legend_label='+-1 sigma')
         p.line(xlim, [(self.action.args.av_bar_nls +
                        self.action.args.st_bar_nls),
                       (self.action.args.av_bar_nls +
-                       self.action.args.st_bar_nls)], color='red',
+                       self.action.args.st_bar_nls)], color=pc.MEAN,
                line_dash='dashed')
         p.xgrid.grid_line_color = None
         oplot_slices(p, ylim)
@@ -691,22 +692,22 @@ class SolveArcs(BasePrimitive):
         p = figure(title=ptitle, x_axis_label="Bar #", y_axis_label="RMS (A)",
                    plot_width=self.config.instrument.plot_width,
                    plot_height=self.config.instrument.plot_height)
-        p.diamond(list(range(nbars)), bar_sig, color='blue', size=8,
+        p.diamond(list(range(nbars)), bar_sig, color=pc.DATA, size=8,
                   legend_label='Bars')
         xlim = [-1, nbars]
         ylim = get_plot_lims(bar_sig)
         p.line(xlim, [self.action.args.av_bar_sig,
-                      self.action.args.av_bar_sig], color='red',
+                      self.action.args.av_bar_sig], color=pc.MEAN,
                legend_label='Mean')
         p.line(xlim, [(self.action.args.av_bar_sig -
                        self.action.args.st_bar_sig),
                       (self.action.args.av_bar_sig -
-                       self.action.args.st_bar_sig)], color='red',
+                       self.action.args.st_bar_sig)], color=pc.MEAN,
                line_dash='dashed', legend_label='+-1 sigma')
         p.line(xlim, [(self.action.args.av_bar_sig +
                        self.action.args.st_bar_sig),
                       (self.action.args.av_bar_sig +
-                       self.action.args.st_bar_sig)], color='red',
+                       self.action.args.st_bar_sig)], color=pc.MEAN,
                line_dash='dashed')
         p.xgrid.grid_line_color = None
         oplot_slices(p, ylim)

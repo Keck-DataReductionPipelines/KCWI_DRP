@@ -13,6 +13,7 @@ from astropy import units as u
 from astropy.nddata import CCDData
 from kcwidrp.core.bokeh_plotting import bokeh_plot
 from kcwidrp.core.kcwi_plotting import figure
+from kcwidrp.core.kcwi_plotting import oplot_wavgood
 from kcwidrp.core.kcwi_interactive import ask_next, QUIT
 from multiprocessing import Pool
 
@@ -289,10 +290,9 @@ class MakeCube(BasePrimitive):
                         p.line([ix, ix], [w0, w0 + tick], color='black',
                                legend_label='Pixel')
                         p.line([ix, ix], [w1 - tick, w1], color='black')
-                    p.line([0, xsize], [geom['wavegood0'], geom['wavegood0']],
-                           color='green', legend_label='WavGood')
-                    p.line([0, xsize], [geom['wavegood1'], geom['wavegood1']],
-                           color='green')
+                    oplot_wavgood(p, geom['wavegood0'], geom['wavegood1'],
+                                  [0, xsize], legend_label='WavGood',
+                                  horizontal=True)
                     bokeh_plot(p, self.context.bokeh_session)
                     if do_inter:
                         q = ask_next(self.logger,

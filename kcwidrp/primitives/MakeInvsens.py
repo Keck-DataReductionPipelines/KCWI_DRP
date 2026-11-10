@@ -8,6 +8,8 @@ from kcwidrp.primitives.kcwi_file_primitives import kcwi_fits_writer, \
 from kcwidrp.core.kcwi_interactive import ask_next, ask_value, pause, QUIT
 
 from kcwidrp.core.kcwi_plotting import figure
+from kcwidrp.core import kcwi_plot_colors as pc
+from kcwidrp.core.kcwi_plotting import oplot_cwave, oplot_wavgood
 from scipy.signal import find_peaks
 from scipy.interpolate import interp1d
 from astropy.io import fits as pf
@@ -191,7 +193,7 @@ class MakeInvsens(BasePrimitive):
                     y_axis_label="Flux summed over WLs",
                     plot_width=self.config.instrument.plot_width,
                     plot_height=self.config.instrument.plot_height)
-                p.scatter(px, py, marker='x', color='blue')
+                p.scatter(px, py, marker='x', color=pc.DATA)
                 bokeh_plot(p, self.context.bokeh_session)
                 print("sl, std: %02d, %.3f" % (i, tstd))
                 qstr = ask_next(
@@ -388,15 +390,12 @@ class MakeInvsens(BasePrimitive):
                     y_axis_label='Intensity (e-)',
                     plot_width=self.config.instrument.plot_width,
                     plot_height=self.config.instrument.plot_height)
-                p.line(w, obsspec, line_color='blue')
-                p.line([wgoo0, wgoo0], yran, line_color='green',
-                       legend_label='WAVGOOD')
-                p.line([wgoo1, wgoo1], yran, line_color='green')
-                p.line([wlm0, wlm0], yran, line_color='purple',
+                p.line(w, obsspec, line_color=pc.DATA)
+                oplot_wavgood(p, wgoo0, wgoo1, yran)
+                p.line([wlm0, wlm0], yran, line_color=pc.LIMIT,
                        legend_label='LIMITS')
-                p.line([wlm1, wlm1], yran, line_color='purple')
-                p.line([cwv, cwv], yran, line_color='orange',
-                       line_dash='dashdotdot', legend_label='CWAV')
+                p.line([wlm1, wlm1], yran, line_color=pc.LIMIT)
+                oplot_cwave(p, cwv, yran, legend_label='CWAV')
                 set_plot_lims(p, xlim=[wall0, wall1], ylim=yran)
                 bokeh_plot(p, self.context.bokeh_session)
                 lims = ask_value(
@@ -522,20 +521,19 @@ class MakeInvsens(BasePrimitive):
                     y_axis_label='Intensity (e-)',
                     plot_width=self.config.instrument.plot_width,
                     plot_height=self.config.instrument.plot_height)
-                p.line(w, obsspec, line_color='blue')
-                p.line([wgoo0, wgoo0], yran, line_color='green',
-                       legend_label='WAVGOOD')
-                p.line([wgoo1, wgoo1], yran, line_color='green')
-                p.line([wlm0, wlm0], yran, line_color='purple',
+                p.line(w, obsspec, line_color=pc.DATA)
+                oplot_wavgood(p, wgoo0, wgoo1, yran)
+                p.line([wlm0, wlm0], yran, line_color=pc.LIMIT,
                        legend_label='LIMITS')
-                p.line([wlm1, wlm1], yran, line_color='purple')
-                p.line([cwv, cwv], yran, line_color='orange',
-                       line_dash='dashdotdot', legend_label='CWAV')
+                p.line([wlm1, wlm1], yran, line_color=pc.LIMIT)
+                oplot_cwave(p, cwv, yran, legend_label='CWAV')
                 for ml in lmasks:
                     if wall0 < ml['w0'] < wall1 and wall0 < ml['w1'] < wall1:
-                        p.line([ml['w0'], ml['w0']], yran, line_color='purple',
+                        p.line([ml['w0'], ml['w0']], yran,
+                               line_color=pc.LINE_MASK,
                                line_dash='dashed')
-                        p.line([ml['w1'], ml['w1']], yran, line_color='purple',
+                        p.line([ml['w1'], ml['w1']], yran,
+                               line_color=pc.LINE_MASK,
                                line_dash='dashed')
                 set_plot_lims(p, xlim=[wall0, wall1], ylim=yran)
                 bokeh_plot(p, self.context.bokeh_session)
@@ -664,22 +662,20 @@ class MakeInvsens(BasePrimitive):
                     y_axis_label='Effective Efficiency (%)',
                     plot_width=self.config.instrument.plot_width,
                     plot_height=self.config.instrument.plot_height)
-                peff.line(wf, 100.*af/area, line_color='blue',
+                peff.line(wf, 100.*af/area, line_color=pc.DATA,
                           legend_label='Data')
-                peff.line(w, 100.*fearea/area, line_color='red',
+                peff.line(w, 100.*fearea/area, line_color=pc.FIT,
                           legend_label='Fit')
-                peff.scatter(ww, ef, marker='x', color='grey',
+                peff.scatter(ww, ef, marker='x', color=pc.MASKED,
                              legend_label='Rej')
-                peff.line([wlm0, wlm0], yran, line_color='purple',
+                peff.line([wlm0, wlm0], yran, line_color=pc.LIMIT,
                           legend_label='WL lims')
-                peff.line([wlm1, wlm1], yran, line_color='purple')
-                peff.line([wgoo0, wgoo0], yran, line_color='green',
-                          legend_label='WAVGOOD')
-                peff.line([wgoo1, wgoo1], yran, line_color='green')
+                peff.line([wlm1, wlm1], yran, line_color=pc.LIMIT)
+                oplot_wavgood(peff, wgoo0, wgoo1, yran)
                 peff.line([wall0, wall1], [effmax, effmax],
-                          line_color='red', line_dash='dashed')
+                          line_color=pc.MEAN, line_dash='dashed')
                 peff.line([wall0, wall1], [effmean, effmean],
-                          line_color='red', line_dash='dashdot')
+                          line_color=pc.MEAN, line_dash='dashdot')
                 set_plot_lims(peff, xlim=[wall0, wall1], ylim=yran)
                 bokeh_plot(peff, self.context.bokeh_session)
                 if self.config.instrument.plot_level >= 2:
@@ -718,16 +714,14 @@ class MakeInvsens(BasePrimitive):
                     y_axis_type='log',
                     plot_width=self.config.instrument.plot_width,
                     plot_height=self.config.instrument.plot_height)
-                pivs.line(wf, sf, line_color='blue', legend_label='Data')
-                pivs.line(w, finvsen, line_color='red', legend_label='Fit')
-                pivs.scatter(ww, mf, marker='x', color='grey',
+                pivs.line(wf, sf, line_color=pc.DATA, legend_label='Data')
+                pivs.line(w, finvsen, line_color=pc.FIT, legend_label='Fit')
+                pivs.scatter(ww, mf, marker='x', color=pc.MASKED,
                              legend_label='Rej')
-                pivs.line([wlm0, wlm0], yran, line_color='purple',
+                pivs.line([wlm0, wlm0], yran, line_color=pc.LIMIT,
                           legend_label='WL lims')
-                pivs.line([wlm1, wlm1], yran, line_color='purple')
-                pivs.line([wgoo0, wgoo0], yran, line_color='green',
-                          legend_label='WAVGOOD')
-                pivs.line([wgoo1, wgoo1], yran, line_color='green')
+                pivs.line([wlm1, wlm1], yran, line_color=pc.LIMIT)
+                oplot_wavgood(pivs, wgoo0, wgoo1, yran)
                 set_plot_lims(pivs, xlim=[wall0, wall1], ylim=yran)
                 bokeh_plot(pivs, self.context.bokeh_session)
                 if self.config.instrument.plot_level >= 2:
@@ -763,14 +757,13 @@ class MakeInvsens(BasePrimitive):
                     plot_width=self.config.instrument.plot_width,
                     plot_height=self.config.instrument.plot_height)
                 # reference first, so the calibrated data is drawn on top
-                pcal.line(w, rsflx, line_color='black', legend_label='Ref')
-                pcal.line(w, calspec, line_color='blue', legend_label='Obs')
-                pcal.line([wlm0, wlm0], yran, line_color='purple',
+                pcal.line(w, rsflx, line_color=pc.REFERENCE,
+                          legend_label='Ref')
+                pcal.line(w, calspec, line_color=pc.DATA, legend_label='Obs')
+                pcal.line([wlm0, wlm0], yran, line_color=pc.LIMIT,
                           legend_label='WL lims')
-                pcal.line([wlm1, wlm1], yran, line_color='purple')
-                pcal.line([wgoo0, wgoo0], yran, line_color='green',
-                          legend_label='WAVGOOD')
-                pcal.line([wgoo1, wgoo1], yran, line_color='green')
+                pcal.line([wlm1, wlm1], yran, line_color=pc.LIMIT)
+                oplot_wavgood(pcal, wgoo0, wgoo1, yran)
                 set_plot_lims(pcal, xlim=[wall0, wall1], ylim=yran)
                 bokeh_plot(pcal, self.context.bokeh_session)
                 if self.config.instrument.plot_level >= 2:
@@ -804,25 +797,23 @@ class MakeInvsens(BasePrimitive):
                     y_axis_label='Obs - Ref / Ref (%)',
                     plot_width=self.config.instrument.plot_width,
                     plot_height=self.config.instrument.plot_height)
-                prsd.line(wf, resid, line_color='blue',
+                prsd.line(wf, resid, line_color=pc.DATA,
                           legend_label='Obs - Ref (%)')
                 if len(not_used) > 0:
-                    prsd.scatter(ww, rbad, marker='x', color='grey',
+                    prsd.scatter(ww, rbad, marker='x', color=pc.MASKED,
                                  legend_label='Rej')
-                prsd.line([wlm0, wlm0], yran, line_color='purple',
+                prsd.line([wlm0, wlm0], yran, line_color=pc.LIMIT,
                           legend_label='WL lims')
-                prsd.line([wlm1, wlm1], yran, line_color='purple')
-                prsd.line([wgoo0, wgoo0], yran, line_color='green',
-                          legend_label='WAVGOOD')
-                prsd.line([wgoo1, wgoo1], yran, line_color='green')
+                prsd.line([wlm1, wlm1], yran, line_color=pc.LIMIT)
+                oplot_wavgood(prsd, wgoo0, wgoo1, yran)
                 prsd.line([wall0, wall1], [rsd_mean, rsd_mean],
-                          line_color='red')
+                          line_color=pc.MEAN)
                 prsd.line([wall0, wall1],
                           [rsd_mean+rsd_stdv, rsd_mean+rsd_stdv],
-                          line_color='red', line_dash='dashed')
+                          line_color=pc.MEAN, line_dash='dashed')
                 prsd.line([wall0, wall1],
                           [rsd_mean-rsd_stdv, rsd_mean-rsd_stdv],
-                          line_color='red', line_dash='dashed')
+                          line_color=pc.MEAN, line_dash='dashed')
                 set_plot_lims(prsd, xlim=[wall0, wall1], ylim=yran)
                 bokeh_plot(prsd, self.context.bokeh_session)
                 if self.config.instrument.plot_level >= 2:

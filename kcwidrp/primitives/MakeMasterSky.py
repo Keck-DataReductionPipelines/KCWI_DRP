@@ -7,6 +7,8 @@ from kcwidrp.core.bokeh_plotting import bokeh_plot
 from kcwidrp.core.kcwi_plotting import save_plot
 from kcwidrp.core.bspline import Bspline
 from kcwidrp.core.kcwi_plotting import figure
+from kcwidrp.core import kcwi_plot_colors as pc
+from kcwidrp.core.kcwi_plotting import oplot_wavgood
 
 import os
 from kcwidrp.core.kcwi_interactive import pause
@@ -336,14 +338,14 @@ class MakeMasterSky(BaseImg):
                     plot_width=self.config.instrument.plot_width,
                     plot_height=self.config.instrument.plot_height)
                 p.circle(std_sl_max_pos_data, std_sl_max_flx_data, size=1,
-                         line_alpha=0., fill_color='blue',
+                         line_alpha=0., fill_color=pc.DATA,
                          legend_label='Data')
-                p.line([ppk, ppk], [0, fpk], color='magenta')
+                p.line([ppk, ppk], [0, fpk], color=pc.FOUND)
                 p.line([std_pos_mask_0, std_pos_mask_0], [0, fpk],
-                       color='purple')
+                       color=pc.LIMIT)
                 p.line([std_pos_mask_1, std_pos_mask_1], [0, fpk],
-                       color='purple')
-                p.line(xx, yy, color='red')
+                       color=pc.LIMIT)
+                p.line(xx, yy, color=pc.FIT)
                 bokeh_plot(p, self.context.bokeh_session)
                 pause(self.config.instrument, self.logger,
                     what="Standard star: profile in its brightest slice and the region masked from the sky model.",
@@ -439,18 +441,18 @@ class MakeMasterSky(BaseImg):
                         plot_width=self.config.instrument.plot_width,
                         plot_height=self.config.instrument.plot_height)
                     p.circle(con_sl_max_pos_data, con_sl_max_flx_data,
-                             size=1, line_alpha=0., fill_color='blue',
+                             size=1, line_alpha=0., fill_color=pc.DATA,
                              legend_label='Data')
-                    p.line([ppk, ppk], [0, fpk], color='magenta')
+                    p.line([ppk, ppk], [0, fpk], color=pc.FOUND)
                     p.line([con_pos_mask_lo_0, con_pos_mask_lo_0], [0, fpk],
-                           color='purple', line_dash='dashed')
+                           color=pc.LIMIT, line_dash='dashed')
                     p.line([con_pos_mask_0, con_pos_mask_0], [0, fpk],
-                           color='purple')
+                           color=pc.LIMIT)
                     p.line([con_pos_mask_1, con_pos_mask_1], [0, fpk],
-                           color='purple')
+                           color=pc.LIMIT)
                     p.line([con_pos_mask_up_1, con_pos_mask_up_1], [0, fpk],
-                           color='purple', line_dash='dashed')
-                    p.line(xx, yy, color='red')
+                           color=pc.LIMIT, line_dash='dashed')
+                    p.line(xx, yy, color=pc.FIT)
                     bokeh_plot(p, self.context.bokeh_session)
                     pause(self.config.instrument, self.logger,
                         what="Continuum source: profile in its brightest slice, source region and local sky windows.",
@@ -636,11 +638,10 @@ class MakeMasterSky(BaseImg):
                 y_axis_label='Flux (e-)',
                 plot_width=self.config.instrument.plot_width,
                 plot_height=self.config.instrument.plot_height)
-            p.circle(xplt, yplt, size=1, line_alpha=0., fill_color='blue',
+            p.circle(xplt, yplt, size=1, line_alpha=0., fill_color=pc.DATA,
                      legend_label='Data')
-            p.line(xplt, fplt, line_color='red', legend_label='Fit')
-            p.line([wavegood0, wavegood0], yrng, line_color='green')
-            p.line([wavegood1, wavegood1], yrng, line_color='green')
+            p.line(xplt, fplt, line_color=pc.FIT, legend_label='Fit')
+            oplot_wavgood(p, wavegood0, wavegood1, yrng, legend_label=None)
             p.y_range.start = yrng[0]
             p.y_range.end = yrng[1]
             bokeh_plot(p, self.context.bokeh_session)

@@ -4,6 +4,7 @@ from kcwidrp.core.kcwi_plotting import save_plot
 from kcwidrp.primitives.kcwi_file_primitives import plotlabel
 
 from kcwidrp.core.kcwi_plotting import figure
+from kcwidrp.core import kcwi_plot_colors as pc
 from kcwidrp.core.kcwi_plotting import Range1d
 import numpy as np
 import scipy as sp
@@ -526,9 +527,9 @@ class GetAtlasLines(BasePrimitive):
                            plot_height=self.config.instrument.plot_height)
                 # atlas first, so the arc being inspected is drawn on top
                 p.line(atwave, atspec / norm_fac, legend_label='Atlas',
-                       color='black')
+                       color=pc.REFERENCE)
                 p.line(subwvals, subyvals / np.nanmax(subyvals),
-                       legend_label='RefArc', color='blue')
+                       legend_label='RefArc', color=pc.DATA)
                 # Rejected: window bad
                 if len(rej_win_w) > 0:
                     p.diamond(rej_win_w, rej_win_a / norm_fac,
@@ -553,8 +554,8 @@ class GetAtlasLines(BasePrimitive):
                 p.diamond(refws, refas / norm_fac, legend_label='Kept',
                           color='green', size=12)
                 p.line([minwav, minwav], [-0.1, 1.1], legend_label='WavLim',
-                       color='purple')
-                p.line([maxwav, maxwav], [-0.1, 1.1], color='purple')
+                       color=pc.LIMIT)
+                p.line([maxwav, maxwav], [-0.1, 1.1], color=pc.LIMIT)
                 # pad past the wavelength limits on both sides
                 xpad = 0.03 * (maxwav - minwav)
                 p.x_range = Range1d(minwav - xpad, maxwav + xpad)

@@ -4,6 +4,7 @@ from kcwidrp.core.kcwi_plotting import save_plot
 from kcwidrp.core.bokeh_plotting import bokeh_clear
 
 from kcwidrp.core.kcwi_plotting import figure
+from kcwidrp.core import kcwi_plot_colors as pc
 from kcwidrp.core.kcwi_plotting import gridplot
 from kcwidrp.core.kcwi_interactive import pause
 import numpy as np
@@ -108,8 +109,8 @@ class SubtractOverscan(BasePrimitive):
                                y_axis_label='counts',
                                plot_width=self.config.instrument.plot_width,
                                plot_height=self.config.instrument.plot_height)
-                    p.circle(x, osvec, color='blue', legend_label="Data")
-                    p.line(x, osfit, line_color='red', line_width=3,
+                    p.circle(x, osvec, color=pc.DATA, legend_label="Data")
+                    p.line(x, osfit, line_color=pc.FIT, line_width=3,
                            legend_label="Fit")
                     bokeh_plot(p, self.context.bokeh_session)
                     plts.append(p)

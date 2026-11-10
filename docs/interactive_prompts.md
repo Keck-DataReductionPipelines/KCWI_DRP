@@ -81,6 +81,12 @@ looks the same from plot to plot (maintainer, 2026-11-09). The help texts
 describe the plots in this scheme; the per-site list is in
 [Colours named per site](#colours-named-per-site).
 
+In the code each role is a constant in `kcwidrp/core/kcwi_plot_colors.py`
+(`pc.DATA`, `pc.REFERENCE`, ...), and `oplot_cwave` / `oplot_wavgood` in
+`kcwi_plotting.py` draw CWAVE and WAVGOOD. Changing a constant changes every
+plot that uses it, but not the help texts, which name colours in words.
+Using the constants is a convention, not a rule: a plot may pass any colour.
+
 | Role | Colour / style |
 |---|---|
 | Data being inspected (points, spectra, profiles, histogram bars) | blue |

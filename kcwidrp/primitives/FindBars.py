@@ -5,6 +5,7 @@ from kcwidrp.primitives.kcwi_file_primitives import plotlabel
 import numpy as np
 import logging
 from kcwidrp.core.kcwi_plotting import figure
+from kcwidrp.core import kcwi_plot_colors as pc
 from kcwidrp.core.kcwi_interactive import pause, ask_next, QUIT
 from scipy.signal import find_peaks
 
@@ -86,12 +87,12 @@ class FindBars(BasePrimitive):
                     x_axis_label='CCD X (px)', y_axis_label='e-',
                     plot_width=self.config.instrument.plot_width,
                     plot_height=self.config.instrument.plot_height)
-                p.line(x, middle_vector, color='blue', legend_label="Trace")
+                p.line(x, middle_vector, color=pc.DATA, legend_label="Trace")
                 p.scatter(peaks_vector,
                           middle_vector[peaks_vector], marker='x',
-                          color='magenta', legend_label="FoundBar")
+                          color=pc.FOUND, legend_label="FoundBar")
                 p.line([0, x_size], [bar_thresh, bar_thresh],
-                       color='grey', line_dash='dashed')
+                       color=pc.THRESHOLD, line_dash='dashed')
                 p.legend.location = "bottom_center"
                 bokeh_plot(p, self.context.bokeh_session)
                 pause(self.config.instrument, self.logger,
@@ -143,12 +144,13 @@ class FindBars(BasePrimitive):
                     x_axis_label='CCD X (px)', y_axis_label='e-',
                     plot_width=self.config.instrument.plot_width,
                     plot_height=self.config.instrument.plot_height)
-                p.line(x, middle_vector, color='blue', legend_label="MidTrace")
+                p.line(x, middle_vector, color=pc.DATA,
+                       legend_label="MidTrace")
                 p.scatter(peaks_vector,
                           middle_vector[peaks_vector], marker='x',
-                          color='magenta', legend_label="FoundBar")
+                          color=pc.FOUND, legend_label="FoundBar")
                 p.line([0, x_size], [bar_thresh, bar_thresh],
-                       color='grey', line_dash='dashed')
+                       color=pc.THRESHOLD, line_dash='dashed')
                 p.legend.location = "bottom_center"
                 bokeh_plot(p, self.context.bokeh_session)
                 pause(self.config.instrument, self.logger,
@@ -189,10 +191,10 @@ class FindBars(BasePrimitive):
                         x_axis_label='CCD X (px)', y_axis_label='e-',
                         plot_width=self.config.instrument.plot_width,
                         plot_height=self.config.instrument.plot_height)
-                    p.line(xs, ys, color='blue', legend_label='Bar Trace')
-                    p.circle(xs, ys, color='blue', legend_label='Bar Trace')
+                    p.line(xs, ys, color=pc.DATA, legend_label='Bar Trace')
+                    p.circle(xs, ys, color=pc.DATA, legend_label='Bar Trace')
                     p.line([xc, xc], [bar_thresh, middle_vector[peak]],
-                           color='magenta', legend_label='Cntrd')
+                           color=pc.FOUND, legend_label='Cntrd')
                     bokeh_plot(p, self.context.bokeh_session)
                     if do_inter:
                         q = ask_next(self.logger,

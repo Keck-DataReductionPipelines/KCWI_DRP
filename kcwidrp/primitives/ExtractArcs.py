@@ -9,6 +9,7 @@ from scipy.signal import savgol_filter
 import os
 from skimage import transform as tf
 from kcwidrp.core.kcwi_plotting import figure
+from kcwidrp.core import kcwi_plot_colors as pc
 from kcwidrp.core.kcwi_interactive import ask_next, QUIT
 
 
@@ -143,9 +144,9 @@ class ExtractArcs(BasePrimitive):
                                y_axis_label="Flux",
                                plot_width=self.config.instrument.plot_width,
                                plot_height=self.config.instrument.plot_height)
-                    p.line(xp, arc, legend_label='Arc', color='blue')
-                    p.line(xp, bkg, legend_label='Bkg', color='cyan')
-                    p.line(xp, bkgf, legend_label='BkgFit', color='red')
+                    p.line(xp, arc, legend_label='Arc', color=pc.DATA)
+                    p.line(xp, bkg, legend_label='Bkg', color=pc.SECOND)
+                    p.line(xp, bkgf, legend_label='BkgFit', color=pc.FIT)
                     bokeh_plot(p, self.context.bokeh_session)
                     q = ask_next(self.logger,
                         what="Arc spectrum extracted along this bar's trace, with its background estimate.",
@@ -230,8 +231,8 @@ class ExtractArcs(BasePrimitive):
                             x_axis_label="Y CCD Pixel", y_axis_label="Flux",
                             plot_width=self.config.instrument.plot_width,
                             plot_height=self.config.instrument.plot_height)
-                        p.line(xp, arc, legend_label='Arc', color='blue')
-                        p.line(xp, bkg, legend_label='Bkg', color='red')
+                        p.line(xp, arc, legend_label='Arc', color=pc.DATA)
+                        p.line(xp, bkg, legend_label='Bkg', color=pc.FIT)
                         bokeh_plot(p, self.context.bokeh_session)
                         q = ask_next(self.logger,
                             what="Arc spectrum extracted at this bar (warped arc image), with its fitted background.",

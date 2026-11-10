@@ -7,6 +7,7 @@ from kcwidrp.core.kcwi_interactive import ask_next, pause, NEXT, QUIT
 
 import numpy as np
 from kcwidrp.core.kcwi_plotting import figure
+from kcwidrp.core import kcwi_plot_colors as pc
 from scipy import signal
 
 
@@ -82,10 +83,10 @@ class ArcOffsets(BasePrimitive):
                                plot_width=self.config.instrument.plot_width,
                                plot_height=self.config.instrument.plot_height)
                     x = range(len(reference_arc))
-                    p.line(x, reference_arc, color='black',
+                    p.line(x, reference_arc, color=pc.REFERENCE,
                            legend_label='ref bar (%d)' %
                            self.config.instrument.REFBAR)
-                    p.line(x, np.roll(arc, offset), color='blue',
+                    p.line(x, np.roll(arc, offset), color=pc.DATA,
                            legend_label='bar %d' % arc_number)
                     bokeh_plot(p, self.context.bokeh_session)
                     q = ask_next(
@@ -131,7 +132,7 @@ class ArcOffsets(BasePrimitive):
                            y_axis_label="Wave offset (px)",
                            plot_width=self.config.instrument.plot_width,
                            plot_height=self.config.instrument.plot_height)
-                p.diamond(list(range(nbars)), offsets, color='blue', size=8)
+                p.diamond(list(range(nbars)), offsets, color=pc.DATA, size=8)
                 xlim = [-1, nbars]
                 ylim = get_plot_lims(offsets)
                 p.xgrid.grid_line_color = None
