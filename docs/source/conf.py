@@ -22,7 +22,8 @@ copyright = '2020-2026, Don Neill, KCWI Team, Luca Rizzi, Max Brodheim'
 author = 'Don Neill, KCWI Team, Luca Rizzi, Max Brodheim'
 
 # The full version, including alpha/beta/rc tags, taken from the installed
-# kcwidrp package (see docs/requirements.txt)
+# kcwidrp package (the build installs this repository with its "docs"
+# extra, so the docs always describe the code in the same commit)
 release = version('kcwidrp')
 version = '.'.join(release.split('.')[:2])
 
@@ -35,18 +36,18 @@ version = '.'.join(release.split('.')[:2])
 extensions = ['sphinx.ext.autodoc',
               'sphinx.ext.napoleon',
               'sphinx.ext.viewcode',
-              'sphinx.ext.autosectionlabel'
+              'sphinx.ext.autosectionlabel',
+              'myst_parser'
               ]
+# User pages are reStructuredText; Markdown (myst-parser) is for the
+# developer pages that live in docs/dev/ (docs plan, decision 3)
+source_suffix = {'.rst': 'restructuredtext', '.md': 'markdown'}
 napoleon_numpy_docstring = True
 autosectionlabel_prefix_document = True
 
 # Class documentation should contain *both* the class docstring and
 # the __init__ docstring
 autoclass_content = "class"
-
-# kcwi_masksky_ds9 imports regions, which kcwidrp 1.3.x does not list as a
-# dependency (it lists pyregion instead), so autodoc could not import it
-autodoc_mock_imports = ['regions']
 
 
 master_doc = 'index'

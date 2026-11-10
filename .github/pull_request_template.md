@@ -13,6 +13,12 @@
      (quick profile; `--regression-profile=full` for plotting or prompt changes and releases).
      Otherwise write "not reduction code" and why. -->
 
+## Documentation
+
+<!-- User-visible behavior, config keys, scripts, outputs or docs/ changed: the docs/source/ pages
+     updated, and the last line of `sphinx-build -W --keep-going docs/source docs/_build`
+     (after `pip install -e ".[docs]"`). Otherwise write "no user-visible change". -->
+
 ## Blesses
 
 <!-- For each bless (maintainer only): entry, reason ("<allowed reason>: <text>") and diff summary.
@@ -36,4 +42,5 @@
 - [ ] No new `skip` without a reason (missing external resource only)
 - [ ] Test authorship stated; breakage check done for each new test file
 - [ ] Coverage lines for the touched modules pasted (`pytest --cov=kcwidrp --cov-report=term-missing`)
+- [ ] Docs updated and built with `-W`, or "no user-visible change"
 - [ ] `git status` shows no stray files

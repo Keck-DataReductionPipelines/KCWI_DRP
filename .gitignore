@@ -17,3 +17,7 @@ docs/dev/baseline/**
 
 # Local virtual environment (docs/dev/testing.md)
 .venv/
+
+# Documentation build output and generated pages (docs/dev/testing.md)
+docs/_build/
+docs/source/_generated/
