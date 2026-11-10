@@ -1,6 +1,6 @@
 # KCWI DRP upgrade: master implementation plan
 
-Date: 2026-10-22, revised the same day after review (decisions D10–D19). **Scope changed 2026-11-09 (D31–D33): Track M is deferred to a later release, and the user documentation moves into this repository (Track D).** Status: **approved by the maintainer 2026-10-22 (D22); in progress.** Done: S.1–S.5 (S.4 except Q10b, deferred with Track M), Track T (PR0, #224, merged 2026-10-28) and Track A (PR1, #225, merged 2026-10-28, plus the viewer download fix #227). In progress: Track P (PR3a). Next: Track D. The current state of every step is in §4, "Where things stand".
+Date: 2026-10-22, revised the same day after review (decisions D10–D19). **Scope changed 2026-11-09 (D31–D33): Track M is deferred to a later release, and the user documentation moves into this repository (Track D).** Status: **approved by the maintainer 2026-10-22 (D22); in progress.** Done: S.1–S.5 (S.4 except Q10b, deferred with Track M), Track T (PR0, #224, merged 2026-10-28), Track A (PR1, #225, merged 2026-10-28, plus the viewer download fix #227) and Track D (PRD, #234, merged 2026-11-10). In progress: Track P (PR3a). The current state of every step is in §4, "Where things stand".
 Plan documents live on branch `drp_upgrade_plan`. Code facts in this plan (counts, line numbers, bug locations) were verified at `dfbcf9d` (`master` `12fd4aa` plus planning documents only). Upstream has since released `v1.3.2` (`9be28f5`, PR #218), which differs from `12fd4aa` only in `kcwidrp/core/kcwi_plotting.py`, so primitive line numbers and counts still hold at `v1.3.2`. The work starts from `v1.3.2` (D10).
 
 This document coordinates the upgrades, and the test overhaul that protects them, into one sequence of tasks, pull requests and human checkpoints. Since D31 (2026-11-09) the release contains T, A, P, D and the small changes X; Track M is deferred.
@@ -150,7 +150,7 @@ Remapping of bokeh-plan tasks:
 
 ## 4. Sequencing, pull requests and gates
 
-### Where things stand (2026-11-09)
+### Where things stand (2026-11-10)
 
 | Step | PR / branch | State |
 |---|---|---|
@@ -158,9 +158,9 @@ Remapping of bokeh-plan tasks:
 | Track T, PR0 | #224, `upgrade/pr0-tests` | Merged into `v3-upgrade` 2026-10-28 |
 | Track A, PR1 | #225, `upgrade/pr1-bokeh` | Merged 2026-10-28. Still open: 👤 0.3 prototype on Ubuntu 24.04; 👤 the `bokeh port 4.3` plot bless |
 | X: viewer download fix | #227, `upgrade/download-fix` | Merged 2026-10-29 |
-| X.1: `develop` into `v3-upgrade` | – | To do: brings #232 (MakeMasterSky Cholesky fallback, merged into `develop` 2026-11-07); again for #228 (CorrectDar edges) once it merges |
-| Track D, PRD | not started | Next (D32). Docs phases 0–2 are done on three local, unpushed branches of `KCWI_DRP-Docs` |
-| Track P, PR3a | `upgrade/pr3a-prompts` (pushed) | P.0–P.4 done; P.0 👤 review in progress (first round of feedback applied, with the plot changes of D33); P.6, P.7 and the full-profile regression run not done; branch is 4 commits behind `v3-upgrade` |
+| X.1: `develop` into `v3-upgrade` | – | Done 2026-11-09 (`8f5d870`): #232 (MakeMasterSky Cholesky fallback); quick regression profile 32 passed. Its tests moved into `unit/core/test_bspline.py` on `upgrade/pr3a-prompts`. Again for #228 (CorrectDar edges) once it merges into `develop` |
+| Track D, PRD | #234, `upgrade/prd-docs` | Merged into `v3-upgrade` 2026-11-10 (D.1–D.5; the D.4 test by a separate session). Before it: docs phases 0–2 merged in KCWI_DRP-Docs (#4, tagged `v1.3.3`; RTD `latest` and `stable` rebuilt). Preview of the v3 docs: RTD project `kcwi-drp-v3-test`, version `v3-upgrade`. Open until R.5: the RTD switch and the legacy project |
+| Track P, PR3a | `upgrade/pr3a-prompts` (pushed) | P.0–P.4 done, with the plot changes of D33; up to date with `v3-upgrade` (PRD merged in; `interactive_prompts.md` now in `docs/dev/`). Open: P.0 👤 review (first round of feedback applied), P.6 👤 interactive session and v2 answer files, P.7 changelog and an "Interactive mode" page in `docs/source/`, the full-profile regression run |
 | Track P, PR3b | not started | After PR3a merges |
 | Release | #226, `v3-upgrade` → `develop` | Open; completed at R.5 |
 | Track M | – | Deferred (D31) |
@@ -168,9 +168,9 @@ Remapping of bokeh-plan tasks:
 ```
 Done:  Phase S ─► Track T ─► PR0 (#224) ─► Track A ─► PR1 (#225) ─► viewer fix (#227)
                                                          │
-X (any time): merge develop into v3-upgrade after each hotfix (#232, #228, ...)
+X (any time): merge develop into v3-upgrade after each hotfix (#232 done; #228, ...)
                                                          │
-Track D: docs merge, D.1–D.5 ───────────────────────► PRD ─► (GD)
+Track D: docs merge, D.1–D.5 ───────────────────────► PRD (#234, merged)
                                                          │
 Track P: P.0 review, P.6, P.7, plots (D33) ─────────► PR3a ─► (G3)
          P.5 bug fixes, P.6, P.7 ───────────────────► PR3b ─► (G4)
@@ -1234,9 +1234,9 @@ Run the full regression profile on the release candidate first. The release merg
 | Track A | A.3.1 | Interactive MakeInvsens session with new cursor readout | Noted in PR1 |
 | Track A | A.4.3 | Review comparison page; interactive level-3 session; sign-off | Sign-off with accepted differences |
 | Before P.1 | P.0 | Review every prompt explanation for scientific accuracy | Each section marked approved. In progress: first round of feedback applied 2026-11-09 (with D33) |
-| Before D.1 | Track D | Merge docs phases 0–2 in `KCWI_DRP-Docs`; answer docs plan §4 decisions 1–3 | Phases on docs `main`; decisions recorded |
-| Track D | D.1, D.5 | Check the import's file list; read the v3 pages; ask for a hidden RTD version of `v3-upgrade` | Noted in PRD |
-| Any time | X.1 | Merge `develop` into `v3-upgrade` after each hotfix (#232 now, #228 later) | Fast and quick-regression summaries recorded |
+| Before D.1 | Track D | Merge docs phases 0–2 in `KCWI_DRP-Docs`; answer docs plan §4 decisions 1–3 | ✔ Done 2026-11-09: KCWI_DRP-Docs#4, tag `v1.3.3`; decisions in `docs/dev/docs_plan.md` |
+| Track D | D.1, D.5 | Check the import's file list; read the v3 pages; ask for a hidden RTD version of `v3-upgrade` | ✔ Done 2026-11-10: #234 merged; preview project `kcwi-drp-v3-test` |
+| Any time | X.1 | Merge `develop` into `v3-upgrade` after each hotfix (#232 done 2026-11-09, #228 later) | Fast and quick-regression summaries recorded |
 | Track P | P.5 | Approve or reject each bug fix; inspect B1 plots | Decision per fix in PR3b |
 | Track P | P.6 | Interactive session with invalid input, `?`, Ctrl-D; read the log; record `answers_*_v2.txt`; replay it again after PR3b | Notes in PR3a; v2 file replays on PR3a and PR3b |
 | *(deferred)* Before M.2e | M.0 | Choose sky regions, std aperture and target masks; confirm thresholds | `regions_*.json` and thresholds committed |
